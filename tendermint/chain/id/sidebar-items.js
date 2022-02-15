@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["MAX_LENGTH","Maximum length of a `chain::Id` name. Matches `MaxChainIDLen` from: https://github.com/tendermint/tendermint/blob/develop/types/genesis.go"]],"struct":[["Id","Chain identifier (e.g. ‘gaia-9000’)"]]});

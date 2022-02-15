@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ProofSpecs","An array of proof specifications."]]});

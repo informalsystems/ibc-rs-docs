@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ValidationErrorDetail",""]],"struct":[["ChainIdInvalidFormatSubdetail",""],["ContainSeparatorSubdetail",""],["EmptySubdetail",""],["InvalidCharacterSubdetail",""],["InvalidCounterpartyChannelIdSubdetail",""],["InvalidLengthSubdetail",""],["ValidationError",""]]});

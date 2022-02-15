@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["Error",""],["Ics02ClientSubdetail",""],["Ics03ConnectionSubdetail",""],["Ics04ChannelSubdetail",""],["Ics20FungibleTokenTransferSubdetail",""],["MalformedMessageBytesSubdetail",""],["UnknownMessageTypeUrlSubdetail",""]]});

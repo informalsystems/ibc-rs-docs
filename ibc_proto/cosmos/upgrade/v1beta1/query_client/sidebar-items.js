@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["QueryClient","Query defines the gRPC upgrade querier service."]]});

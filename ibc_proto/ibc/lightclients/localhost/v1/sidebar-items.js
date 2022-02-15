@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ClientState","ClientState defines a loopback (localhost) client. It requires (read-only) access to keys outside the client prefix."]]});

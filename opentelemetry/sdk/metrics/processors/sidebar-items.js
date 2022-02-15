@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["basic","Create a new basic processor"]],"struct":[["BasicProcessor","Basic metric integration strategy"]]});

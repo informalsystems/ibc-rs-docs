@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Get commit information about a specific block"],["Response","Commit responses"]]});

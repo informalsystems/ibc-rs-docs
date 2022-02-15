@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Request for searching for blocks by their BeginBlock and EndBlock events."],["Response",""]]});

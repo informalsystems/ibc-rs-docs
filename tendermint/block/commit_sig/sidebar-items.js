@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["CommitSig","CommitSig represents a signature of a validator. It’s a part of the Commit and can be used to reconstruct the vote set given the validator set."]]});

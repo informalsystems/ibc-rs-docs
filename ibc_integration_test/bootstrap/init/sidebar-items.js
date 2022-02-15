@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["init_test","Initialize the test with a global logger and error handlers, read the environment variables and return a [`TestConfig`]."],["install_logger","Install the [`tracing_subscriber`] logger handlers so that logs will be displayed during test."]]});

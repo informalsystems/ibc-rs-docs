@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["local_transfer_token",""],["transfer_token","Submits an IBC token transfer transaction."]]});

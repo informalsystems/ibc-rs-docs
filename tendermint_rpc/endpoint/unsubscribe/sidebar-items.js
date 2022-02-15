@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Request to unsubscribe from events relating to a given query."],["Response","Status responses"]]});

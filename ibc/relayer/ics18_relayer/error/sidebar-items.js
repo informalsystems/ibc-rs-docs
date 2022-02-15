@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["ClientAlreadyUpToDateSubdetail",""],["ClientAtHigherHeightSubdetail",""],["ClientStateNotFoundSubdetail",""],["Error",""],["TransactionFailedSubdetail",""]]});

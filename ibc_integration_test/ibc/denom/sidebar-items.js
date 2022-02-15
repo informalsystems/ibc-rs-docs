@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["derive_ibc_denom","A tagged version of `derive_ibc_denom` from the [`ibc`] module."]],"struct":[["Denom","A newtype wrapper to represent a denomination string."]],"type":[["TaggedDenom","Type alias for [`Denom`] tagged with the chain it belongs to."],["TaggedDenomRef","Type alias for `&Denom` tagged with the chain it belongs to."]]});

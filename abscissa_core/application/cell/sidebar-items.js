@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AppCell","Application cell: holder of application state."]]});

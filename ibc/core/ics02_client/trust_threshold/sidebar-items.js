@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["TrustThreshold","[`TrustThreshold`] defines the level of trust that a client has towards a set of validators of a chain."]]});

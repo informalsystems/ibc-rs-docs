@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Get information about a specific block"],["Response","Block responses"]]});

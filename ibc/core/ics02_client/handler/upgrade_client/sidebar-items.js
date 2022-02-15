@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["process",""]],"struct":[["Result","The result following the successful processing of a `MsgUpgradeAnyClient` message. This data type should be used with a qualified name `upgrade_client::Result` to avoid ambiguity."]]});

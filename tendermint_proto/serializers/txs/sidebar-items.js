@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["deserialize","Deserialize transactions into Vec<Vec>"],["serialize","Serialize from Vec<Vec> into transactions"]]});

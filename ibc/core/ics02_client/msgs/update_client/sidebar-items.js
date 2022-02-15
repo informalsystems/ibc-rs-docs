@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgUpdateAnyClient","A type of message that triggers the update of an on-chain (IBC) client with new headers."]]});

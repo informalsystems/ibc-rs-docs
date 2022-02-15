@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgRecvPacket","Message definition for the “packet receiving” datagram."]]});

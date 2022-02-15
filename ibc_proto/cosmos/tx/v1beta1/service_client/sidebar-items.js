@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ServiceClient","Service defines a gRPC service for interacting with transactions."]]});

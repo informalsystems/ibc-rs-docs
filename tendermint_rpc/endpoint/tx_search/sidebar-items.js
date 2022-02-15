@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Request for searching for transactions with their results."],["Response",""]]});

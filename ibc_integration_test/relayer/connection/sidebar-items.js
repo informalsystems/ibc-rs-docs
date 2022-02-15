@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["assert_eventually_connection_established",""],["init_connection",""],["query_connection_end",""]],"trait":[["TaggedConnectionEndExt",""],["TaggedConnectionExt","An extension trait that provide helper methods to get tagged identifiers out of a [`Connection`]."]]});

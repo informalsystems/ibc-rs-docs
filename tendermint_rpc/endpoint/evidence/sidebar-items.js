@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","`/broadcast_evidence`: broadcast an evidence."],["Response","Response from either an evidence broadcast request."]]});

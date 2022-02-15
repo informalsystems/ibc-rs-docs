@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["TxIndexStatus","Transaction index status"]],"struct":[["Info","Node information"],["ListenAddress","Listen address information"],["OtherInfo","Other information"],["ProtocolVersionInfo","Protocol version information"]]});

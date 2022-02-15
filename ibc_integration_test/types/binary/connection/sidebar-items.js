@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ConnectedConnection","A connection that is connected between two chains with the full handshake completed."]]});

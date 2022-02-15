@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["memory","Transient in-memory store"]],"trait":[["LightStore","Store for light blocks."]]});

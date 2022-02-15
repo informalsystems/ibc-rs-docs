@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["HASH_LENGTH","Size of a transaction hash in bytes"]],"struct":[["Data","Transaction data is a wrapper for a list of transactions, where transactions are arbitrary byte arrays."],["Hash","Transaction hashes"],["Transaction","Transactions are arbitrary byte arrays whose contents are validated by the underlying Tendermint application."]]});

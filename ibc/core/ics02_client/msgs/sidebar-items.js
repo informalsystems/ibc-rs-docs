@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ClientMsg",""]],"mod":[["create_client","Definition of domain type message `MsgCreateAnyClient`."],["misbehavior",""],["update_client","Definition of domain type message `MsgUpdateAnyClient`."],["upgrade_client","Definition of domain type msg `MsgUpgradeAnyClient`."]]});

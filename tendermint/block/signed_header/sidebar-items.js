@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SignedHeader","Signed block headers"]]});

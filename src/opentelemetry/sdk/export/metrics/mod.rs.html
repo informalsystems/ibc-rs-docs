@@ -1,0 +1,868 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;home&#x2F;runner&#x2F;.cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;opentelemetry-0.17.0&#x2F;src&#x2F;sdk&#x2F;export&#x2F;metrics&#x2F;mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><script defer src="../../../../../main.js"></script><script defer src="../../../../../source-script.js"></script><script defer src="../../../../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../opentelemetry/index.html'><div class='logo-container rust-logo'><img src='https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;open-telemetry&#x2F;opentelemetry-rust&#x2F;main&#x2F;assets&#x2F;logo.svg' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Metrics Export</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::sdk::resource::Resource</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">attributes</span>,
+    <span class="ident">metrics</span>::{<span class="ident">Descriptor</span>, <span class="ident">InstrumentKind</span>, <span class="ident">Number</span>, <span class="prelude-ty">Result</span>},
+};
+<span class="kw">use</span> <span class="ident">std::any::Any</span>;
+<span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+<span class="kw">use</span> <span class="ident">std::time::SystemTime</span>;
+
+<span class="kw">mod</span> <span class="ident">aggregation</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">stdout</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">aggregation</span>::{
+    <span class="ident">Buckets</span>, <span class="ident">Count</span>, <span class="ident">Histogram</span>, <span class="ident">LastValue</span>, <span class="ident">Max</span>, <span class="ident">Min</span>, <span class="ident">MinMaxSumCount</span>, <span class="ident">Points</span>, <span class="ident">Sum</span>,
+};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">stdout::stdout</span>;
+
+<span class="doccomment">/// Processor is responsible for deciding which kind of aggregation to use (via</span>
+<span class="doccomment">/// `aggregation_selector`), gathering exported results from the SDK during</span>
+<span class="doccomment">/// collection, and deciding over which dimensions to group the exported data.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The SDK supports binding only one of these interfaces, as it has the sole</span>
+<span class="doccomment">/// responsibility of determining which Aggregator to use for each record.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The embedded AggregatorSelector interface is called (concurrently) in</span>
+<span class="doccomment">/// instrumentation context to select the appropriate Aggregator for an</span>
+<span class="doccomment">/// instrument.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Processor</span>: <span class="ident">fmt::Debug</span> {
+    <span class="doccomment">/// AggregatorSelector is responsible for selecting the</span>
+    <span class="doccomment">/// concrete type of Aggregator used for a metric in the SDK.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This may be a static decision based on fields of the</span>
+    <span class="doccomment">/// Descriptor, or it could use an external configuration</span>
+    <span class="doccomment">/// source to customize the treatment of each metric</span>
+    <span class="doccomment">/// instrument.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The result from AggregatorSelector.AggregatorFor should be</span>
+    <span class="doccomment">/// the same type for a given Descriptor or else nil.  The same</span>
+    <span class="doccomment">/// type should be returned for a given descriptor, because</span>
+    <span class="doccomment">/// Aggregators only know how to Merge with their own type.  If</span>
+    <span class="doccomment">/// the result is nil, the metric instrument will be disabled.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that the SDK only calls AggregatorFor when new records</span>
+    <span class="doccomment">/// require an Aggregator. This does not provide a way to</span>
+    <span class="doccomment">/// disable metrics with active records.</span>
+    <span class="kw">fn</span> <span class="ident">aggregation_selector</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">AggregatorSelector</span>;
+}
+
+<span class="doccomment">/// A locked processor.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The `Process` method is called during collection in a single-threaded</span>
+<span class="doccomment">/// context from the SDK, after the aggregator is checkpointed, allowing the</span>
+<span class="doccomment">/// processor to build the set of metrics currently being exported.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">LockedProcessor</span> {
+    <span class="doccomment">/// Process is called by the SDK once per internal record, passing the export</span>
+    <span class="doccomment">/// Accumulation (a Descriptor, the corresponding Attributes, and the checkpointed</span>
+    <span class="doccomment">/// Aggregator).</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The Context argument originates from the controller that orchestrates</span>
+    <span class="doccomment">/// collection.</span>
+    <span class="kw">fn</span> <span class="ident">process</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">accumulation</span>: <span class="ident">Accumulation</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// AggregatorSelector supports selecting the kind of `Aggregator` to use at</span>
+<span class="doccomment">/// runtime for a specific metric instrument.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AggregatorSelector</span>: <span class="ident">fmt::Debug</span> {
+    <span class="doccomment">/// This allocates a variable number of aggregators of a kind suitable for</span>
+    <span class="doccomment">/// the requested export.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// When the call returns `None`, the metric instrument is explicitly disabled.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This must return a consistent type to avoid confusion in later stages of</span>
+    <span class="doccomment">/// the metrics export process, e.g., when merging or checkpointing</span>
+    <span class="doccomment">/// aggregators for a specific instrument.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This call should not block.</span>
+    <span class="kw">fn</span> <span class="ident">aggregator_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// The interface used by a `Controller` to coordinate the `Processor` with</span>
+<span class="doccomment">/// `Accumulator`(s) and `Exporter`(s). The `start_collection` and</span>
+<span class="doccomment">/// `finish_collection` methods start and finish a collection interval.</span>
+<span class="doccomment">/// `Controller`s call the `Accumulator`(s) during collection to process</span>
+<span class="doccomment">/// `Accumulation`s.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Checkpointer</span>: <span class="ident">LockedProcessor</span> {
+    <span class="doccomment">/// A checkpoint of the current data set. This may be called before and after</span>
+    <span class="doccomment">/// collection. The implementation is required to return the same value</span>
+    <span class="doccomment">/// throughout its lifetime.</span>
+    <span class="kw">fn</span> <span class="ident">checkpoint_set</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">CheckpointSet</span>;
+
+    <span class="doccomment">/// Logic to be run at the start of a collection interval.</span>
+    <span class="kw">fn</span> <span class="ident">start_collection</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>);
+
+    <span class="doccomment">/// Cleanup logic or other behavior that needs to be run after a collection</span>
+    <span class="doccomment">/// interval is complete.</span>
+    <span class="kw">fn</span> <span class="ident">finish_collection</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// Aggregator implements a specific aggregation behavior, i.e., a behavior to</span>
+<span class="doccomment">/// track a sequence of updates to an instrument. Sum-only instruments commonly</span>
+<span class="doccomment">/// use a simple Sum aggregator, but for the distribution instruments</span>
+<span class="doccomment">/// (ValueRecorder, ValueObserver) there are a number of possible aggregators</span>
+<span class="doccomment">/// with different cost and accuracy tradeoffs.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Note that any Aggregator may be attached to any instrument--this is the</span>
+<span class="doccomment">/// result of the OpenTelemetry API/SDK separation. It is possible to attach a</span>
+<span class="doccomment">/// Sum aggregator to a ValueRecorder instrument or a MinMaxSumCount aggregator</span>
+<span class="doccomment">/// to a Counter instrument.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregator</span>: <span class="ident">fmt::Debug</span> {
+    <span class="doccomment">/// Update receives a new measured value and incorporates it into the</span>
+    <span class="doccomment">/// aggregation. Update calls may be called concurrently.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `Descriptor::number_kind` should be consulted to determine whether the</span>
+    <span class="doccomment">/// provided number is an `i64`, `u64` or `f64`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The current Context could be inspected for a `Baggage` or</span>
+    <span class="doccomment">/// `SpanContext`.</span>
+    <span class="kw">fn</span> <span class="ident">update</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">number</span>: <span class="kw-2">&amp;</span><span class="ident">Number</span>, <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+
+    <span class="doccomment">/// This method is called during collection to finish one period of aggregation</span>
+    <span class="doccomment">/// by atomically saving the currently-updating state into the argument</span>
+    <span class="doccomment">/// Aggregator.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// `synchronized_move` is called concurrently with `update`. These two methods</span>
+    <span class="doccomment">/// must be synchronized with respect to each other, for correctness.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method will return an `InconsistentAggregator` error if this</span>
+    <span class="doccomment">/// `Aggregator` cannot be copied into the destination due to an incompatible</span>
+    <span class="doccomment">/// type.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This call has no `Context` argument because it is expected to perform only</span>
+    <span class="doccomment">/// computation.</span>
+    <span class="kw">fn</span> <span class="ident">synchronized_move</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">destination</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
+        <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+
+    <span class="doccomment">/// This combines the checkpointed state from the argument `Aggregator` into this</span>
+    <span class="doccomment">/// `Aggregator`. `merge` is not synchronized with respect to `update` or</span>
+    <span class="doccomment">/// `synchronized_move`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The owner of an `Aggregator` being merged is responsible for synchronization</span>
+    <span class="doccomment">/// of both `Aggregator` states.</span>
+    <span class="kw">fn</span> <span class="ident">merge</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>), <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Returns the implementing aggregator as `Any` for downcasting.</span>
+    <span class="kw">fn</span> <span class="ident">as_any</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Any</span>;
+}
+
+<span class="doccomment">/// An optional interface implemented by some Aggregators. An Aggregator must</span>
+<span class="doccomment">/// support `subtract()` in order to be configured for a Precomputed-Sum</span>
+<span class="doccomment">/// instrument (SumObserver, UpDownSumObserver) using a DeltaExporter.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Subtractor</span> {
+    <span class="doccomment">/// Subtract subtracts the `operand` from this Aggregator and outputs the value</span>
+    <span class="doccomment">/// in `result`.</span>
+    <span class="kw">fn</span> <span class="ident">subtract</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">operand</span>: <span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>),
+        <span class="ident">result</span>: <span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>),
+        <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// Exporter handles presentation of the checkpoint of aggregate metrics. This</span>
+<span class="doccomment">/// is the final stage of a metrics export pipeline, where metric data are</span>
+<span class="doccomment">/// formatted for a specific system.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Exporter</span>: <span class="ident">ExportKindFor</span> {
+    <span class="doccomment">/// Export is called immediately after completing a collection pass in the SDK.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The CheckpointSet interface refers to the Processor that just completed</span>
+    <span class="doccomment">/// collection.</span>
+    <span class="kw">fn</span> <span class="ident">export</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">checkpoint_set</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">CheckpointSet</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// ExportKindSelector is a sub-interface of Exporter used to indicate</span>
+<span class="doccomment">/// whether the Processor should compute Delta or Cumulative</span>
+<span class="doccomment">/// Aggregations.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ExportKindFor</span>: <span class="ident">fmt::Debug</span> {
+    <span class="doccomment">/// Determines the correct `ExportKind` that should be used when exporting data</span>
+    <span class="doccomment">/// for the given metric instrument.</span>
+    <span class="kw">fn</span> <span class="ident">export_kind_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>) -&gt; <span class="ident">ExportKind</span>;
+}
+
+<span class="doccomment">/// CheckpointSet allows a controller to access a complete checkpoint of</span>
+<span class="doccomment">/// aggregated metrics from the Processor. This is passed to the `Exporter`</span>
+<span class="doccomment">/// which may then use `try_for_each` to iterate over the collection of</span>
+<span class="doccomment">/// aggregated metrics.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CheckpointSet</span>: <span class="ident">fmt::Debug</span> {
+    <span class="doccomment">/// This iterates over aggregated checkpoints for all metrics that were updated</span>
+    <span class="doccomment">/// during the last collection period. Each aggregated checkpoint returned by</span>
+    <span class="doccomment">/// the function parameter may return an error.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The `ExportKindSelector` argument is used to determine whether the `Record`</span>
+    <span class="doccomment">/// is computed using delta or cumulative aggregation.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ForEach tolerates `MetricsError::NoData` silently, as this is expected from</span>
+    <span class="doccomment">/// the Meter implementation. Any other kind of error will immediately halt and</span>
+    <span class="doccomment">/// return the error to the caller.</span>
+    <span class="kw">fn</span> <span class="ident">try_for_each</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">export_selector</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ExportKindFor</span>,
+        <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">Record</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// Allows `Accumulator` implementations to construct new `Accumulation`s to</span>
+<span class="doccomment">/// send to `Processor`s. The `Descriptor`, `Attributes`, `Resource`, and</span>
+<span class="doccomment">/// `Aggregator` represent aggregate metric events received over a single</span>
+<span class="doccomment">/// collection period.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">accumulation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Descriptor</span>,
+    <span class="ident">attributes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">attributes::AttributeSet</span>,
+    <span class="ident">resource</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Resource</span>,
+    <span class="ident">aggregator</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
+) -&gt; <span class="ident">Accumulation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">Accumulation::new</span>(<span class="ident">descriptor</span>, <span class="ident">attributes</span>, <span class="ident">resource</span>, <span class="ident">aggregator</span>)
+}
+
+<span class="doccomment">/// Allows `Processor` implementations to construct export records. The</span>
+<span class="doccomment">/// `Descriptor`, `Attributes`, and `Aggregator` represent aggregate metric events</span>
+<span class="doccomment">/// received over a single collection period.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">record</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
+    <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Descriptor</span>,
+    <span class="ident">attributes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">attributes::AttributeSet</span>,
+    <span class="ident">resource</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Resource</span>,
+    <span class="ident">aggregator</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">start</span>: <span class="ident">SystemTime</span>,
+    <span class="ident">end</span>: <span class="ident">SystemTime</span>,
+) -&gt; <span class="ident">Record</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">Record</span> {
+        <span class="ident">metadata</span>: <span class="ident">Metadata::new</span>(<span class="ident">descriptor</span>, <span class="ident">attributes</span>, <span class="ident">resource</span>),
+        <span class="ident">aggregator</span>,
+        <span class="ident">start</span>,
+        <span class="ident">end</span>,
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Record</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The aggregator for this metric</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">aggregator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">aggregator</span>
+    }
+}
+
+<span class="doccomment">/// A container for the common elements for exported metric data that are shared</span>
+<span class="doccomment">/// by the `Accumulator`-&gt;`Processor` and `Processor`-&gt;`Exporter` steps.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Metadata</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Descriptor</span>,
+    <span class="ident">attributes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">attributes::AttributeSet</span>,
+    <span class="ident">resource</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Resource</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Metadata</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Create a new `Metadata` instance.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Descriptor</span>,
+        <span class="ident">attributes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">attributes::AttributeSet</span>,
+        <span class="ident">resource</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Resource</span>,
+    ) -&gt; <span class="self">Self</span> {
+        {
+            <span class="ident">Metadata</span> {
+                <span class="ident">descriptor</span>,
+                <span class="ident">attributes</span>,
+                <span class="ident">resource</span>,
+            }
+        }
+    }
+
+    <span class="doccomment">/// A description of the metric instrument being exported.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">descriptor</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Descriptor</span> {
+        <span class="self">self</span>.<span class="ident">descriptor</span>
+    }
+
+    <span class="doccomment">/// The attributes associated with the instrument and the aggregated data.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attributes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">attributes::AttributeSet</span> {
+        <span class="self">self</span>.<span class="ident">attributes</span>
+    }
+
+    <span class="doccomment">/// Common attributes that apply to this metric event.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resource</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Resource</span> {
+        <span class="self">self</span>.<span class="ident">resource</span>
+    }
+}
+
+<span class="doccomment">/// A container for the exported data for a single metric instrument and attribute</span>
+<span class="doccomment">/// set, as prepared by the `Processor` for the `Exporter`. This includes the</span>
+<span class="doccomment">/// effective start and end time for the aggregation.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Record</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">metadata</span>: <span class="ident">Metadata</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="ident">aggregator</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">start</span>: <span class="ident">SystemTime</span>,
+    <span class="ident">end</span>: <span class="ident">SystemTime</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Record</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// A description of the metric instrument being exported.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">descriptor</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Descriptor</span> {
+        <span class="self">self</span>.<span class="ident">metadata</span>.<span class="ident">descriptor</span>
+    }
+
+    <span class="doccomment">/// The attributes associated with the instrument and the aggregated data.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attributes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">attributes::AttributeSet</span> {
+        <span class="self">self</span>.<span class="ident">metadata</span>.<span class="ident">attributes</span>
+    }
+
+    <span class="doccomment">/// Common attributes that apply to this metric event.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resource</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Resource</span> {
+        <span class="self">self</span>.<span class="ident">metadata</span>.<span class="ident">resource</span>
+    }
+
+    <span class="doccomment">/// The start time of the interval covered by this aggregation.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">start_time</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">SystemTime</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">start</span>
+    }
+
+    <span class="doccomment">/// The end time of the interval covered by this aggregation.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">end_time</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">SystemTime</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">end</span>
+    }
+}
+
+<span class="doccomment">/// A container for the exported data for a single metric instrument and attribute</span>
+<span class="doccomment">/// set, as prepared by an `Accumulator` for the `Processor`.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Accumulation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">metadata</span>: <span class="ident">Metadata</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>,
+    <span class="ident">aggregator</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Accumulation</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Create a new `Record` instance.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Descriptor</span>,
+        <span class="ident">attributes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">attributes::AttributeSet</span>,
+        <span class="ident">resource</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Resource</span>,
+        <span class="ident">aggregator</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="self">Self</span> {
+        <span class="ident">Accumulation</span> {
+            <span class="ident">metadata</span>: <span class="ident">Metadata::new</span>(<span class="ident">descriptor</span>, <span class="ident">attributes</span>, <span class="ident">resource</span>),
+            <span class="ident">aggregator</span>,
+        }
+    }
+
+    <span class="doccomment">/// A description of the metric instrument being exported.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">descriptor</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Descriptor</span> {
+        <span class="self">self</span>.<span class="ident">metadata</span>.<span class="ident">descriptor</span>
+    }
+
+    <span class="doccomment">/// The attributes associated with the instrument and the aggregated data.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">attributes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">attributes::AttributeSet</span> {
+        <span class="self">self</span>.<span class="ident">metadata</span>.<span class="ident">attributes</span>
+    }
+
+    <span class="doccomment">/// Common attributes that apply to this metric event.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">resource</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Resource</span> {
+        <span class="self">self</span>.<span class="ident">metadata</span>.<span class="ident">resource</span>
+    }
+
+    <span class="doccomment">/// The checkpointed aggregator for this metric.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">aggregator</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">aggregator</span>
+    }
+}
+
+<span class="doccomment">/// Indicates the kind of data exported by an exporter.</span>
+<span class="doccomment">/// These bits may be OR-d together when multiple exporters are in use.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExportKind</span> {
+    <span class="doccomment">/// Indicates that the `Exporter` expects a cumulative `Aggregation`.</span>
+    <span class="ident">Cumulative</span> <span class="op">=</span> <span class="number">1</span>,
+
+    <span class="doccomment">/// Indicates that the `Exporter` expects a delta `Aggregation`.</span>
+    <span class="ident">Delta</span> <span class="op">=</span> <span class="number">2</span>,
+}
+
+<span class="doccomment">/// Strategies for selecting which export kind is used for an instrument.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExportKindSelector</span> {
+    <span class="doccomment">/// A selector that always returns [`ExportKind::Cumulative`].</span>
+    <span class="ident">Cumulative</span>,
+    <span class="doccomment">/// A selector that always returns [`ExportKind::Delta`].</span>
+    <span class="ident">Delta</span>,
+    <span class="doccomment">/// A selector that returns cumulative or delta based on a given instrument</span>
+    <span class="doccomment">/// kind.</span>
+    <span class="ident">Stateless</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">ExportKind</span> {
+    <span class="doccomment">/// Tests whether `kind` includes a specific kind of exporter.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">includes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">has</span>: <span class="kw-2">&amp;</span><span class="ident">ExportKind</span>) -&gt; <span class="ident">bool</span> {
+        (<span class="self">self</span>.<span class="ident">clone</span>() <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">&amp;</span> (<span class="ident">has</span>.<span class="ident">clone</span>() <span class="kw">as</span> <span class="ident">u32</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
+    }
+
+    <span class="doccomment">/// Returns whether an exporter of this kind requires memory to export correctly.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">memory_required</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">kind</span>: <span class="kw-2">&amp;</span><span class="ident">InstrumentKind</span>) -&gt; <span class="ident">bool</span> {
+        <span class="kw">match</span> <span class="ident">kind</span> {
+            <span class="ident">InstrumentKind::ValueRecorder</span>
+            <span class="op">|</span> <span class="ident">InstrumentKind::ValueObserver</span>
+            <span class="op">|</span> <span class="ident">InstrumentKind::Counter</span>
+            <span class="op">|</span> <span class="ident">InstrumentKind::UpDownCounter</span> =&gt; {
+                <span class="comment">// Delta-oriented instruments:</span>
+                <span class="self">self</span>.<span class="ident">includes</span>(<span class="kw-2">&amp;</span><span class="ident">ExportKind::Cumulative</span>)
+            }
+
+            <span class="ident">InstrumentKind::SumObserver</span> <span class="op">|</span> <span class="ident">InstrumentKind::UpDownSumObserver</span> =&gt; {
+                <span class="comment">// Cumulative-oriented instruments:</span>
+                <span class="self">self</span>.<span class="ident">includes</span>(<span class="kw-2">&amp;</span><span class="ident">ExportKind::Delta</span>)
+            }
+        }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">ExportKindFor</span> <span class="kw">for</span> <span class="ident">ExportKindSelector</span> {
+    <span class="kw">fn</span> <span class="ident">export_kind_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>) -&gt; <span class="ident">ExportKind</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">ExportKindSelector::Cumulative</span> =&gt; <span class="ident">ExportKind::Cumulative</span>,
+            <span class="ident">ExportKindSelector::Delta</span> =&gt; <span class="ident">ExportKind::Delta</span>,
+            <span class="ident">ExportKindSelector::Stateless</span> =&gt; {
+                <span class="kw">if</span> <span class="ident">descriptor</span>.<span class="ident">instrument_kind</span>().<span class="ident">precomputed_sum</span>() {
+                    <span class="ident">ExportKind::Cumulative</span>
+                } <span class="kw">else</span> {
+                    <span class="ident">ExportKind::Delta</span>
+                }
+            }
+        }
+    }
+}
+</code></pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="opentelemetry" data-search-index-js="../../../../../search-index.js" data-search-js="../../../../../search.js"></div>
+</body></html>

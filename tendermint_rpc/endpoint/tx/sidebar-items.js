@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Request for finding a transaction by its hash."],["Response",""]]});

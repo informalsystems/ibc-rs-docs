@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["tx_raw_ft_transfer","Perform the same operation as `hermes tx raw ft-transfer`."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["PORT_ID_PREFIX","The port identifier that the ICS27 applications typically bind with. This is merely a prefix of the full port identifier, which has a complex structure."],["VERSION","ICS27 application current version."]]});

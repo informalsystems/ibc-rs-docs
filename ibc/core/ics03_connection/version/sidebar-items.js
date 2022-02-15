@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["get_compatible_versions","Returns the lists of supported versions"],["pick_version","Selects a version from the intersection of locally supported and counterparty versions."]],"struct":[["Version","Stores the identifier and the features supported by a version"]]});

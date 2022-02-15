@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgChannelCloseInit","Message definition for the first step in the channel close handshake (`ChanCloseInit` datagram)."]]});

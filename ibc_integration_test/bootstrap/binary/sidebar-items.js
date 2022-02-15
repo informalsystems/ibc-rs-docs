@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["chain","Helper functions for bootstrapping two relayer chain handles with connected foreign clients."],["channel","Helper functions for bootstrapping a channel between two chains."],["connection","Helper functions for bootstrapping a connection between two chains."]]});

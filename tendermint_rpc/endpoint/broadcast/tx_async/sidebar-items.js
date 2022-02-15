@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","`/broadcast_tx_async`: broadcast a transaction and return immediately."],["Response","Response from either an async or sync transaction broadcast request."]]});

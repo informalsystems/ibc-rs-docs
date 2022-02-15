@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["SHA256_HASH_SIZE","Output size for the SHA-256 hash function"]],"enum":[["Algorithm","Hash algorithms"],["Hash","Hash digests"]],"mod":[["allow_empty","Serialization/deserialization for `Hash` that allows for empty hashes."]],"struct":[["AppHash","AppHash is usually a SHA256 hash, but in reality it can be any kind of data"]]});

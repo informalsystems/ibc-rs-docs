@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["TestConfig","The test config to be passed to each test case. Currently this is loaded from the `init_test` function based on the test environment variables."]]});

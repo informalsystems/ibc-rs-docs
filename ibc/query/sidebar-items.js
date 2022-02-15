@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["QueryBlockRequest",""],["QueryTxRequest","Used for queries and not yet standardized in channel’s query.proto"]],"struct":[["QueryTxHash",""]]});

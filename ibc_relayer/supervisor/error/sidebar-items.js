@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["ChannelConnectionUninitializedSubdetail",""],["ChannelUninitializedSubdetail",""],["ConnectionNotOpenSubdetail",""],["Error",""],["MissingConnectionHopsSubdetail",""],["MissingCounterpartyChannelIdSubdetail",""],["NoChainsAvailableSubdetail",""],["RelayerSubdetail",""],["ScanSubdetail",""],["SpawnSubdetail",""]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["deserialize","Deserialize array into Vec<Vec>"],["serialize","Serialize from Vec into Vec"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["HASH_SIZE","Size of Merkle root hash"]],"fn":[["simple_hash_from_byte_vectors","Compute a simple Merkle root from vectors of arbitrary byte vectors. The leaves of the tree are the bytes of the given byte vectors in the given order."]],"mod":[["proof","Merkle proofs"]],"type":[["Hash","Hash is the output of the cryptographic digest function"]]});

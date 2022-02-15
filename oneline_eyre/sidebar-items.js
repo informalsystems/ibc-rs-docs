@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["install","Install the `oneline-eyre` hook as the global error report hook, using `: ` `s a separator."],["install_custom","Install the `oneline-eyre` hook as the global error report hook, using the provided separator."]],"struct":[["Handler","A custom context type for minimal error reporting via `eyre`"]]});

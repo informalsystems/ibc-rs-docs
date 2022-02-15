@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["FrameworkErrorKind","Types of errors which occur internally within the framework"]],"struct":[["FrameworkError","Abscissa-internal framework errors"]]});

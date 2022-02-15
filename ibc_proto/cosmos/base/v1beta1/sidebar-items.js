@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Coin","Coin defines a token with a denomination and an amount."],["DecCoin","DecCoin defines a token with a denomination and a decimal amount."],["DecProto","DecProto defines a Protobuf wrapper around a Dec object."],["IntProto","IntProto defines a Protobuf wrapper around an Int object."]]});

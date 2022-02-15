@@ -1,0 +1,1 @@
+initSidebarItems({"type":[["EyreTracer","Type alias to [`eyre::Report`]."]]});

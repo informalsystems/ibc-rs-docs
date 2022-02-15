@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgConnectionOpenInit","Message definition `MsgConnectionOpenInit`  (i.e., the `ConnOpenInit` datagram)."]]});

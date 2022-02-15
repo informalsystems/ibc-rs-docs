@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MsgClient","Msg defines the ibc/channel Msg service."]]});

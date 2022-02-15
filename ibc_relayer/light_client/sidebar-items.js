@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["tendermint",""]],"struct":[["Verified",""]],"trait":[["LightBlock","Defines a light block from the point of view of the relayer."],["LightClient","Defines a client from the point of view of the relayer."]]});

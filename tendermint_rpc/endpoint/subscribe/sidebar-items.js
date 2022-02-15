@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Subscription request for events."],["Response","Status responses"]]});

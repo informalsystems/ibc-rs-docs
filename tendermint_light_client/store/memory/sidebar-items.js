@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MemoryStore","Transient in-memory store."]]});

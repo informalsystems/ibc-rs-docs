@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["PacketMsgType","Enumeration of proof carrying ICS4 message, helper for relayer."],["PacketResult",""],["Receipt",""]],"struct":[["Packet",""],["Sequence","The sequence number of a packet enforces ordering among packets from the same source."]]});

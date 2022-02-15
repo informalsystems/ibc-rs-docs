@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["GenesisState","GenesisState defines the ibc module’s genesis state."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["regex","Compiles a regular expression into a Rust type."]]});

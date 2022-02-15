@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["worker_default_strategy","A basic worker retry strategy."],["worker_stubborn_strategy","A stubborn worker retry strategy."]]});

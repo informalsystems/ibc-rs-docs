@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ServiceClient","Service defines the gRPC querier service for tendermint queries."]]});

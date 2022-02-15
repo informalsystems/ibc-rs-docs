@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Capability",""],["CapabilityName",""],["InvalidCapabilityName",""]]});

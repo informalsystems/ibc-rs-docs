@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["transfer","This is the definition of a transfer messages that an application submits to a chain."]]});

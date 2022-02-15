@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["context","Error contexts"],["framework","Framework error types"],["macros","Error-handling macros for the `abscissa` framework"],["message","Error messages"]],"type":[["BoxError","Box containing a thread-safe + `'static` error suitable for use as a as an `std::error::Error::source`"]]});

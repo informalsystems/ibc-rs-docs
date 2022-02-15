@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["try_from_tx",""]],"struct":[["AcknowledgePacket",""],["Attributes",""],["CloseConfirm",""],["CloseInit",""],["OpenAck",""],["OpenConfirm",""],["OpenInit",""],["OpenTry",""],["ReceivePacket",""],["SendPacket",""],["TimeoutOnClosePacket",""],["TimeoutPacket",""],["WriteAcknowledgement",""]]});

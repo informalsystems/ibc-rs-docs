@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["UpgradeChainErrorDetail",""]],"fn":[["build_and_send_ibc_upgrade_proposal",""]],"struct":[["KeySubdetail",""],["QuerySubdetail",""],["SubmitSubdetail",""],["TendermintOnlySubdetail",""],["TxResponseSubdetail",""],["UpgradeChainError",""],["UpgradePlanOptions",""]]});

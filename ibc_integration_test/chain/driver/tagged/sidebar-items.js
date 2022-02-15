@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["TaggedChainDriverExt","A [`ChainDriver`] may be tagged with a `Chain` tag in the form [`MonoTagged<Chain, ChainDriver>`]."]]});

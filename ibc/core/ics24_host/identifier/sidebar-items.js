@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ChainId","This type is subject to future changes."],["ChannelId",""],["ClientId",""],["ConnectionId",""],["PortChannelId","A pair of [`PortId`] and [`ChannelId`] are used together for sending IBC packets."],["PortId",""]]});

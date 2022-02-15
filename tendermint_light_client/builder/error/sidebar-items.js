@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["EmptyWitnessListSubdetail",""],["Error",""],["HashMismatchSubdetail",""],["HeightMismatchSubdetail",""],["InvalidLightBlockSubdetail",""],["IoSubdetail",""],["NoTrustedStateInStoreSubdetail",""]]});

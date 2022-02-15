@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["message","Nested message and enum types in `Message`."]],"struct":[["ChunkRequest",""],["ChunkResponse",""],["Message",""],["SnapshotsRequest",""],["SnapshotsResponse",""]]});

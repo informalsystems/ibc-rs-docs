@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Sum","sum is the oneof that specifies whether this represents single or multi-signature data"]],"struct":[["Multi","Multi is the signature data for a multisig public key"],["Single","Single is the signature data for a single signer"]]});

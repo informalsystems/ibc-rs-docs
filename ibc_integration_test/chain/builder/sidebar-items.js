@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ChainBuilder","Used for holding common configuration needed to create new `ChainDriver`s."]]});

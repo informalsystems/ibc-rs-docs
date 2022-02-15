@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["WorkerCmd","A command for a `WorkerHandle`."]],"fn":[["spawn_worker_tasks",""]],"mod":[["channel",""],["client",""],["connection",""],["packet",""],["retry_strategy",""]],"struct":[["RunError",""],["WorkerHandle",""],["WorkerId",""],["WorkerMap","Manage the lifecycle of [`WorkerHandle`]s associated with [`Object`]s."]]});

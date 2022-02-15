@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SpawnContext","A context for spawning workers within the supervisor."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ExitStatus","Information about a process’s exit status"],["Process","Subprocess under test spawned by `CargoRunner` or `CmdRunner`"],["Stderr","Buffered reader for standard error"],["Stdout","Buffered reader for standard output"]],"trait":[["OutputStream","Methods common to output streams"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ClientType","Type of the client, depending on the specific consensus algorithm."]]});

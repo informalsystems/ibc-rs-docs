@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ProdVotingPowerCalculator","Default implementation of a `VotingPowerCalculator`"],["VotingPowerTally","Tally for the voting power computed by the `VotingPowerCalculator`"]],"trait":[["VotingPowerCalculator","Computes the voting power in a commit against a validator set."]]});

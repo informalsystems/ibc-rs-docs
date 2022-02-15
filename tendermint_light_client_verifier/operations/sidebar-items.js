@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["commit_validator","Provides an interface and default implementation for the `CommitValidator` operation"],["hasher","Provides an interface and default implementation for the `Hasher` operation"],["voting_power","Provides an interface and default implementation for the `VotingPower` operation"]]});

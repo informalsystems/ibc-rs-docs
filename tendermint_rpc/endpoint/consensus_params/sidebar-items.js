@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Get the consensus parameters."],["Response","Consensus parameters response."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["error","Errors raised by the builder DSL"]],"struct":[["LightClientBuilder","Builder for a light client [`Instance`]"],["SupervisorBuilder","Builder for the [`Supervisor`]"]]});

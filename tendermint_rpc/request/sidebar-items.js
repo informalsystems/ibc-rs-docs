@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Wrapper","JSON-RPC request wrapper (i.e. message envelope)"]],"trait":[["Request","JSON-RPC requests"],["SimpleRequest","Simple JSON-RPC requests which correlate with a single response from the remote endpoint."]]});

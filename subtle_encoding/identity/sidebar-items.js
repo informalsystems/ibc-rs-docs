@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["IDENTITY","Constant `Identity` encoding that can be used in lieu of calling `default()`"]],"struct":[["Identity","`Encoding` which does not transform data and returns the original input."]]});

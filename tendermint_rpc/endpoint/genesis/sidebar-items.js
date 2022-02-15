@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Get the genesis state for the current chain"],["Response","Block responses"]]});

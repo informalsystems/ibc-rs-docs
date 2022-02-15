@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Request","Perform a basic healthceck of the backend"],["Response","Healthcheck responses"]]});

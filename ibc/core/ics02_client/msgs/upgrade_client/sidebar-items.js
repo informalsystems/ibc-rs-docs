@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MsgUpgradeAnyClient","A type of message that triggers the upgrade of an on-chain (IBC) client."]]});

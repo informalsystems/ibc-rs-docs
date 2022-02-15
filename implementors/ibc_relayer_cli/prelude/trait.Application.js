@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["ibc_relayer_cli"] = [{"text":"impl <a class=\"trait\" href=\"ibc_relayer_cli/prelude/trait.Application.html\" title=\"trait ibc_relayer_cli::prelude::Application\">Application</a> for <a class=\"struct\" href=\"ibc_relayer_cli/application/struct.CliApp.html\" title=\"struct ibc_relayer_cli::application::CliApp\">CliApp</a>","synthetic":false,"types":["ibc_relayer_cli::application::CliApp"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

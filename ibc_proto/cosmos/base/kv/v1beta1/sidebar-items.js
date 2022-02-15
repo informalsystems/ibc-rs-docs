@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Pair","Pair defines a key/value bytes tuple."],["Pairs","Pairs defines a repeated slice of Pair objects."]]});

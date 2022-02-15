@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgAcknowledgement","Message definition for packet acknowledgements."]]});

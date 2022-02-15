@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Params","Tendermint consensus parameters"],["ValidatorParams","Validator consensus parameters"],["VersionParams","Version Parameters"]]});
