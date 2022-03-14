@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Cache","The main cache data structure, which comprises multiple sub-caches for caching different chain components, each with different time-to-live values."]]});

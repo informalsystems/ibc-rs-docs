@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["default_by_port","Returns the default channel version, depending on the the given [`PortId`]."]]});

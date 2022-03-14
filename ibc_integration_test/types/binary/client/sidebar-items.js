@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ConnectedClients","Data type to store the client IDs of two chains that are connected."]]});
+initSidebarItems({"struct":[["ClientIdPair","Data type to store the client IDs of two chains that are connected."]]});

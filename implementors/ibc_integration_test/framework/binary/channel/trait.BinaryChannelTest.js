@@ -1,4 +1,4 @@
 (function() {var implementors = {};
 implementors["ibc_integration_test"] = [];
-implementors["test_setup_with_binary_channel"] = [{"text":"impl BinaryChannelTest for <a class=\"struct\" href=\"test_setup_with_binary_channel/struct.Test.html\" title=\"struct test_setup_with_binary_channel::Test\">Test</a>","synthetic":false,"types":["test_setup_with_binary_channel::Test"]}];
+implementors["test_setup_with_binary_channel"] = [{"text":"impl <a class=\"trait\" href=\"ibc_integration_test/framework/binary/channel/trait.BinaryChannelTest.html\" title=\"trait ibc_integration_test::framework::binary::channel::BinaryChannelTest\">BinaryChannelTest</a> for <a class=\"struct\" href=\"test_setup_with_binary_channel/struct.Test.html\" title=\"struct test_setup_with_binary_channel::Test\">Test</a>","synthetic":false,"types":["test_setup_with_binary_channel::Test"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

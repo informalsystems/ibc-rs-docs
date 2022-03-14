@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["transfer",""]]});
+initSidebarItems({});

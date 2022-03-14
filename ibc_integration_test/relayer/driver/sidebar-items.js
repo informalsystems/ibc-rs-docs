@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["RelayerDriver",""]]});
+initSidebarItems({"struct":[["RelayerDriver","Encapsulates the parameters needed to spawn the relayer supervisor."]]});

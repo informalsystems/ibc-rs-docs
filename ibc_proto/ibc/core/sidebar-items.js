@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["channel",""],["client",""],["commitment",""],["connection",""],["port",""],["types",""]]});
+initSidebarItems({"mod":[["channel",""],["client",""],["commitment",""],["connection",""],["types",""]]});

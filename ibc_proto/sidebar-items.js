@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["COSMOS_SDK_VERSION","The version (commit hash) of the Cosmos SDK used when generating this library."]],"macro":[["format",""]],"mod":[["cosmos",""],["ibc",""],["ics23",""]]});
+initSidebarItems({"constant":[["COSMOS_SDK_COMMIT","The version (commit hash) of the Cosmos SDK used when generating this library."],["IBC_GO_COMMIT","The version (commit hash) of IBC Go used when generating this library."]],"mod":[["cosmos",""],["ibc",""],["ics23",""]]});

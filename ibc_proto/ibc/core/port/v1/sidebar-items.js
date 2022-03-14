@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["query_client","Generated client implementations."]],"struct":[["QueryAppVersionRequest","QueryAppVersionRequest is the request type for the Query/AppVersion RPC method"],["QueryAppVersionResponse","QueryAppVersionResponse is the response type for the Query/AppVersion RPC method."]]});

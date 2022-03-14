@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["apps",""],["core",""],["lightclients",""],["mock",""]]});
+initSidebarItems({"mod":[["applications",""],["apps",""],["core",""],["lightclients",""],["mock",""]]});

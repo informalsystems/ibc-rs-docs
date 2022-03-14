@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["interchain_accounts",""],["transfer",""]]});
