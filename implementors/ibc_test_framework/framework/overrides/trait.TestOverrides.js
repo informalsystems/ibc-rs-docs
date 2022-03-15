@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["test_setup_with_binary_channel"] = [{"text":"impl <a class=\"trait\" href=\"ibc_test_framework/framework/overrides/trait.TestOverrides.html\" title=\"trait ibc_test_framework::framework::overrides::TestOverrides\">TestOverrides</a> for <a class=\"struct\" href=\"test_setup_with_binary_channel/struct.Test.html\" title=\"struct test_setup_with_binary_channel::Test\">Test</a>","synthetic":false,"types":["test_setup_with_binary_channel::Test"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
