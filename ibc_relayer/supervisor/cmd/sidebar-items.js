@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["CmdEffect",""],["ConfigUpdate",""],["SupervisorCmd",""]]});
+initSidebarItems({"enum":[["SupervisorCmd",""]]});

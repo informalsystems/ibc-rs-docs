@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Error",""]],"struct":[["ConfigReload","Facility for reloading the relayer configuration. See [`ConfigReload::reload`]."]]});
