@@ -796,6 +796,8 @@
 <span id="794">794</span>
 <span id="795">795</span>
 <span id="796">796</span>
+<span id="797">797</span>
+<span id="798">798</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 <span class="kw">use</span> <span class="ident">std::collections::BTreeMap</span>;
 
@@ -822,7 +824,7 @@
         <span class="ident">counterparty</span>::{<span class="ident">channel_on_destination</span>, <span class="ident">connection_state_on_destination</span>},
         <span class="ident">handle::ChainHandle</span>,
     },
-    <span class="ident">config</span>::{<span class="ident">ChainConfig</span>, <span class="ident">ChannelsSpec</span>, <span class="ident">Config</span>, <span class="ident">PacketFilter</span>},
+    <span class="ident">config</span>::{<span class="ident">filter::ChannelFilters</span>, <span class="ident">ChainConfig</span>, <span class="ident">Config</span>, <span class="ident">PacketFilter</span>},
     <span class="ident">registry::Registry</span>,
     <span class="ident">supervisor::client_state_filter</span>::{<span class="ident">FilterPolicy</span>, <span class="ident">Permission</span>},
 };
@@ -1098,7 +1100,9 @@
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">use_allow_list</span>(<span class="ident">chain_config</span>) {
             <span class="prelude-val">Some</span>(<span class="ident">spec</span>) <span class="kw">if</span> <span class="self">self</span>.<span class="ident">scan_mode</span> <span class="op">==</span> <span class="ident">ScanMode::Auto</span> =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;chain uses an allow list, skipping scan for fast startup&quot;</span>);
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;chain uses an allow list (without wildcards), skipping scan for fast startup&quot;</span>
+                );
                 <span class="macro">info!</span>(<span class="string">&quot;allowed ports/channels: {}&quot;</span>, <span class="ident">spec</span>);
 
                 <span class="self">self</span>.<span class="ident">query_allowed_channels</span>(<span class="kw-2">&amp;</span><span class="ident">chain</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;mut</span> <span class="ident">scan</span>)<span class="question-mark">?</span>;
@@ -1115,12 +1119,12 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">query_allowed_channels</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="ident">Chain</span>,
-        <span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelsSpec</span>,
+        <span class="ident">filters</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelFilters</span>,
         <span class="ident">scan</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ChainScan</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>(<span class="string">&quot;querying allowed channels...&quot;</span>);
 
-        <span class="kw">for</span> (<span class="ident">port_id</span>, <span class="ident">channel_id</span>) <span class="kw">in</span> <span class="ident">spec</span>.<span class="ident">iter</span>() {
+        <span class="kw">for</span> (<span class="ident">port_id</span>, <span class="ident">channel_id</span>) <span class="kw">in</span> <span class="ident">filters</span>.<span class="ident">iter_exact</span>() {
             <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">scan_allowed_channel</span>(<span class="self">self</span>.<span class="ident">registry</span>, <span class="ident">chain</span>, <span class="ident">port_id</span>, <span class="ident">channel_id</span>);
 
             <span class="kw">match</span> <span class="ident">result</span> {
@@ -1317,13 +1321,13 @@
         <span class="bool-val">true</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">use_allow_list</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">ChainConfig</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">ChannelsSpec</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">use_allow_list</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">ChainConfig</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">ChannelFilters</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">filtering_enabled</span>() {
             <span class="kw">return</span> <span class="prelude-val">None</span>;
         }
 
         <span class="kw">match</span> <span class="ident">chain_config</span>.<span class="ident">packet_filter</span> {
-            <span class="ident">PacketFilter::Allow</span>(<span class="kw-2">ref</span> <span class="ident">spec</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">spec</span>),
+            <span class="ident">PacketFilter::Allow</span>(<span class="kw-2">ref</span> <span class="ident">filters</span>) <span class="kw">if</span> <span class="ident">filters</span>.<span class="ident">is_exact</span>() =&gt; <span class="prelude-val">Some</span>(<span class="ident">filters</span>),
             <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         }
     }

@@ -427,75 +427,15 @@
 <span id="425">425</span>
 <span id="426">426</span>
 <span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
-<span id="458">458</span>
-<span id="459">459</span>
-<span id="460">460</span>
-<span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-<span id="475">475</span>
-<span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
-<span id="479">479</span>
-<span id="480">480</span>
-<span id="481">481</span>
-<span id="482">482</span>
-<span id="483">483</span>
-<span id="484">484</span>
-<span id="485">485</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Relayer configuration</span>
 
-<span class="kw">mod</span> <span class="ident">error</span>;
-<span class="kw">mod</span> <span class="ident">proof_specs</span>;
-
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">filter</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">proof_specs</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">types</span>;
 
 <span class="kw">use</span> <span class="ident">alloc::collections::BTreeMap</span>;
-<span class="kw">use</span> <span class="ident">alloc::collections::BTreeSet</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">time::Duration</span>};
-<span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
 <span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">RwLock</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fs</span>, <span class="ident">fs::File</span>, <span class="ident">io::Write</span>, <span class="ident">path::Path</span>};
 
@@ -510,6 +450,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::keyring::Store</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error::Error</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">filter::PacketFilter</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GasPrice</span> {
@@ -526,64 +468,6 @@
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">GasPrice</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}{}&quot;</span>, <span class="self">self</span>.<span class="ident">price</span>, <span class="self">self</span>.<span class="ident">denom</span>)
-    }
-}
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="attribute">#[<span class="ident">serde</span>(
-    <span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;lowercase&quot;</span>,
-    <span class="ident">tag</span> <span class="op">=</span> <span class="string">&quot;policy&quot;</span>,
-    <span class="ident">content</span> <span class="op">=</span> <span class="string">&quot;list&quot;</span>,
-    <span class="ident">deny_unknown_fields</span>
-)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PacketFilter</span> {
-    <span class="ident">Allow</span>(<span class="ident">ChannelsSpec</span>),
-    <span class="ident">Deny</span>(<span class="ident">ChannelsSpec</span>),
-    <span class="ident">AllowAll</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">PacketFilter</span> {
-    <span class="doccomment">/// By default, allows all channels &amp; ports.</span>
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::AllowAll</span>
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">PacketFilter</span> {
-    <span class="doccomment">/// Returns true if the packets can be relayed on the channel with [`PortId`] and [`ChannelId`],</span>
-    <span class="doccomment">/// false otherwise.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_allowed</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>, <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PacketFilter::Allow</span>(<span class="ident">spec</span>) =&gt; <span class="ident">spec</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span>(<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">channel_id</span>.<span class="ident">clone</span>())),
-            <span class="ident">PacketFilter::Deny</span>(<span class="ident">spec</span>) =&gt; <span class="op">!</span><span class="ident">spec</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span>(<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">channel_id</span>.<span class="ident">clone</span>())),
-            <span class="ident">PacketFilter::AllowAll</span> =&gt; <span class="bool-val">true</span>,
-        }
-    }
-}
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">deny_unknown_fields</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ChannelsSpec</span>(<span class="ident">BTreeSet</span><span class="op">&lt;</span>(<span class="ident">PortId</span>, <span class="ident">ChannelId</span>)<span class="op">&gt;</span>);
-
-<span class="kw">impl</span> <span class="ident">ChannelsSpec</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">channel_port</span>: <span class="kw-2">&amp;</span>(<span class="ident">PortId</span>, <span class="ident">ChannelId</span>)) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">contains</span>(<span class="ident">channel_port</span>)
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span>(<span class="ident">PortId</span>, <span class="ident">ChannelId</span>)<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">iter</span>()
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ChannelsSpec</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="macro">write!</span>(
-            <span class="ident">f</span>,
-            <span class="string">&quot;{}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">pid</span>, <span class="ident">cid</span>)<span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;{}/{}&quot;</span>, <span class="ident">pid</span>, <span class="ident">cid</span>))
-                .<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>)
-        )
     }
 }
 
@@ -952,9 +836,9 @@
             <span class="string">&quot;/tests/config/fixtures/relayer_conf_example.toml&quot;</span>
         );
 
-        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">load</span>(<span class="ident">path</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">config</span>);
-        <span class="macro">assert!</span>(<span class="ident">config</span>.<span class="ident">is_ok</span>());
+        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">load</span>(<span class="ident">path</span>).<span class="ident">expect</span>(<span class="string">&quot;could not parse config&quot;</span>);
+
+        <span class="macro">dbg!</span>(<span class="ident">config</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
