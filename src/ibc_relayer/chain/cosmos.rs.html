@@ -2648,38 +2648,6 @@
 <span id="2646">2646</span>
 <span id="2647">2647</span>
 <span id="2648">2648</span>
-<span id="2649">2649</span>
-<span id="2650">2650</span>
-<span id="2651">2651</span>
-<span id="2652">2652</span>
-<span id="2653">2653</span>
-<span id="2654">2654</span>
-<span id="2655">2655</span>
-<span id="2656">2656</span>
-<span id="2657">2657</span>
-<span id="2658">2658</span>
-<span id="2659">2659</span>
-<span id="2660">2660</span>
-<span id="2661">2661</span>
-<span id="2662">2662</span>
-<span id="2663">2663</span>
-<span id="2664">2664</span>
-<span id="2665">2665</span>
-<span id="2666">2666</span>
-<span id="2667">2667</span>
-<span id="2668">2668</span>
-<span id="2669">2669</span>
-<span id="2670">2670</span>
-<span id="2671">2671</span>
-<span id="2672">2672</span>
-<span id="2673">2673</span>
-<span id="2674">2674</span>
-<span id="2675">2675</span>
-<span id="2676">2676</span>
-<span id="2677">2677</span>
-<span id="2678">2678</span>
-<span id="2679">2679</span>
-<span id="2680">2680</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">cmp::min</span>,
@@ -2695,7 +2663,6 @@
 <span class="kw">use</span> <span class="ident">bech32</span>::{<span class="ident">ToBase32</span>, <span class="ident">Variant</span>};
 <span class="kw">use</span> <span class="ident">bitcoin::hashes::hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
-<span class="kw">use</span> <span class="ident">prost::Message</span>;
 <span class="kw">use</span> <span class="ident">prost_types::Any</span>;
 <span class="kw">use</span> <span class="ident">tendermint::account::Id</span> <span class="kw">as</span> <span class="ident">AccountId</span>;
 <span class="kw">use</span> <span class="ident">tendermint::block::Height</span>;
@@ -2741,7 +2708,6 @@
 <span class="kw">use</span> <span class="ident">ibc::query</span>::{<span class="ident">QueryTxHash</span>, <span class="ident">QueryTxRequest</span>};
 <span class="kw">use</span> <span class="ident">ibc::signer::Signer</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>;
-<span class="kw">use</span> <span class="ident">ibc_proto::cosmos::auth::v1beta1</span>::{<span class="ident">BaseAccount</span>, <span class="ident">EthAccount</span>, <span class="ident">QueryAccountRequest</span>};
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::base::tendermint::v1beta1::service_client::ServiceClient</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::base::tendermint::v1beta1::GetNodeInfoRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::base::v1beta1::Coin</span>;
@@ -2763,7 +2729,7 @@
     <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryConnectionsRequest</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain</span>::{<span class="ident">QueryResponse</span>, <span class="ident">StatusResponse</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain</span>::{<span class="ident">cosmos::account::query_account</span>, <span class="ident">QueryResponse</span>, <span class="ident">StatusResponse</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::types::Memo</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config</span>::{<span class="ident">AddressType</span>, <span class="ident">ChainConfig</span>, <span class="ident">GasPrice</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
@@ -2779,9 +2745,12 @@
     <span class="ident">ConnectionsPath</span>, <span class="ident">ReceiptsPath</span>, <span class="ident">SeqRecvsPath</span>,
 };
 
+<span class="kw">use</span> <span class="ident"><span class="self">self</span>::account</span>::{<span class="ident">Account</span>, <span class="ident">AccountNumber</span>, <span class="ident">AccountSequence</span>};
+
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">tx::TrackedMsgs</span>, <span class="ident">ChainEndpoint</span>, <span class="ident">HealthCheck</span>};
 
-<span class="kw">mod</span> <span class="ident">compatibility</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">account</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">compatibility</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">version</span>;
 
 <span class="doccomment">/// Default gas limit when submitting a transaction.</span>
@@ -2826,7 +2795,7 @@
     <span class="ident">rt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TokioRuntime</span><span class="op">&gt;</span>,
     <span class="ident">keybase</span>: <span class="ident">KeyRing</span>,
     <span class="doccomment">/// A cached copy of the account information</span>
-    <span class="ident">account</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">BaseAccount</span><span class="op">&gt;</span>,
+    <span class="ident">account</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Account</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">CosmosSdkChain</span> {
@@ -2999,7 +2968,7 @@
     <span class="kw">fn</span> <span class="ident">send_tx_with_account_sequence</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">proto_msgs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>,
-        <span class="ident">account_seq</span>: <span class="ident">u64</span>,
+        <span class="ident">account_seq</span>: <span class="ident">AccountSequence</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(
             <span class="string">&quot;sending {} messages using account sequence {}&quot;</span>,
@@ -3013,9 +2982,10 @@
         <span class="macro">debug!</span>(<span class="string">&quot;max fee, for use in tx simulation: {}&quot;</span>, <span class="ident">PrettyFee</span>(<span class="kw-2">&amp;</span><span class="ident">max_fee</span>));
 
         <span class="kw">let</span> (<span class="ident">body</span>, <span class="ident">body_buf</span>) <span class="op">=</span> <span class="ident">tx_body_and_bytes</span>(<span class="ident">proto_msgs</span>, <span class="self">self</span>.<span class="ident">tx_memo</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">account_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">account_number</span>()<span class="question-mark">?</span>;
 
         <span class="kw">let</span> (<span class="ident">auth_info</span>, <span class="ident">auth_buf</span>) <span class="op">=</span> <span class="ident">auth_info_and_bytes</span>(<span class="ident">signer_info</span>.<span class="ident">clone</span>(), <span class="ident">max_fee</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">signed_doc</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">signed_doc</span>(<span class="ident">body_buf</span>.<span class="ident">clone</span>(), <span class="ident">auth_buf</span>, <span class="ident">account_seq</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">signed_doc</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">signed_doc</span>(<span class="ident">body_buf</span>.<span class="ident">clone</span>(), <span class="ident">auth_buf</span>, <span class="ident">account_number</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">simulate_tx</span> <span class="op">=</span> <span class="ident">Tx</span> {
             <span class="ident">body</span>: <span class="prelude-val">Some</span>(<span class="ident">body</span>),
@@ -3049,7 +3019,6 @@
         );
 
         <span class="kw">let</span> (<span class="ident">_auth_adjusted</span>, <span class="ident">auth_buf_adjusted</span>) <span class="op">=</span> <span class="ident">auth_info_and_bytes</span>(<span class="ident">signer_info</span>, <span class="ident">adjusted_fee</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">account_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">account_number</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">signed_doc</span> <span class="op">=</span>
             <span class="self">self</span>.<span class="ident">signed_doc</span>(<span class="ident">body_buf</span>.<span class="ident">clone</span>(), <span class="ident">auth_buf_adjusted</span>.<span class="ident">clone</span>(), <span class="ident">account_number</span>)<span class="question-mark">?</span>;
 
@@ -3397,17 +3366,19 @@
 
     <span class="kw">fn</span> <span class="ident">refresh_account</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">account</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">block_on</span>(<span class="ident">query_account</span>(<span class="self">self</span>, <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>.<span class="ident">account</span>))<span class="question-mark">?</span>;
+
         <span class="macro">info!</span>(
             <span class="ident">sequence</span> <span class="op">=</span> <span class="op">%</span><span class="ident">account</span>.<span class="ident">sequence</span>,
             <span class="ident">number</span> <span class="op">=</span> <span class="op">%</span><span class="ident">account</span>.<span class="ident">account_number</span>,
             <span class="string">&quot;refresh: retrieved account&quot;</span>,
         );
 
-        <span class="self">self</span>.<span class="ident">account</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">account</span>);
+        <span class="self">self</span>.<span class="ident">account</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">account</span>.<span class="ident">into</span>());
+
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">account</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">BaseAccount</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">account</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Account</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">account</span> <span class="op">==</span> <span class="prelude-val">None</span> {
             <span class="self">self</span>.<span class="ident">refresh_account</span>()<span class="question-mark">?</span>;
         }
@@ -3418,21 +3389,21 @@
             .<span class="ident">expect</span>(<span class="string">&quot;account was supposedly just cached&quot;</span>))
     }
 
-    <span class="kw">fn</span> <span class="ident">account_number</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">account</span>()<span class="question-mark">?</span>.<span class="ident">account_number</span>)
+    <span class="kw">fn</span> <span class="ident">account_number</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AccountNumber</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">account</span>()<span class="question-mark">?</span>.<span class="ident">number</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">account_sequence</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">account_sequence</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AccountSequence</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">account</span>()<span class="question-mark">?</span>.<span class="ident">sequence</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">incr_account_sequence</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">account</span>) <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">account</span> {
-            <span class="ident">account</span>.<span class="ident">sequence</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            <span class="ident">account</span>.<span class="ident">sequence</span> <span class="op">=</span> <span class="ident">account</span>.<span class="ident">sequence</span>.<span class="ident">increment</span>();
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">sequence</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SignerInfo</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">sequence</span>: <span class="ident">AccountSequence</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SignerInfo</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> (<span class="ident">_key</span>, <span class="ident">pk_buf</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">key_and_bytes</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">pk_type</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">address_type</span> {
             <span class="ident">AddressType::Cosmos</span> =&gt; <span class="string">&quot;/cosmos.crypto.secp256k1.PubKey&quot;</span>.<span class="ident">to_string</span>(),
@@ -3450,7 +3421,7 @@
         <span class="kw">let</span> <span class="ident">signer_info</span> <span class="op">=</span> <span class="ident">SignerInfo</span> {
             <span class="ident">public_key</span>: <span class="prelude-val">Some</span>(<span class="ident">pk_any</span>),
             <span class="ident">mode_info</span>: <span class="ident">mode</span>,
-            <span class="ident">sequence</span>,
+            <span class="ident">sequence</span>: <span class="ident">sequence</span>.<span class="ident">to_u64</span>(),
         };
         <span class="prelude-val">Ok</span>(<span class="ident">signer_info</span>)
     }
@@ -3479,13 +3450,13 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">body_bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
         <span class="ident">auth_info_bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-        <span class="ident">account_number</span>: <span class="ident">u64</span>,
+        <span class="ident">account_number</span>: <span class="ident">AccountNumber</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">sign_doc</span> <span class="op">=</span> <span class="ident">SignDoc</span> {
             <span class="ident">body_bytes</span>,
             <span class="ident">auth_info_bytes</span>,
             <span class="ident">chain_id</span>: <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">clone</span>().<span class="ident">id</span>.<span class="ident">to_string</span>(),
-            <span class="ident">account_number</span>,
+            <span class="ident">account_number</span>: <span class="ident">account_number</span>.<span class="ident">to_u64</span>(),
         };
 
         <span class="comment">// A protobuf serialization of a SignDoc</span>
@@ -5022,41 +4993,6 @@
         .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="ident">rpc_address</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(<span class="ident">response</span>)
-}
-
-<span class="doccomment">/// Uses the GRPC client to retrieve the account sequence</span>
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">query_account</span>(<span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="ident">CosmosSdkChain</span>, <span class="ident">address</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BaseAccount</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="ident">chain</span>.<span class="ident">id</span>(), <span class="string">&quot;query_account&quot;</span>);
-
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">ibc_proto::cosmos::auth::v1beta1::query_client::QueryClient::connect</span>(
-        <span class="ident">chain</span>.<span class="ident">grpc_addr</span>.<span class="ident">clone</span>(),
-    )
-    .<span class="kw">await</span>
-    .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
-
-    <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">QueryAccountRequest</span> {
-        <span class="ident">address</span>: <span class="ident">address</span>.<span class="ident">clone</span>(),
-    });
-
-    <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">account</span>(<span class="ident">request</span>).<span class="kw">await</span>;
-
-    <span class="comment">// Querying for an account might fail, i.e. if the account doesn&#39;t actually exist</span>
-    <span class="kw">let</span> <span class="ident">resp_account</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>.<span class="ident">into_inner</span>().<span class="ident">account</span> {
-        <span class="prelude-val">Some</span>(<span class="ident">account</span>) =&gt; <span class="ident">account</span>,
-        <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::empty_query_account</span>(<span class="ident">address</span>)),
-    };
-
-    <span class="kw">if</span> <span class="ident">resp_account</span>.<span class="ident">type_url</span> <span class="op">==</span> <span class="string">&quot;/cosmos.auth.v1beta1.BaseAccount&quot;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">BaseAccount::decode</span>(<span class="ident">resp_account</span>.<span class="ident">value</span>.<span class="ident">as_slice</span>())
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::protobuf_decode</span>(<span class="string">&quot;BaseAccount&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>)
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">resp_account</span>.<span class="ident">type_url</span>.<span class="ident">ends_with</span>(<span class="string">&quot;.EthAccount&quot;</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">EthAccount::decode</span>(<span class="ident">resp_account</span>.<span class="ident">value</span>.<span class="ident">as_slice</span>())
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::protobuf_decode</span>(<span class="string">&quot;EthAccount&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>
-            .<span class="ident">base_account</span>
-            .<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_base_account</span>)<span class="question-mark">?</span>)
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">Error::unknown_account_type</span>(<span class="ident">resp_account</span>.<span class="ident">type_url</span>))
-    }
 }
 
 <span class="kw">fn</span> <span class="ident">encode_to_bech32</span>(<span class="ident">address</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">account_prefix</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
