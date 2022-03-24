@@ -74,6 +74,13 @@
 <span id="72">72</span>
 <span id="73">73</span>
 <span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Functions for initializing each test at the beginning of a Rust test
    session.
@@ -101,11 +108,16 @@
    read the environment variables and return a [`TestConfig`].
 */</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init_test</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TestConfig</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">no_color_log</span> <span class="op">=</span> <span class="ident">env::var</span>(<span class="string">&quot;NO_COLOR_LOG&quot;</span>)
+        .<span class="ident">ok</span>()
+        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span> <span class="op">==</span> <span class="string">&quot;1&quot;</span>)
+        .<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>);
+
     <span class="ident">INIT</span>.<span class="ident">call_once</span>(<span class="op">|</span><span class="op">|</span> {
-        <span class="kw">if</span> <span class="ident">enable_ansi</span>() {
+        <span class="kw">if</span> <span class="ident">enable_ansi</span>() <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">no_color_log</span> {
             <span class="ident">color_eyre::install</span>().<span class="ident">unwrap</span>();
         }
-        <span class="ident">install_logger</span>();
+        <span class="ident">install_logger</span>(<span class="op">!</span><span class="ident">no_color_log</span>);
     });
 
     <span class="kw">let</span> <span class="ident">chain_command_path</span> <span class="op">=</span> <span class="ident">env::var</span>(<span class="string">&quot;CHAIN_COMMAND_PATH&quot;</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;gaiad&quot;</span>.<span class="ident">to_string</span>());
@@ -135,7 +147,7 @@
    Install the [`tracing_subscriber`] logger handlers so that logs will
    be displayed during test.
 */</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">install_logger</span>() {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">install_logger</span>(<span class="ident">with_color</span>: <span class="ident">bool</span>) {
     <span class="comment">// Use log level INFO by default if RUST_LOG is not set.</span>
     <span class="kw">let</span> <span class="ident">env_filter</span> <span class="op">=</span> <span class="ident">EnvFilter::try_from_default_env</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">EnvFilter::new</span>(<span class="string">&quot;info&quot;</span>));
 
@@ -144,9 +156,11 @@
         <span class="prelude-val">None</span> =&gt; <span class="bool-val">false</span>,
     });
 
-    <span class="kw">let</span> <span class="ident">module_filter</span> <span class="op">=</span> <span class="ident">ts::fmt::layer</span>().<span class="ident">with_filter</span>(<span class="ident">module_filter_fn</span>);
+    <span class="kw">let</span> <span class="ident">layer</span> <span class="op">=</span> <span class="ident">ts::fmt::layer</span>()
+        .<span class="ident">with_ansi</span>(<span class="ident">with_color</span>)
+        .<span class="ident">with_filter</span>(<span class="ident">module_filter_fn</span>);
 
-    <span class="ident">ts::registry</span>().<span class="ident">with</span>(<span class="ident">env_filter</span>).<span class="ident">with</span>(<span class="ident">module_filter</span>).<span class="ident">init</span>();
+    <span class="ident">ts::registry</span>().<span class="ident">with</span>(<span class="ident">env_filter</span>).<span class="ident">with</span>(<span class="ident">layer</span>).<span class="ident">init</span>();
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_test_framework" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.59.0 (9d1b2106e 2022-02-23)" ></div>
