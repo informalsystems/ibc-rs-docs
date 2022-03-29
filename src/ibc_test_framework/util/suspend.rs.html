@@ -36,6 +36,19 @@
 <span id="34">34</span>
 <span id="35">35</span>
 <span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Utilities for suspending the test.
 */</span>
@@ -58,18 +71,31 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hang_on_error</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Display</span><span class="op">&gt;</span>(<span class="ident">hang_on_fail</span>: <span class="ident">bool</span>) -&gt; <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="ident">E</span>) -&gt; <span class="ident">E</span> {
-    <span class="kw">move</span> <span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-        <span class="kw">if</span> <span class="ident">hang_on_fail</span> {
+<span class="doccomment">/**
+   Suspends the test using [`suspend`] if `hang_on_fail` is `true` and if
+   the continuation returns `Err`.
+
+   The parameter `hang_on_fail` should be obtained from
+   [`TestConfig`](crate::types::config::TestConfig),
+   which in turns is set from the `HANG_ON_FAIL` environment variable.
+*/</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hang_on_error</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">E</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Display</span><span class="op">&gt;</span>(
+    <span class="ident">hang_on_fail</span>: <span class="ident">bool</span>,
+    <span class="ident">cont</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">E</span><span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">hang_on_fail</span> {
+        <span class="ident">cont</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
             <span class="macro">error!</span>(<span class="string">&quot;test failure occured with HANG_ON_FAIL=1, suspending the test to allow debugging: {:?}&quot;</span>,
                 <span class="ident">e</span>);
 
             <span class="ident">suspend</span>()
-        } <span class="kw">else</span> {
+        })
+    } <span class="kw">else</span> {
+        <span class="ident">cont</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
             <span class="macro">error!</span>(<span class="string">&quot;test failure occured. set HANG_ON_FAIL=1 to suspend the test on failure for debugging: {}&quot;</span>,
                 <span class="ident">e</span>);
             <span class="ident">e</span>
-        }
+        })
     }
 }
 </code></pre></div>

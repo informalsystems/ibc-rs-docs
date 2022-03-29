@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["hang_on_error",""],["suspend","Call this function in the middle of a test code of interest, so that we can suspend the test and still interact with the spawned Gaia chains and chain supervisor for debugging."]]});
+initSidebarItems({"fn":[["hang_on_error","Suspends the test using [`suspend`] if `hang_on_fail` is `true` and if the continuation returns `Err`."],["suspend","Call this function in the middle of a test code of interest, so that we can suspend the test and still interact with the spawned Gaia chains and chain supervisor for debugging."]]});

@@ -200,14 +200,45 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Constructs for running test cases with more than two chains,
    together with the relayer setup with chain handles and foreign clients.
 */</span>
 
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
-
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::node</span>::{<span class="ident">run_nary_node_test</span>, <span class="ident">NaryNodeTest</span>};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::bootstrap::nary::chain</span>::{
     <span class="ident">boostrap_chains_with_nodes</span>, <span class="ident">boostrap_chains_with_self_connected_node</span>,
@@ -216,11 +247,14 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::framework::base</span>::{<span class="ident">HasOverrides</span>, <span class="ident">TestConfigOverride</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::framework::binary::chain::RelayerConfigOverride</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::framework::binary::node</span>::{<span class="ident">NodeConfigOverride</span>, <span class="ident">NodeGenesisOverride</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::framework::nary::node</span>::{<span class="ident">run_nary_node_test</span>, <span class="ident">NaryNodeTest</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::framework::supervisor</span>::{<span class="ident">RunWithSupervisor</span>, <span class="ident">SupervisorOverride</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::relayer::driver::RelayerDriver</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::binary::chains::DropChainHandle</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::config::TestConfig</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::nary::chains::NaryConnectedChains</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::single::node::FullNode</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::suspend::hang_on_error</span>;
 
 <span class="doccomment">/**
    Runs a test case that implements [`NaryChainTest`] with a `SIZE` number of
@@ -243,10 +277,13 @@
 <span class="kw">where</span>
     <span class="ident">Test</span>: <span class="ident">NaryChainTest</span><span class="op">&lt;</span><span class="ident">SIZE</span><span class="op">&gt;</span>,
     <span class="ident">Test</span>: <span class="ident">HasOverrides</span><span class="op">&lt;</span><span class="ident">Overrides</span> <span class="op">=</span> <span class="ident">Overrides</span><span class="op">&gt;</span>,
-    <span class="ident">Overrides</span>:
-        <span class="ident">TestConfigOverride</span> <span class="op">+</span> <span class="ident">NodeConfigOverride</span> <span class="op">+</span> <span class="ident">NodeGenesisOverride</span> <span class="op">+</span> <span class="ident">RelayerConfigOverride</span>,
+    <span class="ident">Overrides</span>: <span class="ident">TestConfigOverride</span>
+        <span class="op">+</span> <span class="ident">NodeConfigOverride</span>
+        <span class="op">+</span> <span class="ident">NodeGenesisOverride</span>
+        <span class="op">+</span> <span class="ident">RelayerConfigOverride</span>
+        <span class="op">+</span> <span class="ident">SupervisorOverride</span>,
 {
-    <span class="ident">run_nary_node_test</span>(<span class="kw-2">&amp;</span><span class="ident">RunNaryChainTest::new</span>(<span class="ident">test</span>))
+    <span class="ident">run_nary_node_test</span>(<span class="kw-2">&amp;</span><span class="ident">RunNaryChainTest::new</span>(<span class="kw-2">&amp;</span><span class="ident">RunWithSupervisor::new</span>(<span class="ident">test</span>)))
 }
 
 <span class="doccomment">/**
@@ -269,10 +306,15 @@
 <span class="kw">where</span>
     <span class="ident">Test</span>: <span class="ident">NaryChainTest</span><span class="op">&lt;</span><span class="ident">SIZE</span><span class="op">&gt;</span>,
     <span class="ident">Test</span>: <span class="ident">HasOverrides</span><span class="op">&lt;</span><span class="ident">Overrides</span> <span class="op">=</span> <span class="ident">Overrides</span><span class="op">&gt;</span>,
-    <span class="ident">Overrides</span>:
-        <span class="ident">TestConfigOverride</span> <span class="op">+</span> <span class="ident">NodeConfigOverride</span> <span class="op">+</span> <span class="ident">NodeGenesisOverride</span> <span class="op">+</span> <span class="ident">RelayerConfigOverride</span>,
+    <span class="ident">Overrides</span>: <span class="ident">TestConfigOverride</span>
+        <span class="op">+</span> <span class="ident">NodeConfigOverride</span>
+        <span class="op">+</span> <span class="ident">NodeGenesisOverride</span>
+        <span class="op">+</span> <span class="ident">RelayerConfigOverride</span>
+        <span class="op">+</span> <span class="ident">SupervisorOverride</span>,
 {
-    <span class="ident">run_nary_node_test</span>(<span class="kw-2">&amp;</span><span class="ident">RunSelfConnectedNaryChainTest::new</span>(<span class="ident">test</span>))
+    <span class="ident">run_nary_node_test</span>(<span class="kw-2">&amp;</span><span class="ident">RunSelfConnectedNaryChainTest::new</span>(
+        <span class="kw-2">&amp;</span><span class="ident">RunWithSupervisor::new</span>(<span class="ident">test</span>),
+    ))
 }
 
 <span class="doccomment">/**
@@ -357,6 +399,30 @@
         <span class="self">self</span>.<span class="ident">test</span>.<span class="ident">run</span>(<span class="ident">config</span>, <span class="ident">relayer</span>, <span class="ident">chains</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Test</span>, <span class="ident">Overrides</span>, <span class="kw">const</span> <span class="ident">SIZE</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">NaryChainTest</span><span class="op">&lt;</span><span class="ident">SIZE</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RunWithSupervisor</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Test</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">Test</span>: <span class="ident">NaryChainTest</span><span class="op">&lt;</span><span class="ident">SIZE</span><span class="op">&gt;</span>,
+    <span class="ident">Test</span>: <span class="ident">HasOverrides</span><span class="op">&lt;</span><span class="ident">Overrides</span> <span class="op">=</span> <span class="ident">Overrides</span><span class="op">&gt;</span>,
+    <span class="ident">Overrides</span>: <span class="ident">SupervisorOverride</span>,
+{
+    <span class="kw">fn</span> <span class="ident">run</span><span class="op">&lt;</span><span class="ident">Handle</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">TestConfig</span>,
+        <span class="ident">relayer</span>: <span class="ident">RelayerDriver</span>,
+        <span class="ident">chains</span>: <span class="ident">NaryConnectedChains</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">SIZE</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">get_overrides</span>().<span class="ident">should_spawn_supervisor</span>() {
+            <span class="ident">relayer</span>
+                .<span class="ident">clone</span>()
+                .<span class="ident">with_supervisor</span>(<span class="op">|</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">test</span>.<span class="ident">run</span>(<span class="ident">config</span>, <span class="ident">relayer</span>, <span class="ident">chains</span>))
+        } <span class="kw">else</span> {
+            <span class="ident">hang_on_error</span>(<span class="ident">config</span>.<span class="ident">hang_on_fail</span>, <span class="op">|</span><span class="op">|</span> {
+                <span class="self">self</span>.<span class="ident">test</span>.<span class="ident">run</span>(<span class="ident">config</span>, <span class="ident">relayer</span>, <span class="ident">chains</span>)
+            })
+        }
     }
 }
 
