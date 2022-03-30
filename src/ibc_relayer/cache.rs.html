@@ -173,6 +173,16 @@
 <span id="171">171</span>
 <span id="172">172</span>
 <span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Module to provide caching support for the relayer.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Utilizes the [`moka`](https://docs.rs/moka) crate, which provides full</span>
@@ -197,6 +207,16 @@
 <span class="kw">const</span> <span class="ident">CHANNEL_CACHE_CAPACITY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">10_000</span>;
 <span class="kw">const</span> <span class="ident">CONNECTION_CACHE_CAPACITY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">10_000</span>;
 <span class="kw">const</span> <span class="ident">CLIENT_STATE_CACHE_CAPACITY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">10_000</span>;
+
+<span class="doccomment">/// Whether or not a result was in cache (ie. a cache hit)</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CacheStatus</span> {
+    <span class="ident">Hit</span>,
+    <span class="ident">Miss</span>,
+}
+
+<span class="doccomment">/// Alias for a result and its cache status.</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">CacheResult</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">A</span>, <span class="ident">CacheStatus</span>), <span class="ident">E</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// The main cache data structure, which comprises multiple sub-caches for caching</span>
 <span class="doccomment">/// different chain components, each with different time-to-live values.</span>
@@ -259,20 +279,20 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">PortChannelId</span>,
         <span class="ident">f</span>: <span class="ident">F</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="ident">CacheResult</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">chan</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">channels</span>.<span class="ident">get</span>(<span class="ident">id</span>) {
             <span class="comment">// If cache hit, return it.</span>
-            <span class="prelude-val">Ok</span>(<span class="ident">chan</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">chan</span>, <span class="ident">CacheStatus::Hit</span>))
         } <span class="kw">else</span> {
             <span class="comment">// Only cache a channel end if the channel is open.</span>
             <span class="kw">let</span> <span class="ident">chan</span> <span class="op">=</span> <span class="ident">f</span>()<span class="question-mark">?</span>;
             <span class="kw">if</span> <span class="ident">chan</span>.<span class="ident">state</span>().<span class="ident">is_open</span>() {
                 <span class="self">self</span>.<span class="ident">channels</span>.<span class="ident">insert</span>(<span class="ident">id</span>.<span class="ident">clone</span>(), <span class="ident">chan</span>.<span class="ident">clone</span>());
             }
-            <span class="prelude-val">Ok</span>(<span class="ident">chan</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">chan</span>, <span class="ident">CacheStatus::Miss</span>))
         }
     }
 
@@ -284,18 +304,18 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionId</span>,
         <span class="ident">f</span>: <span class="ident">F</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="ident">CacheResult</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">conn</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">connections</span>.<span class="ident">get</span>(<span class="ident">id</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">conn</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">conn</span>, <span class="ident">CacheStatus::Hit</span>))
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="ident">conn</span> <span class="op">=</span> <span class="ident">f</span>()<span class="question-mark">?</span>;
             <span class="kw">if</span> <span class="ident">conn</span>.<span class="ident">state</span>().<span class="ident">is_open</span>() {
                 <span class="self">self</span>.<span class="ident">connections</span>.<span class="ident">insert</span>(<span class="ident">id</span>.<span class="ident">clone</span>(), <span class="ident">conn</span>.<span class="ident">clone</span>());
             }
-            <span class="prelude-val">Ok</span>(<span class="ident">conn</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">conn</span>, <span class="ident">CacheStatus::Miss</span>))
         }
     }
 
@@ -307,16 +327,16 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">f</span>: <span class="ident">F</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="ident">CacheResult</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">client_states</span>.<span class="ident">get</span>(<span class="ident">id</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">state</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">state</span>, <span class="ident">CacheStatus::Hit</span>))
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">f</span>()<span class="question-mark">?</span>;
             <span class="self">self</span>.<span class="ident">client_states</span>.<span class="ident">insert</span>(<span class="ident">id</span>.<span class="ident">clone</span>(), <span class="ident">state</span>.<span class="ident">clone</span>());
-            <span class="prelude-val">Ok</span>(<span class="ident">state</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">state</span>, <span class="ident">CacheStatus::Miss</span>))
         }
     }
 
@@ -327,16 +347,16 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This value is cached with a small time-to-live so that the latest height</span>
     <span class="doccomment">/// query returns the same height if the same query is repeated within a small time frame.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_or_try_update_latest_height_with</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_or_try_update_latest_height_with</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="ident">CacheResult</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">height</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">latest_height</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span>()) {
-            <span class="prelude-val">Ok</span>(<span class="ident">height</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">height</span>, <span class="ident">CacheStatus::Hit</span>))
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">f</span>()<span class="question-mark">?</span>;
             <span class="self">self</span>.<span class="ident">latest_height</span>.<span class="ident">insert</span>((), <span class="ident">height</span>);
-            <span class="prelude-val">Ok</span>(<span class="ident">height</span>)
+            <span class="prelude-val">Ok</span>((<span class="ident">height</span>, <span class="ident">CacheStatus::Miss</span>))
         }
     }
 }

@@ -195,6 +195,23 @@
 <span id="193">193</span>
 <span id="194">194</span>
 <span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 
 <span class="kw">use</span> <span class="ident">opentelemetry</span>::{
@@ -250,6 +267,9 @@
 
     <span class="doccomment">/// Number of queries emitted by the relayer, per chain and query type</span>
     <span class="ident">queries</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+
+    <span class="doccomment">/// Number of cache hits for queries emitted by the relayer, per chain and query type</span>
+    <span class="ident">query_cache_hits</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">TelemetryState</span> {
@@ -341,6 +361,15 @@
 
         <span class="self">self</span>.<span class="ident">queries</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
     }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">query_cache_hit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>, <span class="ident">query_type</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>) {
+        <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
+            <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
+            <span class="ident">KeyValue::new</span>(<span class="string">&quot;query_type&quot;</span>, <span class="ident">query_type</span>),
+        ];
+
+        <span class="self">self</span>.<span class="ident">query_cache_hits</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TelemetryState</span> {
@@ -386,6 +415,11 @@
                 .<span class="ident">with_description</span>(
                     <span class="string">&quot;Number of queries emitted by the relayer, per chain and query type&quot;</span>,
                 )
+                .<span class="ident">init</span>(),
+
+            <span class="ident">query_cache_hits</span>: <span class="ident">meter</span>
+                .<span class="ident">u64_counter</span>(<span class="string">&quot;cache_hits&quot;</span>)
+                .<span class="ident">with_description</span>(<span class="string">&quot;Number of cache hits for queries emitted by the relayer, per chain and query type&quot;</span>)
                 .<span class="ident">init</span>(),
         }
     }
