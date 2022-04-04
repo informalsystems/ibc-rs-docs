@@ -380,6 +380,8 @@
 <span id="378">378</span>
 <span id="379">379</span>
 <span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 
 <span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
@@ -391,7 +393,7 @@
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1::QueryClientStatesRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::config::Config</span>;
-<span class="kw">use</span> <span class="ident">ibc_relayer::foreign_client</span>::{<span class="ident">CreateParams</span>, <span class="ident">ForeignClient</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer::foreign_client</span>::{<span class="ident">CreateOptions</span>, <span class="ident">ForeignClient</span>};
 <span class="kw">use</span> <span class="ident">tendermint_light_client_verifier::types::TrustThreshold</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::application::app_config</span>;
@@ -407,13 +409,15 @@
     <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the source chain&quot;</span>)]</span>
     <span class="ident">src_chain_id</span>: <span class="ident">ChainId</span>,
 
-    <span class="doccomment">/// Override the default clock drift specified in the configuration.</span>
+    <span class="doccomment">/// The maximum allowed clock drift for this client.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The clock drift is a correction parameter. It helps deal with clocks</span>
     <span class="doccomment">/// that are only approximately synchronized between the source and destination chains</span>
     <span class="doccomment">/// of this client.</span>
     <span class="doccomment">/// The destination chain for this client uses the clock drift parameter when deciding</span>
     <span class="doccomment">/// to accept or reject a new header (originating from the source chain) for this client.</span>
+    <span class="doccomment">/// If this option is not specified, a suitable clock drift value is derived from the chain</span>
+    <span class="doccomment">/// configurations.</span>
     <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;d&#39;</span>, <span class="ident">long</span>)]</span>
     <span class="ident">clock_drift</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">humantime::Duration</span><span class="op">&gt;</span>,
 
@@ -449,15 +453,15 @@
 
         <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">ForeignClient::restore</span>(<span class="ident">ClientId::default</span>(), <span class="ident">chains</span>.<span class="ident">dst</span>, <span class="ident">chains</span>.<span class="ident">src</span>);
 
-        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">CreateParams</span> {
-            <span class="ident">clock_drift</span>: <span class="self">self</span>.<span class="ident">clock_drift</span>.<span class="ident">map</span>(<span class="ident">Into::into</span>),
+        <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">CreateOptions</span> {
+            <span class="ident">max_clock_drift</span>: <span class="self">self</span>.<span class="ident">clock_drift</span>.<span class="ident">map</span>(<span class="ident">Into::into</span>),
             <span class="ident">trusting_period</span>: <span class="self">self</span>.<span class="ident">trusting_period</span>.<span class="ident">map</span>(<span class="ident">Into::into</span>),
-            <span class="ident">trust_threshold</span>: <span class="self">self</span>.<span class="ident">trust_threshold</span>,
+            <span class="ident">trust_threshold</span>: <span class="self">self</span>.<span class="ident">trust_threshold</span>.<span class="ident">map</span>(<span class="ident">Into::into</span>),
         };
 
         <span class="comment">// Trigger client creation via the &quot;build&quot; interface, so that we obtain the resulting event</span>
         <span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">IbcEvent</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">client</span>
-            .<span class="ident">build_create_client_and_send</span>(<span class="kw-2">&amp;</span><span class="ident">params</span>)
+            .<span class="ident">build_create_client_and_send</span>(<span class="ident">options</span>)
             .<span class="ident">map_err</span>(<span class="ident">Error::foreign_client</span>);
 
         <span class="kw">match</span> <span class="ident">res</span> {

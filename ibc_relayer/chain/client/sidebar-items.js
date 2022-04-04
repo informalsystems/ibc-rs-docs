@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ClientSettings","Client parameters for the `build_create_client` operation."]]});

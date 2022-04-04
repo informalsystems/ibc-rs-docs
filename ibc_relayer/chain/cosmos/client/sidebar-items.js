@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Settings","Cosmos-specific client parameters for the `build_client_state` operation."]]});

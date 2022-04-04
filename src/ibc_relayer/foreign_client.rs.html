@@ -1717,8 +1717,6 @@
 <span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tx::TrackedMsgs</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span> <span class="kw">as</span> <span class="ident">RelayerError</span>;
 <span class="kw">use</span> <span class="ident">flex_error::define_error</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus</span>::{
     <span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>, <span class="ident">ConsensusState</span>, <span class="ident">QueryClientEventRequest</span>,
@@ -1733,6 +1731,7 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::msgs::misbehavior::MsgSubmitAnyMisbehaviour</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::msgs::update_client::MsgUpdateAnyClient</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::msgs::upgrade_client::MsgUpgradeAnyClient</span>;
+<span class="kw">use</span> <span class="ident">ibc::core::ics02_client::trust_threshold::TrustThreshold</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>};
 <span class="kw">use</span> <span class="ident">ibc::downcast</span>;
 <span class="kw">use</span> <span class="ident">ibc::events</span>::{<span class="ident">IbcEvent</span>, <span class="ident">WithBlockDataType</span>};
@@ -1741,9 +1740,11 @@
 <span class="kw">use</span> <span class="ident">ibc::tx_msg::Msg</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1::QueryConsensusStatesRequest</span>;
-<span class="kw">use</span> <span class="ident">tendermint_light_client_verifier::types::TrustThreshold</span>;
 
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tx::TrackedMsgs</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span> <span class="kw">as</span> <span class="ident">RelayerError</span>;
 
 <span class="kw">const</span> <span class="ident">MAX_MISBEHAVIOUR_CHECK_DURATION</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">120</span>);
 
@@ -1982,6 +1983,17 @@
     }
 }
 
+<span class="doccomment">/// User-supplied options for the [`ForeignClient::build_create_client`] operation.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Currently, the parameters are specific to the Tendermint-based chains.</span>
+<span class="doccomment">/// A future revision will bring differentiated options for other chain types.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CreateOptions</span> {
+    <span class="kw">pub</span> <span class="ident">max_clock_drift</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">trusting_period</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">trust_threshold</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TrustThreshold</span><span class="op">&gt;</span>,
+}
+
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ForeignClient</span><span class="op">&lt;</span><span class="ident">DstChain</span>: <span class="ident">ChainHandle</span>, <span class="ident">SrcChain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> {
     <span class="doccomment">/// The identifier of this client. The host chain determines this id upon client creation,</span>
@@ -1993,16 +2005,6 @@
 
     <span class="doccomment">/// A handle to the chain whose headers this client is verifying, aka the source chain.</span>
     <span class="kw">pub</span> <span class="ident">src_chain</span>: <span class="ident">SrcChain</span>,
-}
-
-<span class="doccomment">/// Optional onfiguration parameters for the</span>
-<span class="doccomment">/// CreateClient command. If set the options override the defaults</span>
-<span class="doccomment">/// taken from the configuration of the destination chain.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CreateParams</span> {
-    <span class="kw">pub</span> <span class="ident">clock_drift</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">trusting_period</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">trust_threshold</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TrustThreshold</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Used in Output messages.</span>
@@ -2203,7 +2205,7 @@
     <span class="doccomment">/// Lower-level interface for preparing a message to create a client.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_create_client</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">CreateParams</span>,
+        <span class="ident">options</span>: <span class="ident">CreateOptions</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MsgCreateAnyClient</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="comment">// Get signer</span>
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dst_chain</span>.<span class="ident">get_signer</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
@@ -2226,29 +2228,27 @@
             )
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">config</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dst_chain</span>.<span class="ident">config</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+        <span class="comment">// Calculate client state settings from the chain configurations and</span>
+        <span class="comment">// optional user overrides.</span>
+        <span class="kw">let</span> <span class="ident">src_config</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">config</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
             <span class="ident">ForeignClientError::client_create</span>(
                 <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
-                <span class="macro">format!</span>(
-                    <span class="string">&quot;failed while querying dst chain ({}) for its configuration&quot;</span>,
-                    <span class="self">self</span>.<span class="ident">dst_chain</span>.<span class="ident">id</span>()
-                ),
+                <span class="string">&quot;failed while querying the source chain for configuration&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">e</span>,
             )
         })<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">d</span>) <span class="op">=</span> <span class="ident">params</span>.<span class="ident">clock_drift</span> {
-            <span class="ident">config</span>.<span class="ident">clock_drift</span> <span class="op">=</span> <span class="ident">d</span>;
-        }
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">p</span>) <span class="op">=</span> <span class="ident">params</span>.<span class="ident">trusting_period</span> {
-            <span class="ident">config</span>.<span class="ident">trusting_period</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">p</span>);
-        }
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">t</span>) <span class="op">=</span> <span class="ident">params</span>.<span class="ident">trust_threshold</span> {
-            <span class="ident">config</span>.<span class="ident">trust_threshold</span> <span class="op">=</span> <span class="ident">t</span>;
-        }
+        <span class="kw">let</span> <span class="ident">dst_config</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dst_chain</span>.<span class="ident">config</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+            <span class="ident">ForeignClientError::client_create</span>(
+                <span class="self">self</span>.<span class="ident">dst_chain</span>.<span class="ident">id</span>(),
+                <span class="string">&quot;failed while querying the destination chain for configuration&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">e</span>,
+            )
+        })<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">settings</span> <span class="op">=</span> <span class="ident">ClientSettings::for_create_command</span>(<span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">src_config</span>, <span class="kw-2">&amp;</span><span class="ident">dst_config</span>);
 
         <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">src_chain</span>
-            .<span class="ident">build_client_state</span>(<span class="ident">latest_height</span>, <span class="ident">config</span>)
+            .<span class="ident">build_client_state</span>(<span class="ident">latest_height</span>, <span class="ident">settings</span>)
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_create</span>(
                     <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
@@ -2284,9 +2284,9 @@
     <span class="doccomment">/// Returns the identifier of the newly created client.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_create_client_and_send</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">CreateParams</span>,
+        <span class="ident">options</span>: <span class="ident">CreateOptions</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">IbcEvent</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">new_msg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_create_client</span>(<span class="ident">params</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">new_msg</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_create_client</span>(<span class="ident">options</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dst_chain</span>
@@ -2309,7 +2309,7 @@
     <span class="doccomment">/// Sends the client creation transaction &amp; subsequently sets the id of this ForeignClient</span>
     <span class="kw">fn</span> <span class="ident">create</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">build_create_client_and_send</span>(<span class="kw-2">&amp;</span><span class="ident">CreateParams::default</span>())
+            .<span class="ident">build_create_client_and_send</span>(<span class="ident">CreateOptions::default</span>())
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="macro">error!</span>(<span class="string">&quot;[{}]  failed CreateClient: {}&quot;</span>, <span class="self">self</span>, <span class="ident">e</span>);
                 <span class="ident">e</span>
@@ -3169,7 +3169,7 @@
         <span class="kw">let</span> <span class="ident">b_client</span> <span class="op">=</span> <span class="ident">ForeignClient::restore</span>(<span class="ident">ClientId::default</span>(), <span class="ident">b_chain</span>, <span class="ident">a_chain</span>);
 
         <span class="comment">// Create the client on chain a</span>
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">a_client</span>.<span class="ident">build_create_client_and_send</span>(<span class="kw-2">&amp;</span><span class="ident">Default::default</span>());
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">a_client</span>.<span class="ident">build_create_client_and_send</span>(<span class="ident">Default::default</span>());
         <span class="macro">assert!</span>(
             <span class="ident">res</span>.<span class="ident">is_ok</span>(),
             <span class="string">&quot;build_create_client_and_send failed (chain a) with error {:?}&quot;</span>,
@@ -3178,7 +3178,7 @@
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">res</span>.<span class="ident">unwrap</span>(), <span class="ident">IbcEvent::CreateClient</span>(<span class="kw">_</span>)));
 
         <span class="comment">// Create the client on chain b</span>
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">b_client</span>.<span class="ident">build_create_client_and_send</span>(<span class="kw-2">&amp;</span><span class="ident">Default::default</span>());
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">b_client</span>.<span class="ident">build_create_client_and_send</span>(<span class="ident">Default::default</span>());
         <span class="macro">assert!</span>(
             <span class="ident">res</span>.<span class="ident">is_ok</span>(),
             <span class="string">&quot;build_create_client_and_send failed (chain b) with error {:?}&quot;</span>,
