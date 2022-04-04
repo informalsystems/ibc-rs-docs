@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process",""]],"struct":[["RecvPacketResult",""]]});
+initSidebarItems({"enum":[["RecvPacketResult",""]],"fn":[["process",""]],"struct":[["RecvPacketSuccess",""]]});

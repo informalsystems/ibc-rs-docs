@@ -48,19 +48,57 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Message definitions for all ICS4 domain types: channel open &amp; close handshake datagrams, as well</span>
 <span class="doccomment">//! as packets.</span>
 
-<span class="kw">use</span> <span class="ident">acknowledgement::MsgAcknowledgement</span>;
-
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::error::Error</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::acknowledgement::MsgAcknowledgement</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_close_confirm::MsgChannelCloseConfirm</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_close_init::MsgChannelCloseInit</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_open_ack::MsgChannelOpenAck</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_open_confirm::MsgChannelOpenConfirm</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_open_init::MsgChannelOpenInit</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_open_try::MsgChannelOpenTry</span>;
-
-<span class="kw">use</span> <span class="self">self</span>::{<span class="ident">recv_packet::MsgRecvPacket</span>, <span class="ident">timeout::MsgTimeout</span>, <span class="ident">timeout_on_close::MsgTimeoutOnClose</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::recv_packet::MsgRecvPacket</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::timeout::MsgTimeout</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context</span>::{<span class="ident">Ics26Context</span>, <span class="ident">ModuleId</span>};
 
 <span class="comment">// Opening handshake messages.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">chan_open_ack</span>;
@@ -87,6 +125,40 @@
     <span class="ident">ChannelOpenConfirm</span>(<span class="ident">MsgChannelOpenConfirm</span>),
     <span class="ident">ChannelCloseInit</span>(<span class="ident">MsgChannelCloseInit</span>),
     <span class="ident">ChannelCloseConfirm</span>(<span class="ident">MsgChannelCloseConfirm</span>),
+}
+
+<span class="kw">impl</span> <span class="ident">ChannelMsg</span> {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn</span> <span class="ident">lookup_module</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">Ics26Context</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ModuleId</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">module_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">ChannelMsg::ChannelOpenInit</span>(<span class="ident">msg</span>) =&gt; {
+                <span class="ident">ctx</span>.<span class="ident">lookup_module_by_port</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)
+                    .<span class="ident">map_err</span>(<span class="ident">Error::ics05_port</span>)<span class="question-mark">?</span>
+                    .<span class="number">0</span>
+            }
+            <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg</span>) =&gt; {
+                <span class="ident">ctx</span>.<span class="ident">lookup_module_by_port</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)
+                    .<span class="ident">map_err</span>(<span class="ident">Error::ics05_port</span>)<span class="question-mark">?</span>
+                    .<span class="number">0</span>
+            }
+            <span class="ident">ChannelMsg::ChannelOpenAck</span>(<span class="ident">msg</span>) =&gt; {
+                <span class="ident">ctx</span>.<span class="ident">lookup_module_by_channel</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">channel_id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)<span class="question-mark">?</span>
+                    .<span class="number">0</span>
+            }
+            <span class="ident">ChannelMsg::ChannelOpenConfirm</span>(<span class="ident">msg</span>) =&gt; {
+                <span class="ident">ctx</span>.<span class="ident">lookup_module_by_channel</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">channel_id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)<span class="question-mark">?</span>
+                    .<span class="number">0</span>
+            }
+            <span class="ident">ChannelMsg::ChannelCloseInit</span>(<span class="ident">msg</span>) =&gt; {
+                <span class="ident">ctx</span>.<span class="ident">lookup_module_by_channel</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">channel_id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)<span class="question-mark">?</span>
+                    .<span class="number">0</span>
+            }
+            <span class="ident">ChannelMsg::ChannelCloseConfirm</span>(<span class="ident">msg</span>) =&gt; {
+                <span class="ident">ctx</span>.<span class="ident">lookup_module_by_channel</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">channel_id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)<span class="question-mark">?</span>
+                    .<span class="number">0</span>
+            }
+        };
+        <span class="prelude-val">Ok</span>(<span class="ident">module_id</span>)
+    }
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>

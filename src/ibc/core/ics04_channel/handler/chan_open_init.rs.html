@@ -218,7 +218,7 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">process</span>(
     <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
-    <span class="ident">msg</span>: <span class="ident">MsgChannelOpenInit</span>,
+    <span class="ident">msg</span>: <span class="kw-2">&amp;</span><span class="ident">MsgChannelOpenInit</span>,
 ) -&gt; <span class="ident">HandlerResult</span><span class="op">&lt;</span><span class="ident">ChannelResult</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">HandlerOutput::builder</span>();
 
@@ -265,7 +265,7 @@
     <span class="ident">output</span>.<span class="ident">log</span>(<span class="string">&quot;success: no channel found&quot;</span>);
 
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ChannelResult</span> {
-        <span class="ident">port_id</span>: <span class="ident">msg</span>.<span class="ident">port_id</span>,
+        <span class="ident">port_id</span>: <span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
         <span class="ident">channel_id</span>: <span class="ident">chan_id</span>.<span class="ident">clone</span>(),
         <span class="ident">channel_end</span>: <span class="ident">new_channel_end</span>,
         <span class="ident">channel_id_state</span>: <span class="ident">ChannelIdState::Generated</span>,
@@ -297,7 +297,7 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::version::get_compatible_versions</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::State</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::handler</span>::{<span class="ident">channel_dispatch</span>, <span class="ident">ChannelResult</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::handler::channel_dispatch</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_open_init::test_util::get_dummy_raw_msg_chan_open_init</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::chan_open_init::MsgChannelOpenInit</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::ChannelMsg</span>;
@@ -365,24 +365,24 @@
         .<span class="ident">collect</span>();
 
         <span class="kw">for</span> <span class="ident">test</span> <span class="kw">in</span> <span class="ident">tests</span> {
-            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">channel_dispatch</span>(<span class="kw-2">&amp;</span><span class="ident">test</span>.<span class="ident">ctx</span>, <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>());
+            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">channel_dispatch</span>(<span class="kw-2">&amp;</span><span class="ident">test</span>.<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">test</span>.<span class="ident">msg</span>);
             <span class="comment">// Additionally check the events and the output objects in the result.</span>
             <span class="kw">match</span> <span class="ident">res</span> {
-                <span class="prelude-val">Ok</span>(<span class="ident">proto_output</span>) =&gt; {
+                <span class="prelude-val">Ok</span>((<span class="ident">proto_output</span>, <span class="ident">res</span>)) =&gt; {
                     <span class="macro">assert!</span>(
                         <span class="ident">test</span>.<span class="ident">want_pass</span>,
                         <span class="string">&quot;chan_open_init: test passed but was supposed to fail for test: {}, \nparams {:?} {:?}&quot;</span>,
                         <span class="ident">test</span>.<span class="ident">name</span>,
-                        <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>(),
+                        <span class="ident">test</span>.<span class="ident">msg</span>,
                         <span class="ident">test</span>.<span class="ident">ctx</span>.<span class="ident">clone</span>()
                     );
 
+                    <span class="kw">let</span> <span class="ident">proto_output</span> <span class="op">=</span> <span class="ident">proto_output</span>.<span class="ident">with_result</span>(());
                     <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">proto_output</span>.<span class="ident">events</span>.<span class="ident">is_empty</span>()); <span class="comment">// Some events must exist.</span>
 
                     <span class="comment">// The object in the output is a ChannelEnd, should have init state.</span>
-                    <span class="kw">let</span> <span class="ident">res</span>: <span class="ident">ChannelResult</span> <span class="op">=</span> <span class="ident">proto_output</span>.<span class="ident">result</span>;
                     <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">channel_end</span>.<span class="ident">state</span>().<span class="ident">clone</span>(), <span class="ident">State::Init</span>);
-                    <span class="kw">let</span> <span class="ident">msg_init</span> <span class="op">=</span> <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>();
+                    <span class="kw">let</span> <span class="ident">msg_init</span> <span class="op">=</span> <span class="ident">test</span>.<span class="ident">msg</span>;
 
                     <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ChannelMsg::ChannelOpenInit</span>(<span class="ident">msg_init</span>) <span class="op">=</span> <span class="ident">msg_init</span> {
                         <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">msg_init</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>());

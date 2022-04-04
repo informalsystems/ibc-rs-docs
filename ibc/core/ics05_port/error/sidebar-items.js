@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["Error",""],["ImplementationSpecificSubdetail",""],["PortAlreadyBoundSubdetail",""],["UnknownPortSubdetail",""]]});
+initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["Error",""],["ImplementationSpecificSubdetail",""],["ModuleNotFoundSubdetail",""],["PortAlreadyBoundSubdetail",""],["UnknownPortSubdetail",""]]});

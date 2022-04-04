@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Capability",""],["CapabilityName",""],["InvalidCapabilityName",""]]});
+initSidebarItems({"struct":[["Capability",""],["CapabilityName",""],["ChannelCapabilityType",""],["InvalidCapabilityName",""],["PortCapabilityType",""],["TypedCapability",""]],"trait":[["CapabilityMarker",""]],"type":[["ChannelCapability",""],["PortCapability",""]]});

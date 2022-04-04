@@ -281,6 +281,22 @@
 <span id="279">279</span>
 <span id="280">280</span>
 <span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
 </pre><pre class="rust"><code><span class="doccomment">//! ICS4 (channel) context. The two traits `ChannelReader ` and `ChannelKeeper` define</span>
 <span class="doccomment">//! the interface that any host chain must implement to be able to process any `ChannelMsg`.</span>
 <span class="doccomment">//!</span>
@@ -291,10 +307,13 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::AnyClientState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::ConnectionEnd</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::ChannelEnd</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::handler::recv_packet::RecvPacketResult</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::handler</span>::{<span class="ident">ChannelIdState</span>, <span class="ident">ChannelResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel</span>::{<span class="ident">error::Error</span>, <span class="ident">packet::Receipt</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics05_port::capabilities::Capability</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics05_port::capabilities::ChannelCapability</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics05_port::context::CapabilityReader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier</span>::{<span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context::ModuleId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp::Timestamp</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
@@ -302,7 +321,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::packet</span>::{<span class="ident">PacketResult</span>, <span class="ident">Sequence</span>};
 
 <span class="doccomment">/// A context supplying all the necessary read-only dependencies for processing any `ChannelMsg`.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ChannelReader</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ChannelReader</span>: <span class="ident">CapabilityReader</span> {
     <span class="doccomment">/// Returns the ChannelEnd for the given `port_id` and `chan_id`.</span>
     <span class="kw">fn</span> <span class="ident">channel_end</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">port_channel_id</span>: <span class="kw-2">&amp;</span>(<span class="ident">PortId</span>, <span class="ident">ChannelId</span>)) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
@@ -321,7 +340,7 @@
         <span class="ident">height</span>: <span class="ident">Height</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">authenticated_capability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Capability</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">authenticated_capability</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelCapability</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">get_next_sequence_send</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -381,6 +400,8 @@
     <span class="doccomment">/// Returns the maximum expected time per block</span>
     <span class="kw">fn</span> <span class="ident">max_expected_time_per_block</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Duration</span>;
 
+    <span class="doccomment">/// Calculates the block delay period using the connection&#39;s delay period and the maximum</span>
+    <span class="doccomment">/// expected time per block.</span>
     <span class="kw">fn</span> <span class="ident">block_delay</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">delay_period_time</span>: <span class="ident">Duration</span>) -&gt; <span class="ident">u64</span> {
         <span class="kw">let</span> <span class="ident">expected_time_per_block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">max_expected_time_per_block</span>();
         <span class="kw">if</span> <span class="ident">expected_time_per_block</span>.<span class="ident">is_zero</span>() {
@@ -390,6 +411,13 @@
         <span class="ident">FloatCore::ceil</span>(<span class="ident">delay_period_time</span>.<span class="ident">as_secs_f64</span>() <span class="op">/</span> <span class="ident">expected_time_per_block</span>.<span class="ident">as_secs_f64</span>())
             <span class="kw">as</span> <span class="ident">u64</span>
     }
+
+    <span class="doccomment">/// Return the module_id along with the capability associated with a given (channel-id, port_id)</span>
+    <span class="kw">fn</span> <span class="ident">lookup_module_by_channel</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ModuleId</span>, <span class="ident">ChannelCapability</span>), <span class="ident">Error</span><span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// A context supplying all the necessary write-only dependencies (i.e., storage writing facility)</span>
@@ -444,6 +472,10 @@
                 )<span class="question-mark">?</span>;
             }
             <span class="ident">PacketResult::Recv</span>(<span class="ident">res</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">res</span> {
+                    <span class="ident">RecvPacketResult::Success</span>(<span class="ident">res</span>) =&gt; <span class="ident">res</span>,
+                    <span class="ident">RecvPacketResult::NoOp</span> =&gt; <span class="macro">unreachable!</span>(),
+                };
                 <span class="kw">match</span> <span class="ident">res</span>.<span class="ident">receipt</span> {
                     <span class="prelude-val">None</span> =&gt; {
                         <span class="comment">// Ordered channel</span>
