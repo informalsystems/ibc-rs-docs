@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["error",""],["operational_data",""]],"struct":[["Link",""],["LinkParameters",""],["RelaySummary",""]]});
+initSidebarItems({"mod":[["cli",""],["error",""],["operational_data",""]],"struct":[["Link",""],["LinkParameters",""],["RelaySummary",""]]});
