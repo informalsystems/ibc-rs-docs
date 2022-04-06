@@ -255,10 +255,6 @@
 <span id="253">253</span>
 <span id="254">254</span>
 <span id="255">255</span>
-<span id="256">256</span>
-<span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::ClientState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::Counterparty</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::State</span>;
@@ -318,28 +314,22 @@
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::frozen_client</span>(<span class="ident">connection_end</span>.<span class="ident">client_id</span>().<span class="ident">clone</span>()));
     }
 
-    <span class="comment">// check if packet height is newer than the height of the latest client state on the receiving chain</span>
     <span class="kw">let</span> <span class="ident">latest_height</span> <span class="op">=</span> <span class="ident">client_state</span>.<span class="ident">latest_height</span>();
-    <span class="kw">let</span> <span class="ident">packet_height</span> <span class="op">=</span> <span class="ident">packet</span>.<span class="ident">timeout_height</span>;
 
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">packet</span>.<span class="ident">timeout_height</span>.<span class="ident">is_zero</span>() <span class="op">&amp;&amp;</span> <span class="ident">packet_height</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">latest_height</span> {
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">packet</span>.<span class="ident">timeout_height</span>.<span class="ident">is_zero</span>() <span class="op">&amp;&amp;</span> <span class="ident">packet</span>.<span class="ident">timeout_height</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">latest_height</span> {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::low_packet_height</span>(
             <span class="ident">latest_height</span>,
             <span class="ident">packet</span>.<span class="ident">timeout_height</span>,
         ));
     }
 
-    <span class="comment">//check if packet timestamp is newer than the timestamp of the latest consensus state of the receiving chain</span>
     <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_consensus_state</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">latest_height</span>)<span class="question-mark">?</span>;
-
     <span class="kw">let</span> <span class="ident">latest_timestamp</span> <span class="op">=</span> <span class="ident">consensus_state</span>.<span class="ident">timestamp</span>();
-
     <span class="kw">let</span> <span class="ident">packet_timestamp</span> <span class="op">=</span> <span class="ident">packet</span>.<span class="ident">timeout_timestamp</span>;
     <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Expiry::Expired</span> <span class="op">=</span> <span class="ident">latest_timestamp</span>.<span class="ident">check_expiry</span>(<span class="kw-2">&amp;</span><span class="ident">packet_timestamp</span>) {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::low_packet_timestamp</span>());
     }
 
-    <span class="comment">// check sequence number</span>
     <span class="kw">let</span> <span class="ident">next_seq_send</span> <span class="op">=</span>
         <span class="ident">ctx</span>.<span class="ident">get_next_sequence_send</span>(<span class="kw-2">&amp;</span>(<span class="ident">packet</span>.<span class="ident">source_port</span>.<span class="ident">clone</span>(), <span class="ident">packet</span>.<span class="ident">source_channel</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
 
@@ -363,7 +353,7 @@
     });
 
     <span class="ident">output</span>.<span class="ident">emit</span>(<span class="ident">IbcEvent::SendPacket</span>(<span class="ident">SendPacket</span> {
-        <span class="ident">height</span>: <span class="ident">packet_height</span>,
+        <span class="ident">height</span>: <span class="ident">ctx</span>.<span class="ident">host_height</span>(),
         <span class="ident">packet</span>,
     }));
 
@@ -383,6 +373,7 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::version::get_compatible_versions</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">Counterparty</span>, <span class="ident">Order</span>, <span class="ident">State</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::context::ChannelReader</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::handler::send_packet::send_packet</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::test_utils::get_dummy_raw_packet</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::Packet</span>;
@@ -502,6 +493,7 @@
                     <span class="comment">// TODO: The object in the output is a PacketResult what can we check on it?</span>
                     <span class="kw">for</span> <span class="ident">e</span> <span class="kw">in</span> <span class="ident">proto_output</span>.<span class="ident">events</span>.<span class="ident">iter</span>() {
                         <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">e</span>, <span class="kw-2">&amp;</span><span class="ident">IbcEvent::SendPacket</span>(<span class="kw">_</span>)));
+                        <span class="macro">assert_eq!</span>(<span class="ident">e</span>.<span class="ident">height</span>(), <span class="ident">test</span>.<span class="ident">ctx</span>.<span class="ident">host_height</span>());
                     }
                 }
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {

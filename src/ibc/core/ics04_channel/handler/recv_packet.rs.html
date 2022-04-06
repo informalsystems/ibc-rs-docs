@@ -329,8 +329,7 @@
 <span id="327">327</span>
 <span id="328">328</span>
 <span id="329">329</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::height::Height</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel</span>::{<span class="ident">Counterparty</span>, <span class="ident">Order</span>, <span class="ident">State</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::context::ChannelReader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::error::Error</span>;
@@ -342,6 +341,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler</span>::{<span class="ident">HandlerOutput</span>, <span class="ident">HandlerResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp::Expiry</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RecvPacketSuccess</span> {
@@ -397,7 +397,6 @@
         ));
     }
 
-    <span class="comment">// Check if packet height is newer than the height of the local host chain</span>
     <span class="kw">let</span> <span class="ident">latest_height</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">host_height</span>();
     <span class="kw">if</span> (<span class="op">!</span><span class="ident">packet</span>.<span class="ident">timeout_height</span>.<span class="ident">is_zero</span>()) <span class="op">&amp;&amp;</span> (<span class="ident">packet</span>.<span class="ident">timeout_height</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">latest_height</span>) {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::low_packet_height</span>(
@@ -406,7 +405,6 @@
         ));
     }
 
-    <span class="comment">// Check if packet timestamp is newer than the local host chain timestamp</span>
     <span class="kw">let</span> <span class="ident">latest_timestamp</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">host_timestamp</span>();
     <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Expiry::Expired</span> <span class="op">=</span> <span class="ident">latest_timestamp</span>.<span class="ident">check_expiry</span>(<span class="kw-2">&amp;</span><span class="ident">packet</span>.<span class="ident">timeout_timestamp</span>) {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::low_packet_timestamp</span>());
@@ -476,7 +474,7 @@
     <span class="ident">output</span>.<span class="ident">log</span>(<span class="string">&quot;success: packet receive&quot;</span>);
 
     <span class="ident">output</span>.<span class="ident">emit</span>(<span class="ident">IbcEvent::ReceivePacket</span>(<span class="ident">ReceivePacket</span> {
-        <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+        <span class="ident">height</span>: <span class="ident">ctx</span>.<span class="ident">host_height</span>(),
         <span class="ident">packet</span>: <span class="ident">msg</span>.<span class="ident">packet</span>.<span class="ident">clone</span>(),
     }));
 
@@ -485,6 +483,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::context::ChannelReader</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
     <span class="kw">use</span> <span class="ident">test_log::test</span>;
@@ -642,6 +641,7 @@
 
                     <span class="kw">for</span> <span class="ident">e</span> <span class="kw">in</span> <span class="ident">proto_output</span>.<span class="ident">events</span>.<span class="ident">iter</span>() {
                         <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">e</span>, <span class="kw-2">&amp;</span><span class="ident">IbcEvent::ReceivePacket</span>(<span class="kw">_</span>)));
+                        <span class="macro">assert_eq!</span>(<span class="ident">e</span>.<span class="ident">height</span>(), <span class="ident">test</span>.<span class="ident">ctx</span>.<span class="ident">host_height</span>());
                     }
                 }
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
