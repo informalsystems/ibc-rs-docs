@@ -136,6 +136,57 @@
 <span id="134">134</span>
 <span id="135">135</span>
 <span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Protocol logic specific to ICS3 messages of type `MsgConnectionOpenInit`.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection</span>::{<span class="ident">ConnectionEnd</span>, <span class="ident">State</span>};
@@ -158,11 +209,22 @@
     <span class="comment">// An IBC client running on the local (host) chain should exist.</span>
     <span class="ident">ctx</span>.<span class="ident">client_state</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">client_id</span>)<span class="question-mark">?</span>;
 
+    <span class="kw">let</span> <span class="ident">versions</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">msg</span>.<span class="ident">version</span> {
+        <span class="prelude-val">Some</span>(<span class="ident">version</span>) =&gt; {
+            <span class="kw">if</span> <span class="ident">ctx</span>.<span class="ident">get_compatible_versions</span>().<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">version</span>) {
+                <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="ident">version</span>])
+            } <span class="kw">else</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">Error::version_not_supported</span>(<span class="ident">version</span>))
+            }
+        }
+        <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">ctx</span>.<span class="ident">get_compatible_versions</span>()),
+    }<span class="question-mark">?</span>;
+
     <span class="kw">let</span> <span class="ident">new_connection_end</span> <span class="op">=</span> <span class="ident">ConnectionEnd::new</span>(
         <span class="ident">State::Init</span>,
         <span class="ident">msg</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
         <span class="ident">msg</span>.<span class="ident">counterparty</span>.<span class="ident">clone</span>(),
-        <span class="ident">ctx</span>.<span class="ident">get_compatible_versions</span>(),
+        <span class="ident">versions</span>,
         <span class="ident">msg</span>.<span class="ident">delay_period</span>,
     );
 
@@ -192,6 +254,8 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::context::ConnectionReader</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::version::Version</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
     <span class="kw">use</span> <span class="ident">test_log::test</span>;
@@ -205,30 +269,65 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::context::MockContext</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
+    <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::connection::v1::Version</span> <span class="kw">as</span> <span class="ident">RawVersion</span>;
+
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">conn_open_init_msg_processing</span>() {
         <span class="kw">struct</span> <span class="ident">Test</span> {
             <span class="ident">name</span>: <span class="ident">String</span>,
             <span class="ident">ctx</span>: <span class="ident">MockContext</span>,
             <span class="ident">msg</span>: <span class="ident">ConnectionMsg</span>,
+            <span class="ident">expected_versions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Version</span><span class="op">&gt;</span>,
             <span class="ident">want_pass</span>: <span class="ident">bool</span>,
         }
 
-        <span class="kw">let</span> <span class="ident">msg_conn_init</span> <span class="op">=</span>
+        <span class="kw">let</span> <span class="ident">msg_conn_init_default</span> <span class="op">=</span>
             <span class="ident">MsgConnectionOpenInit::try_from</span>(<span class="ident">get_dummy_raw_msg_conn_open_init</span>()).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">MockContext::default</span>();
+        <span class="kw">let</span> <span class="ident">msg_conn_init_no_version</span> <span class="op">=</span> <span class="ident">MsgConnectionOpenInit</span> {
+            <span class="ident">version</span>: <span class="prelude-val">None</span>,
+            ..<span class="ident">msg_conn_init_default</span>.<span class="ident">clone</span>()
+        };
+        <span class="kw">let</span> <span class="ident">msg_conn_init_bad_version</span> <span class="op">=</span> <span class="ident">MsgConnectionOpenInit</span> {
+            <span class="ident">version</span>: <span class="ident">Version::try_from</span>(<span class="ident">RawVersion</span> {
+                <span class="ident">identifier</span>: <span class="string">&quot;random identifier 424242&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">features</span>: <span class="macro">vec!</span>[],
+            })
+            .<span class="ident">unwrap</span>()
+            .<span class="ident">into</span>(),
+            ..<span class="ident">msg_conn_init_default</span>.<span class="ident">clone</span>()
+        };
+        <span class="kw">let</span> <span class="ident">default_context</span> <span class="op">=</span> <span class="ident">MockContext::default</span>();
+        <span class="kw">let</span> <span class="ident">good_context</span> <span class="op">=</span> <span class="ident">default_context</span>
+            .<span class="ident">clone</span>()
+            .<span class="ident">with_client</span>(<span class="kw-2">&amp;</span><span class="ident">msg_conn_init_default</span>.<span class="ident">client_id</span>, <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">10</span>));
 
         <span class="kw">let</span> <span class="ident">tests</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Processing fails because no client exists in the context&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">ctx</span>: <span class="ident">context</span>.<span class="ident">clone</span>(),
-                <span class="ident">msg</span>: <span class="ident">ConnectionMsg::ConnectionOpenInit</span>(<span class="ident">msg_conn_init</span>.<span class="ident">clone</span>()),
+                <span class="ident">ctx</span>: <span class="ident">default_context</span>,
+                <span class="ident">msg</span>: <span class="ident">ConnectionMsg::ConnectionOpenInit</span>(<span class="ident">msg_conn_init_default</span>.<span class="ident">clone</span>()),
+                <span class="ident">expected_versions</span>: <span class="macro">vec!</span>[<span class="ident">msg_conn_init_default</span>.<span class="ident">version</span>.<span class="ident">clone</span>().<span class="ident">unwrap</span>()],
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">Test</span> {
+                <span class="ident">name</span>: <span class="string">&quot;Incompatible version in MsgConnectionOpenInit msg&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">ctx</span>: <span class="ident">good_context</span>.<span class="ident">clone</span>(),
+                <span class="ident">msg</span>: <span class="ident">ConnectionMsg::ConnectionOpenInit</span>(<span class="ident">msg_conn_init_bad_version</span>),
+                <span class="ident">expected_versions</span>: <span class="macro">vec!</span>[],
+                <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
+            },
+            <span class="ident">Test</span> {
+                <span class="ident">name</span>: <span class="string">&quot;No version in MsgConnectionOpenInit msg&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">ctx</span>: <span class="ident">good_context</span>.<span class="ident">clone</span>(),
+                <span class="ident">msg</span>: <span class="ident">ConnectionMsg::ConnectionOpenInit</span>(<span class="ident">msg_conn_init_no_version</span>),
+                <span class="ident">expected_versions</span>: <span class="ident">good_context</span>.<span class="ident">get_compatible_versions</span>(),
+                <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
+            },
+            <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Good parameters&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">ctx</span>: <span class="ident">context</span>.<span class="ident">with_client</span>(<span class="kw-2">&amp;</span><span class="ident">msg_conn_init</span>.<span class="ident">client_id</span>, <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">10</span>)),
-                <span class="ident">msg</span>: <span class="ident">ConnectionMsg::ConnectionOpenInit</span>(<span class="ident">msg_conn_init</span>.<span class="ident">clone</span>()),
+                <span class="ident">ctx</span>: <span class="ident">good_context</span>,
+                <span class="ident">msg</span>: <span class="ident">ConnectionMsg::ConnectionOpenInit</span>(<span class="ident">msg_conn_init_default</span>.<span class="ident">clone</span>()),
+                <span class="ident">expected_versions</span>: <span class="macro">vec!</span>[<span class="ident">msg_conn_init_default</span>.<span class="ident">version</span>.<span class="ident">unwrap</span>()],
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
         ]
@@ -240,14 +339,6 @@
             <span class="comment">// Additionally check the events and the output objects in the result.</span>
             <span class="kw">match</span> <span class="ident">res</span> {
                 <span class="prelude-val">Ok</span>(<span class="ident">proto_output</span>) =&gt; {
-                    <span class="macro">assert!</span>(
-                        <span class="ident">test</span>.<span class="ident">want_pass</span>,
-                        <span class="string">&quot;conn_open_init: test passed but was supposed to fail for test: {}, \nparams {:?} {:?}&quot;</span>,
-                        <span class="ident">test</span>.<span class="ident">name</span>,
-                        <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>(),
-                        <span class="ident">test</span>.<span class="ident">ctx</span>.<span class="ident">clone</span>()
-                    );
-
                     <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">proto_output</span>.<span class="ident">events</span>.<span class="ident">is_empty</span>()); <span class="comment">// Some events must exist.</span>
 
                     <span class="comment">// The object in the output is a ConnectionEnd, should have init state.</span>
@@ -257,6 +348,17 @@
                     <span class="kw">for</span> <span class="ident">e</span> <span class="kw">in</span> <span class="ident">proto_output</span>.<span class="ident">events</span>.<span class="ident">iter</span>() {
                         <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">e</span>, <span class="kw-2">&amp;</span><span class="ident">IbcEvent::OpenInitConnection</span>(<span class="kw">_</span>)));
                     }
+
+                    <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">connection_end</span>.<span class="ident">versions</span>(), <span class="ident">test</span>.<span class="ident">expected_versions</span>);
+
+                    <span class="comment">// This needs to be last</span>
+                    <span class="macro">assert!</span>(
+                        <span class="ident">test</span>.<span class="ident">want_pass</span>,
+                        <span class="string">&quot;conn_open_init: test passed but was supposed to fail for test: {}, \nparams {:?} {:?}&quot;</span>,
+                        <span class="ident">test</span>.<span class="ident">name</span>,
+                        <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>(),
+                        <span class="ident">test</span>.<span class="ident">ctx</span>.<span class="ident">clone</span>()
+                    );
                 }
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
                     <span class="macro">assert!</span>(
