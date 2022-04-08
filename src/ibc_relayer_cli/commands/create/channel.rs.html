@@ -178,8 +178,58 @@
 <span id="176">176</span>
 <span id="177">177</span>
 <span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
+
+<span class="kw">use</span> <span class="ident">console::style</span>;
+<span class="kw">use</span> <span class="ident">dialoguer::Confirm</span>;
 
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_state::ClientState</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics03_connection::connection::IdentifiedConnectionEnd</span>;
@@ -197,43 +247,63 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::config::default::connection_delay</span>;
 
+<span class="kw">static</span> <span class="ident">PROMPT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;Are you sure you want a new connection &amp; clients to be created? Hermes will use default security parameters.&quot;</span>;
+<span class="kw">static</span> <span class="ident">HINT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;Consider using the default invocation\n\nhermes create channel --port-a &lt;PORT-ID&gt; --port-b &lt;PORT-ID&gt; &lt;CHAIN-A-ID&gt; &lt;CONNECTION-A-ID&gt;\n\nto re-use a pre-existing connection.&quot;</span>;
+
+<span class="doccomment">/// The data structure that represents all the possible options when invoking</span>
+<span class="doccomment">/// the `create channel` CLI command.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// There are two possible ways to invoke this command:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `create channel --port-a &lt;Port-ID&gt; --port-b &lt;Port-ID&gt; &lt;Chain-A-ID&gt; &lt;Connection-ID&gt;` is the default</span>
+<span class="doccomment">/// way in which this command should be used, specifying a `Connection-ID` for this new channel</span>
+<span class="doccomment">/// to re-use. The command expects that `Connection-ID` is associated with chain A.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `create channel --port-a &lt;Port-ID&gt; --port-b &lt;Port-ID&gt; &lt;Chain-A-ID&gt; &lt;Chain-B-ID&gt; --new-client-connection`</span>
+<span class="doccomment">/// to indicate that a new connection/client pair is being created as part of this new channel.</span>
+<span class="doccomment">/// This brings up an interactive yes/no prompt to ensure that the operator at least</span>
+<span class="doccomment">/// considers the fact that they&#39;re initializing a new connection with the channel.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Note that `Connection-ID`s have to be considered based off of the chain&#39;s perspective. Although</span>
+<span class="doccomment">/// chain A and chain B might refer to the connection with different names, they are actually referring</span>
+<span class="doccomment">/// to the same connection.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Command</span>, <span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">disable_version_flag</span> <span class="op">=</span> <span class="bool-val">true</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CreateChannelCommand</span> {
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the side `a` chain for the new channel&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the side `a` chain for the new channel&quot;</span>
     )]</span>
-    <span class="ident">chain_a_id</span>: <span class="ident">ChainId</span>,
-
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the side `b` chain for the new channel (optional)&quot;</span>)]</span>
-    <span class="ident">chain_b_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChainId</span><span class="op">&gt;</span>,
+    <span class="ident">chain_a</span>: <span class="ident">ChainId</span>,
 
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">short</span>,
         <span class="ident">long</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the connection on chain `a` to use in creating the new channel&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the side `b` chain for the new channel&quot;</span>
     )]</span>
+    <span class="ident">chain_b</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChainId</span><span class="op">&gt;</span>,
+
+    <span class="doccomment">/// Identifier of the connection on chain `a` to use in creating the new channel.</span>
     <span class="ident">connection_a</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConnectionId</span><span class="op">&gt;</span>,
 
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span>,
         <span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the side `a` port for the new channel&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the side `a` port for the new channel&quot;</span>
     )]</span>
     <span class="ident">port_a</span>: <span class="ident">PortId</span>,
 
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span>,
         <span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the side `b` port for the new channel&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the side `b` port for the new channel&quot;</span>
     )]</span>
     <span class="ident">port_b</span>: <span class="ident">PortId</span>,
 
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">short</span>,
         <span class="ident">long</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;the channel ordering, valid options &#39;unordered&#39; (default) and &#39;ordered&#39;&quot;</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The channel ordering, valid options &#39;unordered&#39; (default) and &#39;ordered&#39;&quot;</span>,
         <span class="ident">default_value_t</span>
     )]</span>
     <span class="ident">order</span>: <span class="ident">Order</span>,
@@ -242,34 +312,68 @@
         <span class="ident">short</span>,
         <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;channel-version&quot;</span>,
         <span class="ident">alias</span> <span class="op">=</span> <span class="string">&quot;version&quot;</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;the version for the new channel&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The version for the new channel&quot;</span>
     )]</span>
     <span class="ident">version</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Version</span><span class="op">&gt;</span>,
+
+    <span class="attribute">#[<span class="ident">clap</span>(
+        <span class="ident">long</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Indicates that a new client and connection will be created underlying the new channel&quot;</span>
+    )]</span>
+    <span class="ident">new_client_connection</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Runnable</span> <span class="kw">for</span> <span class="ident">CreateChannelCommand</span> {
     <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_b_id</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">run_reusing_connection</span>(),
-            <span class="prelude-val">Some</span>(<span class="ident">chain_b</span>) =&gt; <span class="self">self</span>.<span class="ident">run_using_new_connection</span>(<span class="ident">chain_b</span>),
+        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">connection_a</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">conn</span>) =&gt; <span class="self">self</span>.<span class="ident">run_reusing_connection</span>(<span class="ident">conn</span>),
+            <span class="prelude-val">None</span> =&gt; <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_b</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">chain_b</span>) =&gt; {
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">new_client_connection</span> {
+                        <span class="kw">match</span> <span class="ident">Confirm::new</span>()
+                            .<span class="ident">with_prompt</span>(<span class="macro">format!</span>(
+                                <span class="string">&quot;{}: {}\n{}: {}&quot;</span>,
+                                <span class="ident">style</span>(<span class="string">&quot;WARN&quot;</span>).<span class="ident">yellow</span>(),
+                                <span class="ident">PROMPT</span>,
+                                <span class="ident">style</span>(<span class="string">&quot;Hint&quot;</span>).<span class="ident">cyan</span>(),
+                                <span class="ident">HINT</span>
+                            ))
+                            .<span class="ident">interact</span>()
+                        {
+                            <span class="prelude-val">Ok</span>(<span class="ident">confirm</span>) =&gt; {
+                                <span class="kw">if</span> <span class="ident">confirm</span> {
+                                    <span class="self">self</span>.<span class="ident">run_using_new_connection</span>(<span class="ident">chain_b</span>);
+                                } <span class="kw">else</span> {
+                                    <span class="ident">Output::error</span>(<span class="string">&quot;You elected not to create new clients and connections. Please re-invoke `create channel` with a pre-existing connection ID&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">exit</span>();
+                                }
+                            }
+                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+                                <span class="ident">Output::error</span>(<span class="macro">format!</span>(
+                                    <span class="string">&quot;An error occurred while waiting for user input: {}&quot;</span>,
+                                    <span class="ident">e</span>
+                                ));
+                            }
+                        }
+                    } <span class="kw">else</span> {
+                        <span class="ident">Output::error</span>(
+                                <span class="string">&quot;The `--new-client-connection` flag is required if invoking with `--chain-b`&quot;</span>.<span class="ident">to_string</span>()
+                            )
+                            .<span class="ident">exit</span>();
+                    }
+                }
+                <span class="prelude-val">None</span> =&gt; <span class="ident">Output::error</span>(<span class="string">&quot;Missing one of `&lt;chain-b&gt;` or `&lt;connection-a&gt;`&quot;</span>.<span class="ident">to_string</span>())
+                    .<span class="ident">exit</span>(),
+            },
         }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">CreateChannelCommand</span> {
-    <span class="comment">// Creates a new channel, as well as a new underlying connection and clients.</span>
-    <span class="kw">fn</span> <span class="ident">run_using_new_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_b_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>) {
+    <span class="doccomment">/// Creates a new channel, as well as a new underlying connection and clients.</span>
+    <span class="kw">fn</span> <span class="ident">run_using_new_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_b</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>) {
         <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">app_config</span>();
 
-        <span class="comment">// Bail with an explicit error. The user might be expecting to use this connection.</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">connection_a</span>.<span class="ident">is_some</span>() {
-            <span class="ident">Output::error</span>(
-                <span class="string">&quot;Option `&lt;connection-a&gt;` is incompatible with `&lt;chain-b-id&gt;`&quot;</span>.<span class="ident">to_string</span>(),
-            )
-            .<span class="ident">exit</span>();
-        }
-
-        <span class="kw">let</span> <span class="ident">chains</span> <span class="op">=</span> <span class="ident">ChainHandlePair::spawn</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_a_id</span>, <span class="ident">chain_b_id</span>)
+        <span class="kw">let</span> <span class="ident">chains</span> <span class="op">=</span> <span class="ident">ChainHandlePair::spawn</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_a</span>, <span class="ident">chain_b</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="macro">info!</span>(
@@ -299,39 +403,29 @@
         <span class="ident">Output::success</span>(<span class="ident">channel</span>).<span class="ident">exit</span>();
     }
 
-    <span class="comment">// Creates a new channel, reusing an already existing connection and its clients.</span>
-    <span class="kw">fn</span> <span class="ident">run_reusing_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="doccomment">/// Creates a new channel, reusing an already existing connection and its clients.</span>
+    <span class="kw">fn</span> <span class="ident">run_reusing_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">connection_a</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionId</span>) {
         <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">app_config</span>();
 
         <span class="comment">// Validate &amp; spawn runtime for side a.</span>
-        <span class="kw">let</span> <span class="ident">chain_a</span> <span class="op">=</span> <span class="ident">spawn_chain_runtime</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_a_id</span>)
+        <span class="kw">let</span> <span class="ident">chain_a</span> <span class="op">=</span> <span class="ident">spawn_chain_runtime</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_a</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
-
-        <span class="comment">// Unwrap the identifier of the connection on side a.</span>
-        <span class="kw">let</span> <span class="ident">connection_a_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">connection_a</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">c</span>) =&gt; <span class="ident">c</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="ident">Output::error</span>(
-                <span class="string">&quot;Option `--connection-a` is necessary when &lt;chain-b-id&gt; argument is missing&quot;</span>
-                    .<span class="ident">to_string</span>(),
-            )
-            .<span class="ident">exit</span>(),
-        };
 
         <span class="comment">// Query the connection end.</span>
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="ident">chain_a</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="number">0</span>);
         <span class="kw">let</span> <span class="ident">conn_end</span> <span class="op">=</span> <span class="ident">chain_a</span>
-            .<span class="ident">query_connection</span>(<span class="ident">connection_a_id</span>, <span class="ident">height</span>)
+            .<span class="ident">query_connection</span>(<span class="ident">connection_a</span>, <span class="ident">height</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="comment">// Query the client state, obtain the identifier of chain b.</span>
-        <span class="kw">let</span> <span class="ident">chain_b_id</span> <span class="op">=</span> <span class="ident">chain_a</span>
+        <span class="kw">let</span> <span class="ident">chain_b</span> <span class="op">=</span> <span class="ident">chain_a</span>
             .<span class="ident">query_client_state</span>(<span class="ident">conn_end</span>.<span class="ident">client_id</span>(), <span class="ident">height</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">chain_id</span>())
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="comment">// Spawn the runtime for side b.</span>
         <span class="kw">let</span> <span class="ident">chain_b</span> <span class="op">=</span>
-            <span class="ident">spawn_chain_runtime</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">chain_b_id</span>).<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
+            <span class="ident">spawn_chain_runtime</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">chain_b</span>).<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="comment">// Create the foreign client handles.</span>
         <span class="kw">let</span> <span class="ident">client_a</span> <span class="op">=</span> <span class="ident">ForeignClient::find</span>(<span class="ident">chain_b</span>.<span class="ident">clone</span>(), <span class="ident">chain_a</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>.<span class="ident">client_id</span>())
@@ -339,7 +433,7 @@
         <span class="kw">let</span> <span class="ident">client_b</span> <span class="op">=</span> <span class="ident">ForeignClient::find</span>(<span class="ident">chain_a</span>, <span class="ident">chain_b</span>, <span class="ident">conn_end</span>.<span class="ident">counterparty</span>().<span class="ident">client_id</span>())
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
-        <span class="kw">let</span> <span class="ident">identified_end</span> <span class="op">=</span> <span class="ident">IdentifiedConnectionEnd::new</span>(<span class="ident">connection_a_id</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>);
+        <span class="kw">let</span> <span class="ident">identified_end</span> <span class="op">=</span> <span class="ident">IdentifiedConnectionEnd::new</span>(<span class="ident">connection_a</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>);
 
         <span class="kw">let</span> <span class="ident">connection</span> <span class="op">=</span> <span class="ident">Connection::find</span>(<span class="ident">client_a</span>, <span class="ident">client_b</span>, <span class="kw-2">&amp;</span><span class="ident">identified_end</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
