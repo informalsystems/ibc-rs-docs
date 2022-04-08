@@ -293,16 +293,6 @@
 <span id="291">291</span>
 <span id="292">292</span>
 <span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
 </pre><pre class="rust"><code><span class="doccomment">//! ICS4 (channel) context. The two traits `ChannelReader ` and `ChannelKeeper` define</span>
 <span class="doccomment">//! the interface that any host chain must implement to be able to process any `ChannelMsg`.</span>
 <span class="doccomment">//!</span>
@@ -426,7 +416,7 @@
     <span class="kw">fn</span> <span class="ident">store_channel_result</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">result</span>: <span class="ident">ChannelResult</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// The handler processed this channel &amp; some modifications occurred, store the new end.</span>
         <span class="self">self</span>.<span class="ident">store_channel</span>(
-            (<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
+            (<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>),
             <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">channel_end</span>,
         )<span class="question-mark">?</span>;
 
@@ -438,18 +428,12 @@
             <span class="comment">// Associate also the channel end to its connection.</span>
             <span class="self">self</span>.<span class="ident">store_connection_channels</span>(
                 <span class="ident">result</span>.<span class="ident">channel_end</span>.<span class="ident">connection_hops</span>()[<span class="number">0</span>].<span class="ident">clone</span>(),
-                <span class="kw-2">&amp;</span>(<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
+                <span class="kw-2">&amp;</span>(<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>),
             )<span class="question-mark">?</span>;
 
             <span class="comment">// Initialize send, recv, and ack sequence numbers.</span>
-            <span class="self">self</span>.<span class="ident">store_next_sequence_send</span>(
-                (<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
-                <span class="number">1</span>.<span class="ident">into</span>(),
-            )<span class="question-mark">?</span>;
-            <span class="self">self</span>.<span class="ident">store_next_sequence_recv</span>(
-                (<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
-                <span class="number">1</span>.<span class="ident">into</span>(),
-            )<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">store_next_sequence_send</span>((<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>), <span class="number">1</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">store_next_sequence_recv</span>((<span class="ident">result</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">result</span>.<span class="ident">channel_id</span>), <span class="number">1</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
             <span class="self">self</span>.<span class="ident">store_next_sequence_ack</span>((<span class="ident">result</span>.<span class="ident">port_id</span>, <span class="ident">result</span>.<span class="ident">channel_id</span>), <span class="number">1</span>.<span class="ident">into</span>())<span class="question-mark">?</span>;
         }
 
@@ -460,12 +444,12 @@
         <span class="kw">match</span> <span class="ident">general_result</span> {
             <span class="ident">PacketResult::Send</span>(<span class="ident">res</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">store_next_sequence_send</span>(
-                    (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
+                    (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>),
                     <span class="ident">res</span>.<span class="ident">seq_number</span>,
                 )<span class="question-mark">?</span>;
 
                 <span class="self">self</span>.<span class="ident">store_packet_commitment</span>(
-                    (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">seq</span>),
+                    (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>, <span class="ident">res</span>.<span class="ident">seq</span>),
                     <span class="ident">res</span>.<span class="ident">timeout_timestamp</span>,
                     <span class="ident">res</span>.<span class="ident">timeout_height</span>,
                     <span class="ident">res</span>.<span class="ident">data</span>,
@@ -480,14 +464,14 @@
                     <span class="prelude-val">None</span> =&gt; {
                         <span class="comment">// Ordered channel</span>
                         <span class="self">self</span>.<span class="ident">store_next_sequence_recv</span>(
-                            (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
+                            (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>),
                             <span class="ident">res</span>.<span class="ident">seq_number</span>,
                         )<span class="question-mark">?</span>
                     }
                     <span class="prelude-val">Some</span>(<span class="ident">r</span>) =&gt; {
                         <span class="comment">// Unordered channel</span>
                         <span class="self">self</span>.<span class="ident">store_packet_receipt</span>(
-                            (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">seq</span>),
+                            (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>, <span class="ident">res</span>.<span class="ident">seq</span>),
                             <span class="ident">r</span>,
                         )<span class="question-mark">?</span>
                     }
@@ -495,7 +479,7 @@
             }
             <span class="ident">PacketResult::WriteAck</span>(<span class="ident">res</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">store_packet_acknowledgement</span>(
-                    (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">seq</span>),
+                    (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>, <span class="ident">res</span>.<span class="ident">seq</span>),
                     <span class="ident">res</span>.<span class="ident">ack</span>,
                 )<span class="question-mark">?</span>;
             }
@@ -509,7 +493,7 @@
                         <span class="comment">//Unordered Channel</span>
                         <span class="self">self</span>.<span class="ident">delete_packet_commitment</span>((
                             <span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
-                            <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(),
+                            <span class="ident">res</span>.<span class="ident">channel_id</span>,
                             <span class="ident">res</span>.<span class="ident">seq</span>,
                         ))<span class="question-mark">?</span>;
                     }
@@ -518,13 +502,9 @@
             <span class="ident">PacketResult::Timeout</span>(<span class="ident">res</span>) =&gt; {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">res</span>.<span class="ident">channel</span> {
                     <span class="comment">//Ordered Channel</span>
-                    <span class="self">self</span>.<span class="ident">store_channel</span>((<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()), <span class="kw-2">&amp;</span><span class="ident">c</span>)<span class="question-mark">?</span>;
+                    <span class="self">self</span>.<span class="ident">store_channel</span>((<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>), <span class="kw-2">&amp;</span><span class="ident">c</span>)<span class="question-mark">?</span>;
                 }
-                <span class="self">self</span>.<span class="ident">delete_packet_commitment</span>((
-                    <span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">res</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">res</span>.<span class="ident">seq</span>,
-                ))<span class="question-mark">?</span>;
+                <span class="self">self</span>.<span class="ident">delete_packet_commitment</span>((<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>, <span class="ident">res</span>.<span class="ident">seq</span>))<span class="question-mark">?</span>;
             }
         }
         <span class="prelude-val">Ok</span>(())
