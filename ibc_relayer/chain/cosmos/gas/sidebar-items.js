@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["calculate_fee",""],["gas_amount_to_fees",""],["mul_ceil","Multiply `a` with `f` and round the result up to the nearest integer."]],"struct":[["PrettyFee",""]]});

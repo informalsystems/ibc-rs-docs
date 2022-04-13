@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["send_tx_with_account_sequence_retry","Try to `send_tx` with retry on account sequence error. An account sequence error can occur if the account sequence that the relayer caches becomes outdated. This may happen if the relayer wallet is used concurrently elsewhere, or when tx fees are mis-configured leading to transactions hanging in the mempool."]]});

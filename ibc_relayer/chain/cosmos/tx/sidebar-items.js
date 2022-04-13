@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["estimate_fee_and_send_tx",""]]});
