@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["cli",""],["error",""],["operational_data",""]],"struct":[["Link",""],["LinkParameters",""],["RelaySummary",""]]});
+initSidebarItems({"enum":[["Resubmit","Whether or not to resubmit packets when pending transactions fail to process within the given timeout duration."]],"mod":[["cli",""],["error",""],["operational_data",""]],"struct":[["Link",""],["LinkParameters",""],["RelayPath",""],["RelaySummary",""]]});

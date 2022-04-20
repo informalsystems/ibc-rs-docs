@@ -154,6 +154,7 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
+<span id="152">152</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core::fmt</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -161,7 +162,7 @@
 <span class="kw">use</span> <span class="ident">tracing::error</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client::ForeignClient</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">Link</span>, <span class="ident">LinkParameters</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">Link</span>, <span class="ident">LinkParameters</span>, <span class="ident">Resubmit</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">chain::handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainHandlePair</span>},
     <span class="ident">config::Config</span>,
@@ -281,6 +282,7 @@
                 <span class="prelude-val">Ok</span>(<span class="ident">link</span>) =&gt; {
                     <span class="kw">let</span> (<span class="ident">cmd_tx</span>, <span class="ident">cmd_rx</span>) <span class="op">=</span> <span class="ident">crossbeam_channel::unbounded</span>();
                     <span class="kw">let</span> <span class="ident">link</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">Mutex::new</span>(<span class="ident">link</span>));
+                    <span class="kw">let</span> <span class="ident">resubmit</span> <span class="op">=</span> <span class="ident">Resubmit::from_clear_interval</span>(<span class="ident">packets_config</span>.<span class="ident">clear_interval</span>);
                     <span class="kw">let</span> <span class="ident">packet_task</span> <span class="op">=</span> <span class="ident">packet::spawn_packet_cmd_worker</span>(
                         <span class="ident">cmd_rx</span>,
                         <span class="ident">link</span>.<span class="ident">clone</span>(),
@@ -290,7 +292,7 @@
                     );
                     <span class="ident">task_handles</span>.<span class="ident">push</span>(<span class="ident">packet_task</span>);
 
-                    <span class="kw">let</span> <span class="ident">link_task</span> <span class="op">=</span> <span class="ident">packet::spawn_packet_worker</span>(<span class="ident">path</span>.<span class="ident">clone</span>(), <span class="ident">link</span>);
+                    <span class="kw">let</span> <span class="ident">link_task</span> <span class="op">=</span> <span class="ident">packet::spawn_packet_worker</span>(<span class="ident">path</span>.<span class="ident">clone</span>(), <span class="ident">link</span>, <span class="ident">resubmit</span>);
                     <span class="ident">task_handles</span>.<span class="ident">push</span>(<span class="ident">link_task</span>);
 
                     (<span class="prelude-val">Some</span>(<span class="ident">cmd_tx</span>), <span class="prelude-val">None</span>)

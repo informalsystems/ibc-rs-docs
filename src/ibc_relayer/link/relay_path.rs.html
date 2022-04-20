@@ -1636,6 +1636,40 @@
 <span id="1631">1631</span>
 <span id="1632">1632</span>
 <span id="1633">1633</span>
+<span id="1634">1634</span>
+<span id="1635">1635</span>
+<span id="1636">1636</span>
+<span id="1637">1637</span>
+<span id="1638">1638</span>
+<span id="1639">1639</span>
+<span id="1640">1640</span>
+<span id="1641">1641</span>
+<span id="1642">1642</span>
+<span id="1643">1643</span>
+<span id="1644">1644</span>
+<span id="1645">1645</span>
+<span id="1646">1646</span>
+<span id="1647">1647</span>
+<span id="1648">1648</span>
+<span id="1649">1649</span>
+<span id="1650">1650</span>
+<span id="1651">1651</span>
+<span id="1652">1652</span>
+<span id="1653">1653</span>
+<span id="1654">1654</span>
+<span id="1655">1655</span>
+<span id="1656">1656</span>
+<span id="1657">1657</span>
+<span id="1658">1658</span>
+<span id="1659">1659</span>
+<span id="1660">1660</span>
+<span id="1661">1661</span>
+<span id="1662">1662</span>
+<span id="1663">1663</span>
+<span id="1664">1664</span>
+<span id="1665">1665</span>
+<span id="1666">1666</span>
+<span id="1667">1667</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">alloc::collections::VecDeque</span>;
 <span class="kw">use</span> <span class="ident">std::ops::Sub</span>;
@@ -1696,6 +1730,27 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::queue::Queue</span>;
 
 <span class="kw">const</span> <span class="ident">MAX_RETRIES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
+
+<span class="doccomment">/// Whether or not to resubmit packets when pending transactions</span>
+<span class="doccomment">/// fail to process within the given timeout duration.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Resubmit</span> {
+    <span class="ident">Yes</span>,
+    <span class="ident">No</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Resubmit</span> {
+    <span class="doccomment">/// Packet resubmission is enabled when the clear interval for packets is 0. Otherwise,</span>
+    <span class="doccomment">/// when the packet clear interval is &gt; 0, the relayer will periodically clear unsent packets</span>
+    <span class="doccomment">/// such that resubmitting packets is not necessary.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_clear_interval</span>(<span class="ident">clear_interval</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
+        <span class="kw">if</span> <span class="ident">clear_interval</span> <span class="op">==</span> <span class="number">0</span> {
+            <span class="ident"><span class="self">Self</span>::Yes</span>
+        } <span class="kw">else</span> {
+            <span class="ident"><span class="self">Self</span>::No</span>
+        }
+    }
+}
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RelayPath</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> {
     <span class="ident">channel</span>: <span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
@@ -2195,8 +2250,8 @@
         <span class="prelude-val">Ok</span>(<span class="ident">S::Reply::empty</span>())
     }
 
-    <span class="doccomment">/// Helper for managing retries of the `relay_from_operational_data` method.</span>
-    <span class="doccomment">/// Expects as input the initial operational data that failed to send.</span>
+    <span class="doccomment">/// Generates fresh operational data for a tx given the initial operational data</span>
+    <span class="doccomment">/// that failed to send.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Return value:</span>
     <span class="doccomment">///   - `Some(..)`: a new operational data from which to retry sending,</span>
@@ -2205,7 +2260,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Side effects: may schedule a new operational data targeting the source chain, comprising</span>
     <span class="doccomment">/// new timeout messages.</span>
-    <span class="kw">fn</span> <span class="ident">regenerate_operational_data</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">regenerate_operational_data</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">initial_odata</span>: <span class="ident">OperationalData</span>,
     ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OperationalData</span><span class="op">&gt;</span> {
@@ -3009,17 +3064,20 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">process_pending_txs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">RelaySummary</span> {
+    <span class="doccomment">/// Kicks off the process of relaying pending txs to the source and destination chains.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// See [`Resubmit::from_clear_interval`] for more info about the `resubmit` parameter.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">process_pending_txs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">resubmit</span>: <span class="ident">Resubmit</span>) -&gt; <span class="ident">RelaySummary</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">confirm_txes</span> {
             <span class="kw">return</span> <span class="ident">RelaySummary::empty</span>();
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">summary_src</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">process_pending_txs_src</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">summary_src</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">process_pending_txs_src</span>(<span class="ident">resubmit</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
             <span class="macro">error!</span>(<span class="string">&quot;error processing pending events in source chain: {}&quot;</span>, <span class="ident">e</span>);
             <span class="ident">RelaySummary::empty</span>()
         });
 
-        <span class="kw">let</span> <span class="ident">summary_dst</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">process_pending_txs_dst</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="ident">summary_dst</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">process_pending_txs_dst</span>(<span class="ident">resubmit</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
             <span class="macro">error!</span>(
                 <span class="string">&quot;error processing pending events in destination chain: {}&quot;</span>,
                 <span class="ident">e</span>
@@ -3031,23 +3089,33 @@
         <span class="ident">summary_src</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">process_pending_txs_src</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RelaySummary</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">process_pending_txs_src</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">resubmit</span>: <span class="ident">Resubmit</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RelaySummary</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">do_resubmit</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resubmit</span> {
+            <span class="ident">Resubmit::Yes</span> =&gt; {
+                <span class="prelude-val">Some</span>(<span class="op">|</span><span class="ident">odata</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">relay_sender::AsyncSender</span><span class="op">&gt;</span>(<span class="ident">odata</span>))
+            }
+            <span class="ident">Resubmit::No</span> =&gt; <span class="prelude-val">None</span>,
+        };
+
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">pending_txs_src</span>
-            .<span class="ident">process_pending</span>(<span class="ident">pending::TIMEOUT</span>, <span class="op">|</span><span class="ident">odata</span><span class="op">|</span> {
-                <span class="self">self</span>.<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">relay_sender::AsyncSender</span><span class="op">&gt;</span>(<span class="ident">odata</span>)
-            })<span class="question-mark">?</span>
+            .<span class="ident">process_pending</span>(<span class="ident">pending::TIMEOUT</span>, <span class="self">self</span>, <span class="ident">do_resubmit</span>)<span class="question-mark">?</span>
             .<span class="ident">unwrap_or_else</span>(<span class="ident">RelaySummary::empty</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">res</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">process_pending_txs_dst</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RelaySummary</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">process_pending_txs_dst</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">resubmit</span>: <span class="ident">Resubmit</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RelaySummary</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">do_resubmit</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resubmit</span> {
+            <span class="ident">Resubmit::Yes</span> =&gt; {
+                <span class="prelude-val">Some</span>(<span class="op">|</span><span class="ident">odata</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">relay_sender::AsyncSender</span><span class="op">&gt;</span>(<span class="ident">odata</span>))
+            }
+            <span class="ident">Resubmit::No</span> =&gt; <span class="prelude-val">None</span>,
+        };
+
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">pending_txs_dst</span>
-            .<span class="ident">process_pending</span>(<span class="ident">pending::TIMEOUT</span>, <span class="op">|</span><span class="ident">odata</span><span class="op">|</span> {
-                <span class="self">self</span>.<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">relay_sender::AsyncSender</span><span class="op">&gt;</span>(<span class="ident">odata</span>)
-            })<span class="question-mark">?</span>
+            .<span class="ident">process_pending</span>(<span class="ident">pending::TIMEOUT</span>, <span class="self">self</span>, <span class="ident">do_resubmit</span>)<span class="question-mark">?</span>
             .<span class="ident">unwrap_or_else</span>(<span class="ident">RelaySummary::empty</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">res</span>)

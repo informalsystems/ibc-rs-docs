@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["spawn_packet_cmd_worker",""],["spawn_packet_worker",""]]});
+initSidebarItems({"fn":[["spawn_packet_cmd_worker",""],["spawn_packet_worker","Spawns a packet worker task in the background that handles the work of processing pending txs between `ChainA` and `ChainB`."]]});
