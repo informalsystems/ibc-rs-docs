@@ -162,6 +162,18 @@
 <span id="157">157</span>
 <span id="158">158</span>
 <span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Registry for keeping track of [`ChainHandle`]s indexed by a `ChainId`.</span>
 
 <span class="kw">use</span> <span class="ident">alloc::collections::btree_map::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
@@ -190,12 +202,24 @@
         <span class="ident">RuntimeNotFound</span>
             <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;expected runtime to be found in registry&quot;</span> },
 
-        <span class="ident">MissingChain</span>
+        <span class="ident">MissingChainConfig</span>
             { <span class="ident">chain_id</span>: <span class="ident">ChainId</span> }
             <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> {
-                <span class="macro">format_args!</span>(<span class="string">&quot;missing chain for id ({}) in configuration file&quot;</span>,
+                <span class="macro">format_args!</span>(<span class="string">&quot;missing chain config for &#39;{}&#39; in configuration file&quot;</span>,
                     <span class="ident">e</span>.<span class="ident">chain_id</span>)
             }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">SpawnError</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">log_as_debug</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">detail</span>().<span class="ident">log_as_debug</span>()
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">SpawnErrorDetail</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">log_as_debug</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">SpawnErrorDetail::MissingChainConfig</span>(<span class="kw">_</span>))
     }
 }
 
@@ -314,7 +338,7 @@
     <span class="kw">let</span> <span class="ident">chain_config</span> <span class="op">=</span> <span class="ident">config</span>
         .<span class="ident">find_chain</span>(<span class="ident">chain_id</span>)
         .<span class="ident">cloned</span>()
-        .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">SpawnError::missing_chain</span>(<span class="ident">chain_id</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
+        .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">SpawnError::missing_chain_config</span>(<span class="ident">chain_id</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span>
         <span class="ident">ChainRuntime</span>::<span class="op">&lt;</span><span class="ident">CosmosSdkChain</span><span class="op">&gt;</span><span class="ident">::spawn</span>(<span class="ident">chain_config</span>, <span class="ident">rt</span>).<span class="ident">map_err</span>(<span class="ident">SpawnError::relayer</span>)<span class="question-mark">?</span>;
