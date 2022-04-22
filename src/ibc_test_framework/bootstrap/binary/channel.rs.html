@@ -193,11 +193,31 @@
 <span id="188">188</span>
 <span id="189">189</span>
 <span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
 </pre><pre class="rust"><code><span class="doccomment">/*!
     Helper functions for bootstrapping a channel between two chains.
 */</span>
 
-<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">eyre</span>::{<span class="ident">eyre</span>, <span class="ident">Report</span> <span class="kw">as</span> <span class="ident">Error</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::channel::Order</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::Version</span>;
@@ -206,7 +226,7 @@
 <span class="kw">use</span> <span class="ident">ibc_relayer::channel</span>::{<span class="ident">Channel</span>, <span class="ident">ChannelSide</span>};
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">info</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::connection::bootstrap_connection</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::connection</span>::{<span class="ident">bootstrap_connection</span>, <span class="ident">BootstrapConnectionOptions</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::binary::chains::ConnectedChains</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::binary::channel::ConnectedChannel</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::binary::connection::ConnectedConnection</span>;
@@ -214,6 +234,12 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::id::TaggedPortIdRef</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::tagged</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::random::random_u64_range</span>;
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BootstrapChannelOptions</span> {
+    <span class="kw">pub</span> <span class="ident">order</span>: <span class="ident">Order</span>,
+    <span class="kw">pub</span> <span class="ident">version</span>: <span class="ident">Version</span>,
+    <span class="kw">pub</span> <span class="ident">bootstrap_with_random_ids</span>: <span class="ident">bool</span>,
+}
 
 <span class="doccomment">/**
    Create a new [`ConnectedChannel`] based on the provided [`ConnectedChains`].
@@ -225,19 +251,15 @@
     <span class="ident">chains</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectedChains</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
     <span class="ident">port_a</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
     <span class="ident">port_b</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-    <span class="ident">order</span>: <span class="ident">Order</span>,
-    <span class="ident">version</span>: <span class="ident">Version</span>,
-    <span class="ident">connection_delay</span>: <span class="ident">Duration</span>,
-    <span class="ident">bootstrap_with_random_ids</span>: <span class="ident">bool</span>,
+    <span class="ident">connection_options</span>: <span class="ident">BootstrapConnectionOptions</span>,
+    <span class="ident">channel_options</span>: <span class="ident">BootstrapChannelOptions</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectedChannel</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">channel</span> <span class="op">=</span> <span class="ident">bootstrap_channel</span>(
         <span class="kw-2">&amp;</span><span class="ident">chains</span>.<span class="ident">foreign_clients</span>,
         <span class="kw-2">&amp;</span><span class="ident">DualTagged::new</span>(<span class="ident">port_a</span>),
         <span class="kw-2">&amp;</span><span class="ident">DualTagged::new</span>(<span class="ident">port_b</span>),
-        <span class="ident">order</span>,
-        <span class="ident">version</span>,
-        <span class="ident">connection_delay</span>,
-        <span class="ident">bootstrap_with_random_ids</span>,
+        <span class="ident">connection_options</span>,
+        <span class="ident">channel_options</span>,
     )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(<span class="ident">channel</span>)
@@ -251,13 +273,10 @@
     <span class="ident">foreign_clients</span>: <span class="kw-2">&amp;</span><span class="ident">ForeignClientPair</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
     <span class="ident">port_a</span>: <span class="kw-2">&amp;</span><span class="ident">TaggedPortIdRef</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
     <span class="ident">port_b</span>: <span class="kw-2">&amp;</span><span class="ident">TaggedPortIdRef</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span>,
-    <span class="ident">order</span>: <span class="ident">Order</span>,
-    <span class="ident">version</span>: <span class="ident">Version</span>,
-    <span class="ident">connection_delay</span>: <span class="ident">Duration</span>,
-    <span class="ident">bootstrap_with_random_ids</span>: <span class="ident">bool</span>,
+    <span class="ident">connection_options</span>: <span class="ident">BootstrapConnectionOptions</span>,
+    <span class="ident">channel_options</span>: <span class="ident">BootstrapChannelOptions</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectedChannel</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">connection</span> <span class="op">=</span>
-        <span class="ident">bootstrap_connection</span>(<span class="ident">foreign_clients</span>, <span class="ident">connection_delay</span>, <span class="ident">bootstrap_with_random_ids</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">connection</span> <span class="op">=</span> <span class="ident">bootstrap_connection</span>(<span class="ident">foreign_clients</span>, <span class="ident">connection_options</span>)<span class="question-mark">?</span>;
 
     <span class="ident">bootstrap_channel_with_connection</span>(
         <span class="kw-2">&amp;</span><span class="ident">foreign_clients</span>.<span class="ident">handle_a</span>(),
@@ -265,9 +284,7 @@
         <span class="ident">connection</span>,
         <span class="ident">port_a</span>,
         <span class="ident">port_b</span>,
-        <span class="ident">order</span>,
-        <span class="ident">version</span>,
-        <span class="ident">bootstrap_with_random_ids</span>,
+        <span class="ident">channel_options</span>,
     )
 }
 
@@ -280,21 +297,19 @@
     <span class="ident">connection</span>: <span class="ident">ConnectedConnection</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
     <span class="ident">port_a</span>: <span class="kw-2">&amp;</span><span class="ident">TaggedPortIdRef</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
     <span class="ident">port_b</span>: <span class="kw-2">&amp;</span><span class="ident">TaggedPortIdRef</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span>,
-    <span class="ident">order</span>: <span class="ident">Order</span>,
-    <span class="ident">version</span>: <span class="ident">Version</span>,
-    <span class="ident">bootstrap_with_random_ids</span>: <span class="ident">bool</span>,
+    <span class="ident">options</span>: <span class="ident">BootstrapChannelOptions</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectedChannel</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">bootstrap_with_random_ids</span> {
+    <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">bootstrap_with_random_ids</span> {
         <span class="ident">pad_channel_id</span>(<span class="ident">chain_a</span>, <span class="ident">chain_b</span>, <span class="kw-2">&amp;</span><span class="ident">connection</span>, <span class="ident">port_a</span>)<span class="question-mark">?</span>;
         <span class="ident">pad_channel_id</span>(<span class="ident">chain_b</span>, <span class="ident">chain_a</span>, <span class="kw-2">&amp;</span><span class="ident">connection</span>.<span class="ident">clone</span>().<span class="ident">flip</span>(), <span class="ident">port_b</span>)<span class="question-mark">?</span>;
     }
 
     <span class="kw">let</span> <span class="ident">channel</span> <span class="op">=</span> <span class="ident">Channel::new</span>(
         <span class="ident">connection</span>.<span class="ident">connection</span>.<span class="ident">clone</span>(),
-        <span class="ident">order</span>,
+        <span class="ident">options</span>.<span class="ident">order</span>,
         <span class="ident">port_a</span>.<span class="number">0</span>.<span class="ident">clone</span>(),
         <span class="ident">port_b</span>.<span class="number">0</span>.<span class="ident">clone</span>(),
-        <span class="prelude-val">Some</span>(<span class="ident">version</span>),
+        <span class="prelude-val">Some</span>(<span class="ident">options</span>.<span class="ident">version</span>),
     )<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">channel_id_a</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">channel</span>
@@ -382,6 +397,33 @@
     }
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">BootstrapChannelOptions</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">order</span>: <span class="ident">Order::Unordered</span>,
+            <span class="ident">version</span>: <span class="ident">Version::ics20</span>(),
+            <span class="ident">bootstrap_with_random_ids</span>: <span class="bool-val">false</span>,
+        }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">BootstrapChannelOptions</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">order</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">Order</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">order</span> <span class="op">=</span> <span class="ident">order</span>;
+        <span class="self">self</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">version</span>: <span class="ident">Version</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">version</span> <span class="op">=</span> <span class="ident">version</span>;
+        <span class="self">self</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bootstrap_with_random_ids</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">bootstrap_with_random_ids</span>: <span class="ident">bool</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">bootstrap_with_random_ids</span> <span class="op">=</span> <span class="ident">bootstrap_with_random_ids</span>;
+        <span class="self">self</span>
+    }
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="ibc_test_framework" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.60.0 (7737e0b5c 2022-04-04)" ></div>
