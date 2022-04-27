@@ -1667,9 +1667,6 @@
 <span id="1662">1662</span>
 <span id="1663">1663</span>
 <span id="1664">1664</span>
-<span id="1665">1665</span>
-<span id="1666">1666</span>
-<span id="1667">1667</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">alloc::collections::VecDeque</span>;
 <span class="kw">use</span> <span class="ident">std::ops::Sub</span>;
@@ -1710,7 +1707,8 @@
 };
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty</span>::{
-    <span class="ident">unreceived_acknowledgements_sequences</span>, <span class="ident">unreceived_packets_sequences</span>,
+    <span class="ident">commitments_on_chain</span>, <span class="ident">packet_acknowledgements</span>, <span class="ident">unreceived_acknowledgements_sequences</span>,
+    <span class="ident">unreceived_packets_sequences</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tx::TrackedMsgs</span>;
@@ -2640,13 +2638,15 @@
         <span class="kw">let</span> <span class="ident">src_channel_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">src_channel_id</span>();
         <span class="kw">let</span> <span class="ident">dst_channel_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dst_channel_id</span>();
 
-        <span class="kw">let</span> (<span class="ident">commit_sequences</span>, <span class="ident">sequences</span>, <span class="ident">src_response_height</span>) <span class="op">=</span> <span class="ident">unreceived_packets_sequences</span>(
+        <span class="kw">let</span> (<span class="ident">commit_sequences</span>, <span class="ident">src_response_height</span>) <span class="op">=</span>
+            <span class="ident">commitments_on_chain</span>(<span class="self">self</span>.<span class="ident">src_chain</span>(), <span class="self">self</span>.<span class="ident">src_port_id</span>(), <span class="ident">src_channel_id</span>)
+                .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let</span> <span class="ident">sequences</span> <span class="op">=</span> <span class="ident">unreceived_packets_sequences</span>(
             <span class="self">self</span>.<span class="ident">dst_chain</span>(),
             <span class="self">self</span>.<span class="ident">dst_port_id</span>(),
             <span class="ident">dst_channel_id</span>,
-            <span class="self">self</span>.<span class="ident">src_chain</span>(),
-            <span class="self">self</span>.<span class="ident">src_port_id</span>(),
-            <span class="ident">src_channel_id</span>,
+            <span class="ident">commit_sequences</span>,
         )
         .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
 
@@ -2656,13 +2656,6 @@
         <span class="kw">if</span> <span class="ident">sequences</span>.<span class="ident">is_empty</span>() {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="ident">events_result</span>.<span class="ident">into</span>(), <span class="ident">query_height</span>));
         }
-
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;packet seq. that still have commitments on {}: {} (first 10 shown here; total={})&quot;</span>,
-            <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
-            <span class="ident">commit_sequences</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="number">10</span>).<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>),
-            <span class="ident">commit_sequences</span>.<span class="ident">len</span>()
-        );
 
         <span class="macro">debug!</span>(
             <span class="string">&quot;recv packets to send out to {} of the ones with commitments on {}: {} (first 10 shown here; total={})&quot;</span>,
@@ -2751,16 +2744,25 @@
         <span class="kw">let</span> <span class="ident">src_channel_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">src_channel_id</span>();
         <span class="kw">let</span> <span class="ident">dst_channel_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dst_channel_id</span>();
 
-        <span class="kw">let</span> (<span class="ident">acks_on_src</span>, <span class="ident">unreceived_acks_by_dst</span>, <span class="ident">src_response_height</span>) <span class="op">=</span>
-            <span class="ident">unreceived_acknowledgements_sequences</span>(
-                <span class="self">self</span>.<span class="ident">dst_chain</span>(),
-                <span class="self">self</span>.<span class="ident">dst_port_id</span>(),
-                <span class="ident">dst_channel_id</span>,
-                <span class="self">self</span>.<span class="ident">src_chain</span>(),
-                <span class="self">self</span>.<span class="ident">src_port_id</span>(),
-                <span class="ident">src_channel_id</span>,
-            )
-            .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">commitments_on_counterparty</span>, <span class="kw">_</span>) <span class="op">=</span>
+            <span class="ident">commitments_on_chain</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>(), <span class="self">self</span>.<span class="ident">dst_port_id</span>(), <span class="ident">dst_channel_id</span>)
+                .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let</span> (<span class="ident">acks_on_src</span>, <span class="ident">src_response_height</span>) <span class="op">=</span> <span class="ident">packet_acknowledgements</span>(
+            <span class="self">self</span>.<span class="ident">src_chain</span>(),
+            <span class="self">self</span>.<span class="ident">src_port_id</span>(),
+            <span class="ident">src_channel_id</span>,
+            <span class="ident">commitments_on_counterparty</span>,
+        )
+        .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let</span> <span class="ident">unreceived_acks_by_dst</span> <span class="op">=</span> <span class="ident">unreceived_acknowledgements_sequences</span>(
+            <span class="self">self</span>.<span class="ident">dst_chain</span>(),
+            <span class="self">self</span>.<span class="ident">dst_port_id</span>(),
+            <span class="ident">dst_channel_id</span>,
+            <span class="ident">acks_on_src</span>,
+        )
+        .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">query_height</span> <span class="op">=</span> <span class="ident">opt_query_height</span>.<span class="ident">unwrap_or</span>(<span class="ident">src_response_height</span>);
 
@@ -2768,14 +2770,6 @@
         <span class="kw">if</span> <span class="ident">sequences</span>.<span class="ident">is_empty</span>() {
             <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="ident">events_result</span>.<span class="ident">into</span>(), <span class="ident">query_height</span>));
         }
-
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;packets that have acknowledgments on {}: [{:?}..{:?}] (total={})&quot;</span>,
-            <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
-            <span class="ident">acks_on_src</span>.<span class="ident">first</span>(),
-            <span class="ident">acks_on_src</span>.<span class="ident">last</span>(),
-            <span class="ident">acks_on_src</span>.<span class="ident">len</span>()
-        );
 
         <span class="macro">debug!</span>(
             <span class="string">&quot;ack packets to send out to {} of the ones with acknowledgments on {}: {} (first 10 shown here; total={})&quot;</span>,

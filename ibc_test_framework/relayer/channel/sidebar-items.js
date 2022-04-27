@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["assert_eventually_channel_established",""],["init_channel",""],["query_channel_end",""]],"trait":[["TaggedChannelEndExt",""]]});
+initSidebarItems({"fn":[["assert_eventually_channel_established",""],["init_channel",""],["query_channel_end",""],["query_identified_channel_end",""]],"trait":[["TaggedChannelEndExt",""]]});

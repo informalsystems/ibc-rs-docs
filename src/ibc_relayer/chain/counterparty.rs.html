@@ -510,7 +510,35 @@
 <span id="505">505</span>
 <span id="506">506</span>
 <span id="507">507</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashSet</span>;
+
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">trace</span>};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::ChannelError</span>;
@@ -840,68 +868,47 @@
     <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
     <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-    <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
-    <span class="ident">counterparty_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-    <span class="ident">counterparty_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Height</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="comment">// get the packet commitments on the counterparty/ source chain</span>
-    <span class="kw">let</span> (<span class="ident">commitments_on_counterparty</span>, <span class="ident">counterparty_height</span>) <span class="op">=</span> <span class="ident">commitments_on_chain</span>(
-        <span class="ident">counterparty_chain</span>,
-        <span class="ident">counterparty_port_id</span>,
-        <span class="ident">counterparty_channel_id</span>,
-    )<span class="question-mark">?</span>;
+    <span class="ident">commitments_on_counterparty</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="ident">commitments_on_counterparty</span>.<span class="ident">is_empty</span>() {
-        <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="macro">vec!</span>[], <span class="macro">vec!</span>[], <span class="ident">counterparty_height</span>));
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
     }
 
     <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">QueryUnreceivedPacketsRequest</span> {
         <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">to_string</span>(),
         <span class="ident">channel_id</span>: <span class="ident">channel_id</span>.<span class="ident">to_string</span>(),
-        <span class="ident">packet_commitment_sequences</span>: <span class="ident">commitments_on_counterparty</span>.<span class="ident">clone</span>(),
+        <span class="ident">packet_commitment_sequences</span>: <span class="ident">commitments_on_counterparty</span>,
     };
 
-    <span class="kw">let</span> <span class="ident">unreceived_recv_msgs</span> <span class="op">=</span> <span class="ident">chain</span>
+    <span class="ident">chain</span>
         .<span class="ident">query_unreceived_packets</span>(<span class="ident">request</span>)
-        .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>((
-        <span class="ident">commitments_on_counterparty</span>,
-        <span class="ident">unreceived_recv_msgs</span>,
-        <span class="ident">counterparty_height</span>,
-    ))
+        .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)
 }
 
 <span class="doccomment">/// Returns the sequences of the written acknowledgments on a given chain and channel (port_id + channel_id), out of</span>
 <span class="doccomment">/// the commitments still present on the counterparty chain.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">packet_acknowledgedgments</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">packet_acknowledgements</span>(
     <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
     <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-    <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
-    <span class="ident">counterparty_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-    <span class="ident">counterparty_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+    <span class="ident">commit_sequences</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Height</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">commit_sequences</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">commitments_on_chain</span>(
-        <span class="ident">counterparty_chain</span>,
-        <span class="ident">counterparty_port_id</span>,
-        <span class="ident">counterparty_channel_id</span>,
-    )<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">commit_set</span> <span class="op">=</span> <span class="ident">commit_sequences</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
-    <span class="comment">// get the packet acknowledgments on counterparty/source chain</span>
+    <span class="comment">// Get the packet acknowledgments on counterparty/source chain</span>
     <span class="kw">let</span> <span class="ident">acks_request</span> <span class="op">=</span> <span class="ident">QueryPacketAcknowledgementsRequest</span> {
         <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">to_string</span>(),
         <span class="ident">channel_id</span>: <span class="ident">channel_id</span>.<span class="ident">to_string</span>(),
         <span class="ident">pagination</span>: <span class="ident">ibc_proto::cosmos::base::query::pagination::all</span>(),
-        <span class="ident">packet_commitment_sequences</span>: <span class="ident">commit_sequences</span>.<span class="ident">clone</span>(),
+        <span class="ident">packet_commitment_sequences</span>: <span class="ident">commit_sequences</span>,
     };
-
     <span class="kw">let</span> (<span class="ident">acks</span>, <span class="ident">response_height</span>) <span class="op">=</span> <span class="ident">chain</span>
         .<span class="ident">query_packet_acknowledgements</span>(<span class="ident">acks_request</span>)
         .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">acked_sequences</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">acks</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">sequence</span>).<span class="ident">collect</span>();
+    <span class="ident">acked_sequences</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">commit_set</span>.<span class="ident">contains</span>(<span class="ident">s</span>));
     <span class="ident">acked_sequences</span>.<span class="ident">sort_unstable</span>();
-    <span class="ident">acked_sequences</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">commit_sequences</span>.<span class="ident">contains</span>(<span class="ident">s</span>));
 
     <span class="prelude-val">Ok</span>((<span class="ident">acked_sequences</span>, <span class="ident">response_height</span>))
 }
@@ -913,37 +920,21 @@
     <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
     <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-    <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
-    <span class="ident">counterparty_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-    <span class="ident">counterparty_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Height</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="comment">// get the packet commitments on the destination chain</span>
-
-    <span class="comment">// get the packet acknowledgments on counterparty chain</span>
-    <span class="kw">let</span> (<span class="ident">acks_on_counterparty</span>, <span class="ident">counterparty_height</span>) <span class="op">=</span> <span class="ident">packet_acknowledgedgments</span>(
-        <span class="ident">counterparty_chain</span>,
-        <span class="ident">counterparty_port_id</span>,
-        <span class="ident">counterparty_channel_id</span>,
-        <span class="ident">chain</span>,
-        <span class="ident">port_id</span>,
-        <span class="ident">channel_id</span>,
-    )<span class="question-mark">?</span>;
+    <span class="ident">acks_on_counterparty</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">acks_on_counterparty</span>.<span class="ident">is_empty</span>() {
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
+    }
 
     <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">QueryUnreceivedAcksRequest</span> {
         <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">to_string</span>(),
         <span class="ident">channel_id</span>: <span class="ident">channel_id</span>.<span class="ident">to_string</span>(),
-        <span class="ident">packet_ack_sequences</span>: <span class="ident">acks_on_counterparty</span>.<span class="ident">clone</span>(),
+        <span class="ident">packet_ack_sequences</span>: <span class="ident">acks_on_counterparty</span>,
     };
 
-    <span class="kw">let</span> <span class="ident">unreceived_ack_msgs</span> <span class="op">=</span> <span class="ident">chain</span>
+    <span class="ident">chain</span>
         .<span class="ident">query_unreceived_acknowledgement</span>(<span class="ident">request</span>)
-        .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>((
-        <span class="ident">acks_on_counterparty</span>,
-        <span class="ident">unreceived_ack_msgs</span>,
-        <span class="ident">counterparty_height</span>,
-    ))
+        .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unreceived_packets</span>(
@@ -951,23 +942,24 @@
     <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedChannelEnd</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">channel</span>
-        .<span class="ident">channel_end</span>
-        .<span class="ident">counterparty</span>()
+    <span class="kw">let</span> <span class="ident">counterparty</span> <span class="op">=</span> <span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>();
+    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">counterparty</span>
         .<span class="ident">channel_id</span>
         .<span class="ident">as_ref</span>()
         .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_counterparty_channel_id</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">sequences</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">unreceived_packets_sequences</span>(
-        <span class="ident">chain</span>,
-        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>,
-        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>,
+    <span class="kw">let</span> (<span class="ident">commit_sequences</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">commitments_on_chain</span>(
         <span class="ident">counterparty_chain</span>,
-        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>().<span class="ident">port_id</span>,
+        <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">port_id</span>,
         <span class="ident">counterparty_channel_id</span>,
     )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(<span class="ident">sequences</span>)
+    <span class="ident">unreceived_packets_sequences</span>(
+        <span class="ident">chain</span>,
+        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>,
+        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>,
+        <span class="ident">commit_sequences</span>,
+    )
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">acknowledgements_on_chain</span>(
@@ -975,20 +967,23 @@
     <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedChannelEnd</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Height</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">channel</span>
-        .<span class="ident">channel_end</span>
-        .<span class="ident">counterparty</span>()
+    <span class="kw">let</span> <span class="ident">counterparty</span> <span class="op">=</span> <span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>();
+    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">counterparty</span>
         .<span class="ident">channel_id</span>
         .<span class="ident">as_ref</span>()
         .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_counterparty_channel_id</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> (<span class="ident">sequences</span>, <span class="ident">height</span>) <span class="op">=</span> <span class="ident">packet_acknowledgedgments</span>(
+    <span class="kw">let</span> (<span class="ident">commitments_on_counterparty</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">commitments_on_chain</span>(
+        <span class="ident">counterparty_chain</span>,
+        <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">port_id</span>,
+        <span class="ident">counterparty_channel_id</span>,
+    )<span class="question-mark">?</span>;
+
+    <span class="kw">let</span> (<span class="ident">sequences</span>, <span class="ident">height</span>) <span class="op">=</span> <span class="ident">packet_acknowledgements</span>(
         <span class="ident">chain</span>,
         <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>,
         <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>,
-        <span class="ident">counterparty_chain</span>,
-        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>().<span class="ident">port_id</span>,
-        <span class="ident">counterparty_channel_id</span>,
+        <span class="ident">commitments_on_counterparty</span>,
     )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((<span class="ident">sequences</span>, <span class="ident">height</span>))
@@ -999,23 +994,80 @@
     <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedChannelEnd</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">channel</span>
-        .<span class="ident">channel_end</span>
-        .<span class="ident">counterparty</span>()
+    <span class="kw">let</span> <span class="ident">counterparty</span> <span class="op">=</span> <span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>();
+    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">counterparty</span>
         .<span class="ident">channel_id</span>
         .<span class="ident">as_ref</span>()
         .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_counterparty_channel_id</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">sequences</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">unreceived_acknowledgements_sequences</span>(
+    <span class="kw">let</span> (<span class="ident">commitments_on_src</span>, <span class="kw">_</span>) <span class="op">=</span>
+        <span class="ident">commitments_on_chain</span>(<span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>, <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let</span> (<span class="ident">acks_on_counterparty</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">packet_acknowledgements</span>(
+        <span class="ident">counterparty_chain</span>,
+        <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">port_id</span>,
+        <span class="ident">counterparty_channel_id</span>,
+        <span class="ident">commitments_on_src</span>,
+    )<span class="question-mark">?</span>;
+
+    <span class="ident">unreceived_acknowledgements_sequences</span>(
         <span class="ident">chain</span>,
         <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>,
         <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>,
+        <span class="ident">acks_on_counterparty</span>,
+    )
+}
+
+<span class="doccomment">/// A structure to display pending packet commitment IDs</span>
+<span class="doccomment">/// at one end of a channel.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Serialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PendingPackets</span> {
+    <span class="doccomment">/// Not yet received on the counterparty chain.</span>
+    <span class="kw">pub</span> <span class="ident">unreceived_packets</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Received on the counterparty chain,</span>
+    <span class="doccomment">/// but the acknowledgement is not yet received on the local chain.</span>
+    <span class="kw">pub</span> <span class="ident">unreceived_acks</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pending_packet_summary</span>(
+    <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
+    <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
+    <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedChannelEnd</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PendingPackets</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">counterparty</span> <span class="op">=</span> <span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>();
+    <span class="kw">let</span> <span class="ident">counterparty_channel_id</span> <span class="op">=</span> <span class="ident">counterparty</span>
+        .<span class="ident">channel_id</span>
+        .<span class="ident">as_ref</span>()
+        .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_counterparty_channel_id</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let</span> (<span class="ident">commitments_on_src</span>, <span class="kw">_</span>) <span class="op">=</span>
+        <span class="ident">commitments_on_chain</span>(<span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>, <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">let</span> <span class="ident">unreceived</span> <span class="op">=</span> <span class="ident">unreceived_packets_sequences</span>(
         <span class="ident">counterparty_chain</span>,
-        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_end</span>.<span class="ident">counterparty</span>().<span class="ident">port_id</span>,
+        <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">port_id</span>,
         <span class="ident">counterparty_channel_id</span>,
+        <span class="ident">commitments_on_src</span>.<span class="ident">clone</span>(),
     )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(<span class="ident">sequences</span>)
+    <span class="kw">let</span> (<span class="ident">acks_on_counterparty</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">packet_acknowledgements</span>(
+        <span class="ident">counterparty_chain</span>,
+        <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">port_id</span>,
+        <span class="ident">counterparty_channel_id</span>,
+        <span class="ident">commitments_on_src</span>,
+    )<span class="question-mark">?</span>;
+
+    <span class="kw">let</span> <span class="ident">pending_acks</span> <span class="op">=</span> <span class="ident">unreceived_acknowledgements_sequences</span>(
+        <span class="ident">chain</span>,
+        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">port_id</span>,
+        <span class="kw-2">&amp;</span><span class="ident">channel</span>.<span class="ident">channel_id</span>,
+        <span class="ident">acks_on_counterparty</span>,
+    )<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(<span class="ident">PendingPackets</span> {
+        <span class="ident">unreceived_packets</span>: <span class="ident">unreceived</span>,
+        <span class="ident">unreceived_acks</span>: <span class="ident">pending_acks</span>,
+    })
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.60.0 (7737e0b5c 2022-04-04)" ></div>
