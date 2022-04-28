@@ -1624,6 +1624,41 @@
 <span id="1619">1619</span>
 <span id="1620">1620</span>
 <span id="1621">1621</span>
+<span id="1622">1622</span>
+<span id="1623">1623</span>
+<span id="1624">1624</span>
+<span id="1625">1625</span>
+<span id="1626">1626</span>
+<span id="1627">1627</span>
+<span id="1628">1628</span>
+<span id="1629">1629</span>
+<span id="1630">1630</span>
+<span id="1631">1631</span>
+<span id="1632">1632</span>
+<span id="1633">1633</span>
+<span id="1634">1634</span>
+<span id="1635">1635</span>
+<span id="1636">1636</span>
+<span id="1637">1637</span>
+<span id="1638">1638</span>
+<span id="1639">1639</span>
+<span id="1640">1640</span>
+<span id="1641">1641</span>
+<span id="1642">1642</span>
+<span id="1643">1643</span>
+<span id="1644">1644</span>
+<span id="1645">1645</span>
+<span id="1646">1646</span>
+<span id="1647">1647</span>
+<span id="1648">1648</span>
+<span id="1649">1649</span>
+<span id="1650">1650</span>
+<span id="1651">1651</span>
+<span id="1652">1652</span>
+<span id="1653">1653</span>
+<span id="1654">1654</span>
+<span id="1655">1655</span>
+<span id="1656">1656</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
@@ -1647,7 +1682,7 @@
 };
 <span class="kw">use</span> <span class="ident">tokio::runtime::Runtime</span> <span class="kw">as</span> <span class="ident">TokioRuntime</span>;
 <span class="kw">use</span> <span class="ident">tonic::codegen::http::Uri</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">span</span>, <span class="ident">warn</span>, <span class="ident">Level</span>};
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">span</span>, <span class="ident">warn</span>, <span class="ident">Level</span>};
 
 <span class="kw">use</span> <span class="ident">ibc::clients::ics07_tendermint::client_state</span>::{<span class="ident">AllowUpdate</span>, <span class="ident">ClientState</span>};
 <span class="kw">use</span> <span class="ident">ibc::clients::ics07_tendermint::consensus_state::ConsensusState</span> <span class="kw">as</span> <span class="ident">TMConsensusState</span>;
@@ -1792,7 +1827,7 @@
         }
 
         <span class="comment">// Get the latest height and convert to tendermint Height</span>
-        <span class="kw">let</span> <span class="ident">latest_height</span> <span class="op">=</span> <span class="ident">Height::try_from</span>(<span class="self">self</span>.<span class="ident">query_latest_height</span>()<span class="question-mark">?</span>.<span class="ident">revision_height</span>)
+        <span class="kw">let</span> <span class="ident">latest_height</span> <span class="op">=</span> <span class="ident">Height::try_from</span>(<span class="self">self</span>.<span class="ident">query_chain_latest_height</span>()<span class="question-mark">?</span>.<span class="ident">revision_height</span>)
             .<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// Check on the configured max_tx_size against the consensus parameters at latest height</span>
@@ -1982,7 +2017,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if the node is still syncing and has not caught up,</span>
     <span class="doccomment">/// ie. if `sync_info.catching_up` is `true`.</span>
-    <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">status::Response</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">chain_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">status::Response</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="self">self</span>.<span class="ident">rpc_client</span>.<span class="ident">status</span>())
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rpc_addr</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
@@ -1998,7 +2033,7 @@
     }
 
     <span class="doccomment">/// Query the chain&#39;s latest height</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">query_latest_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ICSHeight</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">query_chain_latest_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ICSHeight</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_latest_height&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_latest_height&quot;</span>);
 
@@ -2264,16 +2299,44 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::ics02</span>(<span class="ident">ClientError::empty_prefix</span>()))
     }
 
-    <span class="doccomment">/// Query the chain status</span>
-    <span class="kw">fn</span> <span class="ident">query_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChainStatus</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="macro">crate::time!</span>(<span class="string">&quot;query_status&quot;</span>);
-        <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_status&quot;</span>);
+    <span class="doccomment">/// Query the application status</span>
+    <span class="kw">fn</span> <span class="ident">query_application_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChainStatus</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="macro">crate::time!</span>(<span class="string">&quot;query_application_status&quot;</span>);
+        <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_application_status&quot;</span>);
 
-        <span class="self">self</span>.<span class="ident">rt</span>.<span class="ident">block_on</span>(<span class="ident">query_status</span>(
-            <span class="self">self</span>.<span class="ident">id</span>(),
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">rpc_client</span>,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rpc_addr</span>,
-        ))
+        <span class="comment">// We cannot rely on `/status` endpoint to provide details about the latest block.</span>
+        <span class="comment">// Instead, we need to pull block height via `/abci_info` and then fetch block</span>
+        <span class="comment">// metadata at the given height via `/blockchain` endpoint.</span>
+        <span class="kw">let</span> <span class="ident">abci_info</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">block_on</span>(<span class="self">self</span>.<span class="ident">rpc_client</span>.<span class="ident">abci_info</span>())
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rpc_addr</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
+
+        <span class="comment">// Query `/blockchain` endpoint to pull the block metadata corresponding to</span>
+        <span class="comment">// the latest block that the application committed.</span>
+        <span class="comment">// TODO: Replace this query with `/header`, once it&#39;s available.</span>
+        <span class="comment">//  https://github.com/informalsystems/tendermint-rs/pull/1101</span>
+        <span class="kw">let</span> <span class="ident">blocks</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">block_on</span>(
+                <span class="self">self</span>.<span class="ident">rpc_client</span>
+                    .<span class="ident">blockchain</span>(<span class="ident">abci_info</span>.<span class="ident">last_block_height</span>, <span class="ident">abci_info</span>.<span class="ident">last_block_height</span>),
+            )
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rpc_addr</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>
+            .<span class="ident">block_metas</span>;
+
+        <span class="kw">return</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">latest_app_block</span>) <span class="op">=</span> <span class="ident">blocks</span>.<span class="ident">first</span>() {
+            <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">ICSHeight</span> {
+                <span class="ident">revision_number</span>: <span class="ident">ChainId::chain_version</span>(<span class="ident">latest_app_block</span>.<span class="ident">header</span>.<span class="ident">chain_id</span>.<span class="ident">as_str</span>()),
+                <span class="ident">revision_height</span>: <span class="ident">u64::from</span>(<span class="ident">abci_info</span>.<span class="ident">last_block_height</span>),
+            };
+            <span class="kw">let</span> <span class="ident">timestamp</span> <span class="op">=</span> <span class="ident">latest_app_block</span>.<span class="ident">header</span>.<span class="ident">time</span>.<span class="ident">into</span>();
+
+            <span class="prelude-val">Ok</span>(<span class="ident">ChainStatus</span> { <span class="ident">height</span>, <span class="ident">timestamp</span> })
+        } <span class="kw">else</span> {
+            <span class="comment">// The `/blockchain` query failed to return the header we wanted</span>
+            <span class="prelude-val">Err</span>(<span class="ident">Error::query</span>(
+                <span class="string">&quot;/blockchain endpoint for latest app. block&quot;</span>.<span class="ident">to_owned</span>(),
+            ))
+        };
     }
 
     <span class="kw">fn</span> <span class="ident">query_clients</span>(
@@ -3142,11 +3205,18 @@
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::no_historical_entries</span>(<span class="ident">chain_id</span>.<span class="ident">clone</span>()));
     }
 
-    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">status</span>()<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">chain_status</span>()<span class="question-mark">?</span>;
 
     <span class="comment">// Check that transaction indexing is enabled</span>
     <span class="kw">if</span> <span class="ident">status</span>.<span class="ident">node_info</span>.<span class="ident">other</span>.<span class="ident">tx_index</span> <span class="op">!</span><span class="op">=</span> <span class="ident">TxIndexStatus::On</span> {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::tx_indexing_disabled</span>(<span class="ident">chain_id</span>.<span class="ident">clone</span>()));
+    }
+
+    <span class="comment">// Check that the chain identifier matches the network name</span>
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">status</span>.<span class="ident">node_info</span>.<span class="ident">network</span>.<span class="ident">as_str</span>().<span class="ident">eq</span>(<span class="ident">chain_id</span>.<span class="ident">as_str</span>()) {
+        <span class="comment">// Log the error, continue optimistically</span>
+        <span class="macro">error!</span>(<span class="string">&quot;/status endpoint from chain id &#39;{}&#39; reports network identifier to be &#39;{}&#39;: this is usually a sign of misconfiguration, check your config.toml&quot;</span>,
+            <span class="ident">chain_id</span>, <span class="ident">status</span>.<span class="ident">node_info</span>.<span class="ident">network</span>);
     }
 
     <span class="kw">let</span> <span class="ident">version_specs</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">block_on</span>(<span class="ident">fetch_version_specs</span>(<span class="kw-2">&amp;</span><span class="ident">chain</span>.<span class="ident">config</span>.<span class="ident">id</span>, <span class="kw-2">&amp;</span><span class="ident">chain</span>.<span class="ident">grpc_addr</span>))<span class="question-mark">?</span>;
