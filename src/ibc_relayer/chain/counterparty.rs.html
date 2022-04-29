@@ -536,6 +536,57 @@
 <span id="531">531</span>
 <span id="532">532</span>
 <span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashSet</span>;
 
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -937,6 +988,29 @@
         .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)
 }
 
+<span class="doccomment">/// This method returns a vector of sequence numbers for all the packets</span>
+<span class="doccomment">/// which the counterparty chain _sent_ on the given channel and which the</span>
+<span class="doccomment">/// (target) chain did not yet _receive_.</span>
+<span class="doccomment">/// Expects an [`IdentifiedChannelEnd`] plus a pair of</span>
+<span class="doccomment">/// [`ChainHandle`]s representing the chains at the two ends of this</span>
+<span class="doccomment">/// channel, called a (target) chain and a counterparty chain.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ### Implementation details</span>
+<span class="doccomment">/// This method involves two separate queries:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 1. It performs a [`QueryPacketCommitmentsRequest`] on the counterparty chain.</span>
+<span class="doccomment">///     This query returns the vector of all sequence numbers for those packets that have</span>
+<span class="doccomment">///     commitments written on-chain in the counterparty chain&#39;s state.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     This step relies on [`commitments_on_chain`], see that method for more details.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 2. It performs a [`QueryUnreceivedPacketsRequest`] on the (target) chain.</span>
+<span class="doccomment">///     Given the sequence numbers of packet commitments on the counterparty (query #1),</span>
+<span class="doccomment">///     this query returns a subset of these sequence numbers, all of which the target</span>
+<span class="doccomment">///     chain has not yet _received_.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///    This step relies on [`unreceived_packets_sequences`], see that method for more details.</span>
+<span class="doccomment">///</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unreceived_packets</span>(
     <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
@@ -989,6 +1063,34 @@
     <span class="prelude-val">Ok</span>((<span class="ident">sequences</span>, <span class="ident">height</span>))
 }
 
+<span class="doccomment">/// This method returns a vector of sequence numbers for those packets</span>
+<span class="doccomment">/// which the counterparty chain _received_ on the given channel and which the</span>
+<span class="doccomment">/// (target) chain did not yet _acknowledge_.</span>
+<span class="doccomment">/// Expects an [`IdentifiedChannelEnd`] plus a pair of</span>
+<span class="doccomment">/// [`ChainHandle`]s representing the chains at the two ends of this</span>
+<span class="doccomment">/// channel, called a (target) chain and a counterparty chain.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ### Implementation details</span>
+<span class="doccomment">/// This method involves two separate queries:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 1. It performs a [`QueryPacketCommitmentsRequest`] on the target chain.</span>
+<span class="doccomment">///     This query returns the vector of all sequence numbers for those packets that have</span>
+<span class="doccomment">///     commitments written on-chain in the (target) chain&#39;s state.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     This step relies on [`commitments_on_chain`], see that method for more details.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 2. It performs a [`QueryPacketAcknowledgementsRequest`] on the counterparty chain.</span>
+<span class="doccomment">///     Given the sequence numbers of packet commitments on the target chain (from step #1),</span>
+<span class="doccomment">///     this query returns a subset of these sequence numbers, all of which the counterparty</span>
+<span class="doccomment">///     chain has _received_ (i.e., it stores acknowledgments for these sequence numbers).</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     This step relies on [`packet_acknowledgements`], see that method for more details.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// 3. It performs a [`QueryUnreceivedAcksRequest`] on the target chain.</span>
+<span class="doccomment">///     Given the sequence numbers of packet acknowledgements on the counterparty (step #3),</span>
+<span class="doccomment">///     this query fetches the subset among these acknowledgements which have not been</span>
+<span class="doccomment">///     relayed yet to the target chain.</span>
+<span class="doccomment">///     This step relies on [`unreceived_acknowledgements_sequences`].</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unreceived_acknowledgements</span>(
     <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
