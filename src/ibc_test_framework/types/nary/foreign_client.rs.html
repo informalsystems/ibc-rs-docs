@@ -77,6 +77,20 @@
 <span id="72">72</span>
 <span id="73">73</span>
 <span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
 <span class="kw">use</span> <span class="ident">eyre::eyre</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
@@ -85,6 +99,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::aliases::NthChainHandle</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::binary::foreign_client::ForeignClientPair</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::env</span>::{<span class="ident">EnvWriter</span>, <span class="ident">ExportEnv</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::types::tagged</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::array</span>::{<span class="ident">into_nested_vec</span>, <span class="ident">try_into_nested_array</span>};
 
@@ -149,6 +164,19 @@
     <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">clients</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ForeignClient</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">Handle</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">foreign_clients</span> <span class="op">=</span> <span class="ident">try_into_nested_array</span>(<span class="ident">clients</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">foreign_clients</span> })
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Handle</span>: <span class="ident">ChainHandle</span>, <span class="kw">const</span> <span class="ident">SIZE</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">ExportEnv</span> <span class="kw">for</span> <span class="ident">ForeignClientPairs</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">SIZE</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">export_env</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;mut</span> <span class="kw">impl</span> <span class="ident">EnvWriter</span>) {
+        <span class="kw">for</span> (<span class="ident">source</span>, <span class="ident">inner_clients</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">foreign_clients</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
+            <span class="kw">for</span> (<span class="ident">destination</span>, <span class="ident">client</span>) <span class="kw">in</span> <span class="ident">inner_clients</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
+                <span class="ident">writer</span>.<span class="ident">write_env</span>(
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;CLIENT_ID_{}_to_{}&quot;</span>, <span class="ident">source</span>, <span class="ident">destination</span>),
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">client</span>.<span class="ident">id</span>()),
+                );
+            }
+        }
     }
 }
 </code></pre></div>

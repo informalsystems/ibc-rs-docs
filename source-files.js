@@ -258,6 +258,7 @@ sourcesIndex["tendermint_rpc"] = {"name":"","dirs":[{"name":"client","dirs":[{"n
 sourcesIndex["termcolor"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["terminal_size"] = {"name":"","files":["lib.rs","unix.rs"]};
 sourcesIndex["test_setup_with_binary_channel"] = {"name":"","files":["test_setup_with_binary_channel.rs"]};
+sourcesIndex["test_setup_with_ternary_channel"] = {"name":"","files":["test_setup_with_ternary_channel.rs"]};
 sourcesIndex["textwrap"] = {"name":"","files":["core.rs","indentation.rs","lib.rs","word_separators.rs","word_splitters.rs","wrap_algorithms.rs"]};
 sourcesIndex["thiserror"] = {"name":"","files":["aserror.rs","display.rs","lib.rs"]};
 sourcesIndex["thiserror_impl"] = {"name":"","files":["ast.rs","attr.rs","expand.rs","fmt.rs","generics.rs","lib.rs","prop.rs","valid.rs"]};
