@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SharedSecret","A tag used for recovering the public key from a compact signature"]]});
+initSidebarItems({"fn":[["shared_secret_point","Creates a shared point from public key and secret key."]],"struct":[["SharedSecret","Enables two parties to create a shared secret without revealing their own secrets."]]});

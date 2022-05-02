@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["block","Bitcoin Block"],["constants","Blockdata constants"],["opcodes","Opcodes"],["script","Script"],["transaction","Bitcoin Transaction"]]});
+initSidebarItems({"mod":[["block","Bitcoin blocks."],["constants","Blockdata constants."],["opcodes","Bitcoin script opcodes."],["script","Bitcoin scripts."],["transaction","Bitcoin transactions."],["witness","Witness"]]});

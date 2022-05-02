@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["encode","Consensus-encodable types"],["params","Consensus parameters"]]});
+initSidebarItems({"mod":[["encode","Bitcoin consensus-encodable types."],["params","Bitcoin consensus parameters."]]});

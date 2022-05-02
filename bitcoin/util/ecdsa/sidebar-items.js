@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PrivateKey","A Bitcoin ECDSA private key"],["PublicKey","A Bitcoin ECDSA public key"]]});
+initSidebarItems({"enum":[["EcdsaSigError","A key-related error."]],"struct":[["EcdsaSig","An ECDSA signature with the corresponding hash type."]]});

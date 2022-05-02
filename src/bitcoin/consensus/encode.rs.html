@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.27.1/src/consensus/encode.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>encode.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.28.0/src/consensus/encode.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>encode.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../bitcoin/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -1057,6 +1057,19 @@
 <span id="1052">1052</span>
 <span id="1053">1053</span>
 <span id="1054">1054</span>
+<span id="1055">1055</span>
+<span id="1056">1056</span>
+<span id="1057">1057</span>
+<span id="1058">1058</span>
+<span id="1059">1059</span>
+<span id="1060">1060</span>
+<span id="1061">1061</span>
+<span id="1062">1062</span>
+<span id="1063">1063</span>
+<span id="1064">1064</span>
+<span id="1065">1065</span>
+<span id="1066">1066</span>
+<span id="1067">1067</span>
 </pre><pre class="rust"><code><span class="comment">// Rust Bitcoin Library</span>
 <span class="comment">// Written in 2014 by</span>
 <span class="comment">//     Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;</span>
@@ -1071,21 +1084,19 @@
 <span class="comment">// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.</span>
 <span class="comment">//</span>
 
-<span class="doccomment">//! Consensus-encodable types</span>
+<span class="doccomment">//! Bitcoin consensus-encodable types.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! This is basically a replacement of the `Encodable` trait which does</span>
-<span class="doccomment">//! normalization for endianness, etc., to ensure that the encoding</span>
-<span class="doccomment">//! matches for endianness, etc., to ensure that the encoding matches</span>
+<span class="doccomment">//! normalization of endianness etc., to ensure that the encoding matches</span>
 <span class="doccomment">//! the network consensus encoding.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Essentially, anything that must go on the -disk- or -network- must</span>
-<span class="doccomment">//! be encoded using the `Encodable` trait, since this data</span>
-<span class="doccomment">//! must be the same for all systems. Any data going to the -user-, e.g.</span>
-<span class="doccomment">//! over JSONRPC, should use the ordinary `Encodable` trait. (This</span>
-<span class="doccomment">//! should also be the same across systems, of course, but has some</span>
-<span class="doccomment">//! critical differences from the network format, e.g. scripts come</span>
-<span class="doccomment">//! with an opcode decode, hashes are big-endian, numbers are typically</span>
-<span class="doccomment">//! big-endian decimals, etc.)</span>
+<span class="doccomment">//! Essentially, anything that must go on the _disk_ or _network_ must be</span>
+<span class="doccomment">//! encoded using the `Encodable` trait, since this data must be the same for</span>
+<span class="doccomment">//! all systems. Any data going to the _user_ e.g., over JSONRPC, should use the</span>
+<span class="doccomment">//! ordinary `Encodable` trait. (This should also be the same across systems, of</span>
+<span class="doccomment">//! course, but has some critical differences from the network format e.g.,</span>
+<span class="doccomment">//! scripts come with an opcode decode, hashes are big-endian, numbers are</span>
+<span class="doccomment">//! typically big-endian decimals, etc.)</span>
 <span class="doccomment">//!</span>
 
 <span class="kw">use</span> <span class="ident">prelude</span>::<span class="kw-2">*</span>;
@@ -1093,13 +1104,14 @@
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">mem</span>, <span class="ident">u32</span>, <span class="ident">convert::From</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span> <span class="kw">use</span> <span class="ident">std::error</span>;
 
-<span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">sha256d</span>, <span class="ident">Hash</span>};
+<span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">sha256d</span>, <span class="ident">Hash</span>, <span class="ident">sha256</span>};
 <span class="kw">use</span> <span class="ident">hash_types</span>::{<span class="ident">BlockHash</span>, <span class="ident">FilterHash</span>, <span class="ident">TxMerkleNode</span>, <span class="ident">FilterHeader</span>};
 
 <span class="kw">use</span> <span class="ident">io</span>::{<span class="self">self</span>, <span class="ident">Cursor</span>, <span class="ident">Read</span>};
 
 <span class="kw">use</span> <span class="ident">util::endian</span>;
 <span class="kw">use</span> <span class="ident">util::psbt</span>;
+<span class="kw">use</span> <span class="ident">util::taproot::TapLeafHash</span>;
 <span class="kw">use</span> <span class="ident">hashes::hex::ToHex</span>;
 
 <span class="kw">use</span> <span class="ident">blockdata::transaction</span>::{<span class="ident">TxOut</span>, <span class="ident">Transaction</span>, <span class="ident">TxIn</span>};
@@ -1121,7 +1133,7 @@
         <span class="ident">actual</span>: <span class="ident">u32</span>,
     },
     <span class="doccomment">/// Tried to allocate an oversized vector</span>
-    <span class="ident">OversizedVectorAllocation</span>{
+    <span class="ident">OversizedVectorAllocation</span> {
         <span class="doccomment">/// The capacity requested</span>
         <span class="ident">requested</span>: <span class="ident">usize</span>,
         <span class="doccomment">/// The maximum capacity</span>
@@ -1165,6 +1177,7 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
 <span class="kw">impl</span> <span class="ident">::std::error::Error</span> <span class="kw">for</span> <span class="ident">Error</span> {
     <span class="kw">fn</span> <span class="ident">cause</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">dyn</span>  <span class="ident">error::Error</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
@@ -1198,7 +1211,7 @@
 <span class="doccomment">/// Encode an object into a vector</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Encodable</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">encoder</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">encoder</span>).<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">encoder</span>).<span class="ident">expect</span>(<span class="string">&quot;in-memory writers don&#39;t error&quot;</span>);
     <span class="macro">debug_assert_eq!</span>(<span class="ident">len</span>, <span class="ident">encoder</span>.<span class="ident">len</span>());
     <span class="ident">encoder</span>
 }
@@ -1223,9 +1236,7 @@
 
 <span class="doccomment">/// Deserialize an object from a vector, but will not report an error if said deserialization</span>
 <span class="doccomment">/// doesn&#39;t consume the entire vector.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_partial</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Decodable</span><span class="op">&gt;</span>(
-    <span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">T</span>, <span class="ident">usize</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_partial</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Decodable</span><span class="op">&gt;</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">T</span>, <span class="ident">usize</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">decoder</span> <span class="op">=</span> <span class="ident">Cursor::new</span>(<span class="ident">data</span>);
     <span class="kw">let</span> <span class="ident">rv</span> <span class="op">=</span> <span class="ident">Decodable::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">decoder</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">consumed</span> <span class="op">=</span> <span class="ident">decoder</span>.<span class="ident">position</span>() <span class="kw">as</span> <span class="ident">usize</span>;
@@ -1392,8 +1403,8 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CheckedData</span>(<span class="kw">pub</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>);
 
 <span class="comment">// Primitive types</span>
-<span class="macro">macro_rules!</span> <span class="ident">impl_int_encodable</span>{
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">meth_dec</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">meth_enc</span>:<span class="ident">ident</span>) =&gt; (
+<span class="macro">macro_rules!</span> <span class="ident">impl_int_encodable</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">meth_dec</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">meth_enc</span>:<span class="ident">ident</span>) =&gt; {
         <span class="kw">impl</span> <span class="ident">Decodable</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
             <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">io::Read</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
@@ -1402,15 +1413,12 @@
         }
         <span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">WriteExt</span><span class="op">&gt;</span>(
-                <span class="kw-2">&amp;</span><span class="self">self</span>,
-                <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>,
-            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">WriteExt</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
                 <span class="ident">s</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">meth_enc</span>(<span class="kw-2">*</span><span class="self">self</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span><span class="op">&gt;</span>())
             }
         }
-    )
+    }
 }
 
 <span class="macro">impl_int_encodable!</span>(<span class="ident">u8</span>,  <span class="ident">read_u8</span>,  <span class="ident">emit_u8</span>);
@@ -1498,7 +1506,6 @@
     }
 }
 
-
 <span class="comment">// Booleans</span>
 <span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">bool</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
@@ -1521,7 +1528,7 @@
     <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">as_bytes</span>();
         <span class="kw">let</span> <span class="ident">vi_len</span> <span class="op">=</span> <span class="ident">VarInt</span>(<span class="ident">b</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>)<span class="question-mark">?</span>;
-        <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>)<span class="question-mark">?</span>;
+        <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="ident">b</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">vi_len</span> <span class="op">+</span> <span class="ident">b</span>.<span class="ident">len</span>())
     }
 }
@@ -1540,7 +1547,7 @@
     <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">as_bytes</span>();
         <span class="kw">let</span> <span class="ident">vi_len</span> <span class="op">=</span> <span class="ident">VarInt</span>(<span class="ident">b</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>)<span class="question-mark">?</span>;
-        <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="kw-2">&amp;</span><span class="ident">b</span>)<span class="question-mark">?</span>;
+        <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="ident">b</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">vi_len</span> <span class="op">+</span> <span class="ident">b</span>.<span class="ident">len</span>())
     }
 }
@@ -1557,13 +1564,10 @@
 
 <span class="comment">// Arrays</span>
 <span class="macro">macro_rules!</span> <span class="ident">impl_array</span> {
-    ( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>:<span class="ident">expr</span> ) =&gt; (
+    ( <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>:<span class="ident">expr</span> ) =&gt; {
         <span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> [<span class="ident">u8</span>; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>] {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">WriteExt</span><span class="op">&gt;</span>(
-                <span class="kw-2">&amp;</span><span class="self">self</span>,
-                <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>,
-            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">WriteExt</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
                 <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>[..])<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">len</span>())
             }
@@ -1577,7 +1581,7 @@
                 <span class="prelude-val">Ok</span>(<span class="ident">ret</span>)
             }
         }
-    );
+    };
 }
 
 <span class="macro">impl_array!</span>(<span class="number">2</span>);
@@ -1613,10 +1617,7 @@
     (<span class="macro-nonterminal">$</span><span class="kw">type</span>: <span class="macro-nonterminal">ty</span>) =&gt; {
         <span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="kw">type</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="macro-nonterminal">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(
-                <span class="kw-2">&amp;</span><span class="self">self</span>,
-                <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>,
-            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">len</span> <span class="op">=</span> <span class="number">0</span>;
                 <span class="ident">len</span> <span class="op">+</span><span class="op">=</span> <span class="ident">VarInt</span>(<span class="self">self</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>)<span class="question-mark">?</span>;
                 <span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">iter</span>() {
@@ -1630,8 +1631,8 @@
             <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">io::Read</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">d</span>)<span class="question-mark">?</span>.<span class="number">0</span>;
                 <span class="kw">let</span> <span class="ident">byte_size</span> <span class="op">=</span> (<span class="ident">len</span> <span class="kw">as</span> <span class="ident">usize</span>)
-                                    .<span class="ident">checked_mul</span>(<span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="kw">type</span><span class="op">&gt;</span>())
-                                    .<span class="macro-nonterminal">ok_or</span>(<span class="ident"><span class="self">self</span>::Error::ParseFailed</span>(<span class="string">&quot;Invalid length&quot;</span>))<span class="question-mark">?</span>;
+                    .<span class="ident">checked_mul</span>(<span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="kw">type</span><span class="op">&gt;</span>())
+                    .<span class="macro-nonterminal">ok_or</span>(<span class="ident"><span class="self">self</span>::Error::ParseFailed</span>(<span class="string">&quot;Invalid length&quot;</span>))<span class="question-mark">?</span>;
                 <span class="kw">if</span> <span class="ident">byte_size</span> <span class="op">&gt;</span> <span class="ident">MAX_VEC_SIZE</span> {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="self">self</span>::Error::OversizedVectorAllocation</span> { <span class="ident">requested</span>: <span class="ident">byte_size</span>, <span class="ident">max</span>: <span class="ident">MAX_VEC_SIZE</span> })
                 }
@@ -1654,14 +1655,15 @@
 <span class="macro">impl_vec!</span>(<span class="ident">TxIn</span>);
 <span class="macro">impl_vec!</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>);
 <span class="macro">impl_vec!</span>(<span class="ident">u64</span>);
+<span class="macro">impl_vec!</span>(<span class="ident">TapLeafHash</span>);
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span> <span class="macro">impl_vec!</span>(<span class="ident">Inventory</span>);
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span> <span class="macro">impl_vec!</span>((<span class="ident">u32</span>, <span class="ident">Address</span>));
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span> <span class="macro">impl_vec!</span>(<span class="ident">AddrV2Message</span>);
 
-<span class="kw">fn</span> <span class="ident">consensus_encode_with_size</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">consensus_encode_with_size</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">mut</span> <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">vi_len</span> <span class="op">=</span> <span class="ident">VarInt</span>(<span class="ident">data</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">s</span>)<span class="question-mark">?</span>;
-    <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>)<span class="question-mark">?</span>;
+    <span class="ident">s</span>.<span class="ident">emit_slice</span>(<span class="ident">data</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(<span class="ident">vi_len</span> <span class="op">+</span> <span class="ident">data</span>.<span class="ident">len</span>())
 }
 
@@ -1770,7 +1772,7 @@
 
 <span class="comment">// Tuples</span>
 <span class="macro">macro_rules!</span> <span class="ident">tuple_encode</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">ident</span>),<span class="kw-2">*</span>) =&gt; (
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">ident</span>),<span class="kw-2">*</span>) =&gt; {
         <span class="kw">impl</span> <span class="op">&lt;</span>$(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>: <span class="ident">Encodable</span>),<span class="kw-2">*</span><span class="op">&gt;</span> <span class="ident">Encodable</span> <span class="kw">for</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>),<span class="kw-2">*</span>) {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
             <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_snake_case</span>)]</span>
@@ -1792,7 +1794,7 @@
                 <span class="prelude-val">Ok</span>(($({<span class="kw">let</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">=</span> <span class="ident">Decodable::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">d</span>)<span class="question-mark">?</span>; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> }),<span class="kw-2">*</span>))
             }
         }
-    );
+    };
 }
 
 <span class="macro">tuple_encode!</span>(<span class="ident">T0</span>, <span class="ident">T1</span>);
@@ -1810,6 +1812,30 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Decodable</span> <span class="kw">for</span> <span class="ident">sha256d::Hash</span> {
+    <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">io::Read</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::from_inner</span>(<span class="op">&lt;</span><span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">Hash</span><span class="op">&gt;</span><span class="ident">::Inner</span><span class="op">&gt;</span><span class="ident">::consensus_decode</span>(<span class="ident">d</span>)<span class="question-mark">?</span>))
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">sha256::Hash</span> {
+    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">into_inner</span>().<span class="ident">consensus_encode</span>(<span class="ident">s</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Decodable</span> <span class="kw">for</span> <span class="ident">sha256::Hash</span> {
+    <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">io::Read</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::from_inner</span>(<span class="op">&lt;</span><span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">Hash</span><span class="op">&gt;</span><span class="ident">::Inner</span><span class="op">&gt;</span><span class="ident">::consensus_decode</span>(<span class="ident">d</span>)<span class="question-mark">?</span>))
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">TapLeafHash</span> {
+    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">into_inner</span>().<span class="ident">consensus_encode</span>(<span class="ident">s</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Decodable</span> <span class="kw">for</span> <span class="ident">TapLeafHash</span> {
     <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">io::Read</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::from_inner</span>(<span class="op">&lt;</span><span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">Hash</span><span class="op">&gt;</span><span class="ident">::Inner</span><span class="op">&gt;</span><span class="ident">::consensus_decode</span>(<span class="ident">d</span>)<span class="question-mark">?</span>))
     }
@@ -2067,7 +2093,7 @@
         <span class="kw">let</span> <span class="ident">witness</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="number">3_999_999</span>]; <span class="number">2</span>];
         <span class="kw">let</span> <span class="ident">ser</span> <span class="op">=</span> <span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="ident">witness</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">io::Cursor::new</span>(<span class="ident">ser</span>);
-        <span class="kw">let</span> <span class="ident">err</span>  <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">reader</span>);
+        <span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">reader</span>);
         <span class="macro">assert!</span>(<span class="ident">err</span>.<span class="ident">is_err</span>());
     }
 

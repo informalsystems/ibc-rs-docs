@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","A key-related error."]]});
+initSidebarItems({"enum":[["Error","A key-related error."]],"struct":[["KeyPair","Opaque data structure that holds a keypair consisting of a secret and a public key."],["PrivateKey","A Bitcoin ECDSA private key"],["PublicKey","A Bitcoin ECDSA public key"],["XOnlyPublicKey","An x-only public key, used for verification of Schnorr signatures and serialized according to BIP-340."]]});
