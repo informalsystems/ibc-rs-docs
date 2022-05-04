@@ -488,11 +488,6 @@
 <span id="483">483</span>
 <span id="484">484</span>
 <span id="485">485</span>
-<span id="486">486</span>
-<span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
-<span id="490">490</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::convert::TryInto</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::commitment::v1::MerkleProof</span> <span class="kw">as</span> <span class="ident">RawMerkleProof</span>;
@@ -513,8 +508,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error::Error</span> <span class="kw">as</span> <span class="ident">Ics02Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::ConnectionEnd</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::ChannelEnd</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::commitment</span>::{<span class="ident">AcknowledgementCommitment</span>, <span class="ident">PacketCommitment</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::context::ChannelReader</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::msgs::acknowledgement::Acknowledgement</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::Sequence</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics23_commitment::commitment</span>::{
     <span class="ident">CommitmentPrefix</span>, <span class="ident">CommitmentProofBytes</span>, <span class="ident">CommitmentRoot</span>,
@@ -778,7 +773,7 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
-        <span class="ident">commitment</span>: <span class="ident">String</span>,
+        <span class="ident">commitment</span>: <span class="ident">PacketCommitment</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Ics02Error</span><span class="op">&gt;</span> {
         <span class="ident">client_state</span>.<span class="ident">verify_height</span>(<span class="ident">height</span>)<span class="question-mark">?</span>;
         <span class="ident">verify_delay_passed</span>(<span class="ident">ctx</span>, <span class="ident">height</span>, <span class="ident">connection_end</span>)<span class="question-mark">?</span>;
@@ -789,18 +784,13 @@
             <span class="ident">sequence</span>,
         };
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commitment_bytes</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">commitment</span>
-            .<span class="ident">encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">commitment_bytes</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;buffer size too small&quot;</span>);
-
         <span class="ident">verify_membership</span>(
             <span class="ident">client_state</span>,
             <span class="ident">connection_end</span>.<span class="ident">counterparty</span>().<span class="ident">prefix</span>(),
             <span class="ident">proof</span>,
             <span class="ident">root</span>,
             <span class="ident">commitment_path</span>,
-            <span class="ident">commitment_bytes</span>,
+            <span class="ident">commitment</span>.<span class="ident">into_vec</span>(),
         )
     }
 
@@ -815,7 +805,7 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
-        <span class="ident">ack</span>: <span class="ident">Acknowledgement</span>,
+        <span class="ident">ack_commitment</span>: <span class="ident">AcknowledgementCommitment</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Ics02Error</span><span class="op">&gt;</span> {
         <span class="ident">client_state</span>.<span class="ident">verify_height</span>(<span class="ident">height</span>)<span class="question-mark">?</span>;
         <span class="ident">verify_delay_passed</span>(<span class="ident">ctx</span>, <span class="ident">height</span>, <span class="ident">connection_end</span>)<span class="question-mark">?</span>;
@@ -831,7 +821,7 @@
             <span class="ident">proof</span>,
             <span class="ident">root</span>,
             <span class="ident">ack_path</span>,
-            <span class="ident">ack</span>.<span class="ident">into_bytes</span>(),
+            <span class="ident">ack_commitment</span>.<span class="ident">into_vec</span>(),
         )
     }
 
