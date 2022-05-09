@@ -548,6 +548,17 @@
 <span id="543">543</span>
 <span id="544">544</span>
 <span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines the various errors that be raised in the relayer.</span>
 
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
@@ -557,8 +568,9 @@
 <span class="kw">use</span> <span class="ident">humantime::format_duration</span>;
 <span class="kw">use</span> <span class="ident">prost</span>::{<span class="ident">DecodeError</span>, <span class="ident">EncodeError</span>};
 <span class="kw">use</span> <span class="ident">tendermint::Error</span> <span class="kw">as</span> <span class="ident">TendermintError</span>;
-<span class="kw">use</span> <span class="ident">tendermint_light_client</span>::{
-    <span class="ident">components::io::IoError</span> <span class="kw">as</span> <span class="ident">LightClientIoError</span>, <span class="ident">errors::Error</span> <span class="kw">as</span> <span class="ident">LightClientError</span>,
+<span class="kw">use</span> <span class="ident">tendermint_light_client::components::io::IoError</span> <span class="kw">as</span> <span class="ident">LightClientIoError</span>;
+<span class="kw">use</span> <span class="ident">tendermint_light_client::errors</span>::{
+    <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">LightClientError</span>, <span class="ident">ErrorDetail</span> <span class="kw">as</span> <span class="ident">LightClientErrorDetail</span>,
 };
 <span class="kw">use</span> <span class="ident">tendermint_proto::Error</span> <span class="kw">as</span> <span class="ident">TendermintProtoError</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc::endpoint::abci_query::AbciQuery</span>;
@@ -643,10 +655,10 @@
             [ <span class="ident">TraceError</span><span class="op">&lt;</span><span class="ident">TendermintProtoError</span><span class="op">&gt;</span> ]
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;error decoding protobuf&quot;</span> },
 
-        <span class="ident">LightClient</span>
-            { <span class="ident">address</span>: <span class="ident">String</span> }
-            [ <span class="ident">TraceError</span><span class="op">&lt;</span><span class="ident">LightClientError</span><span class="op">&gt;</span> ]
-            <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;light client error for RPC address {0}&quot;</span>, <span class="ident">e</span>.<span class="ident">address</span>) },
+        <span class="ident">LightClientVerification</span>
+            { <span class="ident">chain_id</span>: <span class="ident">String</span> }
+            [ <span class="ident">LightClientError</span> ]
+            <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;light client verification error for chain id {0}&quot;</span>, <span class="ident">e</span>.<span class="ident">chain_id</span>) },
 
         <span class="ident">LightClientState</span>
             [ <span class="ident">client_error::Error</span> ]
@@ -654,7 +666,7 @@
 
         <span class="ident">LightClientIo</span>
             { <span class="ident">address</span>: <span class="ident">String</span> }
-            [ <span class="ident">TraceError</span><span class="op">&lt;</span><span class="ident">LightClientIoError</span><span class="op">&gt;</span> ]
+            [ <span class="ident">LightClientIoError</span> ]
             <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;light client error for RPC address {0}&quot;</span>, <span class="ident">e</span>.<span class="ident">address</span>) },
 
         <span class="ident">ChainNotCaughtUp</span>
@@ -1055,6 +1067,16 @@
 <span class="kw">impl</span> <span class="ident">Error</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw">_</span>: <span class="ident">crossbeam_channel::SendError</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>) -&gt; <span class="ident">Error</span> {
         <span class="ident">Error::channel_send</span>()
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_trusted_state_outside_trusting_period_error</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">detail</span>() {
+            <span class="ident">ErrorDetail::LightClientVerification</span>(<span class="ident">e</span>) =&gt; <span class="macro">matches!</span>(
+                <span class="ident">e</span>.<span class="ident">source</span>,
+                <span class="ident">LightClientErrorDetail::TrustedStateOutsideTrustingPeriod</span>(<span class="kw">_</span>)
+            ),
+            <span class="kw">_</span> =&gt; <span class="bool-val">false</span>,
+        }
     }
 }
 

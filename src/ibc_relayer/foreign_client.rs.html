@@ -1706,6 +1706,22 @@
 <span id="1701">1701</span>
 <span id="1702">1702</span>
 <span id="1703">1703</span>
+<span id="1704">1704</span>
+<span id="1705">1705</span>
+<span id="1706">1706</span>
+<span id="1707">1707</span>
+<span id="1708">1708</span>
+<span id="1709">1709</span>
+<span id="1710">1710</span>
+<span id="1711">1711</span>
+<span id="1712">1712</span>
+<span id="1713">1713</span>
+<span id="1714">1714</span>
+<span id="1715">1715</span>
+<span id="1716">1716</span>
+<span id="1717">1717</span>
+<span id="1718">1718</span>
+<span id="1719">1719</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,</span>
@@ -1718,7 +1734,7 @@
 
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 <span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">span</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 
 <span class="kw">use</span> <span class="ident">flex_error::define_error</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus</span>::{
@@ -2859,6 +2875,13 @@
         <span class="kw-2">mut</span> <span class="ident">update</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">UpdateClient</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MisbehaviourEvidence</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="number">100</span>));
+        <span class="kw">let</span> <span class="ident">span_guard</span> <span class="op">=</span> <span class="ident">update</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">ev</span><span class="op">|</span> <span class="ident">ev</span>.<span class="ident">consensus_height</span>());
+        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">span!</span>(
+            <span class="ident">tracing::Level::DEBUG</span>,
+            <span class="string">&quot;detect_misbehaviour&quot;</span>,
+            <span class="ident">update_height</span> <span class="op">=</span> <span class="question-mark">?</span><span class="ident">span_guard</span>,
+        )
+        .<span class="ident">entered</span>();
 
         <span class="comment">// Get the latest client state on destination.</span>
         <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="self">self</span>
@@ -2883,8 +2906,7 @@
         };
 
         <span class="macro">trace!</span>(
-            <span class="string">&quot;[{}] checking misbehaviour for consensus state heights (first 50 shown here): {}, total: {}&quot;</span>,
-            <span class="self">self</span>,
+            <span class="string">&quot;checking misbehaviour for consensus state heights (first 50 shown here): {}, total: {}&quot;</span>,
             <span class="ident">consensus_state_heights</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="number">50</span>).<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>),
             <span class="ident">consensus_state_heights</span>.<span class="ident">len</span>()
         );
@@ -2934,23 +2956,35 @@
             <span class="comment">// Check for misbehaviour according to the specific source chain type.</span>
             <span class="comment">// In case of Tendermint client, this will also check the BFT time violation if</span>
             <span class="comment">// a header for the event height cannot be retrieved from the witness.</span>
-            <span class="comment">//</span>
-            <span class="comment">// FIXME: This returns error if the update event contains expired client state.</span>
-            <span class="comment">// This can happen even if the latest client state is unexpired, but the</span>
-            <span class="comment">// update event is from earlier.</span>
-            <span class="kw">let</span> <span class="ident">misbehavior</span> <span class="op">=</span> <span class="self">self</span>
+            <span class="kw">let</span> <span class="ident">misbehavior</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>
                 .<span class="ident">src_chain</span>
                 .<span class="ident">check_misbehaviour</span>(<span class="ident">update_event</span>.<span class="ident">clone</span>(), <span class="ident">client_state</span>.<span class="ident">clone</span>())
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="ident">ForeignClientError::misbehaviour</span>(
+            {
+                <span class="comment">// Misbehavior check passed.</span>
+                <span class="prelude-val">Ok</span>(<span class="ident">evidence_opt</span>) =&gt; <span class="ident">evidence_opt</span>,
+
+                <span class="comment">// Predictable error occurred which we&#39;ll wrap.</span>
+                <span class="comment">// This error means we cannot check for misbehavior with the provided `target_height`</span>
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">is_trusted_state_outside_trusting_period_error</span>() =&gt; {
+                    <span class="macro">debug!</span>(<span class="ident">target</span> <span class="op">=</span> <span class="op">%</span><span class="ident">target_height</span>,
+                     <span class="string">&quot;exhausted checking trusted consensus states for this client; no evidence found&quot;</span>);
+                    <span class="comment">// It&#39;s safe to stop checking for misbehavior past this `target_height`.</span>
+                    <span class="kw">break</span>;
+                }
+
+                <span class="comment">// Unknown error occurred in the light client `check_misbehaviour` method.</span>
+                <span class="comment">// Propagate.</span>
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ForeignClientError::misbehaviour</span>(
                         <span class="macro">format!</span>(
                             <span class="string">&quot;failed to check misbehaviour for {} at consensus height {}&quot;</span>,
                             <span class="ident">update_event</span>.<span class="ident">client_id</span>(),
                             <span class="ident">update_event</span>.<span class="ident">consensus_height</span>(),
                         ),
                         <span class="ident">e</span>,
-                    )
-                })<span class="question-mark">?</span>;
+                    ))
+                }
+            };
 
             <span class="kw">if</span> <span class="ident">misbehavior</span>.<span class="ident">is_some</span>() {
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">misbehavior</span>);
@@ -2959,8 +2993,7 @@
             <span class="comment">// Exit the loop if more than MAX_MISBEHAVIOUR_CHECK_TIME was spent here.</span>
             <span class="kw">if</span> <span class="ident">start_time</span>.<span class="ident">elapsed</span>() <span class="op">&gt;</span> <span class="ident">MAX_MISBEHAVIOUR_CHECK_DURATION</span> {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;[{}] finished misbehaviour verification after {:?}&quot;</span>,
-                    <span class="self">self</span>,
+                    <span class="string">&quot;finished misbehaviour verification after {:?}&quot;</span>,
                     <span class="ident">start_time</span>.<span class="ident">elapsed</span>()
                 );
 
@@ -2975,8 +3008,7 @@
         }
 
         <span class="macro">trace!</span>(
-            <span class="string">&quot;[{}] finished misbehaviour verification after {:?}&quot;</span>,
-            <span class="self">self</span>,
+            <span class="string">&quot;finished misbehaviour verification after {:?}&quot;</span>,
             <span class="ident">start_time</span>.<span class="ident">elapsed</span>()
         );
 
