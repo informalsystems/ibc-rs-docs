@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["CapabilityKeeper",""],["CapabilityReader",""],["PortKeeper",""],["PortReader","A context supplying all the necessary read-only dependencies for processing any information regarding a port."]]});
+initSidebarItems({"trait":[["PortKeeper",""],["PortReader","A context supplying all the necessary read-only dependencies for processing any information regarding a port."]]});

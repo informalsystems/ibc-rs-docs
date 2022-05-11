@@ -429,35 +429,6 @@
 <span id="424">424</span>
 <span id="425">425</span>
 <span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Protocol logic specific to ICS4 messages of type `MsgChannelOpenTry`.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>;
@@ -547,9 +518,6 @@
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::channel_feature_not_suported_by_connection</span>());
     }
 
-    <span class="comment">// Channel capabilities</span>
-    <span class="kw">let</span> <span class="ident">channel_cap</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">authenticated_capability</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">port_id</span>)<span class="question-mark">?</span>;
-
     <span class="comment">// Proof verification in two steps:</span>
     <span class="comment">// 1. Setup: build the Channel as we expect to find it on the other party.</span>
     <span class="comment">//      the port should be identical with the port we&#39;re using; the channel id should not be set</span>
@@ -587,7 +555,6 @@
 
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ChannelResult</span> {
         <span class="ident">port_id</span>: <span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
-        <span class="ident">channel_cap</span>,
         <span class="ident">channel_id_state</span>: <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">msg</span>.<span class="ident">previous_channel_id</span>, <span class="prelude-val">None</span>) {
             <span class="ident">ChannelIdState::Generated</span>
         } <span class="kw">else</span> {
@@ -755,32 +722,11 @@
                 },
             },
             <span class="ident">Test</span> {
-                <span class="ident">name</span>: <span class="string">&quot;Processing fails because the port does not have a capability associated&quot;</span>
-                    .<span class="ident">to_string</span>(),
-                <span class="ident">ctx</span>: <span class="ident">context</span>
-                    .<span class="ident">clone</span>()
-                    .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>.<span class="ident">clone</span>()),
-                <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg_vanilla</span>.<span class="ident">clone</span>()),
-                <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
-                <span class="ident">match_error</span>: {
-                    <span class="kw">let</span> <span class="ident">port_id</span> <span class="op">=</span> <span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>();
-                    <span class="ident">Box::new</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">e</span> {
-                        <span class="ident">error::ErrorDetail::NoPortCapability</span>(<span class="ident">e</span>) =&gt; {
-                            <span class="macro">assert_eq!</span>(<span class="ident">e</span>.<span class="ident">port_id</span>, <span class="ident">port_id</span>);
-                        }
-                        <span class="kw">_</span> =&gt; {
-                            <span class="macro">panic!</span>(<span class="string">&quot;Expected NoPortCapability, instead got {}&quot;</span>, <span class="ident">e</span>)
-                        }
-                    })
-                },
-            },
-            <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Processing fails because of inconsistent version with preexisting channel&quot;</span>
                     .<span class="ident">to_string</span>(),
                 <span class="ident">ctx</span>: <span class="ident">context</span>
                     .<span class="ident">clone</span>()
                     .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>.<span class="ident">clone</span>())
-                    .<span class="ident">with_port_capability</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>())
                     .<span class="ident">with_channel</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">chan_id</span>, <span class="ident">incorrect_chan_end_ver</span>),
                 <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg</span>.<span class="ident">clone</span>()),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
@@ -801,7 +747,6 @@
                 <span class="ident">ctx</span>: <span class="ident">context</span>
                     .<span class="ident">clone</span>()
                     .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>.<span class="ident">clone</span>())
-                    .<span class="ident">with_port_capability</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>())
                     .<span class="ident">with_channel</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">chan_id</span>, <span class="ident">incorrect_chan_end_hops</span>),
                 <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg</span>.<span class="ident">clone</span>()),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
@@ -822,7 +767,6 @@
                 <span class="ident">ctx</span>: <span class="ident">context</span>
                     .<span class="ident">clone</span>()
                     .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>.<span class="ident">clone</span>())
-                    .<span class="ident">with_port_capability</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>())
                     .<span class="ident">with_channel</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">chan_id</span>, <span class="ident">correct_chan_end</span>.<span class="ident">clone</span>()),
                 <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg</span>.<span class="ident">clone</span>()),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
@@ -852,9 +796,8 @@
                     .<span class="ident">clone</span>()
                     .<span class="ident">with_client</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="ident">proof_height</span>))
                     .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>.<span class="ident">clone</span>(), <span class="ident">conn_end</span>.<span class="ident">clone</span>())
-                    .<span class="ident">with_port_capability</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>())
                     .<span class="ident">with_channel</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">chan_id</span>, <span class="ident">correct_chan_end</span>),
-                <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg</span>.<span class="ident">clone</span>()),
+                <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg</span>),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
                 <span class="ident">match_error</span>: <span class="ident">Box::new</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {}),
             },
@@ -863,8 +806,7 @@
                     .<span class="ident">to_string</span>(),
                 <span class="ident">ctx</span>: <span class="ident">context</span>
                     .<span class="ident">with_client</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="ident">proof_height</span>))
-                    .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>, <span class="ident">conn_end</span>)
-                    .<span class="ident">with_port_capability</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>),
+                    .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>, <span class="ident">conn_end</span>),
                 <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg_vanilla</span>),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
                 <span class="ident">match_error</span>: <span class="ident">Box::new</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {}),

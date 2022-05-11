@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["capabilities","Capabilities: this is a placeholder."],["context",""],["error",""]]});
+initSidebarItems({"mod":[["context",""],["error",""]]});
