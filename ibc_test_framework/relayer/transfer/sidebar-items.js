@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["tx_raw_ft_transfer","Perform the same operation as `hermes tx raw ft-transfer`."]]});
+initSidebarItems({"fn":[["build_transfer_message",""],["ibc_token_transfer","Perform a simplified version of IBC token transfer for testing purpose."]]});
