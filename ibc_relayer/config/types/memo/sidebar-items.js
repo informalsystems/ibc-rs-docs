@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["Error",""],["Memo","A memo domain-type."],["TooLongSubdetail",""]]});

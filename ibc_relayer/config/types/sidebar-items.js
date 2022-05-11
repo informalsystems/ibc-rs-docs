@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["MaxMsgNum",""],["MaxTxSize",""],["Memo","A memo domain-type."]]});
+initSidebarItems({"mod":[["max_msg_num",""],["max_tx_size",""],["memo",""]]});
