@@ -157,19 +157,95 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
 
-<span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
-<span class="kw">use</span> <span class="ident">ibc::Height</span>;
+<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet::Sequence</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error_span</span>, <span class="ident">info</span>};
 
+<span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
+<span class="kw">use</span> <span class="ident">ibc::Height</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty</span>::{<span class="ident">unreceived_acknowledgements</span>, <span class="ident">unreceived_packets</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error::LinkError</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::operational_data::OperationalData</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::operational_data</span>::{<span class="ident">OperationalData</span>, <span class="ident">TrackedEvents</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::packet_events</span>::{
+    <span class="ident">query_packet_events_with</span>, <span class="ident">query_send_packet_events</span>, <span class="ident">query_write_ack_events</span>,
+};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_path::RelayPath</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">relay_sender</span>, <span class="ident">Link</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_sender::SyncSender</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::Link</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path::PathIdentifiers</span>;
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">RelayPath</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Fetches an operational data that has fulfilled its predefined delay period. May _block_</span>
@@ -196,11 +272,27 @@
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
     }
+
+    <span class="doccomment">/// Given a vector of [`OperationalData`], this method proceeds to relaying</span>
+    <span class="doccomment">/// all the messages therein. It accumulates all events generated in the</span>
+    <span class="doccomment">/// mutable vector of [`IbcEvent`]s.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">relay_and_accumulate_results</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">from</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">OperationalData</span><span class="op">&gt;</span>,
+        <span class="ident">results</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">LinkError</span><span class="op">&gt;</span> {
+        <span class="kw">for</span> <span class="ident">od</span> <span class="kw">in</span> <span class="ident">from</span> {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">SyncSender</span><span class="op">&gt;</span>(<span class="ident">od</span>)<span class="question-mark">?</span>;
+            <span class="ident">results</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">last_res</span>.<span class="ident">events</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Implements the `packet-recv` CLI</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_and_send_recv_packet_messages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">relay_recv_packet_and_timeout_messages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">error_span!</span>(
             <span class="string">&quot;PacketRecvCmd&quot;</span>,
             <span class="ident">src_chain</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
@@ -210,23 +302,25 @@
         )
         .<span class="ident">entered</span>();
 
-        <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">build_recv_packet_and_timeout_msgs</span>(<span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+        <span class="comment">// Find the sequence numbers of unreceived packets</span>
+        <span class="kw">let</span> (<span class="ident">sequences</span>, <span class="ident">src_response_height</span>) <span class="op">=</span> <span class="ident">unreceived_packets</span>(
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">dst_chain</span>(),
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">path_id</span>,
+        )
+        .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-
-        <span class="comment">// Block waiting for all of the scheduled data (until `None` is returned)</span>
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">odata</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">fetch_scheduled_operational_data</span>()<span class="question-mark">?</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_res</span> <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">a_to_b</span>
-                .<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">relay_sender::SyncSender</span><span class="op">&gt;</span>(<span class="ident">odata</span>)<span class="question-mark">?</span>;
-            <span class="ident">results</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">last_res</span>.<span class="ident">events</span>);
+        <span class="kw">if</span> <span class="ident">sequences</span>.<span class="ident">is_empty</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">results</span>)
+        <span class="macro">info!</span>(<span class="string">&quot;unreceived packets found: {} &quot;</span>, <span class="ident">sequences</span>.<span class="ident">len</span>());
+
+        <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(<span class="ident">sequences</span>, <span class="ident">src_response_height</span>, <span class="ident">query_send_packet_events</span>)
     }
 
     <span class="doccomment">/// Implements the `packet-ack` CLI</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_and_send_ack_packet_messages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">relay_ack_packet_messages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">error_span!</span>(
             <span class="string">&quot;PacketAckCmd&quot;</span>,
             <span class="ident">src_chain</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
@@ -236,16 +330,58 @@
         )
         .<span class="ident">entered</span>();
 
-        <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">build_packet_ack_msgs</span>(<span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+        <span class="comment">// Find the sequence numbers of unreceived acknowledgements</span>
+        <span class="kw">let</span> (<span class="ident">sequences</span>, <span class="ident">src_response_height</span>) <span class="op">=</span> <span class="ident">unreceived_acknowledgements</span>(
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">dst_chain</span>(),
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">path_id</span>,
+        )
+        .<span class="ident">map_err</span>(<span class="ident">LinkError::supervisor</span>)<span class="question-mark">?</span>;
 
+        <span class="kw">if</span> <span class="ident">sequences</span>.<span class="ident">is_empty</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
+        }
+
+        <span class="macro">info!</span>(<span class="string">&quot;unreceived acknowledgements found: {} &quot;</span>, <span class="ident">sequences</span>.<span class="ident">len</span>());
+
+        <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(<span class="ident">sequences</span>, <span class="ident">src_response_height</span>, <span class="ident">query_write_ack_events</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">relay_packet_messages</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">sequences</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+        <span class="ident">src_response_height</span>: <span class="ident">Height</span>,
+        <span class="ident">query_fn</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(
+            <span class="kw-2">&amp;</span><span class="ident">ChainA</span>,
+            <span class="kw-2">&amp;</span><span class="ident">PathIdentifiers</span>,
+            <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>,
+            <span class="ident">Height</span>,
+        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TrackedEvents</span>, <span class="ident">LinkError</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+        <span class="macro">dbg!</span>(<span class="ident">src_response_height</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+        <span class="kw">for</span> <span class="ident">events_chunk</span> <span class="kw">in</span> <span class="ident">query_packet_events_with</span>(
+            <span class="kw-2">&amp;</span><span class="ident">sequences</span>,
+            <span class="ident">src_response_height</span>,
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">path_id</span>,
+            <span class="ident">query_fn</span>,
+        ) {
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">events_chunk</span>)<span class="question-mark">?</span>;
 
-        <span class="comment">// Block waiting for all of the scheduled data</span>
+            <span class="comment">// In case of zero connection delay, the op. data will already be ready</span>
+            <span class="kw">let</span> (<span class="ident">src_ods</span>, <span class="ident">dst_ods</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">try_fetch_scheduled_operational_data</span>()<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">a_to_b</span>
+                .<span class="ident">relay_and_accumulate_results</span>(<span class="ident">Vec::from</span>(<span class="ident">src_ods</span>), <span class="kw-2">&amp;mut</span> <span class="ident">results</span>)<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">a_to_b</span>
+                .<span class="ident">relay_and_accumulate_results</span>(<span class="ident">Vec::from</span>(<span class="ident">dst_ods</span>), <span class="kw-2">&amp;mut</span> <span class="ident">results</span>)<span class="question-mark">?</span>;
+        }
+
+        <span class="comment">// In case of non-zero connection delay, we block here waiting for all op.data</span>
+        <span class="comment">// until the connection delay elapses</span>
         <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">odata</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">fetch_scheduled_operational_data</span>()<span class="question-mark">?</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_res</span> <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">a_to_b</span>
-                .<span class="ident">relay_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">relay_sender::SyncSender</span><span class="op">&gt;</span>(<span class="ident">odata</span>)<span class="question-mark">?</span>;
-            <span class="ident">results</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">last_res</span>.<span class="ident">events</span>);
+            <span class="self">self</span>.<span class="ident">a_to_b</span>
+                .<span class="ident">relay_and_accumulate_results</span>(<span class="macro">vec!</span>[<span class="ident">odata</span>], <span class="kw-2">&amp;mut</span> <span class="ident">results</span>)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(<span class="ident">results</span>)

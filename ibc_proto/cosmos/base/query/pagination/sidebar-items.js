@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["all",""]]});
+initSidebarItems({"fn":[["all",""],["latest_limited",""]]});
