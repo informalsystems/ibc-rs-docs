@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["auth",""],["base",""],["crypto",""],["gov",""],["staking",""],["tx",""],["upgrade",""]]});
+initSidebarItems({"mod":[["auth",""],["bank",""],["base",""],["crypto",""],["gov",""],["staking",""],["tx",""],["upgrade",""]]});

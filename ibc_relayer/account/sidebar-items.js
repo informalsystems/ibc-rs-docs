@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Balance","The balance for a specific denom"]]});

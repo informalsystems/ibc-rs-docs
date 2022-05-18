@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["spawn_wallet_worker",""]]});

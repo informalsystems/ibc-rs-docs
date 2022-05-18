@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["TrackedMsgs","A wrapper over a vector of proto-encoded messages (`Vec<Any>`), which has an associated tracking number."]]});

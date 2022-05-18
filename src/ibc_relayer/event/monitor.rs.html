@@ -481,6 +481,15 @@
 <span id="476">476</span>
 <span id="477">477</span>
 <span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core::cmp::Ordering</span>;
 
@@ -503,9 +512,13 @@
     <span class="ident">core::ics02_client::height::Height</span>, <span class="ident">core::ics24_host::identifier::ChainId</span>, <span class="ident">events::IbcEvent</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util</span>::{
-    <span class="ident">retry</span>::{<span class="ident">retry_count</span>, <span class="ident">retry_with_index</span>, <span class="ident">RetryResult</span>},
-    <span class="ident">stream::try_group_while</span>,
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">chain::tracking::TrackingId</span>,
+    <span class="ident">telemetry</span>,
+    <span class="ident">util</span>::{
+        <span class="ident">retry</span>::{<span class="ident">retry_count</span>, <span class="ident">retry_with_index</span>, <span class="ident">RetryResult</span>},
+        <span class="ident">stream::try_group_while</span>,
+    },
 };
 
 <span class="kw">mod</span> <span class="ident">error</span>;
@@ -532,6 +545,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventBatch</span> {
     <span class="kw">pub</span> <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
+    <span class="kw">pub</span> <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="kw">pub</span> <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>,
 }
@@ -828,39 +842,40 @@
                     <span class="macro">error!</span>(<span class="string">&quot;[{}] {}&quot;</span>, <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>);
                 }),
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-                    <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">detail</span>() {
-                        <span class="ident">ErrorDetail::SubscriptionCancelled</span>(<span class="ident">reason</span>) =&gt; {
-                            <span class="macro">error!</span>(
-                                <span class="string">&quot;[{}] subscription cancelled, reason: {}&quot;</span>,
-                                <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">reason</span>
-                            );
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="ident">ErrorDetail::SubscriptionCancelled</span>(<span class="ident">reason</span>) <span class="op">=</span> <span class="ident">e</span>.<span class="ident">detail</span>() {
+                        <span class="macro">error!</span>(
+                            <span class="string">&quot;[{}] subscription cancelled, reason: {}&quot;</span>,
+                            <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">reason</span>
+                        );
 
-                            <span class="self">self</span>.<span class="ident">propagate_error</span>(<span class="ident">e</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                                <span class="macro">error!</span>(<span class="string">&quot;[{}] {}&quot;</span>, <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>);
-                            });
+                        <span class="self">self</span>.<span class="ident">propagate_error</span>(<span class="ident">e</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                            <span class="macro">error!</span>(<span class="string">&quot;[{}] {}&quot;</span>, <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>);
+                        });
 
-                            <span class="comment">// Reconnect to the WebSocket endpoint, and subscribe again to the queries.</span>
-                            <span class="self">self</span>.<span class="ident">reconnect</span>();
+                        <span class="macro">telemetry!</span>(<span class="ident">ws_reconnect</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_id</span>);
 
-                            <span class="comment">// Abort this event loop, the `run` method will start a new one.</span>
-                            <span class="comment">// We can&#39;t just write `return self.run()` here because Rust</span>
-                            <span class="comment">// does not perform tail call optimization, and we would</span>
-                            <span class="comment">// thus potentially blow up the stack after many restarts.</span>
-                            <span class="kw">return</span> <span class="ident">Next::Continue</span>;
-                        }
-                        <span class="kw">_</span> =&gt; {
-                            <span class="macro">error!</span>(<span class="string">&quot;[{}] failed to collect events: {}&quot;</span>, <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>);
+                        <span class="comment">// Reconnect to the WebSocket endpoint, and subscribe again to the queries.</span>
+                        <span class="self">self</span>.<span class="ident">reconnect</span>();
 
-                            <span class="comment">// Reconnect to the WebSocket endpoint, and subscribe again to the queries.</span>
-                            <span class="self">self</span>.<span class="ident">reconnect</span>();
+                        <span class="comment">// Abort this event loop, the `run` method will start a new one.</span>
+                        <span class="comment">// We can&#39;t just write `return self.run()` here because Rust</span>
+                        <span class="comment">// does not perform tail call optimization, and we would</span>
+                        <span class="comment">// thus potentially blow up the stack after many restarts.</span>
+                        <span class="kw">return</span> <span class="ident">Next::Continue</span>;
+                    } <span class="kw">else</span> {
+                        <span class="macro">error!</span>(<span class="string">&quot;[{}] failed to collect events: {}&quot;</span>, <span class="self">self</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>);
 
-                            <span class="comment">// Abort this event loop, the `run` method will start a new one.</span>
-                            <span class="comment">// We can&#39;t just write `return self.run()` here because Rust</span>
-                            <span class="comment">// does not perform tail call optimization, and we would</span>
-                            <span class="comment">// thus potentially blow up the stack after many restarts.</span>
-                            <span class="kw">return</span> <span class="ident">Next::Continue</span>;
-                        }
-                    }
+                        <span class="macro">telemetry!</span>(<span class="ident">ws_reconnect</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_id</span>);
+
+                        <span class="comment">// Reconnect to the WebSocket endpoint, and subscribe again to the queries.</span>
+                        <span class="self">self</span>.<span class="ident">reconnect</span>();
+
+                        <span class="comment">// Abort this event loop, the `run` method will start a new one.</span>
+                        <span class="comment">// We can&#39;t just write `return self.run()` here because Rust</span>
+                        <span class="comment">// does not perform tail call optimization, and we would</span>
+                        <span class="comment">// thus potentially blow up the stack after many restarts.</span>
+                        <span class="kw">return</span> <span class="ident">Next::Continue</span>;
+                    };
                 }
             }
         }
@@ -883,6 +898,8 @@
 
     <span class="doccomment">/// Collect the IBC events from the subscriptions</span>
     <span class="kw">fn</span> <span class="ident">process_batch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">batch</span>: <span class="ident">EventBatch</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="macro">telemetry!</span>(<span class="ident">ws_events</span>, <span class="kw-2">&amp;</span><span class="ident">batch</span>.<span class="ident">chain_id</span>, <span class="ident">batch</span>.<span class="ident">events</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>);
+
         <span class="self">self</span>.<span class="ident">tx_batch</span>
             .<span class="ident">send</span>(<span class="prelude-val">Ok</span>(<span class="ident">batch</span>))
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::channel_send_failed</span>())<span class="question-mark">?</span>;
@@ -931,6 +948,7 @@
             <span class="ident">height</span>,
             <span class="ident">events</span>,
             <span class="ident">chain_id</span>: <span class="ident">chain_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">tracking_id</span>: <span class="ident">TrackingId::new_uuid</span>(),
         }
     })
 }

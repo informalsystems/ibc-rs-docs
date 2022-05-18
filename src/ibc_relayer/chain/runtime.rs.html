@@ -895,6 +895,15 @@
 <span id="890">890</span>
 <span id="891">891</span>
 <span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 
@@ -941,6 +950,7 @@
 };
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">account::Balance</span>,
     <span class="ident">chain</span>::{<span class="ident">client::ClientSettings</span>, <span class="ident">ChainStatus</span>},
     <span class="ident">config::ChainConfig</span>,
     <span class="ident">connection::ConnectionMsgType</span>,
@@ -955,7 +965,7 @@
 
 <span class="kw">use</span> <span class="kw">super</span>::{
     <span class="ident">handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainRequest</span>, <span class="ident">ReplyTo</span>, <span class="ident">Subscription</span>},
-    <span class="ident">tx::TrackedMsgs</span>,
+    <span class="ident">tracking::TrackedMsgs</span>,
     <span class="ident">ChainEndpoint</span>, <span class="ident">HealthCheck</span>,
 };
 
@@ -1175,7 +1185,6 @@
                             <span class="self">self</span>.<span class="ident">ibc_version</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         }
 
-
                         <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildHeader</span> { <span class="ident">trusted_height</span>, <span class="ident">target_height</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span> }) =&gt; {
                             <span class="self">self</span>.<span class="ident">build_header</span>(<span class="ident">trusted_height</span>, <span class="ident">target_height</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         }
@@ -1199,6 +1208,10 @@
                         <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildChannelProofs</span> { <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> }) =&gt; {
                             <span class="self">self</span>.<span class="ident">build_channel_proofs</span>(<span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
+
+                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryBalance</span> { <span class="ident">reply_to</span> }) =&gt; {
+                            <span class="self">self</span>.<span class="ident">query_balance</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
+                        }
 
                         <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryApplicationStatus</span> { <span class="ident">reply_to</span> }) =&gt; {
                             <span class="self">self</span>.<span class="ident">query_application_status</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
@@ -1360,6 +1373,11 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">send_messages_and_wait_check_tx</span>(<span class="ident">tracked_msgs</span>);
         <span class="ident">reply_to</span>.<span class="ident">send</span>(<span class="ident">result</span>).<span class="ident">map_err</span>(<span class="ident">Error::send</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">query_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">reply_to</span>: <span class="ident">ReplyTo</span><span class="op">&lt;</span><span class="ident">Balance</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">balance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">query_balance</span>();
+        <span class="ident">reply_to</span>.<span class="ident">send</span>(<span class="ident">balance</span>).<span class="ident">map_err</span>(<span class="ident">Error::send</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">query_application_status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">reply_to</span>: <span class="ident">ReplyTo</span><span class="op">&lt;</span><span class="ident">ChainStatus</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {

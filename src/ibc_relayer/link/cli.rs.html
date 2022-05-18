@@ -225,6 +225,19 @@
 <span id="220">220</span>
 <span id="221">221</span>
 <span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
@@ -237,6 +250,7 @@
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty</span>::{<span class="ident">unreceived_acknowledgements</span>, <span class="ident">unreceived_packets</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackingId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error::LinkError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::operational_data</span>::{<span class="ident">OperationalData</span>, <span class="ident">TrackedEvents</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::packet_events</span>::{
@@ -316,7 +330,12 @@
 
         <span class="macro">info!</span>(<span class="string">&quot;unreceived packets found: {} &quot;</span>, <span class="ident">sequences</span>.<span class="ident">len</span>());
 
-        <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(<span class="ident">sequences</span>, <span class="ident">src_response_height</span>, <span class="ident">query_send_packet_events</span>)
+        <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(
+            <span class="ident">sequences</span>,
+            <span class="ident">src_response_height</span>,
+            <span class="ident">query_send_packet_events</span>,
+            <span class="ident">TrackingId::new_static</span>(<span class="string">&quot;packet-recv&quot;</span>),
+        )
     }
 
     <span class="doccomment">/// Implements the `packet-ack` CLI</span>
@@ -344,7 +363,12 @@
 
         <span class="macro">info!</span>(<span class="string">&quot;unreceived acknowledgements found: {} &quot;</span>, <span class="ident">sequences</span>.<span class="ident">len</span>());
 
-        <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(<span class="ident">sequences</span>, <span class="ident">src_response_height</span>, <span class="ident">query_write_ack_events</span>)
+        <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(
+            <span class="ident">sequences</span>,
+            <span class="ident">src_response_height</span>,
+            <span class="ident">query_write_ack_events</span>,
+            <span class="ident">TrackingId::new_static</span>(<span class="string">&quot;packet-ack&quot;</span>),
+        )
     }
 
     <span class="kw">fn</span> <span class="ident">relay_packet_messages</span>(
@@ -356,7 +380,8 @@
             <span class="kw-2">&amp;</span><span class="ident">PathIdentifiers</span>,
             <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>,
             <span class="ident">Height</span>,
-        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TrackedEvents</span>, <span class="ident">LinkError</span><span class="op">&gt;</span>,
+        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="macro">dbg!</span>(<span class="ident">src_response_height</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="macro">vec!</span>[];
@@ -367,7 +392,8 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">path_id</span>,
             <span class="ident">query_fn</span>,
         ) {
-            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">events_chunk</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">tracked_events</span> <span class="op">=</span> <span class="ident">TrackedEvents::new</span>(<span class="ident">events_chunk</span>, <span class="ident">tracking_id</span>);
+            <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">tracked_events</span>)<span class="question-mark">?</span>;
 
             <span class="comment">// In case of zero connection delay, the op. data will already be ready</span>
             <span class="kw">let</span> (<span class="ident">src_ods</span>, <span class="ident">dst_ods</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">try_fetch_scheduled_operational_data</span>()<span class="question-mark">?</span>;

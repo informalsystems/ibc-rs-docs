@@ -274,6 +274,25 @@
 <span id="269">269</span>
 <span id="270">270</span>
 <span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::iter::Iterator</span>;
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">std::time::Instant</span>;
@@ -284,8 +303,10 @@
 <span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident">ibc::query</span>::{<span class="ident">QueryTxHash</span>, <span class="ident">QueryTxRequest</span>};
 
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackingId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span> <span class="kw">as</span> <span class="ident">RelayerError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">error::LinkError</span>, <span class="ident">RelayPath</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::telemetry</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::queue::Queue</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">chain::handle::ChainHandle</span>,
@@ -307,6 +328,12 @@
     <span class="kw">pub</span> <span class="ident">tx_hashes</span>: <span class="ident">TxHashes</span>,
     <span class="kw">pub</span> <span class="ident">submit_time</span>: <span class="ident">Instant</span>,
     <span class="kw">pub</span> <span class="ident">error_events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">PendingData</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tracking_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TrackingId</span> {
+        <span class="self">self</span>.<span class="ident">original_od</span>.<span class="ident">tracking_id</span>
+    }
 }
 
 <span class="doccomment">/// Stores all pending data</span>
@@ -390,6 +417,7 @@
             <span class="ident">submit_time</span>: <span class="ident">Instant::now</span>(),
             <span class="ident">error_events</span>,
         };
+
         <span class="self">self</span>.<span class="ident">pending_queue</span>.<span class="ident">push_back</span>(<span class="ident">u</span>);
     }
 
@@ -503,9 +531,19 @@
                     <span class="comment">// to the chain.</span>
 
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;confirmed after {:#?}: {} &quot;</span>,
-                        <span class="ident">pending</span>.<span class="ident">submit_time</span>.<span class="ident">elapsed</span>(),
-                        <span class="ident">tx_hashes</span>
+                        <span class="ident">tracking_id</span> <span class="op">=</span> <span class="op">%</span><span class="ident">pending</span>.<span class="ident">tracking_id</span>(),
+                        <span class="ident">elapsed</span> <span class="op">=</span> <span class="question-mark">?</span><span class="ident">pending</span>.<span class="ident">submit_time</span>.<span class="ident">elapsed</span>(),
+                        <span class="ident">tx_hashes</span> <span class="op">=</span> <span class="op">%</span><span class="ident">tx_hashes</span>,
+                        <span class="string">&quot;transactions confirmed&quot;</span>,
+                    );
+
+                    <span class="macro">telemetry!</span>(
+                        <span class="ident">tx_confirmed</span>,
+                        <span class="ident">pending</span>.<span class="ident">tracking_id</span>(),
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">id</span>(),
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">channel_id</span>,
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">port_id</span>,
+                        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">counterparty_chain_id</span>
                     );
 
                     <span class="comment">// Convert the events to RelaySummary and return them.</span>

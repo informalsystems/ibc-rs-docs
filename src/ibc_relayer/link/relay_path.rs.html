@@ -1548,6 +1548,57 @@
 <span id="1543">1543</span>
 <span id="1544">1544</span>
 <span id="1545">1545</span>
+<span id="1546">1546</span>
+<span id="1547">1547</span>
+<span id="1548">1548</span>
+<span id="1549">1549</span>
+<span id="1550">1550</span>
+<span id="1551">1551</span>
+<span id="1552">1552</span>
+<span id="1553">1553</span>
+<span id="1554">1554</span>
+<span id="1555">1555</span>
+<span id="1556">1556</span>
+<span id="1557">1557</span>
+<span id="1558">1558</span>
+<span id="1559">1559</span>
+<span id="1560">1560</span>
+<span id="1561">1561</span>
+<span id="1562">1562</span>
+<span id="1563">1563</span>
+<span id="1564">1564</span>
+<span id="1565">1565</span>
+<span id="1566">1566</span>
+<span id="1567">1567</span>
+<span id="1568">1568</span>
+<span id="1569">1569</span>
+<span id="1570">1570</span>
+<span id="1571">1571</span>
+<span id="1572">1572</span>
+<span id="1573">1573</span>
+<span id="1574">1574</span>
+<span id="1575">1575</span>
+<span id="1576">1576</span>
+<span id="1577">1577</span>
+<span id="1578">1578</span>
+<span id="1579">1579</span>
+<span id="1580">1580</span>
+<span id="1581">1581</span>
+<span id="1582">1582</span>
+<span id="1583">1583</span>
+<span id="1584">1584</span>
+<span id="1585">1585</span>
+<span id="1586">1586</span>
+<span id="1587">1587</span>
+<span id="1588">1588</span>
+<span id="1589">1589</span>
+<span id="1590">1590</span>
+<span id="1591">1591</span>
+<span id="1592">1592</span>
+<span id="1593">1593</span>
+<span id="1594">1594</span>
+<span id="1595">1595</span>
+<span id="1596">1596</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">alloc::collections::VecDeque</span>;
 <span class="kw">use</span> <span class="ident">std::ops::Sub</span>;
@@ -1589,7 +1640,8 @@
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty</span>::{<span class="ident">unreceived_acknowledgements</span>, <span class="ident">unreceived_packets</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tx::TrackedMsgs</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackingId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::ChainStatus</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::error::ChannelError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::Channel</span>;
@@ -1607,6 +1659,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_summary::RelaySummary</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">pending</span>, <span class="ident">relay_sender</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path::PathIdentifiers</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::telemetry</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::queue::Queue</span>;
 
 <span class="kw">const</span> <span class="ident">MAX_RETRIES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
@@ -1874,9 +1927,13 @@
         <span class="prelude-val">Ok</span>(<span class="ident">new_msg</span>.<span class="ident">to_any</span>())
     }
 
-    <span class="comment">// Determines if the events received are relevant and should be processed.</span>
-    <span class="comment">// Only events for a port/channel matching one of the channel ends should be processed.</span>
-    <span class="kw">fn</span> <span class="ident">filter_relaying_events</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>) -&gt; <span class="ident">TrackedEvents</span> {
+    <span class="doccomment">/// Determines if the events received are relevant and should be processed.</span>
+    <span class="doccomment">/// Only events for a port/channel matching one of the channel ends should be processed.</span>
+    <span class="kw">fn</span> <span class="ident">filter_relaying_events</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
+    ) -&gt; <span class="ident">TrackedEvents</span> {
         <span class="kw">let</span> <span class="ident">src_channel_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">src_channel_id</span>();
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="macro">vec!</span>[];
@@ -1916,14 +1973,16 @@
         }
 
         <span class="comment">// Transform into `TrackedEvents`</span>
-        <span class="ident">result</span>.<span class="ident">into</span>()
+        <span class="ident">TrackedEvents::new</span>(<span class="ident">result</span>, <span class="ident">tracking_id</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">relay_pending_packets</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">LinkError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">tracking_id</span> <span class="op">=</span> <span class="ident">TrackingId::new_static</span>(<span class="string">&quot;relay pending packets&quot;</span>);
+
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..<span class="op">=</span><span class="ident">MAX_RETRIES</span> {
             <span class="kw">let</span> <span class="ident">cleared</span> <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">schedule_recv_packet_and_timeout_msgs</span>(<span class="ident">height</span>)
-                .<span class="ident">and_then</span>(<span class="op">|</span>()<span class="op">|</span> <span class="self">self</span>.<span class="ident">schedule_packet_ack_msgs</span>(<span class="ident">height</span>));
+                .<span class="ident">schedule_recv_packet_and_timeout_msgs</span>(<span class="ident">height</span>, <span class="ident">tracking_id</span>)
+                .<span class="ident">and_then</span>(<span class="op">|</span>()<span class="op">|</span> <span class="self">self</span>.<span class="ident">schedule_packet_ack_msgs</span>(<span class="ident">height</span>, <span class="ident">tracking_id</span>));
 
             <span class="kw">match</span> <span class="ident">cleared</span> {
                 <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">return</span> <span class="prelude-val">Ok</span>(()),
@@ -1955,7 +2014,7 @@
     <span class="doccomment">/// Generate &amp; schedule operational data from the input `batch` of IBC events.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update_schedule</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">batch</span>: <span class="ident">EventBatch</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="comment">// Collect relevant events from the incoming batch &amp; adjust their height.</span>
-        <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">filter_relaying_events</span>(<span class="ident">batch</span>.<span class="ident">events</span>);
+        <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">filter_relaying_events</span>(<span class="ident">batch</span>.<span class="ident">events</span>, <span class="ident">batch</span>.<span class="ident">tracking_id</span>);
 
         <span class="comment">// Transform the events into operational data items</span>
         <span class="self">self</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">events</span>)
@@ -2126,7 +2185,7 @@
             <span class="macro">debug!</span>(<span class="string">&quot;[try {}/{}]&quot;</span>, <span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">MAX_RETRIES</span>);
 
             <span class="comment">// Consume the operational data by attempting to send its messages</span>
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">send_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="ident">odata</span>.<span class="ident">clone</span>()) {
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">send_from_operational_data</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">odata</span>) {
                 <span class="prelude-val">Ok</span>(<span class="ident">reply</span>) =&gt; {
                     <span class="comment">// Done with this op. data</span>
                     <span class="macro">info!</span>(<span class="string">&quot;success&quot;</span>);
@@ -2170,7 +2229,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">initial_odata</span>: <span class="ident">OperationalData</span>,
     ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OperationalData</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">op_info</span> <span class="op">=</span> <span class="ident">initial_odata</span>.<span class="ident">info</span>().<span class="ident">into_owned</span>();
+        <span class="kw">let</span> <span class="ident">op_info</span> <span class="op">=</span> <span class="ident">initial_odata</span>.<span class="ident">info</span>();
 
         <span class="macro">warn!</span>(
             <span class="string">&quot;failed. Regenerate operational data from {} events&quot;</span>,
@@ -2244,7 +2303,7 @@
     <span class="doccomment">/// Propagates any encountered errors.</span>
     <span class="kw">fn</span> <span class="ident">send_from_operational_data</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">relay_sender::Submit</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">odata</span>: <span class="ident">OperationalData</span>,
+        <span class="ident">odata</span>: <span class="kw-2">&amp;</span><span class="ident">OperationalData</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Reply</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">odata</span>.<span class="ident">batch</span>.<span class="ident">is_empty</span>() {
             <span class="macro">error!</span>(<span class="string">&quot;ignoring empty operational data!&quot;</span>);
@@ -2252,6 +2311,18 @@
         }
 
         <span class="kw">let</span> <span class="ident">msgs</span> <span class="op">=</span> <span class="ident">odata</span>.<span class="ident">assemble_msgs</span>(<span class="self">self</span>)<span class="question-mark">?</span>;
+
+        <span class="macro">telemetry!</span>({
+            <span class="kw">let</span> (<span class="ident">chain</span>, <span class="ident">counterparty</span>, <span class="ident">channel_id</span>, <span class="ident">port_id</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">target_info</span>(<span class="ident">odata</span>.<span class="ident">target</span>);
+
+            <span class="ident">ibc_telemetry::global</span>().<span class="ident">tx_submitted</span>(
+                <span class="ident">msgs</span>.<span class="ident">tracking_id</span>,
+                <span class="kw-2">&amp;</span><span class="ident">chain</span>,
+                <span class="ident">channel_id</span>,
+                <span class="ident">port_id</span>,
+                <span class="kw-2">&amp;</span><span class="ident">counterparty</span>,
+            );
+        });
 
         <span class="kw">match</span> <span class="ident">odata</span>.<span class="ident">target</span> {
             <span class="ident">OperationalDataTarget::Source</span> =&gt; <span class="ident">S::submit</span>(<span class="self">self</span>.<span class="ident">src_chain</span>(), <span class="ident">msgs</span>),
@@ -2408,7 +2479,7 @@
     <span class="kw">fn</span> <span class="ident">update_client_dst</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">src_chain_height</span>: <span class="ident">Height</span>,
-        <span class="ident">tracking_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">do_update_client_dst</span>(<span class="ident">src_chain_height</span>, <span class="ident">tracking_id</span>, <span class="ident">MAX_RETRIES</span>)
     }
@@ -2422,7 +2493,7 @@
     <span class="kw">fn</span> <span class="ident">do_update_client_dst</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">src_chain_height</span>: <span class="ident">Height</span>,
-        <span class="ident">tracking_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
         <span class="ident">retries_left</span>: <span class="ident">usize</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>( <span class="string">&quot;sending update_client to client hosted on source chain for height {} (retries left: {})&quot;</span>, <span class="ident">src_chain_height</span>, <span class="ident">retries_left</span> );
@@ -2433,6 +2504,7 @@
             .<span class="ident">dst_chain</span>()
             .<span class="ident">send_messages_and_wait_commit</span>(<span class="ident">tm</span>)
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
+
         <span class="macro">info!</span>(<span class="string">&quot;result: {}&quot;</span>, <span class="ident">PrettyEvents</span>(<span class="kw-2">&amp;</span><span class="ident">dst_tx_events</span>));
 
         <span class="kw">let</span> (<span class="ident">error</span>, <span class="ident">update</span>, <span class="ident">misbehaviour</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::event_per_type</span>(<span class="ident">dst_tx_events</span>);
@@ -2474,7 +2546,7 @@
     <span class="kw">fn</span> <span class="ident">update_client_src</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">dst_chain_height</span>: <span class="ident">Height</span>,
-        <span class="ident">tracking_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">do_update_client_src</span>(<span class="ident">dst_chain_height</span>, <span class="ident">tracking_id</span>, <span class="ident">MAX_RETRIES</span>)
     }
@@ -2488,7 +2560,7 @@
     <span class="kw">fn</span> <span class="ident">do_update_client_src</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">dst_chain_height</span>: <span class="ident">Height</span>,
-        <span class="ident">tracking_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
         <span class="ident">retries_left</span>: <span class="ident">usize</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>( <span class="string">&quot;sending update_client to client hosted on source chain for height {} (retries left: {})&quot;</span>, <span class="ident">dst_chain_height</span>, <span class="ident">retries_left</span> );
@@ -2499,6 +2571,7 @@
             .<span class="ident">src_chain</span>()
             .<span class="ident">send_messages_and_wait_commit</span>(<span class="ident">tm</span>)
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
+
         <span class="macro">info!</span>(<span class="string">&quot;result: {}&quot;</span>, <span class="ident">PrettyEvents</span>(<span class="kw-2">&amp;</span><span class="ident">src_tx_events</span>));
 
         <span class="kw">let</span> (<span class="ident">error</span>, <span class="ident">update</span>, <span class="ident">misbehaviour</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::event_per_type</span>(<span class="ident">src_tx_events</span>);
@@ -2545,9 +2618,10 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">schedule_recv_packet_and_timeout_msgs</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opt_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span>
-            <span class="macro">span!</span>(<span class="ident">Level::DEBUG</span>, <span class="string">&quot;schedule_recv_packet_and_timeout_msgs&quot;</span>, <span class="ident">h</span> <span class="op">=</span> <span class="question-mark">?</span><span class="ident">opt_query_height</span>)
+            <span class="macro">span!</span>(<span class="ident">Level::DEBUG</span>, <span class="string">&quot;schedule_recv_packet_and_timeout_msgs&quot;</span>, <span class="ident">query_height</span> <span class="op">=</span> <span class="question-mark">?</span><span class="ident">opt_query_height</span>)
                 .<span class="ident">entered</span>();
 
         <span class="comment">// Pull the s.n. of all packets that the destination chain has not yet received.</span>
@@ -2566,7 +2640,7 @@
             <span class="string">&quot;sequences of unreceived packets to send out to {} of the ones with commitments on {}: {} (first 10 shown here; total={})&quot;</span>,
             <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
             <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
-            <span class="ident">sequences</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="number">10</span>).<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>), <span class="ident">sequences</span>.<span class="ident">len</span>()
+            <span class="ident">sequences</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="number">10</span>).<span class="ident">format</span>(<span class="string">&quot;, &quot;</span>), <span class="ident">sequences</span>.<span class="ident">len</span>()
         );
 
         <span class="comment">// Chunk-up the list of sequence nrs. into smaller parts,</span>
@@ -2578,7 +2652,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path_id</span>,
             <span class="ident">query_send_packet_events</span>,
         ) {
-            <span class="self">self</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">events_chunk</span>)<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">TrackedEvents::new</span>(<span class="ident">events_chunk</span>, <span class="ident">tracking_id</span>))<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -2592,6 +2666,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">schedule_packet_ack_msgs</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">opt_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">span!</span>(<span class="ident">Level::DEBUG</span>, <span class="string">&quot;build_packet_ack_msgs&quot;</span>, <span class="ident">h</span> <span class="op">=</span> <span class="question-mark">?</span><span class="ident">opt_query_height</span>).<span class="ident">entered</span>();
 
@@ -2610,7 +2685,7 @@
             <span class="string">&quot;seq. nrs. of ack packets to send out to {} of the ones with acknowledgments on {}: {} (first 10 shown here; total={})&quot;</span>,
             <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
             <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
-            <span class="ident">sequences</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="number">10</span>).<span class="ident">join</span>(<span class="string">&quot;, &quot;</span>), <span class="ident">sequences</span>.<span class="ident">len</span>()
+            <span class="ident">sequences</span>.<span class="ident">iter</span>().<span class="ident">take</span>(<span class="number">10</span>).<span class="ident">format</span>(<span class="string">&quot;, &quot;</span>), <span class="ident">sequences</span>.<span class="ident">len</span>()
         );
 
         <span class="comment">// Incrementally process all the available sequence numbers in chunks</span>
@@ -2621,7 +2696,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path_id</span>,
             <span class="ident">query_write_ack_events</span>,
         ) {
-            <span class="self">self</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">events_chunk</span>)<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">TrackedEvents::new</span>(<span class="ident">events_chunk</span>, <span class="ident">tracking_id</span>))<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -2925,7 +3000,7 @@
                                     <span class="ident">OperationalData::new</span>(
                                         <span class="ident">dst_current_height</span>,
                                         <span class="ident">OperationalDataTarget::Source</span>,
-                                        <span class="kw-2">&amp;</span><span class="ident">odata</span>.<span class="ident">tracking_id</span>,
+                                        <span class="ident">odata</span>.<span class="ident">tracking_id</span>,
                                         <span class="self">self</span>.<span class="ident">channel</span>.<span class="ident">connection_delay</span>,
                                     )
                                 })
@@ -3001,12 +3076,12 @@
             <span class="kw">let</span> <span class="ident">target_height</span> <span class="op">=</span> <span class="ident">od</span>.<span class="ident">proofs_height</span>.<span class="ident">increment</span>();
             <span class="kw">match</span> <span class="ident">od</span>.<span class="ident">target</span> {
                 <span class="ident">OperationalDataTarget::Source</span> =&gt; {
-                    <span class="kw">let</span> <span class="ident">update_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">update_client_src</span>(<span class="ident">target_height</span>, <span class="kw-2">&amp;</span><span class="ident">od</span>.<span class="ident">tracking_id</span>)<span class="question-mark">?</span>;
+                    <span class="kw">let</span> <span class="ident">update_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">update_client_src</span>(<span class="ident">target_height</span>, <span class="ident">od</span>.<span class="ident">tracking_id</span>)<span class="question-mark">?</span>;
                     <span class="ident">od</span>.<span class="ident">set_update_height</span>(<span class="ident">update_height</span>);
                     <span class="self">self</span>.<span class="ident">src_time_at_height</span>(<span class="ident">update_height</span>)<span class="question-mark">?</span>
                 }
                 <span class="ident">OperationalDataTarget::Destination</span> =&gt; {
-                    <span class="kw">let</span> <span class="ident">update_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">update_client_dst</span>(<span class="ident">target_height</span>, <span class="kw-2">&amp;</span><span class="ident">od</span>.<span class="ident">tracking_id</span>)<span class="question-mark">?</span>;
+                    <span class="kw">let</span> <span class="ident">update_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">update_client_dst</span>(<span class="ident">target_height</span>, <span class="ident">od</span>.<span class="ident">tracking_id</span>)<span class="question-mark">?</span>;
                     <span class="ident">od</span>.<span class="ident">set_update_height</span>(<span class="ident">update_height</span>);
                     <span class="self">self</span>.<span class="ident">dst_time_at_height</span>(<span class="ident">update_height</span>)<span class="question-mark">?</span>
                 }
@@ -3091,6 +3166,33 @@
             <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">clone</span>(),
             <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">clone</span>(),
         )
+    }
+
+    <span class="comment">// we need fully qualified ChainId to avoid unneeded imports warnings</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;telemetry&quot;</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">target_info</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">target</span>: <span class="ident">OperationalDataTarget</span>,
+    ) -&gt; (
+        <span class="ident">ibc::core::ics24_host::identifier::ChainId</span>, <span class="comment">// source chain</span>
+        <span class="ident">ibc::core::ics24_host::identifier::ChainId</span>, <span class="comment">// destination chain</span>
+        <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+    ) {
+        <span class="kw">match</span> <span class="ident">target</span> {
+            <span class="ident">OperationalDataTarget::Source</span> =&gt; (
+                <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
+                <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
+                <span class="self">self</span>.<span class="ident">src_channel_id</span>(),
+                <span class="self">self</span>.<span class="ident">src_port_id</span>(),
+            ),
+            <span class="ident">OperationalDataTarget::Destination</span> =&gt; (
+                <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
+                <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
+                <span class="self">self</span>.<span class="ident">dst_channel_id</span>(),
+                <span class="self">self</span>.<span class="ident">dst_port_id</span>(),
+            ),
+        }
     }
 }
 </code></pre></div>
