@@ -269,10 +269,26 @@
 <span id="264">264</span>
 <span id="265">265</span>
 <span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 
 <span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{
+    <span class="ident">PageRequest</span>, <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
+    <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>,
+};
 <span class="kw">use</span> <span class="ident">tokio::runtime::Runtime</span> <span class="kw">as</span> <span class="ident">TokioRuntime</span>;
 <span class="kw">use</span> <span class="ident">tracing::debug</span>;
 
@@ -283,8 +299,6 @@
 <span class="kw">use</span> <span class="ident">ibc::events::WithBlockDataType</span>;
 <span class="kw">use</span> <span class="ident">ibc::query::QueryTxRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1::QueryConsensusStatesRequest</span>;
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::connection::v1::QueryClientConnectionsRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::ChainEndpoint</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::CosmosSdkChain</span>;
 
@@ -324,7 +338,10 @@
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">unwrap_or</span>(<span class="number">0_u64</span>));
 
-        <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">client_id</span>, <span class="ident">height</span>) {
+        <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
+            <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">height</span>,
+        }) {
             <span class="prelude-val">Ok</span>(<span class="ident">cs</span>) =&gt; <span class="ident">Output::success</span>(<span class="ident">cs</span>).<span class="ident">exit</span>(),
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)).<span class="ident">exit</span>(),
         }
@@ -379,7 +396,10 @@
         <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">CosmosSdkChain::bootstrap</span>(<span class="ident">chain_config</span>.<span class="ident">clone</span>(), <span class="ident">rt</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
-        <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">client_id</span>, <span class="ident">Height::zero</span>()) {
+        <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
+            <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+        }) {
             <span class="prelude-val">Ok</span>(<span class="ident">cs</span>) =&gt; <span class="ident">cs</span>.<span class="ident">chain_id</span>(),
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(
                 <span class="string">&quot;failed while querying client &#39;{}&#39; on chain &#39;{}&#39; with error: {}&quot;</span>,
@@ -393,8 +413,11 @@
                 <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">unwrap_or</span>(<span class="number">0_u64</span>));
                 <span class="kw">let</span> <span class="ident">consensus_height</span> <span class="op">=</span> <span class="ident">ibc::Height::new</span>(<span class="ident">counterparty_chain</span>.<span class="ident">version</span>(), <span class="ident">cs_height</span>);
 
-                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span>
-                    <span class="ident">chain</span>.<span class="ident">query_consensus_state</span>(<span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">consensus_height</span>, <span class="ident">height</span>);
+                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_consensus_state</span>(<span class="ident">QueryConsensusStateRequest</span> {
+                    <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">consensus_height</span>,
+                    <span class="ident">query_height</span>: <span class="ident">height</span>,
+                });
 
                 <span class="kw">match</span> <span class="ident">res</span> {
                     <span class="prelude-val">Ok</span>(<span class="ident">cs</span>) =&gt; <span class="ident">Output::success</span>(<span class="ident">cs</span>).<span class="ident">exit</span>(),
@@ -403,8 +426,8 @@
             }
             <span class="prelude-val">None</span> =&gt; {
                 <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_consensus_states</span>(<span class="ident">QueryConsensusStatesRequest</span> {
-                    <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">pagination</span>: <span class="ident">ibc_proto::cosmos::base::query::pagination::all</span>(),
+                    <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">pagination</span>: <span class="prelude-val">Some</span>(<span class="ident">PageRequest::all</span>()),
                 });
 
                 <span class="kw">match</span> <span class="ident">res</span> {
@@ -459,7 +482,10 @@
         <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">CosmosSdkChain::bootstrap</span>(<span class="ident">chain_config</span>.<span class="ident">clone</span>(), <span class="ident">rt</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
-        <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">client_id</span>, <span class="ident">Height::zero</span>()) {
+        <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
+            <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+        }) {
             <span class="prelude-val">Ok</span>(<span class="ident">cs</span>) =&gt; <span class="ident">cs</span>.<span class="ident">chain_id</span>(),
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(
                 <span class="string">&quot;failed while querying client &#39;{}&#39; on chain &#39;{}&#39; with error: {}&quot;</span>,
@@ -523,11 +549,9 @@
         <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">CosmosSdkChain::bootstrap</span>(<span class="ident">chain_config</span>.<span class="ident">clone</span>(), <span class="ident">rt</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
-        <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">QueryClientConnectionsRequest</span> {
-            <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">to_string</span>(),
-        };
-
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_client_connections</span>(<span class="ident">req</span>);
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_client_connections</span>(<span class="ident">QueryClientConnectionsRequest</span> {
+            <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+        });
 
         <span class="kw">match</span> <span class="ident">res</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">ce</span>) =&gt; <span class="ident">Output::success</span>(<span class="ident">ce</span>).<span class="ident">exit</span>(),

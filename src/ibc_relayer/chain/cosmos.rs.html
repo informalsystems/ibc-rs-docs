@@ -1677,6 +1677,27 @@
 <span id="1672">1672</span>
 <span id="1673">1673</span>
 <span id="1674">1674</span>
+<span id="1675">1675</span>
+<span id="1676">1676</span>
+<span id="1677">1677</span>
+<span id="1678">1678</span>
+<span id="1679">1679</span>
+<span id="1680">1680</span>
+<span id="1681">1681</span>
+<span id="1682">1682</span>
+<span id="1683">1683</span>
+<span id="1684">1684</span>
+<span id="1685">1685</span>
+<span id="1686">1686</span>
+<span id="1687">1687</span>
+<span id="1688">1688</span>
+<span id="1689">1689</span>
+<span id="1690">1690</span>
+<span id="1691">1691</span>
+<span id="1692">1692</span>
+<span id="1693">1693</span>
+<span id="1694">1694</span>
+<span id="1695">1695</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
@@ -1702,7 +1723,6 @@
 <span class="kw">use</span> <span class="ident">tonic::codegen::http::Uri</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">span</span>, <span class="ident">warn</span>, <span class="ident">Level</span>};
 
-<span class="kw">use</span> <span class="ident">ibc::clients::ics07_tendermint::client_state</span>::{<span class="ident">AllowUpdate</span>, <span class="ident">ClientState</span>};
 <span class="kw">use</span> <span class="ident">ibc::clients::ics07_tendermint::consensus_state::ConsensusState</span> <span class="kw">as</span> <span class="ident">TMConsensusState</span>;
 <span class="kw">use</span> <span class="ident">ibc::clients::ics07_tendermint::header::Header</span> <span class="kw">as</span> <span class="ident">TmHeader</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus</span>::{<span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>};
@@ -1727,18 +1747,11 @@
 <span class="kw">use</span> <span class="ident">ibc::query::QueryTxRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc::signer::Signer</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>;
+<span class="kw">use</span> <span class="ident">ibc</span>::{
+    <span class="ident">clients::ics07_tendermint::client_state</span>::{<span class="ident">AllowUpdate</span>, <span class="ident">ClientState</span>},
+    <span class="ident">core::ics23_commitment::merkle::MerkleProof</span>,
+};
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::staking::v1beta1::Params</span> <span class="kw">as</span> <span class="ident">StakingParams</span>;
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::channel::v1</span>::{
-    <span class="ident">PacketState</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelsRequest</span>,
-    <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryNextSequenceReceiveRequest</span>,
-    <span class="ident">QueryPacketAcknowledgementsRequest</span>, <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>,
-    <span class="ident">QueryUnreceivedPacketsRequest</span>,
-};
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1</span>::{<span class="ident">QueryClientStatesRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>};
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::commitment::v1::MerkleProof</span>;
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::connection::v1</span>::{
-    <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryConnectionsRequest</span>,
-};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
@@ -1764,6 +1777,16 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::keyring</span>::{<span class="ident">KeyEntry</span>, <span class="ident">KeyRing</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client::tendermint::LightClient</span> <span class="kw">as</span> <span class="ident">TmLightClient</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client</span>::{<span class="ident">LightClient</span>, <span class="ident">Verified</span>};
+
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::requests</span>::{
+    <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>,
+    <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryClientStatesRequest</span>,
+    <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>, <span class="ident">QueryConnectionsRequest</span>,
+    <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHostConsensusStateRequest</span>,
+    <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryPacketAcknowledgementsRequest</span>,
+    <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
+    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+};
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">batch</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">client</span>;
@@ -2390,7 +2413,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">client_states</span>(<span class="ident">request</span>))
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>
@@ -2411,14 +2434,13 @@
 
     <span class="kw">fn</span> <span class="ident">query_client_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
+        <span class="ident">request</span>: <span class="ident">QueryClientStateRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_client_state&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_client_state&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">query</span>(<span class="ident">ClientStatePath</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>()), <span class="ident">height</span>, <span class="bool-val">false</span>)
+            .<span class="ident">query</span>(<span class="ident">ClientStatePath</span>(<span class="ident">request</span>.<span class="ident">client_id</span>), <span class="ident">request</span>.<span class="ident">height</span>, <span class="bool-val">false</span>)
             .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">AnyClientState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">client_state</span>)
@@ -2426,15 +2448,16 @@
 
     <span class="kw">fn</span> <span class="ident">query_upgraded_client_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
+        <span class="ident">request</span>: <span class="ident">QueryUpgradedClientStateRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyClientState</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_upgraded_client_state&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_upgraded_client_state&quot;</span>);
 
         <span class="comment">// Query for the value and the proof.</span>
-        <span class="kw">let</span> <span class="ident">tm_height</span> <span class="op">=</span> <span class="ident">Height::try_from</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">tm_height</span> <span class="op">=</span>
+            <span class="ident">Height::try_from</span>(<span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> (<span class="ident">upgraded_client_state_raw</span>, <span class="ident">proof</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">query_client_upgrade_state</span>(
-            <span class="ident">ClientUpgradePath::UpgradedClientState</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>),
+            <span class="ident">ClientUpgradePath::UpgradedClientState</span>(<span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>),
             <span class="ident">tm_height</span>,
         )<span class="question-mark">?</span>;
 
@@ -2446,16 +2469,17 @@
 
     <span class="kw">fn</span> <span class="ident">query_upgraded_consensus_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
+        <span class="ident">request</span>: <span class="ident">QueryUpgradedConsensusStateRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyConsensusState</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_upgraded_consensus_state&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_upgraded_consensus_state&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">tm_height</span> <span class="op">=</span> <span class="ident">Height::try_from</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">tm_height</span> <span class="op">=</span>
+            <span class="ident">Height::try_from</span>(<span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// Fetch the consensus state and its proof.</span>
         <span class="kw">let</span> (<span class="ident">upgraded_consensus_state_raw</span>, <span class="ident">proof</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">query_client_upgrade_state</span>(
-            <span class="ident">ClientUpgradePath::UpgradedClientConsensusState</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>),
+            <span class="ident">ClientUpgradePath::UpgradedClientConsensusState</span>(<span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>),
             <span class="ident">tm_height</span>,
         )<span class="question-mark">?</span>;
 
@@ -2481,7 +2505,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">consensus_states</span>(<span class="ident">request</span>))
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>
@@ -2499,15 +2523,16 @@
 
     <span class="kw">fn</span> <span class="ident">query_consensus_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
-        <span class="ident">consensus_height</span>: <span class="ident">ICSHeight</span>,
-        <span class="ident">query_height</span>: <span class="ident">ICSHeight</span>,
+        <span class="ident">request</span>: <span class="ident">QueryConsensusStateRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_consensus_state&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_consensus_state&quot;</span>);
 
-        <span class="kw">let</span> (<span class="ident">consensus_state</span>, <span class="ident">_proof</span>) <span class="op">=</span>
-            <span class="self">self</span>.<span class="ident">proven_client_consensus</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">consensus_height</span>, <span class="ident">query_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">consensus_state</span>, <span class="ident">_proof</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">proven_client_consensus</span>(
+            <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">client_id</span>,
+            <span class="ident">request</span>.<span class="ident">consensus_height</span>,
+            <span class="ident">request</span>.<span class="ident">query_height</span>,
+        )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">consensus_state</span>)
     }
@@ -2527,7 +2552,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">client_connections</span>(<span class="ident">request</span>)) {
             <span class="prelude-val">Ok</span>(<span class="ident">res</span>) =&gt; <span class="ident">res</span>.<span class="ident">into_inner</span>(),
@@ -2562,7 +2587,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">connections</span>(<span class="ident">request</span>))
@@ -2581,11 +2606,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">connections</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_connection</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">connection_id</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionId</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryConnectionRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_connection&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_connection&quot;</span>);
 
@@ -2638,7 +2659,9 @@
             }
         }
 
-        <span class="self">self</span>.<span class="ident">block_on</span>(<span class="kw">async</span> { <span class="ident">do_query_connection</span>(<span class="self">self</span>, <span class="ident">connection_id</span>, <span class="ident">height</span>).<span class="kw">await</span> })
+        <span class="self">self</span>.<span class="ident">block_on</span>(<span class="kw">async</span> {
+            <span class="ident">do_query_connection</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">connection_id</span>, <span class="ident">request</span>.<span class="ident">height</span>).<span class="kw">await</span>
+        })
     }
 
     <span class="kw">fn</span> <span class="ident">query_connection_channels</span>(
@@ -2656,7 +2679,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">connection_channels</span>(<span class="ident">request</span>))
@@ -2689,7 +2712,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">channels</span>(<span class="ident">request</span>))
@@ -2704,16 +2727,15 @@
         <span class="prelude-val">Ok</span>(<span class="ident">channels</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_channel</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryChannelRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_channel&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_channel&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(<span class="ident">ChannelEndsPath</span>(<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="ident">channel_id</span>), <span class="ident">height</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+            <span class="ident">ChannelEndsPath</span>(<span class="ident">request</span>.<span class="ident">port_id</span>, <span class="ident">request</span>.<span class="ident">channel_id</span>),
+            <span class="ident">request</span>.<span class="ident">height</span>,
+            <span class="bool-val">false</span>,
+        )<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">channel_end</span> <span class="op">=</span> <span class="ident">ChannelEnd::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">channel_end</span>)
@@ -2734,7 +2756,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">channel_client_state</span>(<span class="ident">request</span>))
@@ -2752,7 +2774,7 @@
     <span class="kw">fn</span> <span class="ident">query_packet_commitments</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryPacketCommitmentsRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PacketState</span><span class="op">&gt;</span>, <span class="ident">ICSHeight</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>, <span class="ident">ICSHeight</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_packet_commitments&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_packet_commitments&quot;</span>);
 
@@ -2764,29 +2786,33 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">packet_commitments</span>(<span class="ident">request</span>))
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>
             .<span class="ident">into_inner</span>();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pc</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">commitments</span>;
-        <span class="ident">pc</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span><span class="ident">ps</span><span class="op">|</span> <span class="ident">ps</span>.<span class="ident">sequence</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">commitment_sequences</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">response</span>
+            .<span class="ident">commitments</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">sequence</span>.<span class="ident">into</span>())
+            .<span class="ident">collect</span>();
+        <span class="ident">commitment_sequences</span>.<span class="ident">sort_unstable</span>();
 
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">response</span>
             .<span class="ident">height</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::grpc_response_param</span>(<span class="string">&quot;height&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>
             .<span class="ident">into</span>();
 
-        <span class="prelude-val">Ok</span>((<span class="ident">pc</span>, <span class="ident">height</span>))
+        <span class="prelude-val">Ok</span>((<span class="ident">commitment_sequences</span>, <span class="ident">height</span>))
     }
 
     <span class="doccomment">/// Queries the unreceived packet sequences associated with a channel.</span>
     <span class="kw">fn</span> <span class="ident">query_unreceived_packets</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryUnreceivedPacketsRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_unreceived_packets&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_unreceived_packets&quot;</span>);
 
@@ -2798,7 +2824,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">unreceived_packets</span>(<span class="ident">request</span>))
@@ -2806,14 +2832,18 @@
             .<span class="ident">into_inner</span>();
 
         <span class="ident">response</span>.<span class="ident">sequences</span>.<span class="ident">sort_unstable</span>();
-        <span class="prelude-val">Ok</span>(<span class="ident">response</span>.<span class="ident">sequences</span>)
+        <span class="prelude-val">Ok</span>(<span class="ident">response</span>
+            .<span class="ident">sequences</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seq</span><span class="op">|</span> <span class="ident">seq</span>.<span class="ident">into</span>())
+            .<span class="ident">collect</span>())
     }
 
     <span class="doccomment">/// Queries the packet acknowledgment hashes associated with a channel.</span>
     <span class="kw">fn</span> <span class="ident">query_packet_acknowledgements</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryPacketAcknowledgementsRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PacketState</span><span class="op">&gt;</span>, <span class="ident">ICSHeight</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>, <span class="ident">ICSHeight</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_packet_acknowledgements&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_packet_acknowledgements&quot;</span>);
 
@@ -2825,28 +2855,32 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">packet_acknowledgements</span>(<span class="ident">request</span>))
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>
             .<span class="ident">into_inner</span>();
 
-        <span class="kw">let</span> <span class="ident">pc</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">acknowledgements</span>;
+        <span class="kw">let</span> <span class="ident">acks_sequences</span> <span class="op">=</span> <span class="ident">response</span>
+            .<span class="ident">acknowledgements</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">sequence</span>.<span class="ident">into</span>())
+            .<span class="ident">collect</span>();
 
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">response</span>
             .<span class="ident">height</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::grpc_response_param</span>(<span class="string">&quot;height&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>
             .<span class="ident">into</span>();
 
-        <span class="prelude-val">Ok</span>((<span class="ident">pc</span>, <span class="ident">height</span>))
+        <span class="prelude-val">Ok</span>((<span class="ident">acks_sequences</span>, <span class="ident">height</span>))
     }
 
     <span class="doccomment">/// Queries the unreceived acknowledgements sequences associated with a channel.</span>
     <span class="kw">fn</span> <span class="ident">query_unreceived_acknowledgements</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryUnreceivedAcksRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_unreceived_acknowledgements&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_unreceived_acknowledgements&quot;</span>);
 
@@ -2858,7 +2892,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">unreceived_acks</span>(<span class="ident">request</span>))
@@ -2866,7 +2900,11 @@
             .<span class="ident">into_inner</span>();
 
         <span class="ident">response</span>.<span class="ident">sequences</span>.<span class="ident">sort_unstable</span>();
-        <span class="prelude-val">Ok</span>(<span class="ident">response</span>.<span class="ident">sequences</span>)
+        <span class="prelude-val">Ok</span>(<span class="ident">response</span>
+            .<span class="ident">sequences</span>
+            .<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seq</span><span class="op">|</span> <span class="ident">seq</span>.<span class="ident">into</span>())
+            .<span class="ident">collect</span>())
     }
 
     <span class="kw">fn</span> <span class="ident">query_next_sequence_receive</span>(
@@ -2884,7 +2922,7 @@
             )
             .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">next_sequence_receive</span>(<span class="ident">request</span>))
@@ -2982,8 +3020,12 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">query_host_consensus_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="ident">ICSHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::ConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::try_from</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn</span> <span class="ident">query_host_consensus_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryHostConsensusStateRequest</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::ConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span>
+            <span class="ident">Height::try_from</span>(<span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// TODO(hu55a1n1): use the `/header` RPC endpoint instead when we move to tendermint v0.35.x</span>
         <span class="kw">let</span> <span class="ident">rpc_call</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">height</span>.<span class="ident">value</span>() {

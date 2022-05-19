@@ -1599,6 +1599,16 @@
 <span id="1594">1594</span>
 <span id="1595">1595</span>
 <span id="1596">1596</span>
+<span id="1597">1597</span>
+<span id="1598">1598</span>
+<span id="1599">1599</span>
+<span id="1600">1600</span>
+<span id="1601">1601</span>
+<span id="1602">1602</span>
+<span id="1603">1603</span>
+<span id="1604">1604</span>
+<span id="1605">1605</span>
+<span id="1606">1606</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">alloc::collections::VecDeque</span>;
 <span class="kw">use</span> <span class="ident">std::ops::Sub</span>;
@@ -1608,6 +1618,35 @@
 <span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">span</span>, <span class="ident">trace</span>, <span class="ident">warn</span>, <span class="ident">Level</span>};
 
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty::unreceived_acknowledgements</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty::unreceived_packets</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryChannelRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryHostConsensusStateRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryNextSequenceReceiveRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryUnreceivedAcksRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryUnreceivedPacketsRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackingId</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::ChainStatus</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::error::ChannelError</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::Channel</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::monitor::EventBatch</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client</span>::{<span class="ident">ForeignClient</span>, <span class="ident">ForeignClientError</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error</span>::{<span class="self">self</span>, <span class="ident">LinkError</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::operational_data</span>::{
+    <span class="ident">OperationalData</span>, <span class="ident">OperationalDataTarget</span>, <span class="ident">TrackedEvents</span>, <span class="ident">TransitMessage</span>,
+};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::packet_events::query_packet_events_with</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::packet_events::query_send_packet_events</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::packet_events::query_write_ack_events</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::pending::PendingTxs</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_sender</span>::{<span class="ident">AsyncReply</span>, <span class="ident">SubmitReply</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_summary::RelaySummary</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">pending</span>, <span class="ident">relay_sender</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path::PathIdentifiers</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::telemetry</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::queue::Queue</span>;
 <span class="kw">use</span> <span class="ident">ibc</span>::{
     <span class="ident">core</span>::{
         <span class="ident">ics02_client</span>::{
@@ -1634,33 +1673,6 @@
     <span class="ident">tx_msg::Msg</span>,
     <span class="ident">Height</span>,
 };
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::channel::v1</span>::{
-    <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
-};
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty</span>::{<span class="ident">unreceived_acknowledgements</span>, <span class="ident">unreceived_packets</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackingId</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::ChainStatus</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::error::ChannelError</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::Channel</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::monitor::EventBatch</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client</span>::{<span class="ident">ForeignClient</span>, <span class="ident">ForeignClientError</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error</span>::{<span class="self">self</span>, <span class="ident">LinkError</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::operational_data</span>::{
-    <span class="ident">OperationalData</span>, <span class="ident">OperationalDataTarget</span>, <span class="ident">TrackedEvents</span>, <span class="ident">TransitMessage</span>,
-};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::packet_events</span>::{
-    <span class="ident">query_packet_events_with</span>, <span class="ident">query_send_packet_events</span>, <span class="ident">query_write_ack_events</span>,
-};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::pending::PendingTxs</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_sender</span>::{<span class="ident">AsyncReply</span>, <span class="ident">SubmitReply</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::relay_summary::RelaySummary</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">pending</span>, <span class="ident">relay_sender</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path::PathIdentifiers</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::telemetry</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::queue::Queue</span>;
 
 <span class="kw">const</span> <span class="ident">MAX_RETRIES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
 
@@ -1799,13 +1811,21 @@
 
     <span class="kw">fn</span> <span class="ident">src_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">src_chain</span>()
-            .<span class="ident">query_channel</span>(<span class="self">self</span>.<span class="ident">src_port_id</span>(), <span class="self">self</span>.<span class="ident">src_channel_id</span>(), <span class="ident">height</span>)
+            .<span class="ident">query_channel</span>(<span class="ident">QueryChannelRequest</span> {
+                <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">src_port_id</span>().<span class="ident">clone</span>(),
+                <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">src_channel_id</span>(),
+                <span class="ident">height</span>,
+            })
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">LinkError::channel</span>(<span class="ident">ChannelError::query</span>(<span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>)))
     }
 
     <span class="kw">fn</span> <span class="ident">dst_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dst_chain</span>()
-            .<span class="ident">query_channel</span>(<span class="self">self</span>.<span class="ident">dst_port_id</span>(), <span class="self">self</span>.<span class="ident">dst_channel_id</span>(), <span class="ident">height</span>)
+            .<span class="ident">query_channel</span>(<span class="ident">QueryChannelRequest</span> {
+                <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
+                <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">dst_channel_id</span>(),
+                <span class="ident">height</span>,
+            })
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">LinkError::channel</span>(<span class="ident">ChannelError::query</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>)))
     }
 
@@ -2350,9 +2370,9 @@
         <span class="kw">let</span> <span class="ident">unreceived_packet</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dst_chain</span>()
             .<span class="ident">query_unreceived_packets</span>(<span class="ident">QueryUnreceivedPacketsRequest</span> {
-                <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">to_string</span>(),
-                <span class="ident">channel_id</span>: <span class="self">self</span>.<span class="ident">dst_channel_id</span>().<span class="ident">to_string</span>(),
-                <span class="ident">packet_commitment_sequences</span>: <span class="macro">vec!</span>[<span class="ident">packet</span>.<span class="ident">sequence</span>.<span class="ident">into</span>()],
+                <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
+                <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">dst_channel_id</span>(),
+                <span class="ident">packet_commitment_sequences</span>: <span class="macro">vec!</span>[<span class="ident">packet</span>.<span class="ident">sequence</span>],
             })
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
 
@@ -2389,9 +2409,9 @@
         <span class="kw">let</span> <span class="ident">unreceived_ack</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dst_chain</span>()
             .<span class="ident">query_unreceived_acknowledgement</span>(<span class="ident">QueryUnreceivedAcksRequest</span> {
-                <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">to_string</span>(),
-                <span class="ident">channel_id</span>: <span class="self">self</span>.<span class="ident">dst_channel_id</span>().<span class="ident">to_string</span>(),
-                <span class="ident">packet_ack_sequences</span>: <span class="macro">vec!</span>[<span class="ident">packet</span>.<span class="ident">sequence</span>.<span class="ident">into</span>()],
+                <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
+                <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">dst_channel_id</span>(),
+                <span class="ident">packet_ack_sequences</span>: <span class="macro">vec!</span>[<span class="ident">packet</span>.<span class="ident">sequence</span>],
             })
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
 
@@ -2465,7 +2485,7 @@
         <span class="ident">height</span>: <span class="ident">Height</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instant</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">chain_time</span> <span class="op">=</span> <span class="ident">chain</span>
-            .<span class="ident">query_host_consensus_state</span>(<span class="ident">height</span>)
+            .<span class="ident">query_host_consensus_state</span>(<span class="ident">QueryHostConsensusStateRequest</span> { <span class="ident">height</span> })
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>
             .<span class="ident">timestamp</span>();
         <span class="kw">let</span> <span class="ident">duration</span> <span class="op">=</span> <span class="ident">Timestamp::now</span>()
@@ -2770,8 +2790,8 @@
             <span class="kw">let</span> <span class="ident">next_seq</span> <span class="op">=</span> <span class="self">self</span>
                 .<span class="ident">dst_chain</span>()
                 .<span class="ident">query_next_sequence_receive</span>(<span class="ident">QueryNextSequenceReceiveRequest</span> {
-                    <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">to_string</span>(),
-                    <span class="ident">channel_id</span>: <span class="ident">dst_channel_id</span>.<span class="ident">to_string</span>(),
+                    <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
+                    <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">dst_channel_id</span>,
                 })
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">LinkError::query</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
             (<span class="ident">PacketMsgType::TimeoutOrdered</span>, <span class="ident">next_seq</span>)

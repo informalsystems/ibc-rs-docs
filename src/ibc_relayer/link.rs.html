@@ -151,6 +151,14 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc</span>::{
     <span class="ident">core</span>::{
         <span class="ident">ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>,
@@ -160,8 +168,9 @@
     <span class="ident">Height</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty::check_channel_counterparty</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryChannelRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain</span>::{<span class="ident">counterparty::check_channel_counterparty</span>, <span class="ident">requests::QueryConnectionRequest</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel</span>::{<span class="ident">Channel</span>, <span class="ident">ChannelSide</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error::LinkError</span>;
 
@@ -213,7 +222,11 @@
         <span class="kw">let</span> <span class="ident">a_channel_id</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">src_channel_id</span>;
         <span class="kw">let</span> <span class="ident">a_port_id</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">src_port_id</span>;
         <span class="kw">let</span> <span class="ident">a_channel</span> <span class="op">=</span> <span class="ident">a_chain</span>
-            .<span class="ident">query_channel</span>(<span class="ident">a_port_id</span>, <span class="ident">a_channel_id</span>, <span class="ident">Height::default</span>())
+            .<span class="ident">query_channel</span>(<span class="ident">QueryChannelRequest</span> {
+                <span class="ident">port_id</span>: <span class="ident">opts</span>.<span class="ident">src_port_id</span>.<span class="ident">clone</span>(),
+                <span class="ident">channel_id</span>: <span class="ident">opts</span>.<span class="ident">src_channel_id</span>,
+                <span class="ident">height</span>: <span class="ident">Height::default</span>(),
+            })
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">LinkError::channel_not_found</span>(<span class="ident">a_port_id</span>.<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="ident">a_channel_id</span>, <span class="ident">a_chain</span>.<span class="ident">id</span>(), <span class="ident">e</span>)
             })<span class="question-mark">?</span>;
@@ -253,7 +266,10 @@
         <span class="comment">// Check the underlying connection</span>
         <span class="kw">let</span> <span class="ident">a_connection_id</span> <span class="op">=</span> <span class="ident">a_channel</span>.<span class="ident">connection_hops</span>()[<span class="number">0</span>].<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">a_connection</span> <span class="op">=</span> <span class="ident">a_chain</span>
-            .<span class="ident">query_connection</span>(<span class="kw-2">&amp;</span><span class="ident">a_connection_id</span>, <span class="ident">Height::zero</span>())
+            .<span class="ident">query_connection</span>(<span class="ident">QueryConnectionRequest</span> {
+                <span class="ident">connection_id</span>: <span class="ident">a_connection_id</span>.<span class="ident">clone</span>(),
+                <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+            })
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="op">!</span><span class="ident">a_connection</span>.<span class="ident">state_matches</span>(<span class="kw-2">&amp;</span><span class="ident">ConnectionState::Open</span>) {
