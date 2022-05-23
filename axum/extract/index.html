@@ -4,7 +4,7 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../../axum/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"><a href="#">Module extract</a></h2><div class="sidebar-elems"><section><div class="block"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div></section><div id="sidebar-vars" data-name="extract" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../axum/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">axum</a>::<wbr><a class="mod" href="#">extract</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/axum/extract/mod.rs.html#1-117">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Types and traits for extracting data from requests.</p>
+    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">axum</a>::<wbr><a class="mod" href="#">extract</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/axum/extract/mod.rs.html#1-119">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Types and traits for extracting data from requests.</p>
 <p>A handler function is an async function that takes any number of
 “extractors” as arguments. An extractor is a type that implements
 <a href="trait.FromRequest.html"><code>FromRequest</code></a>.</p>
@@ -120,25 +120,71 @@ deserializes it as JSON into some target type:</p>
 
     <span class="comment">// ...</span>
 }</code></pre></div>
-<p>Take care of the order in which you apply extractors as some will mutate the
-request. For example extractors that consume the request body can only be
-applied once. The same is true for <a href="https://docs.rs/http/latest/http/struct.Request.html"><code>Request</code></a>, which consumes the entire
-request:</p>
+<p>Extractors always run in the order of the function parameters that is from
+left to right.</p>
+<h2 id="be-careful-when-extracting-request"><a href="#be-careful-when-extracting-request">Be careful when extracting <code>Request</code></a></h2>
+<p><a href="https://docs.rs/http/latest/http/struct.Request.html"><code>Request</code></a> is itself an extractor:</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{
-    <span class="ident">routing::get</span>,
-    <span class="ident">http::Request</span>,
-    <span class="ident">body::Body</span>,
-    <span class="ident">Router</span>,
-};
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{<span class="ident">http::Request</span>, <span class="ident">body::Body</span>};
 
 <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handler</span>(<span class="ident">request</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>) {
     <span class="comment">// ...</span>
+}</code></pre></div>
+<p>However be careful when combining it with other extractors since it will consume
+all extensions and the request body. Therefore it is recommended to always apply
+the request extractor last:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{<span class="ident">http::Request</span>, <span class="ident">Extension</span>, <span class="ident">body::Body</span>};
+
+<span class="comment">// this will fail at runtime since `Request&lt;Body&gt;` will have consumed all the</span>
+<span class="comment">// extensions so `Extension&lt;State&gt;` will be missing</span>
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">broken</span>(
+    <span class="ident">request</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
+    <span class="ident">Extension</span>(<span class="ident">state</span>): <span class="ident">Extension</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
+) {
+    <span class="comment">// ...</span>
 }
 
-<span class="kw">let</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">Router::new</span>().<span class="ident">route</span>(<span class="string">&quot;/&quot;</span>, <span class="ident">get</span>(<span class="ident">handler</span>));</code></pre></div>
-<p>Extractors always run in the order of the function parameters that is from
-left to right.</p>
+<span class="comment">// this will work since we extract `Extension&lt;State&gt;` before `Request&lt;Body&gt;`</span>
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">works</span>(
+    <span class="ident">Extension</span>(<span class="ident">state</span>): <span class="ident">Extension</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
+    <span class="ident">request</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
+) {
+    <span class="comment">// ...</span>
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
+<span class="kw">struct</span> <span class="ident">State</span> {};</code></pre></div>
+<h2 id="extracting-request-bodies"><a href="#extracting-request-bodies">Extracting request bodies</a></h2>
+<p>Since request bodies are asynchronous streams they can only be extracted once:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{<span class="ident">Json</span>, <span class="ident">http::Request</span>, <span class="ident">body</span>::{<span class="ident">Bytes</span>, <span class="ident">Body</span>}};
+<span class="kw">use</span> <span class="ident">serde_json::Value</span>;
+
+<span class="comment">// this will fail at runtime since `Json&lt;Value&gt;` and `Bytes` both attempt to extract</span>
+<span class="comment">// the body</span>
+<span class="comment">//</span>
+<span class="comment">// the solution is to only extract the body once so remove either</span>
+<span class="comment">// `body_json: Json&lt;Value&gt;` or `body_bytes: Bytes`</span>
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">broken</span>(
+    <span class="ident">body_json</span>: <span class="ident">Json</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>,
+    <span class="ident">body_bytes</span>: <span class="ident">Bytes</span>,
+) {
+    <span class="comment">// ...</span>
+}
+
+<span class="comment">// this doesn&#39;t work either for the same reason: `Bytes` and `Request&lt;Body&gt;`</span>
+<span class="comment">// both extract the body</span>
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">also_broken</span>(
+    <span class="ident">body_json</span>: <span class="ident">Json</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>,
+    <span class="ident">request</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>,
+) {
+    <span class="comment">// ...</span>
+}</code></pre></div>
+<p>Also keep this in mind if you extract or otherwise consume the body in
+middleware. You either need to not extract the body in handlers or make sure
+your middleware reinserts the body using <a href="struct.RequestParts.html#method.body_mut"><code>RequestParts::body_mut</code></a> so it’s
+available to handlers.</p>
 <h2 id="optional-extractors"><a href="#optional-extractors">Optional extractors</a></h2>
 <p>All extractors defined in axum will reject the request if it doesn’t match.
 If you wish to make an extractor optional you can wrap it in <code>Option</code>:</p>
@@ -465,6 +511,6 @@ you might have to apply a different body type to some extractors:</p>
 </div></div></div><h2 id="traits" class="small-section-header"><a href="#traits">Traits</a></h2>
 <div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.FromRequest.html" title="axum::extract::FromRequest trait">FromRequest</a></div><div class="item-right docblock-short"><p>Types that can be created from requests.</p>
 </div></div></div><h2 id="functions" class="small-section-header"><a href="#functions">Functions</a></h2>
-<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.extractor_middleware.html" title="axum::extract::extractor_middleware fn">extractor_middleware</a></div><div class="item-right docblock-short"><p>Convert an extractor into a middleware.</p>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.extractor_middleware.html" title="axum::extract::extractor_middleware fn">extractor_middleware</a><span class="stab deprecated" title="">Deprecated</span></div><div class="item-right docblock-short"><p>Convert an extractor into a middleware.</p>
 </div></div></div></section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="axum" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.60.0 (7737e0b5c 2022-04-04)" ></div>
 </body></html>

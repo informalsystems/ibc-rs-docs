@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["FromFnResponseFuture","Response future for [`FromFn`]."]]});
+initSidebarItems({"struct":[["FromExtractorResponseFuture","Response future for [`FromExtractor`]."],["FromFnResponseFuture","Response future for [`FromFn`]."]]});

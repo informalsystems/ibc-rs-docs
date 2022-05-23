@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/quanta-0.9.3/src/instant.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instant.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/quanta-0.10.0/src/instant.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>instant.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../quanta/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -293,11 +293,6 @@
 <span id="288">288</span>
 <span id="289">289</span>
 <span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::cmp</span>::{<span class="ident">Ord</span>, <span class="ident">Ordering</span>, <span class="ident">PartialOrd</span>};
 <span class="kw">use</span> <span class="ident">std::fmt</span>;
 <span class="kw">use</span> <span class="ident">std::ops</span>::{<span class="ident">Add</span>, <span class="ident">AddAssign</span>, <span class="ident">Sub</span>, <span class="ident">SubAssign</span>};
@@ -305,11 +300,8 @@
 
 <span class="doccomment">/// A point-in-time wall-clock measurement.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Unlike the stdlib `Instant`, this type has a meaningful difference: it is intended to be opaque,</span>
-<span class="doccomment">/// but the internal value _can_ be accessed.  There are no guarantees here and depending on this</span>
-<span class="doccomment">/// value directly is proceeding at your own risk. ⚠️</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An `Instant` is 8 bytes.</span>
+<span class="doccomment">/// Mimics most of the functionality of [`std::time::Instant`] but provides an additional method for</span>
+<span class="doccomment">/// using the &quot;recent time&quot; feature of `quanta`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Instant</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">u64</span>);
 
@@ -319,8 +311,10 @@
     <span class="doccomment">/// This method depends on a lazily initialized global clock, which can take up to 200ms to</span>
     <span class="doccomment">/// initialize and calibrate itself.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// This method is the spiritual equivalent of [`std::time::Instant::now`].  It is guaranteed to</span>
+    <span class="doccomment">/// This method is the spiritual equivalent of [`Instant::now`][instant_now].  It is guaranteed to</span>
     <span class="doccomment">/// return a monotonically increasing value.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [instant_now]: std::time::Instant::now</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">now</span>() -&gt; <span class="ident">Instant</span> {
         <span class="ident"><span class="kw">crate</span>::get_now</span>()
     }
@@ -331,12 +325,15 @@
     <span class="doccomment">/// time.  Instead of querying the underlying source clock directly, a shared, global value is</span>
     <span class="doccomment">/// read directly without the need to scale to reference time.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// The value is updated by running an &quot;upkeep&quot; thread or by calling [`quanta::set_recent`].  An</span>
-    <span class="doccomment">/// upkeep thread can be configured and spawned via [`Builder`].</span>
+    <span class="doccomment">/// The value is updated by running an &quot;upkeep&quot; thread or by calling [`set_recent`][set_recent].  An</span>
+    <span class="doccomment">/// upkeep thread can be configured and spawned via [`Upkeep`][upkeep].</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If the upkeep thread has not been started, or no value has been set manually, a lazily</span>
     <span class="doccomment">/// initialized global clock will be used to get the current time.  This clock can take up to</span>
     <span class="doccomment">/// 200ms to initialize and calibrate itself.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [set_recent]: crate::set_recent</span>
+    <span class="doccomment">/// [upkeep]: crate::Upkeep</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">recent</span>() -&gt; <span class="ident">Instant</span> {
         <span class="ident"><span class="kw">crate</span>::get_recent</span>()
     }
@@ -361,9 +358,7 @@
     <span class="doccomment">/// println!(&quot;{:?}&quot;, new_now.duration_since(now));</span>
     <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">duration_since</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">earlier</span>: <span class="ident">Instant</span>) -&gt; <span class="ident">Duration</span> {
-        <span class="self">self</span>.<span class="number">0</span>
-            .<span class="ident">checked_sub</span>(<span class="ident">earlier</span>.<span class="number">0</span>)
-            .<span class="ident">map</span>(<span class="ident">Duration::from_nanos</span>)
+        <span class="self">self</span>.<span class="ident">checked_duration_since</span>(<span class="ident">earlier</span>)
             .<span class="ident">expect</span>(<span class="string">&quot;supplied instant is later than self&quot;</span>)
     }
 
@@ -422,11 +417,6 @@
     <span class="doccomment">/// otherwise.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">checked_sub</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">duration</span>: <span class="ident">Duration</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_sub</span>(<span class="ident">duration</span>.<span class="ident">as_nanos</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">map</span>(<span class="ident">Instant</span>)
-    }
-
-    <span class="doccomment">/// Gets the inner value of this `Instant`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_u64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-        <span class="self">self</span>.<span class="number">0</span>
     }
 }
 
@@ -530,8 +520,8 @@
         <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="number">15</span>));
         <span class="kw">let</span> <span class="ident">t1</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
 
-        <span class="macro">assert!</span>(<span class="ident">t0</span>.<span class="ident">as_u64</span>() <span class="op">&gt;</span> <span class="number">0</span>);
-        <span class="macro">assert!</span>(<span class="ident">t1</span>.<span class="ident">as_u64</span>() <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="macro">assert!</span>(<span class="ident">t0</span>.<span class="number">0</span> <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="macro">assert!</span>(<span class="ident">t1</span>.<span class="number">0</span> <span class="op">&gt;</span> <span class="number">0</span>);
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">t1</span> <span class="op">-</span> <span class="ident">t0</span>;
         <span class="kw">let</span> <span class="ident">threshold</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">14</span>);
@@ -551,8 +541,8 @@
         <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="number">15</span>));
         <span class="kw">let</span> <span class="ident">t1</span> <span class="op">=</span> <span class="ident">Instant::recent</span>();
 
-        <span class="macro">assert!</span>(<span class="ident">t0</span>.<span class="ident">as_u64</span>() <span class="op">&gt;</span> <span class="number">0</span>);
-        <span class="macro">assert!</span>(<span class="ident">t1</span>.<span class="ident">as_u64</span>() <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="macro">assert!</span>(<span class="ident">t0</span>.<span class="number">0</span> <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="macro">assert!</span>(<span class="ident">t1</span>.<span class="number">0</span> <span class="op">&gt;</span> <span class="number">0</span>);
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">t1</span> <span class="op">-</span> <span class="ident">t0</span>;
         <span class="kw">let</span> <span class="ident">threshold</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">14</span>);
@@ -577,19 +567,19 @@
             <span class="ident">mock</span>.<span class="ident">increment</span>(<span class="number">42</span>);
             <span class="kw">let</span> <span class="ident">t1</span> <span class="op">=</span> <span class="ident">Instant::now</span>();
 
-            <span class="macro">assert_eq!</span>(<span class="ident">t0</span>.<span class="ident">as_u64</span>(), <span class="number">0</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">t1</span>.<span class="ident">as_u64</span>(), <span class="number">42</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">t0</span>.<span class="number">0</span>, <span class="number">0</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">t1</span>.<span class="number">0</span>, <span class="number">42</span>);
 
             <span class="kw">let</span> <span class="ident">t2</span> <span class="op">=</span> <span class="ident">Instant::recent</span>();
             <span class="ident">mock</span>.<span class="ident">increment</span>(<span class="number">420</span>);
             <span class="kw">let</span> <span class="ident">t3</span> <span class="op">=</span> <span class="ident">Instant::recent</span>();
 
-            <span class="macro">assert_eq!</span>(<span class="ident">t2</span>.<span class="ident">as_u64</span>(), <span class="number">42</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">t3</span>.<span class="ident">as_u64</span>(), <span class="number">462</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">t2</span>.<span class="number">0</span>, <span class="number">42</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">t3</span>.<span class="number">0</span>, <span class="number">462</span>);
 
             <span class="ident"><span class="kw">crate</span>::set_recent</span>(<span class="ident">Instant</span>(<span class="number">1440</span>));
             <span class="kw">let</span> <span class="ident">t4</span> <span class="op">=</span> <span class="ident">Instant::recent</span>();
-            <span class="macro">assert_eq!</span>(<span class="ident">t4</span>.<span class="ident">as_u64</span>(), <span class="number">1440</span>);
+            <span class="macro">assert_eq!</span>(<span class="ident">t4</span>.<span class="number">0</span>, <span class="number">1440</span>);
         })
     }
 }
