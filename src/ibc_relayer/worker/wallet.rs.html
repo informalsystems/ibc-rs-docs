@@ -45,19 +45,17 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
-<span id="43">43</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error_span</span>, <span class="ident">trace</span>};
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">chain::handle::ChainHandle</span>,
-    <span class="ident">util::task</span>::{<span class="ident">spawn_background_task</span>, <span class="ident">Next</span>, <span class="ident">TaskHandle</span>},
+    <span class="ident">telemetry</span>,
+    <span class="ident">util::task</span>::{<span class="ident">spawn_background_task</span>, <span class="ident">Next</span>, <span class="ident">TaskError</span>, <span class="ident">TaskHandle</span>},
 };
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_wallet_worker</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(<span class="ident">chain</span>: <span class="ident">Chain</span>) -&gt; <span class="ident">TaskHandle</span> {
-    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">telemetry</span>, <span class="ident">util::task::TaskError</span>};
-
     <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">error_span!</span>(<span class="string">&quot;wallet&quot;</span>, <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain</span>.<span class="ident">id</span>());
 
     <span class="ident">spawn_background_task</span>(<span class="ident">span</span>, <span class="prelude-val">Some</span>(<span class="ident">Duration::from_secs</span>(<span class="number">5</span>)), <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
@@ -69,7 +67,7 @@
             <span class="ident">TaskError::Ignore</span>(<span class="macro">format!</span>(<span class="string">&quot;failed to query balance for the account: {e}&quot;</span>))
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">amount</span> <span class="op">=</span> <span class="ident">balance</span>.<span class="ident">amount</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="ident">amount</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">balance</span>.<span class="ident">amount</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
             <span class="ident">TaskError::Ignore</span>(<span class="macro">format!</span>(
                 <span class="string">&quot;failed to parse amount into u64: {}&quot;</span>,
                 <span class="ident">balance</span>.<span class="ident">amount</span>
