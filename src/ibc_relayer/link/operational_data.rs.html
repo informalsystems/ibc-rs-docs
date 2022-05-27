@@ -390,6 +390,13 @@
 <span id="385">385</span>
 <span id="386">386</span>
 <span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 <span class="kw">use</span> <span class="ident">core::iter</span>;
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
@@ -409,9 +416,12 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error::LinkError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::RelayPath</span>;
 
+<span class="doccomment">/// The chain that the events associated with a piece of [`OperationalData`] are bound for.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OperationalDataTarget</span> {
+    <span class="doccomment">/// The chain which generated the events associated with the `OperationalData`.</span>
     <span class="ident">Source</span>,
+    <span class="doccomment">/// The chain receiving the events associated with the `OperationalData``.</span>
     <span class="ident">Destination</span>,
 }
 
@@ -467,18 +477,22 @@
     <span class="kw">pub</span> <span class="ident">msg</span>: <span class="ident">Any</span>,
 }
 
-<span class="doccomment">/// Holds all the necessary information for handling a set of in-transit messages.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Each `OperationalData` item is uniquely identified by the combination of two attributes:</span>
-<span class="doccomment">///     - `target`: represents the target of the packet messages, either source or destination chain,</span>
-<span class="doccomment">///     - `proofs_height`: represents the height for the proofs in all the messages.</span>
-<span class="doccomment">///       Note: this is the height at which the proofs are queried. A client consensus state at</span>
-<span class="doccomment">///       `proofs_height + 1` must exist on-chain in order to verify the proofs.</span>
+<span class="doccomment">/// Holds all the necessary information for handling a batch of in-transit messages. This includes</span>
+<span class="doccomment">/// an event received from a chain along with any other packets related to the event (i.e.</span>
+<span class="doccomment">/// &#39;receive&#39; or &#39;timeout&#39; packets) that the relayer has to submit in response to the event.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OperationalData</span> {
+    <span class="doccomment">/// Represents the height for the proofs in all the messages. Note that this is the height</span>
+    <span class="doccomment">/// at which the proofs are queried. For example, for Tendermint chains, a client consensus</span>
+    <span class="doccomment">/// state at `proofs_height + 1` must exist on-chain in order to verify the proofs.</span>
     <span class="kw">pub</span> <span class="ident">proofs_height</span>: <span class="ident">Height</span>,
+    <span class="doccomment">/// The batch of messages associated with this piece of operational data.</span>
     <span class="kw">pub</span> <span class="ident">batch</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TransitMessage</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Represents the target of the packet messages, either the source or the destination</span>
+    <span class="doccomment">/// chain.</span>
     <span class="kw">pub</span> <span class="ident">target</span>: <span class="ident">OperationalDataTarget</span>,
+    <span class="doccomment">/// A unique ID for tracking this batch of events starting from when they were received</span>
+    <span class="doccomment">/// until the transactions corresponding to those events is submitted.</span>
     <span class="kw">pub</span> <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
     <span class="doccomment">/// Stores `Some(ConnectionDelay)` if the delay is non-zero and `None` otherwise</span>
     <span class="ident">connection_delay</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConnectionDelay</span><span class="op">&gt;</span>,
