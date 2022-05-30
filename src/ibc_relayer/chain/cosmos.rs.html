@@ -1698,6 +1698,17 @@
 <span id="1693">1693</span>
 <span id="1694">1694</span>
 <span id="1695">1695</span>
+<span id="1696">1696</span>
+<span id="1697">1697</span>
+<span id="1698">1698</span>
+<span id="1699">1699</span>
+<span id="1700">1700</span>
+<span id="1701">1701</span>
+<span id="1702">1702</span>
+<span id="1703">1703</span>
+<span id="1704">1704</span>
+<span id="1705">1705</span>
+<span id="1706">1706</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
@@ -2337,12 +2348,23 @@
         <span class="prelude-val">Ok</span>(<span class="ident">version_specs</span>.<span class="ident">ibc_go_version</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Balance</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>;
+    <span class="kw">fn</span> <span class="ident">query_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Balance</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="comment">// If a key_name is given, extract the account hash.</span>
+        <span class="comment">// Else retrieve the account from the configuration file.</span>
+        <span class="kw">let</span> <span class="ident">account</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">key_name</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">account</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">keybase</span>().<span class="ident">get_key</span>(<span class="kw-2">&amp;</span><span class="ident">account</span>).<span class="ident">map_err</span>(<span class="ident">Error::key_base</span>)<span class="question-mark">?</span>;
+                <span class="ident">key</span>.<span class="ident">account</span>
+            }
+            <span class="kw">_</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>;
+                <span class="ident">key</span>.<span class="ident">account</span>
+            }
+        };
 
         <span class="kw">let</span> <span class="ident">balance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">block_on</span>(<span class="ident">query_balance</span>(
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">grpc_addr</span>,
-            <span class="kw-2">&amp;</span><span class="ident">key</span>.<span class="ident">account</span>,
+            <span class="kw-2">&amp;</span><span class="ident">account</span>,
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">gas_price</span>.<span class="ident">denom</span>,
         ))<span class="question-mark">?</span>;
 
