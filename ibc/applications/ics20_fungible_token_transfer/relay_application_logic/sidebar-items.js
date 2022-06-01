@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["send_transfer",""]]});

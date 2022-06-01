@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["DestinationChannelNotFoundSubdetail",""],["Error",""],["Ics04ChannelSubdetail",""],["InvalidChannelIdSubdetail",""],["InvalidPacketTimeoutHeightSubdetail",""],["InvalidPacketTimeoutTimestampSubdetail",""],["InvalidPortIdSubdetail",""],["UnknowMessageTypeUrlSubdetail",""],["Utf8Subdetail",""]]});

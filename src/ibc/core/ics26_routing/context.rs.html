@@ -222,6 +222,11 @@
 <span id="217">217</span>
 <span id="218">218</span>
 <span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">alloc::borrow</span>::{<span class="ident">Borrow</span>, <span class="ident">Cow</span>};
@@ -229,7 +234,8 @@
 <span class="kw">use</span> <span class="ident">core::fmt::Debug</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">str::FromStr</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::ics20_fungible_token_transfer::context::Ics20Context</span>;
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::context</span>::{<span class="ident">ClientKeeper</span>, <span class="ident">ClientReader</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::context</span>::{<span class="ident">ConnectionKeeper</span>, <span class="ident">ConnectionReader</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel</span>::{<span class="ident">Counterparty</span>, <span class="ident">Order</span>};
@@ -240,8 +246,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::Version</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics05_port::context::PortReader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier</span>::{<span class="ident">ChannelId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler::HandlerOutput</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::ModuleEvent</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler::HandlerOutputBuilder</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::signer::Signer</span>;
 
 <span class="doccomment">/// This trait captures all the functional dependencies (i.e., context) which the ICS26 module</span>
@@ -255,7 +261,6 @@
     <span class="op">+</span> <span class="ident">ChannelKeeper</span>
     <span class="op">+</span> <span class="ident">ChannelReader</span>
     <span class="op">+</span> <span class="ident">PortReader</span>
-    <span class="op">+</span> <span class="ident">Ics20Context</span>
 {
     <span class="kw">type</span> <span class="ident">Router</span>: <span class="ident">Router</span>;
 
@@ -267,7 +272,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InvalidModuleId</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ModuleId</span>(<span class="ident">String</span>);
 
 <span class="kw">impl</span> <span class="ident">ModuleId</span> {
@@ -303,7 +308,7 @@
 <span class="doccomment">/// Types implementing this trait are expected to implement `From&lt;GenericAcknowledgement&gt;`</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Acknowledgement</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {}
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WriteFn</span> <span class="op">=</span> <span class="kw">dyn</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Any</span>);
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WriteFn</span> <span class="op">=</span> <span class="kw">dyn</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;mut</span> <span class="kw">dyn</span> <span class="ident">Any</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">String</span><span class="op">&gt;</span>;
 
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">OnRecvPacketAck</span> {
     <span class="ident">Nil</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">WriteFn</span><span class="op">&gt;</span>),
@@ -311,15 +316,19 @@
     <span class="ident">Failed</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Acknowledgement</span><span class="op">&gt;</span>),
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ModuleEvent</span> <span class="op">=</span> <span class="ident">IbcEvent</span>;
+<span class="kw">impl</span> <span class="ident">OnRecvPacketAck</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_successful</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">OnRecvPacketAck::Successful</span>(<span class="kw">_</span>, <span class="kw">_</span>))
+    }
+}
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ModuleOutput</span> <span class="op">=</span> <span class="ident">HandlerOutput</span><span class="op">&lt;</span>(), <span class="ident">ModuleEvent</span><span class="op">&gt;</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ModuleOutputBuilder</span> <span class="op">=</span> <span class="ident">HandlerOutputBuilder</span><span class="op">&lt;</span>(), <span class="ident">ModuleEvent</span><span class="op">&gt;</span>;
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Module</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">AsAnyMut</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
     <span class="kw">fn</span> <span class="ident">on_chan_open_init</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_order</span>: <span class="ident">Order</span>,
         <span class="ident">_connection_hops</span>: <span class="kw-2">&amp;</span>[<span class="ident">ConnectionId</span>],
         <span class="ident">_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
@@ -333,18 +342,19 @@
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
     <span class="kw">fn</span> <span class="ident">on_chan_open_try</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_order</span>: <span class="ident">Order</span>,
         <span class="ident">_connection_hops</span>: <span class="kw-2">&amp;</span>[<span class="ident">ConnectionId</span>],
         <span class="ident">_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">_counterparty</span>: <span class="kw-2">&amp;</span><span class="ident">Counterparty</span>,
+        <span class="ident">_version</span>: <span class="kw-2">&amp;</span><span class="ident">Version</span>,
         <span class="ident">_counterparty_version</span>: <span class="kw-2">&amp;</span><span class="ident">Version</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Version</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">on_chan_open_ack</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">_counterparty_version</span>: <span class="kw-2">&amp;</span><span class="ident">Version</span>,
@@ -354,7 +364,7 @@
 
     <span class="kw">fn</span> <span class="ident">on_chan_open_confirm</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
@@ -363,7 +373,7 @@
 
     <span class="kw">fn</span> <span class="ident">on_chan_close_init</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
@@ -372,7 +382,7 @@
 
     <span class="kw">fn</span> <span class="ident">on_chan_close_confirm</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">_channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
@@ -381,16 +391,16 @@
 
     <span class="kw">fn</span> <span class="ident">on_recv_packet</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_packet</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
         <span class="ident">_relayer</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>,
     ) -&gt; <span class="ident">OnRecvPacketAck</span> {
-        <span class="ident">OnRecvPacketAck::Nil</span>(<span class="ident">Box::new</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {}))
+        <span class="ident">OnRecvPacketAck::Nil</span>(<span class="ident">Box::new</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(())))
     }
 
     <span class="kw">fn</span> <span class="ident">on_acknowledgement_packet</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_packet</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
         <span class="ident">_acknowledgement</span>: <span class="kw-2">&amp;</span><span class="ident">GenericAcknowledgement</span>,
         <span class="ident">_relayer</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>,
@@ -400,7 +410,7 @@
 
     <span class="kw">fn</span> <span class="ident">on_timeout_packet</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutput</span>,
+        <span class="ident">_output</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ModuleOutputBuilder</span>,
         <span class="ident">_packet</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
         <span class="ident">_relayer</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {

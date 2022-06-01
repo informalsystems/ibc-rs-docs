@@ -520,6 +520,85 @@
 <span id="515">515</span>
 <span id="516">516</span>
 <span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">alloc::collections::btree_map::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
@@ -528,6 +607,7 @@
 <span class="kw">use</span> <span class="ident">flex_error</span>::{<span class="ident">define_error</span>, <span class="ident">TraceError</span>};
 <span class="kw">use</span> <span class="ident">prost::alloc::fmt::Formatter</span>;
 <span class="kw">use</span> <span class="ident">serde_derive</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">tendermint::abci::tag::Tag</span>;
 <span class="kw">use</span> <span class="ident">tendermint::abci::Event</span> <span class="kw">as</span> <span class="ident">AbciEvent</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error</span> <span class="kw">as</span> <span class="ident">client_error</span>;
@@ -541,6 +621,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::events::Attributes</span> <span class="kw">as</span> <span class="ident">ChannelAttributes</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::Packet</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::error::ValidationError</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context::ModuleId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp::ParseTimestampError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
@@ -584,6 +665,10 @@
         <span class="ident">IncorrectEventType</span>
             { <span class="ident">event</span>: <span class="ident">String</span> }
             <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;incorrect event type: {}&quot;</span>, <span class="ident">e</span>.<span class="ident">event</span>) },
+
+        <span class="ident">MalformedModuleEvent</span>
+            { <span class="ident">event</span>: <span class="ident">ModuleEvent</span> }
+            <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;module event cannot use core event types: {:?}&quot;</span>, <span class="ident">e</span>.<span class="ident">event</span>) },
     }
 }
 
@@ -611,6 +696,7 @@
 <span class="kw">const</span> <span class="ident">NEW_BLOCK_EVENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;new_block&quot;</span>;
 <span class="kw">const</span> <span class="ident">EMPTY_EVENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;empty&quot;</span>;
 <span class="kw">const</span> <span class="ident">CHAIN_ERROR_EVENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;chain_error&quot;</span>;
+<span class="kw">const</span> <span class="ident">APP_MODULE_EVENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;app_module&quot;</span>;
 <span class="doccomment">/// Client event types</span>
 <span class="kw">const</span> <span class="ident">CREATE_CLIENT_EVENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;create_client&quot;</span>;
 <span class="kw">const</span> <span class="ident">UPDATE_CLIENT_EVENT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;update_client&quot;</span>;
@@ -660,6 +746,7 @@
     <span class="ident">AckPacket</span>,
     <span class="ident">Timeout</span>,
     <span class="ident">TimeoutOnClose</span>,
+    <span class="ident">AppModule</span>,
     <span class="ident">Empty</span>,
     <span class="ident">ChainError</span>,
 }
@@ -688,6 +775,7 @@
             <span class="ident">IbcEventType::AckPacket</span> =&gt; <span class="ident">ACK_PACKET_EVENT</span>,
             <span class="ident">IbcEventType::Timeout</span> =&gt; <span class="ident">TIMEOUT_EVENT</span>,
             <span class="ident">IbcEventType::TimeoutOnClose</span> =&gt; <span class="ident">TIMEOUT_ON_CLOSE_EVENT</span>,
+            <span class="ident">IbcEventType::AppModule</span> =&gt; <span class="ident">APP_MODULE_EVENT</span>,
             <span class="ident">IbcEventType::Empty</span> =&gt; <span class="ident">EMPTY_EVENT</span>,
             <span class="ident">IbcEventType::ChainError</span> =&gt; <span class="ident">CHAIN_ERROR_EVENT</span>,
         }
@@ -722,6 +810,7 @@
             <span class="ident">TIMEOUT_ON_CLOSE_EVENT</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">IbcEventType::TimeoutOnClose</span>),
             <span class="ident">EMPTY_EVENT</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">IbcEventType::Empty</span>),
             <span class="ident">CHAIN_ERROR_EVENT</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">IbcEventType::ChainError</span>),
+            <span class="comment">// from_str() for `APP_MODULE_EVENT` MUST fail because a `ModuleEvent`&#39;s type isn&#39;t constant</span>
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::incorrect_event_type</span>(<span class="ident">s</span>.<span class="ident">to_string</span>())),
         }
     }
@@ -755,6 +844,8 @@
     <span class="ident">AcknowledgePacket</span>(<span class="ident">ChannelEvents::AcknowledgePacket</span>),
     <span class="ident">TimeoutPacket</span>(<span class="ident">ChannelEvents::TimeoutPacket</span>),
     <span class="ident">TimeoutOnClosePacket</span>(<span class="ident">ChannelEvents::TimeoutOnClosePacket</span>),
+
+    <span class="ident">AppModule</span>(<span class="ident">ModuleEvent</span>),
 
     <span class="ident">Empty</span>(<span class="ident">String</span>),      <span class="comment">// Special event, signifying empty response</span>
     <span class="ident">ChainError</span>(<span class="ident">String</span>), <span class="comment">// Special event, signifying an error on CheckTx or DeliverTx</span>
@@ -807,6 +898,8 @@
             <span class="ident">IbcEvent::TimeoutPacket</span>(<span class="ident">ev</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;TimeoutPacketEv({})&quot;</span>, <span class="ident">ev</span>),
             <span class="ident">IbcEvent::TimeoutOnClosePacket</span>(<span class="ident">ev</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;TimeoutOnClosePacketEv({})&quot;</span>, <span class="ident">ev</span>),
 
+            <span class="ident">IbcEvent::AppModule</span>(<span class="ident">ev</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;AppModuleEv({:?})&quot;</span>, <span class="ident">ev</span>),
+
             <span class="ident">IbcEvent::Empty</span>(<span class="ident">ev</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;EmptyEv({})&quot;</span>, <span class="ident">ev</span>),
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">ev</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;ChainErrorEv({})&quot;</span>, <span class="ident">ev</span>),
         }
@@ -833,10 +926,15 @@
             <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">into</span>(),
             <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">into</span>(),
             <span class="ident">IbcEvent::SendPacket</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="ident">Error::channel</span>)<span class="question-mark">?</span>,
+            <span class="ident">IbcEvent::ReceivePacket</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="ident">Error::channel</span>)<span class="question-mark">?</span>,
             <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="ident">Error::channel</span>)<span class="question-mark">?</span>,
             <span class="ident">IbcEvent::AcknowledgePacket</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="ident">Error::channel</span>)<span class="question-mark">?</span>,
             <span class="ident">IbcEvent::TimeoutPacket</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="ident">Error::channel</span>)<span class="question-mark">?</span>,
-            <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::incorrect_event_type</span>(<span class="ident">event</span>.<span class="ident">to_string</span>())),
+            <span class="ident">IbcEvent::TimeoutOnClosePacket</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="ident">Error::channel</span>)<span class="question-mark">?</span>,
+            <span class="ident">IbcEvent::AppModule</span>(<span class="ident">event</span>) =&gt; <span class="ident">event</span>.<span class="ident">try_into</span>()<span class="question-mark">?</span>,
+            <span class="ident">IbcEvent::NewBlock</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">IbcEvent::Empty</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>) =&gt; {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::incorrect_event_type</span>(<span class="ident">event</span>.<span class="ident">to_string</span>()))
+            }
         })
     }
 }
@@ -942,6 +1040,7 @@
             <span class="ident">IbcEvent::AcknowledgePacket</span>(<span class="kw">_</span>) =&gt; <span class="ident">IbcEventType::AckPacket</span>,
             <span class="ident">IbcEvent::TimeoutPacket</span>(<span class="kw">_</span>) =&gt; <span class="ident">IbcEventType::Timeout</span>,
             <span class="ident">IbcEvent::TimeoutOnClosePacket</span>(<span class="kw">_</span>) =&gt; <span class="ident">IbcEventType::TimeoutOnClose</span>,
+            <span class="ident">IbcEvent::AppModule</span>(<span class="kw">_</span>) =&gt; <span class="ident">IbcEventType::AppModule</span>,
             <span class="ident">IbcEvent::Empty</span>(<span class="kw">_</span>) =&gt; <span class="ident">IbcEventType::Empty</span>,
             <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>) =&gt; <span class="ident">IbcEventType::ChainError</span>,
         }
@@ -983,6 +1082,65 @@
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="ident">ev</span>) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">ev</span>.<span class="ident">ack</span>),
             <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+        }
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ModuleEvent</span> {
+    <span class="kw">pub</span> <span class="ident">kind</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">module_name</span>: <span class="ident">ModuleId</span>,
+    <span class="kw">pub</span> <span class="ident">attributes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ModuleEventAttribute</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">ModuleEvent</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AbciEvent</span> {
+    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
+
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">event</span>: <span class="ident">ModuleEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">IbcEventType::from_str</span>(<span class="ident">event</span>.<span class="ident">kind</span>.<span class="ident">as_str</span>()).<span class="ident">is_ok</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::malformed_module_event</span>(<span class="ident">event</span>));
+        }
+
+        <span class="kw">let</span> <span class="ident">attributes</span> <span class="op">=</span> <span class="ident">event</span>.<span class="ident">attributes</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">collect</span>();
+        <span class="prelude-val">Ok</span>(<span class="ident">AbciEvent</span> {
+            <span class="ident">type_str</span>: <span class="ident">event</span>.<span class="ident">kind</span>,
+            <span class="ident">attributes</span>,
+        })
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleEvent</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IbcEvent</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">ModuleEvent</span>) -&gt; <span class="self">Self</span> {
+        <span class="ident">IbcEvent::AppModule</span>(<span class="ident">e</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ModuleEventAttribute</span> {
+    <span class="kw">pub</span> <span class="ident">key</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">value</span>: <span class="ident">String</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>: <span class="ident">ToString</span>, <span class="ident">V</span>: <span class="ident">ToString</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ModuleEventAttribute</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>((<span class="ident">k</span>, <span class="ident">v</span>): (<span class="ident">K</span>, <span class="ident">V</span>)) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">key</span>: <span class="ident">k</span>.<span class="ident">to_string</span>(),
+            <span class="ident">value</span>: <span class="ident">v</span>.<span class="ident">to_string</span>(),
+        }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleEventAttribute</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Tag</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">attr</span>: <span class="ident">ModuleEventAttribute</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">key</span>: <span class="ident">attr</span>
+                .<span class="ident">key</span>
+                .<span class="ident">parse</span>()
+                .<span class="ident">expect</span>(<span class="string">&quot;Key::from_str() impl is infallible&quot;</span>),
+            <span class="ident">value</span>: <span class="ident">attr</span>
+                .<span class="ident">key</span>
+                .<span class="ident">parse</span>()
+                .<span class="ident">expect</span>(<span class="string">&quot;Value::from_str() impl is infallible&quot;</span>),
         }
     }
 }

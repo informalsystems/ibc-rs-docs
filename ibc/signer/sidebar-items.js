@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Signer",""]]});
+initSidebarItems({"enum":[["SignerErrorDetail",""]],"struct":[["EmptySignerSubdetail",""],["Signer",""],["SignerError",""]]});

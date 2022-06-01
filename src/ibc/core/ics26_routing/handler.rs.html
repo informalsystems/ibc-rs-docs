@@ -505,11 +505,71 @@
 <span id="500">500</span>
 <span id="501">501</span>
 <span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::ics20_fungible_token_transfer::relay_application_logic::send_transfer::send_transfer</span> <span class="kw">as</span> <span class="ident">ics20_msg_dispatcher</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::handler::dispatch</span> <span class="kw">as</span> <span class="ident">ics2_msg_dispatcher</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::handler::dispatch</span> <span class="kw">as</span> <span class="ident">ics3_msg_dispatcher</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::handler</span>::{
@@ -521,17 +581,24 @@
     <span class="ident">packet_dispatch</span> <span class="kw">as</span> <span class="ident">ics4_packet_msg_dispatcher</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::PacketResult</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context::Ics26Context</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context</span>::{<span class="ident">Ics26Context</span>, <span class="ident">ModuleOutputBuilder</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::msgs::Ics26Envelope</span>::{
-    <span class="self">self</span>, <span class="ident">Ics20Msg</span>, <span class="ident">Ics2Msg</span>, <span class="ident">Ics3Msg</span>, <span class="ident">Ics4ChannelMsg</span>, <span class="ident">Ics4PacketMsg</span>,
+    <span class="self">self</span>, <span class="ident">Ics2Msg</span>, <span class="ident">Ics3Msg</span>, <span class="ident">Ics4ChannelMsg</span>, <span class="ident">Ics4PacketMsg</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">events::IbcEvent</span>, <span class="ident">handler::HandlerOutput</span>};
+
+<span class="doccomment">/// Result of message execution - comprises of events emitted and logs entries created during the</span>
+<span class="doccomment">/// execution of a transaction message.</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MsgReceipt</span> {
+    <span class="kw">pub</span> <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">log</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+}
 
 <span class="doccomment">/// Mimics the DeliverTx ABCI interface, but for a single message and at a slightly lower level.</span>
 <span class="doccomment">/// No need for authentication info or signature checks here.</span>
 <span class="doccomment">/// Returns a vector of all events that got generated as a byproduct of processing `message`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deliver</span><span class="op">&lt;</span><span class="ident">Ctx</span><span class="op">&gt;</span>(<span class="ident">ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Ctx</span>, <span class="ident">message</span>: <span class="ident">Any</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deliver</span><span class="op">&lt;</span><span class="ident">Ctx</span><span class="op">&gt;</span>(<span class="ident">ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Ctx</span>, <span class="ident">message</span>: <span class="ident">Any</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MsgReceipt</span>, <span class="ident">Error</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">Ctx</span>: <span class="ident">Ics26Context</span>,
 {
@@ -539,9 +606,9 @@
     <span class="kw">let</span> <span class="ident">envelope</span> <span class="op">=</span> <span class="ident">decode</span>(<span class="ident">message</span>)<span class="question-mark">?</span>;
 
     <span class="comment">// Process the envelope, and accumulate any events that were generated.</span>
-    <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">dispatch</span>(<span class="ident">ctx</span>, <span class="ident">envelope</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">HandlerOutput</span> { <span class="ident">log</span>, <span class="ident">events</span>, .. } <span class="op">=</span> <span class="ident">dispatch</span>(<span class="ident">ctx</span>, <span class="ident">envelope</span>)<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>((<span class="ident">output</span>.<span class="ident">events</span>, <span class="ident">output</span>.<span class="ident">log</span>))
+    <span class="prelude-val">Ok</span>(<span class="ident">MsgReceipt</span> { <span class="ident">events</span>, <span class="ident">log</span> })
 }
 
 <span class="doccomment">/// Attempts to convert a message into a [Ics26Envelope] message</span>
@@ -590,7 +657,7 @@
             <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">handler_builder</span>, <span class="ident">channel_result</span>) <span class="op">=</span>
                 <span class="ident">ics4_msg_dispatcher</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>).<span class="ident">map_err</span>(<span class="ident">Error::ics04_channel</span>)<span class="question-mark">?</span>;
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">module_output</span> <span class="op">=</span> <span class="ident">HandlerOutput::builder</span>().<span class="ident">with_result</span>(());
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">module_output</span> <span class="op">=</span> <span class="ident">ModuleOutputBuilder::new</span>();
             <span class="kw">let</span> <span class="ident">cb_result</span> <span class="op">=</span>
                 <span class="ident">ics4_callback</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">module_id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="ident">channel_result</span>, <span class="kw-2">&amp;mut</span> <span class="ident">module_output</span>);
             <span class="ident">handler_builder</span>.<span class="ident">merge</span>(<span class="ident">module_output</span>);
@@ -603,20 +670,6 @@
             <span class="ident">handler_builder</span>.<span class="ident">with_result</span>(())
         }
 
-        <span class="ident">Ics20Msg</span>(<span class="ident">msg</span>) =&gt; {
-            <span class="kw">let</span> <span class="ident">handler_output</span> <span class="op">=</span>
-                <span class="ident">ics20_msg_dispatcher</span>(<span class="ident">ctx</span>, <span class="ident">msg</span>).<span class="ident">map_err</span>(<span class="ident">Error::ics20_fungible_token_transfer</span>)<span class="question-mark">?</span>;
-
-            <span class="comment">// Apply any results to the host chain store.</span>
-            <span class="ident">ctx</span>.<span class="ident">store_packet_result</span>(<span class="ident">handler_output</span>.<span class="ident">result</span>)
-                .<span class="ident">map_err</span>(<span class="ident">Error::ics04_channel</span>)<span class="question-mark">?</span>;
-
-            <span class="ident">HandlerOutput::builder</span>()
-                .<span class="ident">with_log</span>(<span class="ident">handler_output</span>.<span class="ident">log</span>)
-                .<span class="ident">with_events</span>(<span class="ident">handler_output</span>.<span class="ident">events</span>)
-                .<span class="ident">with_result</span>(())
-        }
-
         <span class="ident">Ics4PacketMsg</span>(<span class="ident">msg</span>) =&gt; {
             <span class="kw">let</span> <span class="ident">module_id</span> <span class="op">=</span> <span class="ident">get_module_for_packet_msg</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>).<span class="ident">map_err</span>(<span class="ident">Error::ics04_channel</span>)<span class="question-mark">?</span>;
             <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">handler_builder</span>, <span class="ident">packet_result</span>) <span class="op">=</span>
@@ -626,7 +679,7 @@
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">handler_builder</span>.<span class="ident">with_result</span>(()));
             }
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">module_output</span> <span class="op">=</span> <span class="ident">HandlerOutput::builder</span>().<span class="ident">with_result</span>(());
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">module_output</span> <span class="op">=</span> <span class="ident">ModuleOutputBuilder::new</span>();
             <span class="kw">let</span> <span class="ident">cb_result</span> <span class="op">=</span> <span class="ident">ics4_packet_callback</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">module_id</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;mut</span> <span class="ident">module_output</span>);
             <span class="ident">handler_builder</span>.<span class="ident">merge</span>(<span class="ident">module_output</span>);
             <span class="ident">cb_result</span>.<span class="ident">map_err</span>(<span class="ident">Error::ics04_channel</span>)<span class="question-mark">?</span>;
@@ -648,14 +701,10 @@
 
     <span class="kw">use</span> <span class="ident">test_log::test</span>;
 
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::transfer::context::test::deliver</span> <span class="kw">as</span> <span class="ident">ics20_deliver</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::transfer::PrefixedCoin</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_consensus::AnyConsensusState</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::AnyClientState</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
-    <span class="kw">use</span> <span class="kw">crate</span>::{
-        <span class="ident">applications::ics20_fungible_token_transfer::msgs::transfer::test_util::get_dummy_msg_transfer</span>,
-        <span class="ident">core::ics23_commitment::commitment::test_util::get_dummy_merkle_proof</span>,
-    };
-
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs</span>::{
         <span class="ident">create_client::MsgCreateAnyClient</span>, <span class="ident">update_client::MsgUpdateAnyClient</span>,
         <span class="ident">upgrade_client::MsgUpgradeAnyClient</span>, <span class="ident">ClientMsg</span>,
@@ -678,15 +727,24 @@
         <span class="ident">timeout_on_close</span>::{<span class="ident">test_util::get_dummy_raw_msg_timeout_on_close</span>, <span class="ident">MsgTimeoutOnClose</span>},
         <span class="ident">ChannelMsg</span>, <span class="ident">PacketMsg</span>,
     };
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics23_commitment::commitment::test_util::get_dummy_merkle_proof</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{
+        <span class="ident">applications::transfer::msgs::transfer::test_util::get_dummy_msg_transfer</span>,
+        <span class="ident">applications::transfer::msgs::transfer::MsgTransfer</span>,
+        <span class="ident">applications::transfer::packet::PacketData</span>, <span class="ident">applications::transfer::MODULE_ID_STR</span>,
+    };
 
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier::ConnectionId</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context</span>::{<span class="ident">ModuleId</span>, <span class="ident">RouterBuilder</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context</span>::{<span class="ident">Ics26Context</span>, <span class="ident">ModuleId</span>, <span class="ident">Router</span>, <span class="ident">RouterBuilder</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::error::Error</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::handler::dispatch</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::msgs::Ics26Envelope</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler::HandlerOutputBuilder</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::client_state</span>::{<span class="ident">MockClientState</span>, <span class="ident">MockConsensusState</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::context</span>::{<span class="ident">MockContext</span>, <span class="ident">MockRouterBuilder</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::header::MockHeader</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test_utils</span>::{<span class="ident">get_dummy_account_id</span>, <span class="ident">DummyModule</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test_utils</span>::{<span class="ident">get_dummy_account_id</span>, <span class="ident">DummyTransferModule</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp::Timestamp</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
@@ -696,10 +754,28 @@
     <span class="doccomment">/// to work with the context and correctly store results (i.e., the `ClientKeeper`,</span>
     <span class="doccomment">/// `ConnectionKeeper`, and `ChannelKeeper` traits).</span>
     <span class="kw">fn</span> <span class="ident">routing_module_and_keepers</span>() {
+        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+        <span class="kw">enum</span> <span class="ident">TestMsg</span> {
+            <span class="ident">Ics26</span>(<span class="ident">Ics26Envelope</span>),
+            <span class="ident">Ics20</span>(<span class="ident">MsgTransfer</span><span class="op">&lt;</span><span class="ident">PrefixedCoin</span><span class="op">&gt;</span>),
+        }
+
+        <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Ics26Envelope</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TestMsg</span> {
+            <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">msg</span>: <span class="ident">Ics26Envelope</span>) -&gt; <span class="self">Self</span> {
+                <span class="ident"><span class="self">Self</span>::Ics26</span>(<span class="ident">msg</span>)
+            }
+        }
+
+        <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MsgTransfer</span><span class="op">&lt;</span><span class="ident">PrefixedCoin</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TestMsg</span> {
+            <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">msg</span>: <span class="ident">MsgTransfer</span><span class="op">&lt;</span><span class="ident">PrefixedCoin</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+                <span class="ident"><span class="self">Self</span>::Ics20</span>(<span class="ident">msg</span>)
+            }
+        }
+
         <span class="comment">// Test parameters</span>
         <span class="kw">struct</span> <span class="ident">Test</span> {
             <span class="ident">name</span>: <span class="ident">String</span>,
-            <span class="ident">msg</span>: <span class="ident">Ics26Envelope</span>,
+            <span class="ident">msg</span>: <span class="ident">TestMsg</span>,
             <span class="ident">want_pass</span>: <span class="ident">bool</span>,
         }
         <span class="kw">let</span> <span class="ident">default_signer</span> <span class="op">=</span> <span class="ident">get_dummy_account_id</span>();
@@ -714,16 +790,18 @@
 
         <span class="kw">let</span> <span class="ident">upgrade_client_height_second</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">1</span>);
 
-        <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">DummyModule::default</span>();
-        <span class="kw">let</span> <span class="ident">module_id</span>: <span class="ident">ModuleId</span> <span class="op">=</span> <span class="string">&quot;dummymodule&quot;</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-
-        <span class="kw">let</span> <span class="ident">router</span> <span class="op">=</span> <span class="ident">MockRouterBuilder::default</span>()
-            .<span class="ident">add_route</span>(<span class="ident">module_id</span>.<span class="ident">clone</span>(), <span class="ident">module</span>)
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">build</span>();
+        <span class="kw">let</span> <span class="ident">transfer_module_id</span>: <span class="ident">ModuleId</span> <span class="op">=</span> <span class="ident">MODULE_ID_STR</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>();
 
         <span class="comment">// We reuse this same context across all tests. Nothing in particular needs parametrizing.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">MockContext::default</span>().<span class="ident">with_router</span>(<span class="ident">router</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ctx</span> <span class="op">=</span> {
+            <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">MockContext::default</span>();
+            <span class="kw">let</span> <span class="ident">module</span> <span class="op">=</span> <span class="ident">DummyTransferModule::new</span>(<span class="ident">ctx</span>.<span class="ident">ibc_store_share</span>());
+            <span class="kw">let</span> <span class="ident">router</span> <span class="op">=</span> <span class="ident">MockRouterBuilder::default</span>()
+                .<span class="ident">add_route</span>(<span class="ident">transfer_module_id</span>.<span class="ident">clone</span>(), <span class="ident">module</span>)
+                .<span class="ident">unwrap</span>()
+                .<span class="ident">build</span>();
+            <span class="ident">ctx</span>.<span class="ident">with_router</span>(<span class="ident">router</span>)
+        };
 
         <span class="kw">let</span> <span class="ident">create_client_msg</span> <span class="op">=</span> <span class="ident">MsgCreateAnyClient::new</span>(
             <span class="ident">AnyClientState::from</span>(<span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">start_client_height</span>))),
@@ -790,6 +868,20 @@
         <span class="ident">msg_to_on_close</span>.<span class="ident">packet</span>.<span class="ident">timeout_height</span> <span class="op">=</span> <span class="ident">msg_transfer_two</span>.<span class="ident">timeout_height</span>;
         <span class="ident">msg_to_on_close</span>.<span class="ident">packet</span>.<span class="ident">timeout_timestamp</span> <span class="op">=</span> <span class="ident">msg_transfer_two</span>.<span class="ident">timeout_timestamp</span>;
 
+        <span class="kw">let</span> <span class="ident">denom</span> <span class="op">=</span> <span class="ident">msg_transfer_two</span>.<span class="ident">token</span>.<span class="ident">denom</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">packet_data</span> <span class="op">=</span> {
+            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">PacketData</span> {
+                <span class="ident">token</span>: <span class="ident">PrefixedCoin</span> {
+                    <span class="ident">denom</span>,
+                    <span class="ident">amount</span>: <span class="ident">msg_transfer_two</span>.<span class="ident">token</span>.<span class="ident">amount</span>,
+                },
+                <span class="ident">sender</span>: <span class="ident">msg_transfer_two</span>.<span class="ident">sender</span>.<span class="ident">clone</span>(),
+                <span class="ident">receiver</span>: <span class="ident">msg_transfer_two</span>.<span class="ident">receiver</span>.<span class="ident">clone</span>(),
+            };
+            <span class="ident">serde_json::to_vec</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>).<span class="ident">expect</span>(<span class="string">&quot;PacketData&#39;s infallible Serialize impl failed&quot;</span>)
+        };
+        <span class="ident">msg_to_on_close</span>.<span class="ident">packet</span>.<span class="ident">data</span> <span class="op">=</span> <span class="ident">packet_data</span>;
+
         <span class="kw">let</span> <span class="ident">msg_recv_packet</span> <span class="op">=</span> <span class="ident">MsgRecvPacket::try_from</span>(<span class="ident">get_dummy_raw_msg_recv_packet</span>(<span class="number">35</span>)).<span class="ident">unwrap</span>();
 
         <span class="comment">// First, create a client..</span>
@@ -805,7 +897,7 @@
             <span class="ident">res</span>
         );
 
-        <span class="ident">ctx</span>.<span class="ident">scope_port_to_module</span>(<span class="ident">msg_chan_init</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">module_id</span>);
+        <span class="ident">ctx</span>.<span class="ident">scope_port_to_module</span>(<span class="ident">msg_chan_init</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">transfer_module_id</span>.<span class="ident">clone</span>());
 
         <span class="comment">// Figure out the ID of the client that was just created.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">unwrap</span>().<span class="ident">events</span>;
@@ -829,7 +921,8 @@
                         .<span class="ident">with_timestamp</span>(<span class="ident">Timestamp::now</span>())
                         .<span class="ident">into</span>(),
                     <span class="ident">signer</span>: <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
-                })),
+                }))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
@@ -838,14 +931,16 @@
                     <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_client_height</span>).<span class="ident">into</span>(),
                     <span class="ident">signer</span>: <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
-                })),
+                }))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Connection open init succeeds&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics3Msg</span>(<span class="ident">ConnectionMsg::ConnectionOpenInit</span>(
                     <span class="ident">msg_conn_init</span>.<span class="ident">with_client_id</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>()),
-                )),
+                ))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
@@ -853,50 +948,54 @@
                     .<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics3Msg</span>(<span class="ident">ConnectionMsg::ConnectionOpenTry</span>(<span class="ident">Box::new</span>(
                     <span class="ident">incorrect_msg_conn_try</span>,
-                ))),
+                )))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Connection open try succeeds&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics3Msg</span>(<span class="ident">ConnectionMsg::ConnectionOpenTry</span>(<span class="ident">Box::new</span>(
                     <span class="ident">correct_msg_conn_try</span>.<span class="ident">with_client_id</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>()),
-                ))),
+                )))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Connection open ack succeeds&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics3Msg</span>(<span class="ident">ConnectionMsg::ConnectionOpenAck</span>(<span class="ident">Box::new</span>(
                     <span class="ident">msg_conn_ack</span>,
-                ))),
+                )))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="comment">// ICS04</span>
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Channel open init succeeds&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenInit</span>(<span class="ident">msg_chan_init</span>)),
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenInit</span>(<span class="ident">msg_chan_init</span>))
+                    .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Channel open init fail due to missing connection&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenInit</span>(
                     <span class="ident">incorrect_msg_chan_init</span>,
-                )),
+                ))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Channel open try succeeds&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg_chan_try</span>)),
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenTry</span>(<span class="ident">msg_chan_try</span>)).<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Channel open ack succeeds&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenAck</span>(<span class="ident">msg_chan_ack</span>)),
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelOpenAck</span>(<span class="ident">msg_chan_ack</span>)).<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
-            <span class="comment">//ICS20-04-packet</span>
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Packet send&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics20Msg</span>(<span class="ident">msg_transfer</span>),
+                <span class="ident">msg</span>: <span class="ident">msg_transfer</span>.<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="comment">// The client update is required in this test, because the proof associated with</span>
@@ -909,22 +1008,24 @@
                         .<span class="ident">with_timestamp</span>(<span class="ident">Timestamp::now</span>())
                         .<span class="ident">into</span>(),
                     <span class="ident">signer</span>: <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
-                })),
+                }))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Receive packet&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4PacketMsg</span>(<span class="ident">PacketMsg::RecvPacket</span>(<span class="ident">msg_recv_packet</span>.<span class="ident">clone</span>())),
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4PacketMsg</span>(<span class="ident">PacketMsg::RecvPacket</span>(<span class="ident">msg_recv_packet</span>.<span class="ident">clone</span>()))
+                    .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Re-Receive packet&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4PacketMsg</span>(<span class="ident">PacketMsg::RecvPacket</span>(<span class="ident">msg_recv_packet</span>)),
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4PacketMsg</span>(<span class="ident">PacketMsg::RecvPacket</span>(<span class="ident">msg_recv_packet</span>)).<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Packet send&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics20Msg</span>(<span class="ident">msg_transfer_two</span>),
+                <span class="ident">msg</span>: <span class="ident">msg_transfer_two</span>.<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
@@ -933,7 +1034,8 @@
                     <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_client_height_after_second_send</span>).<span class="ident">into</span>(),
                     <span class="ident">signer</span>: <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
-                })),
+                }))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="comment">//ICS04-close channel</span>
@@ -941,20 +1043,22 @@
                 <span class="ident">name</span>: <span class="string">&quot;Channel close init succeeds&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelCloseInit</span>(
                     <span class="ident">msg_chan_close_init</span>,
-                )),
+                ))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Channel close confirm fails cause channel is already closed&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4ChannelMsg</span>(<span class="ident">ChannelMsg::ChannelCloseConfirm</span>(
                     <span class="ident">msg_chan_close_confirm</span>,
-                )),
+                ))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="comment">//ICS04-to_on_close</span>
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Timeout on close&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4PacketMsg</span>(<span class="ident">PacketMsg::ToClosePacket</span>(<span class="ident">msg_to_on_close</span>)),
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics4PacketMsg</span>(<span class="ident">PacketMsg::ToClosePacket</span>(<span class="ident">msg_to_on_close</span>)).<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
@@ -970,7 +1074,8 @@
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
-                ))),
+                )))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
@@ -986,7 +1091,8 @@
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">default_signer</span>,
-                ))),
+                )))
+                .<span class="ident">into</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
         ]
@@ -994,7 +1100,23 @@
         .<span class="ident">collect</span>();
 
         <span class="kw">for</span> <span class="ident">test</span> <span class="kw">in</span> <span class="ident">tests</span> {
-            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">dispatch</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ctx</span>, <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>());
+            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">test</span>.<span class="ident">msg</span>.<span class="ident">clone</span>() {
+                <span class="ident">TestMsg::Ics26</span>(<span class="ident">msg</span>) =&gt; <span class="ident">dispatch</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ctx</span>, <span class="ident">msg</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ()),
+                <span class="ident">TestMsg::Ics20</span>(<span class="ident">msg</span>) =&gt; {
+                    <span class="kw">let</span> <span class="ident">transfer_module</span> <span class="op">=</span>
+                        <span class="ident">ctx</span>.<span class="ident">router_mut</span>().<span class="ident">get_route_mut</span>(<span class="kw-2">&amp;</span><span class="ident">transfer_module_id</span>).<span class="ident">unwrap</span>();
+                    <span class="ident">ics20_deliver</span>(
+                        <span class="ident">transfer_module</span>
+                            .<span class="ident">as_any_mut</span>()
+                            .<span class="ident">downcast_mut</span>::<span class="op">&lt;</span><span class="ident">DummyTransferModule</span><span class="op">&gt;</span>()
+                            .<span class="ident">unwrap</span>(),
+                        <span class="kw-2">&amp;mut</span> <span class="ident">HandlerOutputBuilder::new</span>(),
+                        <span class="ident">msg</span>,
+                    )
+                    .<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())
+                    .<span class="ident">map_err</span>(<span class="ident">Error::ics04_channel</span>)
+                }
+            };
 
             <span class="macro">assert_eq!</span>(
                 <span class="ident">test</span>.<span class="ident">want_pass</span>,

@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgTransfer","Message used to build an ICS20 token transfer packet."]]});
