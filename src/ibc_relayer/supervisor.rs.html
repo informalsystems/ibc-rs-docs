@@ -734,6 +734,7 @@
 <span id="729">729</span>
 <span id="730">730</span>
 <span id="731">731</span>
+<span id="732">732</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::btree_map::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core::convert::Infallible</span>;
@@ -752,7 +753,7 @@
 };
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">chain</span>::{<span class="ident">handle::ChainHandle</span>, <span class="ident">tracking::TrackingId</span>, <span class="ident">HealthCheck</span>},
+    <span class="ident">chain</span>::{<span class="ident">endpoint::HealthCheck</span>, <span class="ident">handle::ChainHandle</span>, <span class="ident">tracking::TrackingId</span>},
     <span class="ident">config::Config</span>,
     <span class="ident">event::monitor</span>::{<span class="self">self</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">EventError</span>, <span class="ident">ErrorDetail</span> <span class="kw">as</span> <span class="ident">EventErrorDetail</span>, <span class="ident">EventBatch</span>},
     <span class="ident">object::Object</span>,
@@ -1227,14 +1228,15 @@
 
         <span class="kw">match</span> <span class="ident">chain</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">chain</span>) =&gt; <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">health_check</span>() {
-                <span class="prelude-val">Ok</span>(<span class="ident">Healthy</span>) =&gt; <span class="macro">info!</span>(<span class="string">&quot;[{}] chain is healthy&quot;</span>, <span class="ident">id</span>),
-                <span class="prelude-val">Ok</span>(<span class="ident">Unhealthy</span>(<span class="ident">e</span>)) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;[{}] chain is unhealthy: {}&quot;</span>, <span class="ident">id</span>, <span class="ident">e</span>),
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;[{}] failed to perform health check: {}&quot;</span>, <span class="ident">id</span>, <span class="ident">e</span>),
+                <span class="prelude-val">Ok</span>(<span class="ident">Healthy</span>) =&gt; <span class="macro">info!</span>(<span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">id</span>, <span class="string">&quot;chain is healthy&quot;</span>),
+                <span class="prelude-val">Ok</span>(<span class="ident">Unhealthy</span>(<span class="ident">e</span>)) =&gt; <span class="macro">warn!</span>(<span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">id</span>, <span class="string">&quot;chain is unhealthy: {}&quot;</span>, <span class="ident">e</span>),
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(<span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">id</span>, <span class="string">&quot;failed to perform health check: {}&quot;</span>, <span class="ident">e</span>),
             },
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;skipping health check for chain {}, reason: failed to spawn chain runtime with error: {}&quot;</span>,
-                    <span class="ident">config</span>.<span class="ident">id</span>, <span class="ident">e</span>
+                    <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">id</span>,
+                    <span class="string">&quot;skipping health check, reason: failed to spawn chain runtime with error: {}&quot;</span>,
+                    <span class="ident">e</span>
                 );
             }
         }

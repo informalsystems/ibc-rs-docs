@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["clear_packets_interval",""],["clock_drift",""],["connection_delay",""],["max_block_time",""],["rpc_timeout",""],["tx_confirmation",""]]});
+initSidebarItems({"fn":[["chain_type",""],["clear_packets_interval",""],["clock_drift",""],["connection_delay",""],["max_block_time",""],["rpc_timeout",""],["tx_confirmation",""]]});
