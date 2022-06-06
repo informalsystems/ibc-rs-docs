@@ -452,6 +452,41 @@
 <span id="447">447</span>
 <span id="448">448</span>
 <span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">crossbeam_channel</span> <span class="kw">as</span> <span class="ident">channel</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus</span>::{<span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">IdentifiedAnyClientState</span>};
@@ -485,13 +520,15 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::endpoint</span>::{<span class="ident">ChainStatus</span>, <span class="ident">HealthCheck</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainRequest</span>, <span class="ident">Subscription</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{
-    <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>,
     <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryClientStatesRequest</span>,
     <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>, <span class="ident">QueryConnectionsRequest</span>,
     <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHostConsensusStateRequest</span>,
-    <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryPacketAcknowledgementsRequest</span>,
-    <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
-    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+    <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>,
+    <span class="ident">QueryPacketAcknowledgementsRequest</span>, <span class="ident">QueryPacketCommitmentRequest</span>,
+    <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>,
+    <span class="ident">QueryUnreceivedPacketsRequest</span>, <span class="ident">QueryUpgradedClientStateRequest</span>,
+    <span class="ident">QueryUpgradedConsensusStateRequest</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::ChainConfig</span>;
@@ -617,25 +654,31 @@
     <span class="kw">fn</span> <span class="ident">query_client_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryClientStateRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyClientState</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>();
-        <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">is_zero</span>() {
-            <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span>
-                <span class="self">self</span>.<span class="ident">cache</span>
-                    .<span class="ident">get_or_try_insert_client_state_with</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">client_id</span>, <span class="op">|</span><span class="op">|</span> {
-                        <span class="ident">handle</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-                            <span class="ident">client_id</span>: <span class="ident">request</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                            <span class="ident">height</span>: <span class="ident">request</span>.<span class="ident">height</span>,
-                        })
-                    })<span class="question-mark">?</span>;
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; <span class="ident">handle</span>.<span class="ident">query_client_state</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::Yes</span>),
+            <span class="ident">IncludeProof::No</span> =&gt; {
+                <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">is_zero</span>() {
+                    <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_client_state_with</span>(
+                        <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">client_id</span>,
+                        <span class="op">|</span><span class="op">|</span> {
+                            <span class="ident">handle</span>
+                                .<span class="ident">query_client_state</span>(<span class="ident">request</span>.<span class="ident">clone</span>(), <span class="ident">IncludeProof::No</span>)
+                                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">client_state</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">client_state</span>)
+                        },
+                    )<span class="question-mark">?</span>;
 
-            <span class="kw">if</span> <span class="ident">in_cache</span> <span class="op">==</span> <span class="ident">CacheStatus::Hit</span> {
-                <span class="macro">telemetry!</span>(<span class="ident">query_cache_hit</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_client_state&quot;</span>);
+                    <span class="kw">if</span> <span class="ident">in_cache</span> <span class="op">==</span> <span class="ident">CacheStatus::Hit</span> {
+                        <span class="macro">telemetry!</span>(<span class="ident">query_cache_hit</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_client_state&quot;</span>);
+                    }
+
+                    <span class="prelude-val">Ok</span>((<span class="ident">result</span>, <span class="prelude-val">None</span>))
+                } <span class="kw">else</span> {
+                    <span class="ident">handle</span>.<span class="ident">query_client_state</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::No</span>)
+                }
             }
-
-            <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
-        } <span class="kw">else</span> {
-            <span class="ident">handle</span>.<span class="ident">query_client_state</span>(<span class="ident">request</span>)
         }
     }
 
@@ -656,8 +699,9 @@
     <span class="kw">fn</span> <span class="ident">query_consensus_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryConsensusStateRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_consensus_state</span>(<span class="ident">request</span>)
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyConsensusState</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_consensus_state</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">query_upgraded_client_state</span>(
@@ -682,22 +726,34 @@
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_compatible_versions</span>()
     }
 
-    <span class="kw">fn</span> <span class="ident">query_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryConnectionRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_connection</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryConnectionRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ConnectionEnd</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>();
-        <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">is_zero</span>() {
-            <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">cache</span>
-                .<span class="ident">get_or_try_insert_connection_with</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">connection_id</span>, <span class="op">|</span><span class="op">|</span> {
-                    <span class="ident">handle</span>.<span class="ident">query_connection</span>(<span class="ident">request</span>.<span class="ident">clone</span>())
-                })<span class="question-mark">?</span>;
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; <span class="ident">handle</span>.<span class="ident">query_connection</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::Yes</span>),
+            <span class="ident">IncludeProof::No</span> =&gt; {
+                <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">is_zero</span>() {
+                    <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_connection_with</span>(
+                        <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">connection_id</span>,
+                        <span class="op">|</span><span class="op">|</span> {
+                            <span class="ident">handle</span>
+                                .<span class="ident">query_connection</span>(<span class="ident">request</span>.<span class="ident">clone</span>(), <span class="ident">IncludeProof::No</span>)
+                                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">conn_end</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">conn_end</span>)
+                        },
+                    )<span class="question-mark">?</span>;
 
-            <span class="kw">if</span> <span class="ident">in_cache</span> <span class="op">==</span> <span class="ident">CacheStatus::Hit</span> {
-                <span class="macro">telemetry!</span>(<span class="ident">query_cache_hit</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_connection&quot;</span>);
+                    <span class="kw">if</span> <span class="ident">in_cache</span> <span class="op">==</span> <span class="ident">CacheStatus::Hit</span> {
+                        <span class="macro">telemetry!</span>(<span class="ident">query_cache_hit</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_connection&quot;</span>);
+                    }
+
+                    <span class="prelude-val">Ok</span>((<span class="ident">result</span>, <span class="prelude-val">None</span>))
+                } <span class="kw">else</span> {
+                    <span class="ident">handle</span>.<span class="ident">query_connection</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::No</span>)
+                }
             }
-
-            <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
-        } <span class="kw">else</span> {
-            <span class="ident">handle</span>.<span class="ident">query_connection</span>(<span class="ident">request</span>)
         }
     }
 
@@ -718,8 +774,10 @@
     <span class="kw">fn</span> <span class="ident">query_next_sequence_receive</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryNextSequenceReceiveRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Sequence</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_next_sequence_receive</span>(<span class="ident">request</span>)
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Sequence</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>()
+            .<span class="ident">query_next_sequence_receive</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">query_channels</span>(
@@ -729,21 +787,34 @@
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_channels</span>(<span class="ident">request</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryChannelRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_channel</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryChannelRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ChannelEnd</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>();
-        <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">is_zero</span>() {
-            <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_channel_with</span>(
-                <span class="kw-2">&amp;</span><span class="ident">PortChannelId::new</span>(<span class="ident">request</span>.<span class="ident">channel_id</span>, <span class="ident">request</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>()),
-                <span class="op">|</span><span class="op">|</span> <span class="ident">handle</span>.<span class="ident">query_channel</span>(<span class="ident">request</span>),
-            )<span class="question-mark">?</span>;
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; <span class="ident">handle</span>.<span class="ident">query_channel</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::Yes</span>),
+            <span class="ident">IncludeProof::No</span> =&gt; {
+                <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">height</span>.<span class="ident">is_zero</span>() {
+                    <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_channel_with</span>(
+                        <span class="kw-2">&amp;</span><span class="ident">PortChannelId::new</span>(<span class="ident">request</span>.<span class="ident">channel_id</span>, <span class="ident">request</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>()),
+                        <span class="op">|</span><span class="op">|</span> {
+                            <span class="ident">handle</span>
+                                .<span class="ident">query_channel</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::No</span>)
+                                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">channel_end</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">channel_end</span>)
+                        },
+                    )<span class="question-mark">?</span>;
 
-            <span class="kw">if</span> <span class="ident">in_cache</span> <span class="op">==</span> <span class="ident">CacheStatus::Hit</span> {
-                <span class="macro">telemetry!</span>(<span class="ident">query_cache_hit</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_channel&quot;</span>);
+                    <span class="kw">if</span> <span class="ident">in_cache</span> <span class="op">==</span> <span class="ident">CacheStatus::Hit</span> {
+                        <span class="macro">telemetry!</span>(<span class="ident">query_cache_hit</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_channel&quot;</span>);
+                    }
+
+                    <span class="prelude-val">Ok</span>((<span class="ident">result</span>, <span class="prelude-val">None</span>))
+                } <span class="kw">else</span> {
+                    <span class="ident">handle</span>.<span class="ident">query_channel</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::No</span>)
+                }
             }
-
-            <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
-        } <span class="kw">else</span> {
-            <span class="ident">handle</span>.<span class="ident">query_channel</span>(<span class="ident">request</span>)
         }
     }
 
@@ -752,32 +823,6 @@
         <span class="ident">request</span>: <span class="ident">QueryChannelClientStateRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">IdentifiedAnyClientState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_channel_client_state</span>(<span class="ident">request</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_client_state</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
-        <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyClientState</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">proven_client_state</span>(<span class="ident">client_id</span>, <span class="ident">height</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_connection</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">connection_id</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionId</span>,
-        <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ConnectionEnd</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">proven_connection</span>(<span class="ident">connection_id</span>, <span class="ident">height</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_client_consensus</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
-        <span class="ident">consensus_height</span>: <span class="ident">Height</span>,
-        <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyConsensusState</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>()
-            .<span class="ident">proven_client_consensus</span>(<span class="ident">client_id</span>, <span class="ident">consensus_height</span>, <span class="ident">height</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">build_header</span>(
@@ -850,9 +895,17 @@
         <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
         <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Proofs</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Proofs</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">build_packet_proofs</span>(<span class="ident">packet_type</span>, <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">sequence</span>, <span class="ident">height</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">query_packet_commitment</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketCommitmentRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_packet_commitment</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">query_packet_commitments</span>(
@@ -862,11 +915,28 @@
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_packet_commitments</span>(<span class="ident">request</span>)
     }
 
+    <span class="kw">fn</span> <span class="ident">query_packet_receipt</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketReceiptRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_packet_receipt</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>)
+    }
+
     <span class="kw">fn</span> <span class="ident">query_unreceived_packets</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryUnreceivedPacketsRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_unreceived_packets</span>(<span class="ident">request</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">query_packet_acknowledgement</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketAcknowledgementRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>()
+            .<span class="ident">query_packet_acknowledgement</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">query_packet_acknowledgements</span>(
@@ -876,11 +946,11 @@
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_packet_acknowledgements</span>(<span class="ident">request</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_unreceived_acknowledgement</span>(
+    <span class="kw">fn</span> <span class="ident">query_unreceived_acknowledgements</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryUnreceivedAcksRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_unreceived_acknowledgement</span>(<span class="ident">request</span>)
+        <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">query_unreceived_acknowledgements</span>(<span class="ident">request</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">query_txs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryTxRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {

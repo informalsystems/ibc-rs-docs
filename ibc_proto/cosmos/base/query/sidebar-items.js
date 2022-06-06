@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["pagination",""],["v1beta1",""]]});
+initSidebarItems({"mod":[["v1beta1",""]]});

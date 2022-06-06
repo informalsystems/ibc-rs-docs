@@ -1849,6 +1849,25 @@
 <span id="1844">1844</span>
 <span id="1845">1845</span>
 <span id="1846">1846</span>
+<span id="1847">1847</span>
+<span id="1848">1848</span>
+<span id="1849">1849</span>
+<span id="1850">1850</span>
+<span id="1851">1851</span>
+<span id="1852">1852</span>
+<span id="1853">1853</span>
+<span id="1854">1854</span>
+<span id="1855">1855</span>
+<span id="1856">1856</span>
+<span id="1857">1857</span>
+<span id="1858">1858</span>
+<span id="1859">1859</span>
+<span id="1860">1860</span>
+<span id="1861">1861</span>
+<span id="1862">1862</span>
+<span id="1863">1863</span>
+<span id="1864">1864</span>
+<span id="1865">1865</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,</span>
@@ -1889,8 +1908,9 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{
-    <span class="ident">PageRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>,
-    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryConsensusStateRequest</span>,
+    <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryUpgradedClientStateRequest</span>,
+    <span class="ident">QueryUpgradedConsensusStateRequest</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span> <span class="kw">as</span> <span class="ident">RelayerError</span>;
@@ -2249,11 +2269,14 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ForeignClient</span><span class="op">&lt;</span><span class="ident">DstChain</span>, <span class="ident">SrcChain</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="ident">expected_target_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="number">0</span>);
 
-        <span class="kw">match</span> <span class="ident">host_chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-            <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">height</span>,
-        }) {
-            <span class="prelude-val">Ok</span>(<span class="ident">cs</span>) =&gt; {
+        <span class="kw">match</span> <span class="ident">host_chain</span>.<span class="ident">query_client_state</span>(
+            <span class="ident">QueryClientStateRequest</span> {
+                <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
+                <span class="ident">height</span>,
+            },
+            <span class="ident">IncludeProof::No</span>,
+        ) {
+            <span class="prelude-val">Ok</span>((<span class="ident">cs</span>, <span class="kw">_</span>)) =&gt; {
                 <span class="kw">if</span> <span class="ident">cs</span>.<span class="ident">chain_id</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">expected_target_chain</span>.<span class="ident">id</span>() {
                     <span class="prelude-val">Err</span>(<span class="ident">ForeignClientError::mismatch_chain_id</span>(
                         <span class="ident">client_id</span>.<span class="ident">clone</span>(),
@@ -2502,12 +2525,15 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">validated_client_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyClientState</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>), <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> {
+        <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="kw">_</span>) <span class="op">=</span> {
             <span class="self">self</span>.<span class="ident">dst_chain</span>
-                .<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-                    <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                    <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
-                })
+                .<span class="ident">query_client_state</span>(
+                    <span class="ident">QueryClientStateRequest</span> {
+                        <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
+                        <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+                    },
+                    <span class="ident">IncludeProof::No</span>,
+                )
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                     <span class="ident">ForeignClientError::client_refresh</span>(
                         <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
@@ -3046,13 +3072,16 @@
 
     <span class="doccomment">/// Returns the consensus state at `height` or error if not found.</span>
     <span class="kw">fn</span> <span class="ident">consensus_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>
+        <span class="kw">let</span> (<span class="ident">consensus_state</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dst_chain</span>
-            .<span class="ident">query_consensus_state</span>(<span class="ident">QueryConsensusStateRequest</span> {
-                <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
-                <span class="ident">consensus_height</span>: <span class="ident">height</span>,
-                <span class="ident">query_height</span>: <span class="ident">Height::zero</span>(),
-            })
+            .<span class="ident">query_consensus_state</span>(
+                <span class="ident">QueryConsensusStateRequest</span> {
+                    <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">consensus_height</span>: <span class="ident">height</span>,
+                    <span class="ident">query_height</span>: <span class="ident">Height::zero</span>(),
+                },
+                <span class="ident">IncludeProof::No</span>,
+            )
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_consensus_query</span>(
                     <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
@@ -3062,7 +3091,7 @@
                 )
             })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">res</span>)
+        <span class="prelude-val">Ok</span>(<span class="ident">consensus_state</span>)
     }
 
     <span class="doccomment">/// Retrieves all consensus heights for this client sorted in descending</span>
@@ -3127,12 +3156,15 @@
         .<span class="ident">entered</span>();
 
         <span class="comment">// Get the latest client state on destination.</span>
-        <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> {
+        <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="kw">_</span>) <span class="op">=</span> {
             <span class="self">self</span>.<span class="ident">dst_chain</span>()
-                .<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-                    <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                    <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
-                })
+                .<span class="ident">query_client_state</span>(
+                    <span class="ident">QueryClientStateRequest</span> {
+                        <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
+                        <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+                    },
+                    <span class="ident">IncludeProof::No</span>,
+                )
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                     <span class="ident">ForeignClientError::misbehaviour</span>(
                         <span class="macro">format!</span>(<span class="string">&quot;failed querying client state on dst chain {}&quot;</span>, <span class="self">self</span>.<span class="ident">id</span>),
@@ -3432,7 +3464,7 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle</span>::{<span class="ident">BaseChainHandle</span>, <span class="ident">ChainHandle</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::mock::test_utils::get_basic_chain_config</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::mock::MockChain</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryClientStateRequest</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{<span class="ident">IncludeProof</span>, <span class="ident">QueryClientStateRequest</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::runtime::ChainRuntime</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client::ForeignClient</span>;
 
@@ -3613,24 +3645,30 @@
         <span class="kw">let</span> <span class="ident">b_client</span> <span class="op">=</span> <span class="ident">client_on_b</span>.<span class="ident">id</span>;
 
         <span class="comment">// Now that the clients exists, we should be able to query its state</span>
-        <span class="kw">let</span> <span class="ident">b_client_state</span> <span class="op">=</span> <span class="ident">b_chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-            <span class="ident">client_id</span>: <span class="ident">b_client</span>,
-            <span class="ident">height</span>: <span class="ident">Height::default</span>(),
-        });
+        <span class="kw">let</span> <span class="ident">b_client_state_res</span> <span class="op">=</span> <span class="ident">b_chain</span>.<span class="ident">query_client_state</span>(
+            <span class="ident">QueryClientStateRequest</span> {
+                <span class="ident">client_id</span>: <span class="ident">b_client</span>,
+                <span class="ident">height</span>: <span class="ident">Height::default</span>(),
+            },
+            <span class="ident">IncludeProof::No</span>,
+        );
         <span class="macro">assert!</span>(
-            <span class="ident">b_client_state</span>.<span class="ident">is_ok</span>(),
+            <span class="ident">b_client_state_res</span>.<span class="ident">is_ok</span>(),
             <span class="string">&quot;Client query (on chain b) failed with error: {:?}&quot;</span>,
-            <span class="ident">b_client_state</span>
+            <span class="ident">b_client_state_res</span>
         );
 
-        <span class="kw">let</span> <span class="ident">a_client_state</span> <span class="op">=</span> <span class="ident">a_chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-            <span class="ident">client_id</span>: <span class="ident">a_client</span>,
-            <span class="ident">height</span>: <span class="ident">Height::default</span>(),
-        });
+        <span class="kw">let</span> <span class="ident">a_client_state_res</span> <span class="op">=</span> <span class="ident">a_chain</span>.<span class="ident">query_client_state</span>(
+            <span class="ident">QueryClientStateRequest</span> {
+                <span class="ident">client_id</span>: <span class="ident">a_client</span>,
+                <span class="ident">height</span>: <span class="ident">Height::default</span>(),
+            },
+            <span class="ident">IncludeProof::No</span>,
+        );
         <span class="macro">assert!</span>(
-            <span class="ident">a_client_state</span>.<span class="ident">is_ok</span>(),
+            <span class="ident">a_client_state_res</span>.<span class="ident">is_ok</span>(),
             <span class="string">&quot;Client query (on chain a) failed with error: {:?}&quot;</span>,
-            <span class="ident">a_client_state</span>
+            <span class="ident">a_client_state_res</span>
         );
     }
 

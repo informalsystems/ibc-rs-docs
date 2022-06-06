@@ -260,6 +260,19 @@
 <span id="255">255</span>
 <span id="256">256</span>
 <span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Debug</span>, <span class="ident">Error</span>, <span class="ident">Formatter</span>};
 
 <span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
@@ -272,7 +285,7 @@
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle</span>::{<span class="ident">BaseChainHandle</span>, <span class="ident">ChainHandle</span>};
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{
-    <span class="ident">PageRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
     <span class="ident">QueryConnectionRequest</span>,
 };
 <span class="kw">use</span> <span class="ident">ibc_relayer::registry::Registry</span>;
@@ -388,15 +401,21 @@
     <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
     <span class="ident">chain_height</span>: <span class="ident">Height</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnds</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">connection_end</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_connection</span>(<span class="ident">QueryConnectionRequest</span> {
-        <span class="ident">connection_id</span>: <span class="ident">connection_id</span>.<span class="ident">clone</span>(),
-        <span class="ident">height</span>: <span class="ident">chain_height</span>,
-    })<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">connection_end</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_connection</span>(
+        <span class="ident">QueryConnectionRequest</span> {
+            <span class="ident">connection_id</span>: <span class="ident">connection_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">height</span>: <span class="ident">chain_height</span>,
+        },
+        <span class="ident">IncludeProof::No</span>,
+    )<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">client_id</span> <span class="op">=</span> <span class="ident">connection_end</span>.<span class="ident">client_id</span>().<span class="ident">clone</span>();
-    <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
-        <span class="ident">client_id</span>,
-        <span class="ident">height</span>: <span class="ident">chain_height</span>,
-    })<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(
+        <span class="ident">QueryClientStateRequest</span> {
+            <span class="ident">client_id</span>,
+            <span class="ident">height</span>: <span class="ident">chain_height</span>,
+        },
+        <span class="ident">IncludeProof::No</span>,
+    )<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">counterparty_chain_id</span> <span class="op">=</span> <span class="ident">client_state</span>.<span class="ident">chain_id</span>();
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dst_chain_id</span>) <span class="op">=</span> <span class="ident">destination_chain</span> {
@@ -435,23 +454,30 @@
     <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">get_or_spawn</span>(<span class="kw-2">&amp;</span><span class="ident">counterparty_chain_id</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">counterparty_chain_height</span> <span class="op">=</span> <span class="ident">counterparty_chain</span>.<span class="ident">query_latest_height</span>()<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">counterparty_connection_end</span> <span class="op">=</span>
-        <span class="ident">counterparty_chain</span>.<span class="ident">query_connection</span>(<span class="ident">QueryConnectionRequest</span> {
+    <span class="kw">let</span> (<span class="ident">counterparty_connection_end</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">counterparty_chain</span>.<span class="ident">query_connection</span>(
+        <span class="ident">QueryConnectionRequest</span> {
             <span class="ident">connection_id</span>: <span class="ident">counterparty_connection_id</span>,
             <span class="ident">height</span>: <span class="ident">counterparty_chain_height</span>,
-        })<span class="question-mark">?</span>;
+        },
+        <span class="ident">IncludeProof::No</span>,
+    )<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">counterparty_client_state</span> <span class="op">=</span>
-        <span class="ident">counterparty_chain</span>.<span class="ident">query_client_state</span>(<span class="ident">QueryClientStateRequest</span> {
+    <span class="kw">let</span> (<span class="ident">counterparty_client_state</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">counterparty_chain</span>.<span class="ident">query_client_state</span>(
+        <span class="ident">QueryClientStateRequest</span> {
             <span class="ident">client_id</span>: <span class="ident">counterparty_client_id</span>,
             <span class="ident">height</span>: <span class="ident">counterparty_chain_height</span>,
-        })<span class="question-mark">?</span>;
+        },
+        <span class="ident">IncludeProof::No</span>,
+    )<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">counterparty_channel_end</span> <span class="op">=</span> <span class="ident">counterparty_chain</span>.<span class="ident">query_channel</span>(<span class="ident">QueryChannelRequest</span> {
-        <span class="ident">port_id</span>: <span class="ident">counterparty_port_id</span>,
-        <span class="ident">channel_id</span>: <span class="ident">counterparty_channel_id</span>,
-        <span class="ident">height</span>: <span class="ident">counterparty_chain_height</span>,
-    })<span class="question-mark">?</span>;
+    <span class="kw">let</span> (<span class="ident">counterparty_channel_end</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">counterparty_chain</span>.<span class="ident">query_channel</span>(
+        <span class="ident">QueryChannelRequest</span> {
+            <span class="ident">port_id</span>: <span class="ident">counterparty_port_id</span>,
+            <span class="ident">channel_id</span>: <span class="ident">counterparty_channel_id</span>,
+            <span class="ident">height</span>: <span class="ident">counterparty_chain_height</span>,
+        },
+        <span class="ident">IncludeProof::No</span>,
+    )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(<span class="ident">ChannelEnds</span> {
         <span class="ident">channel_end</span>,

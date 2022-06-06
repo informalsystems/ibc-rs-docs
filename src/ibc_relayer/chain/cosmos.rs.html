@@ -1710,7 +1710,50 @@
 <span id="1705">1705</span>
 <span id="1706">1706</span>
 <span id="1707">1707</span>
+<span id="1708">1708</span>
+<span id="1709">1709</span>
+<span id="1710">1710</span>
+<span id="1711">1711</span>
+<span id="1712">1712</span>
+<span id="1713">1713</span>
+<span id="1714">1714</span>
+<span id="1715">1715</span>
+<span id="1716">1716</span>
+<span id="1717">1717</span>
+<span id="1718">1718</span>
+<span id="1719">1719</span>
+<span id="1720">1720</span>
+<span id="1721">1721</span>
+<span id="1722">1722</span>
+<span id="1723">1723</span>
+<span id="1724">1724</span>
+<span id="1725">1725</span>
+<span id="1726">1726</span>
+<span id="1727">1727</span>
+<span id="1728">1728</span>
+<span id="1729">1729</span>
+<span id="1730">1730</span>
+<span id="1731">1731</span>
+<span id="1732">1732</span>
+<span id="1733">1733</span>
+<span id="1734">1734</span>
+<span id="1735">1735</span>
+<span id="1736">1736</span>
+<span id="1737">1737</span>
+<span id="1738">1738</span>
+<span id="1739">1739</span>
+<span id="1740">1740</span>
+<span id="1741">1741</span>
+<span id="1742">1742</span>
+<span id="1743">1743</span>
+<span id="1744">1744</span>
+<span id="1745">1745</span>
+<span id="1746">1746</span>
+<span id="1747">1747</span>
+<span id="1748">1748</span>
+<span id="1749">1749</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
+<span class="kw">use</span> <span class="ident">bytes</span>::{<span class="ident">Buf</span>, <span class="ident">Bytes</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
     <span class="ident">future::Future</span>,
@@ -1746,9 +1789,9 @@
     <span class="ident">ChannelEnd</span>, <span class="ident">IdentifiedChannelEnd</span>, <span class="ident">QueryPacketEventDataRequest</span>,
 };
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::events</span> <span class="kw">as</span> <span class="ident">ChannelEvents</span>;
-<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">PacketMsgType</span>, <span class="ident">Sequence</span>};
+<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">Sequence</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics23_commitment::commitment::CommitmentPrefix</span>;
-<span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>};
+<span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::path</span>::{
     <span class="ident">AcksPath</span>, <span class="ident">ChannelEndsPath</span>, <span class="ident">ClientConsensusStatePath</span>, <span class="ident">ClientStatePath</span>, <span class="ident">CommitmentsPath</span>,
     <span class="ident">ConnectionsPath</span>, <span class="ident">ReceiptsPath</span>, <span class="ident">SeqRecvsPath</span>,
@@ -1790,13 +1833,15 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client</span>::{<span class="ident">LightClient</span>, <span class="ident">Verified</span>};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::requests</span>::{
-    <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>,
     <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryClientStatesRequest</span>,
     <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>, <span class="ident">QueryConnectionsRequest</span>,
     <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHostConsensusStateRequest</span>,
-    <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryPacketAcknowledgementsRequest</span>,
-    <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
-    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+    <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>,
+    <span class="ident">QueryPacketAcknowledgementsRequest</span>, <span class="ident">QueryPacketCommitmentRequest</span>,
+    <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>,
+    <span class="ident">QueryUnreceivedPacketsRequest</span>, <span class="ident">QueryUpgradedClientStateRequest</span>,
+    <span class="ident">QueryUpgradedConsensusStateRequest</span>,
 };
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">batch</span>;
@@ -2459,15 +2504,25 @@
     <span class="kw">fn</span> <span class="ident">query_client_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryClientStateRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyClientState</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_client_state&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_client_state&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">query</span>(<span class="ident">ClientStatePath</span>(<span class="ident">request</span>.<span class="ident">client_id</span>), <span class="ident">request</span>.<span class="ident">height</span>, <span class="bool-val">false</span>)
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">AnyClientState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>))<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+            <span class="ident">ClientStatePath</span>(<span class="ident">request</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>()),
+            <span class="ident">request</span>.<span class="ident">height</span>,
+            <span class="macro">matches!</span>(<span class="ident">include_proof</span>, <span class="ident">IncludeProof::Yes</span>),
+        )<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="ident">AnyClientState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">client_state</span>)
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>((<span class="ident">client_state</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">client_state</span>, <span class="prelude-val">None</span>)),
+        }
     }
 
     <span class="kw">fn</span> <span class="ident">query_upgraded_client_state</span>(
@@ -2548,17 +2603,37 @@
     <span class="kw">fn</span> <span class="ident">query_consensus_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryConsensusStateRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyConsensusState</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_consensus_state&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_consensus_state&quot;</span>);
 
-        <span class="kw">let</span> (<span class="ident">consensus_state</span>, <span class="ident">_proof</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">proven_client_consensus</span>(
-            <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">client_id</span>,
-            <span class="ident">request</span>.<span class="ident">consensus_height</span>,
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+            <span class="ident">ClientConsensusStatePath</span> {
+                <span class="ident">client_id</span>: <span class="ident">request</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
+                <span class="ident">epoch</span>: <span class="ident">request</span>.<span class="ident">consensus_height</span>.<span class="ident">revision_number</span>,
+                <span class="ident">height</span>: <span class="ident">request</span>.<span class="ident">consensus_height</span>.<span class="ident">revision_height</span>,
+            },
             <span class="ident">request</span>.<span class="ident">query_height</span>,
+            <span class="macro">matches!</span>(<span class="ident">include_proof</span>, <span class="ident">IncludeProof::Yes</span>),
         )<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">consensus_state</span>)
+        <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">AnyConsensusState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">consensus_state</span>, <span class="ident">AnyConsensusState::Tendermint</span>(<span class="kw">_</span>)) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::consensus_state_type_mismatch</span>(
+                <span class="ident">ClientType::Tendermint</span>,
+                <span class="ident">consensus_state</span>.<span class="ident">client_type</span>(),
+            ));
+        }
+
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>((<span class="ident">consensus_state</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">consensus_state</span>, <span class="prelude-val">None</span>)),
+        }
     }
 
     <span class="kw">fn</span> <span class="ident">query_client_connections</span>(
@@ -2630,7 +2705,11 @@
         <span class="prelude-val">Ok</span>(<span class="ident">connections</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_connection</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryConnectionRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ConnectionEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_connection</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryConnectionRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ConnectionEnd</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_connection&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_connection&quot;</span>);
 
@@ -2683,9 +2762,27 @@
             }
         }
 
-        <span class="self">self</span>.<span class="ident">block_on</span>(<span class="kw">async</span> {
-            <span class="ident">do_query_connection</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">connection_id</span>, <span class="ident">request</span>.<span class="ident">height</span>).<span class="kw">await</span>
-        })
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+                    <span class="ident">ConnectionsPath</span>(<span class="ident">request</span>.<span class="ident">connection_id</span>.<span class="ident">clone</span>()),
+                    <span class="ident">request</span>.<span class="ident">height</span>,
+                    <span class="bool-val">true</span>,
+                )<span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">connection_end</span> <span class="op">=</span>
+                    <span class="ident">ConnectionEnd::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
+
+                <span class="prelude-val">Ok</span>((
+                    <span class="ident">connection_end</span>,
+                    <span class="prelude-val">Some</span>(<span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>),
+                ))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="self">self</span>
+                .<span class="ident">block_on</span>(<span class="kw">async</span> {
+                    <span class="ident">do_query_connection</span>(<span class="self">self</span>, <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">connection_id</span>, <span class="ident">request</span>.<span class="ident">height</span>).<span class="kw">await</span>
+                })
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">conn_end</span><span class="op">|</span> (<span class="ident">conn_end</span>, <span class="prelude-val">None</span>)),
+        }
     }
 
     <span class="kw">fn</span> <span class="ident">query_connection_channels</span>(
@@ -2751,18 +2848,29 @@
         <span class="prelude-val">Ok</span>(<span class="ident">channels</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryChannelRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_channel</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryChannelRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ChannelEnd</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_channel&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_channel&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
             <span class="ident">ChannelEndsPath</span>(<span class="ident">request</span>.<span class="ident">port_id</span>, <span class="ident">request</span>.<span class="ident">channel_id</span>),
             <span class="ident">request</span>.<span class="ident">height</span>,
-            <span class="bool-val">false</span>,
+            <span class="macro">matches!</span>(<span class="ident">include_proof</span>, <span class="ident">IncludeProof::Yes</span>),
         )<span class="question-mark">?</span>;
+
         <span class="kw">let</span> <span class="ident">channel_end</span> <span class="op">=</span> <span class="ident">ChannelEnd::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">channel_end</span>)
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>((<span class="ident">channel_end</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">channel_end</span>, <span class="prelude-val">None</span>)),
+        }
     }
 
     <span class="kw">fn</span> <span class="ident">query_channel_client_state</span>(
@@ -2792,6 +2900,31 @@
             .<span class="ident">map_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">None</span>, <span class="op">|</span><span class="ident">proto_cs</span><span class="op">|</span> <span class="ident">proto_cs</span>.<span class="ident">try_into</span>().<span class="ident">ok</span>());
 
         <span class="prelude-val">Ok</span>(<span class="ident">client_state</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">query_packet_commitment</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketCommitmentRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+            <span class="ident">CommitmentsPath</span> {
+                <span class="ident">port_id</span>: <span class="ident">request</span>.<span class="ident">port_id</span>,
+                <span class="ident">channel_id</span>: <span class="ident">request</span>.<span class="ident">channel_id</span>,
+                <span class="ident">sequence</span>: <span class="ident">request</span>.<span class="ident">sequence</span>,
+            },
+            <span class="ident">request</span>.<span class="ident">height</span>,
+            <span class="macro">matches!</span>(<span class="ident">include_proof</span>, <span class="ident">IncludeProof::Yes</span>),
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
+
+                <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="prelude-val">None</span>)),
+        }
     }
 
     <span class="doccomment">/// Queries the packet commitment hashes associated with a channel.</span>
@@ -2832,6 +2965,31 @@
         <span class="prelude-val">Ok</span>((<span class="ident">commitment_sequences</span>, <span class="ident">height</span>))
     }
 
+    <span class="kw">fn</span> <span class="ident">query_packet_receipt</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketReceiptRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+            <span class="ident">ReceiptsPath</span> {
+                <span class="ident">port_id</span>: <span class="ident">request</span>.<span class="ident">port_id</span>,
+                <span class="ident">channel_id</span>: <span class="ident">request</span>.<span class="ident">channel_id</span>,
+                <span class="ident">sequence</span>: <span class="ident">request</span>.<span class="ident">sequence</span>,
+            },
+            <span class="ident">request</span>.<span class="ident">height</span>,
+            <span class="macro">matches!</span>(<span class="ident">include_proof</span>, <span class="ident">IncludeProof::Yes</span>),
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
+
+                <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="prelude-val">None</span>)),
+        }
+    }
+
     <span class="doccomment">/// Queries the unreceived packet sequences associated with a channel.</span>
     <span class="kw">fn</span> <span class="ident">query_unreceived_packets</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -2861,6 +3019,31 @@
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">seq</span><span class="op">|</span> <span class="ident">seq</span>.<span class="ident">into</span>())
             .<span class="ident">collect</span>())
+    }
+
+    <span class="kw">fn</span> <span class="ident">query_packet_acknowledgement</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketAcknowledgementRequest</span>,
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+            <span class="ident">AcksPath</span> {
+                <span class="ident">port_id</span>: <span class="ident">request</span>.<span class="ident">port_id</span>,
+                <span class="ident">channel_id</span>: <span class="ident">request</span>.<span class="ident">channel_id</span>,
+                <span class="ident">sequence</span>: <span class="ident">request</span>.<span class="ident">sequence</span>,
+            },
+            <span class="ident">request</span>.<span class="ident">height</span>,
+            <span class="macro">matches!</span>(<span class="ident">include_proof</span>, <span class="ident">IncludeProof::Yes</span>),
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
+
+                <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="prelude-val">None</span>)),
+        }
     }
 
     <span class="doccomment">/// Queries the packet acknowledgment hashes associated with a channel.</span>
@@ -2934,26 +3117,49 @@
     <span class="kw">fn</span> <span class="ident">query_next_sequence_receive</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryNextSequenceReceiveRequest</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Sequence</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="ident">include_proof</span>: <span class="ident">IncludeProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Sequence</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleProof</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_next_sequence_receive&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_next_sequence_receive&quot;</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">block_on</span>(
-                <span class="ident">ibc_proto::ibc::core::channel::v1::query_client::QueryClient::connect</span>(
-                    <span class="self">self</span>.<span class="ident">grpc_addr</span>.<span class="ident">clone</span>(),
-                ),
-            )
-            .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
+        <span class="kw">match</span> <span class="ident">include_proof</span> {
+            <span class="ident">IncludeProof::Yes</span> =&gt; {
+                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
+                    <span class="ident">SeqRecvsPath</span>(<span class="ident">request</span>.<span class="ident">port_id</span>, <span class="ident">request</span>.<span class="ident">channel_id</span>),
+                    <span class="ident">request</span>.<span class="ident">height</span>,
+                    <span class="bool-val">true</span>,
+                )<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
+                <span class="comment">// Note: We expect the return to be a u64 encoded in big-endian. Refer to ibc-go:</span>
+                <span class="comment">// https://github.com/cosmos/ibc-go/blob/25767f6bdb5bab2c2a116b41d92d753c93e18121/modules/core/04-channel/client/utils/utils.go#L191</span>
+                <span class="kw">if</span> <span class="ident">res</span>.<span class="ident">value</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">8</span> {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::query</span>(<span class="string">&quot;next_sequence_receive&quot;</span>.<span class="ident">into</span>()));
+                }
+                <span class="kw">let</span> <span class="ident">seq</span>: <span class="ident">Sequence</span> <span class="op">=</span> <span class="ident">Bytes::from</span>(<span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">get_u64</span>().<span class="ident">into</span>();
 
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">next_sequence_receive</span>(<span class="ident">request</span>))
-            .<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>
-            .<span class="ident">into_inner</span>();
+                <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Sequence::from</span>(<span class="ident">response</span>.<span class="ident">next_sequence_receive</span>))
+                <span class="prelude-val">Ok</span>((<span class="ident">seq</span>, <span class="prelude-val">Some</span>(<span class="ident">proof</span>)))
+            }
+            <span class="ident">IncludeProof::No</span> =&gt; {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>
+                    .<span class="ident">block_on</span>(
+                        <span class="ident">ibc_proto::ibc::core::channel::v1::query_client::QueryClient::connect</span>(
+                            <span class="self">self</span>.<span class="ident">grpc_addr</span>.<span class="ident">clone</span>(),
+                        ),
+                    )
+                    .<span class="ident">map_err</span>(<span class="ident">Error::grpc_transport</span>)<span class="question-mark">?</span>;
+
+                <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">tonic::Request::new</span>(<span class="ident">request</span>.<span class="ident">into</span>());
+
+                <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="self">self</span>
+                    .<span class="ident">block_on</span>(<span class="ident">client</span>.<span class="ident">next_sequence_receive</span>(<span class="ident">request</span>))
+                    .<span class="ident">map_err</span>(<span class="ident">Error::grpc_status</span>)<span class="question-mark">?</span>
+                    .<span class="ident">into_inner</span>();
+
+                <span class="prelude-val">Ok</span>((<span class="ident">Sequence::from</span>(<span class="ident">response</span>.<span class="ident">next_sequence_receive</span>), <span class="prelude-val">None</span>))
+            }
+        }
     }
 
     <span class="doccomment">/// This function queries transactions for events matching certain criteria.</span>
@@ -3060,128 +3266,6 @@
             .<span class="ident">block_on</span>(<span class="ident">rpc_call</span>)
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">rpc_addr</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">response</span>.<span class="ident">block</span>.<span class="ident">header</span>.<span class="ident">into</span>())
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_client_state</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyClientState</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="macro">crate::time!</span>(<span class="string">&quot;proven_client_state&quot;</span>);
-
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(<span class="ident">ClientStatePath</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>()), <span class="ident">height</span>, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-
-        <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="ident">AnyClientState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>((
-            <span class="ident">client_state</span>,
-            <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>,
-        ))
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_client_consensus</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
-        <span class="ident">consensus_height</span>: <span class="ident">ICSHeight</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">AnyConsensusState</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="macro">crate::time!</span>(<span class="string">&quot;proven_client_consensus&quot;</span>);
-
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(
-            <span class="ident">ClientConsensusStatePath</span> {
-                <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">epoch</span>: <span class="ident">consensus_height</span>.<span class="ident">revision_number</span>,
-                <span class="ident">height</span>: <span class="ident">consensus_height</span>.<span class="ident">revision_height</span>,
-            },
-            <span class="ident">height</span>,
-            <span class="bool-val">true</span>,
-        )<span class="question-mark">?</span>;
-
-        <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">AnyConsensusState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
-
-        <span class="kw">if</span> <span class="op">!</span><span class="macro">matches!</span>(<span class="ident">consensus_state</span>, <span class="ident">AnyConsensusState::Tendermint</span>(<span class="kw">_</span>)) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::consensus_state_type_mismatch</span>(
-                <span class="ident">ClientType::Tendermint</span>,
-                <span class="ident">consensus_state</span>.<span class="ident">client_type</span>(),
-            ));
-        }
-
-        <span class="kw">let</span> <span class="ident">proof</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>((<span class="ident">consensus_state</span>, <span class="ident">proof</span>))
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_connection</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">connection_id</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionId</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ConnectionEnd</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(<span class="ident">ConnectionsPath</span>(<span class="ident">connection_id</span>.<span class="ident">clone</span>()), <span class="ident">height</span>, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">connection_end</span> <span class="op">=</span> <span class="ident">ConnectionEnd::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>((
-            <span class="ident">connection_end</span>,
-            <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>,
-        ))
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_channel</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">ChannelEnd</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(<span class="ident">ChannelEndsPath</span>(<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="ident">channel_id</span>), <span class="ident">height</span>, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-
-        <span class="kw">let</span> <span class="ident">channel_end</span> <span class="op">=</span> <span class="ident">ChannelEnd::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">res</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode</span>)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>((
-            <span class="ident">channel_end</span>,
-            <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>,
-        ))
-    }
-
-    <span class="kw">fn</span> <span class="ident">proven_packet</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">packet_type</span>: <span class="ident">PacketMsgType</span>,
-        <span class="ident">port_id</span>: <span class="ident">PortId</span>,
-        <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
-        <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
-        <span class="ident">height</span>: <span class="ident">ICSHeight</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">data</span>: <span class="ident">Path</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">packet_type</span> {
-            <span class="ident">PacketMsgType::Recv</span> =&gt; <span class="ident">CommitmentsPath</span> {
-                <span class="ident">port_id</span>,
-                <span class="ident">channel_id</span>,
-                <span class="ident">sequence</span>,
-            }
-            .<span class="ident">into</span>(),
-            <span class="ident">PacketMsgType::Ack</span> =&gt; <span class="ident">AcksPath</span> {
-                <span class="ident">port_id</span>,
-                <span class="ident">channel_id</span>,
-                <span class="ident">sequence</span>,
-            }
-            .<span class="ident">into</span>(),
-            <span class="ident">PacketMsgType::TimeoutUnordered</span> =&gt; <span class="ident">ReceiptsPath</span> {
-                <span class="ident">port_id</span>,
-                <span class="ident">channel_id</span>,
-                <span class="ident">sequence</span>,
-            }
-            .<span class="ident">into</span>(),
-            <span class="ident">PacketMsgType::TimeoutOrdered</span> =&gt; <span class="ident">SeqRecvsPath</span>(<span class="ident">port_id</span>, <span class="ident">channel_id</span>).<span class="ident">into</span>(),
-            <span class="ident">PacketMsgType::TimeoutOnClose</span> =&gt; <span class="ident">ReceiptsPath</span> {
-                <span class="ident">port_id</span>,
-                <span class="ident">channel_id</span>,
-                <span class="ident">sequence</span>,
-            }
-            .<span class="ident">into</span>(),
-        };
-
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">query</span>(<span class="ident">data</span>, <span class="ident">height</span>, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-
-        <span class="kw">let</span> <span class="ident">commitment_proof_bytes</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">proof</span>.<span class="ident">ok_or_else</span>(<span class="ident">Error::empty_response_proof</span>)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>((<span class="ident">res</span>.<span class="ident">value</span>, <span class="ident">commitment_proof_bytes</span>))
     }
 
     <span class="kw">fn</span> <span class="ident">build_client_state</span>(

@@ -79,12 +79,15 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{<span class="ident">IncludeProof</span>, <span class="ident">QueryPacketCommitmentRequest</span>};
 <span class="kw">use</span> <span class="ident">serde::Serialize</span>;
 <span class="kw">use</span> <span class="ident">subtle_encoding</span>::{<span class="ident">Encoding</span>, <span class="ident">Hex</span>};
 
-<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">PacketMsgType</span>, <span class="ident">Sequence</span>};
+<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet::Sequence</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">PortId</span>};
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
@@ -126,15 +129,16 @@
 
         <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">spawn_chain_runtime</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_id</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">chain</span>
-            .<span class="ident">build_packet_proofs</span>(
-                <span class="ident">PacketMsgType::Recv</span>,
-                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">port_id</span>,
-                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">channel_id</span>,
-                <span class="self">self</span>.<span class="ident">sequence</span>,
-                <span class="ident">Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">unwrap_or</span>(<span class="number">0_u64</span>)),
+        <span class="kw">let</span> (<span class="ident">bytes</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chain</span>
+            .<span class="ident">query_packet_commitment</span>(
+                <span class="ident">QueryPacketCommitmentRequest</span> {
+                    <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">channel_id</span>: <span class="self">self</span>.<span class="ident">channel_id</span>,
+                    <span class="ident">sequence</span>: <span class="self">self</span>.<span class="ident">sequence</span>,
+                    <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">unwrap_or</span>(<span class="number">0_u64</span>)),
+                },
+                <span class="ident">IncludeProof::No</span>,
             )
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">bytes</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">bytes</span>)
             .<span class="ident">map_err</span>(<span class="ident">Error::relayer</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="ident">bytes</span>.<span class="ident">is_empty</span>() {
