@@ -271,88 +271,30 @@
 <span id="266">266</span>
 <span id="267">267</span>
 <span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
-<span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>};
 
 <span class="kw">use</span> <span class="ident">crossbeam_channel::Receiver</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">error_span</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">error_span</span>, <span class="ident">trace</span>};
 
-<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::channel::Order</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::monitor::EventBatch</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client::HasExpiredOrFrozenError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::Resubmit</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link</span>::{<span class="ident">error::LinkError</span>, <span class="ident">Link</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::object::Packet</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::telemetry</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::retry</span>::{<span class="ident">retry_with_index</span>, <span class="ident">RetryResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::task</span>::{<span class="ident">spawn_background_task</span>, <span class="ident">Next</span>, <span class="ident">TaskError</span>, <span class="ident">TaskHandle</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::worker::retry_strategy</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::error::RunError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::WorkerCmd</span>;
 
-<span class="doccomment">/// Whether or not to clear pending packets at this `step` for the given height.</span>
-<span class="doccomment">/// Packets are cleared on the first iteration if this is an ordered channel, or</span>
-<span class="doccomment">/// if `clear_on_start` is true.</span>
-<span class="doccomment">/// Subsequently, packets are cleared only if `clear_interval` is not `0` and</span>
-<span class="doccomment">/// if we have reached the interval.</span>
-<span class="kw">fn</span> <span class="ident">should_clear_packets</span>(
-    <span class="ident">is_first_run</span>: <span class="kw-2">&amp;mut</span> <span class="ident">bool</span>,
-    <span class="ident">clear_on_start</span>: <span class="ident">bool</span>,
-    <span class="ident">channel_ordering</span>: <span class="ident">Order</span>,
-    <span class="ident">clear_interval</span>: <span class="ident">u64</span>,
-    <span class="ident">height</span>: <span class="ident">Height</span>,
-) -&gt; <span class="ident">bool</span> {
-    <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">is_first_run</span> {
-        <span class="kw-2">*</span><span class="ident">is_first_run</span> <span class="op">=</span> <span class="bool-val">false</span>;
-        <span class="kw">if</span> <span class="ident">channel_ordering</span> <span class="op">==</span> <span class="ident">Order::Ordered</span> {
-            <span class="macro">warn!</span>(<span class="string">&quot;ordered channel: will clear packets because this is the first run&quot;</span>);
-            <span class="bool-val">true</span>
-        } <span class="kw">else</span> {
-            <span class="ident">clear_on_start</span>
-        }
-    } <span class="kw">else</span> {
-        <span class="ident">clear_interval</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">height</span>.<span class="ident">revision_height</span> <span class="op">%</span> <span class="ident">clear_interval</span> <span class="op">==</span> <span class="number">0</span>
-    }
-}
-
 <span class="kw">fn</span> <span class="ident">handle_link_error_in_task</span>(<span class="ident">e</span>: <span class="ident">LinkError</span>) -&gt; <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">RunError</span><span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">is_expired_or_frozen_error</span>() {
+        <span class="comment">// If the client is expired or frozen, terminate the packet worker</span>
+        <span class="comment">// as there is no point of relaying further packets.</span>
         <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::link</span>(<span class="ident">e</span>))
     } <span class="kw">else</span> {
         <span class="ident">TaskError::Ignore</span>(<span class="ident">RunError::link</span>(<span class="ident">e</span>))
@@ -379,25 +321,7 @@
     };
 
     <span class="ident">spawn_background_task</span>(<span class="ident">span</span>, <span class="prelude-val">Some</span>(<span class="ident">Duration::from_millis</span>(<span class="number">1000</span>)), <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">relay_path</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">link</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">a_to_b</span>;
-
-        <span class="ident">relay_path</span>
-            .<span class="ident">refresh_schedule</span>()
-            .<span class="ident">map_err</span>(<span class="ident">handle_link_error_in_task</span>)<span class="question-mark">?</span>;
-
-        <span class="ident">relay_path</span>
-            .<span class="ident">execute_schedule</span>()
-            .<span class="ident">map_err</span>(<span class="ident">handle_link_error_in_task</span>)<span class="question-mark">?</span>;
-
-        <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">relay_path</span>.<span class="ident">process_pending_txs</span>(<span class="ident">resubmit</span>);
-
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">summary</span>.<span class="ident">is_empty</span>() {
-            <span class="macro">trace!</span>(<span class="string">&quot;packet worker produced relay summary: {}&quot;</span>, <span class="ident">summary</span>);
-        }
-
-        <span class="macro">telemetry!</span>(<span class="ident">packet_metrics</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="kw-2">&amp;</span><span class="ident">summary</span>));
-        <span class="kw">let</span> <span class="ident">_path</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">path</span>; <span class="comment">// avoid unused variable warning when telemetry is disabled</span>
-
+        <span class="ident">handle_execute_schedule</span>(<span class="kw-2">&amp;mut</span> <span class="ident">link</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>(), <span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="ident">resubmit</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
     })
 }
@@ -406,11 +330,10 @@
     <span class="ident">cmd_rx</span>: <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">WorkerCmd</span><span class="op">&gt;</span>,
     <span class="comment">// Mutex is used to prevent race condition between the packet workers</span>
     <span class="ident">link</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">clear_on_start</span>: <span class="ident">bool</span>,
+    <span class="kw-2">mut</span> <span class="ident">should_clear_on_start</span>: <span class="ident">bool</span>,
     <span class="ident">clear_interval</span>: <span class="ident">u64</span>,
     <span class="ident">path</span>: <span class="ident">Packet</span>,
 ) -&gt; <span class="ident">TaskHandle</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">is_first_run</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>;
     <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> {
         <span class="kw">let</span> <span class="ident">relay_path</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">link</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">a_to_b</span>;
         <span class="macro">error_span!</span>(
@@ -421,20 +344,28 @@
             <span class="ident">dst_chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">relay_path</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
         )
     };
+
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">current_command</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+
     <span class="ident">spawn_background_task</span>(<span class="ident">span</span>, <span class="prelude-val">Some</span>(<span class="ident">Duration::from_millis</span>(<span class="number">200</span>)), <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">cmd</span>) <span class="op">=</span> <span class="ident">cmd_rx</span>.<span class="ident">try_recv</span>() {
-            <span class="ident">retry_with_index</span>(<span class="ident">retry_strategy::worker_stubborn_strategy</span>(), <span class="op">|</span><span class="ident">index</span><span class="op">|</span> {
-                <span class="ident">handle_packet_cmd</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">is_first_run</span>,
-                    <span class="kw-2">&amp;mut</span> <span class="ident">link</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>(),
-                    <span class="ident">clear_on_start</span>,
-                    <span class="ident">clear_interval</span>,
-                    <span class="kw-2">&amp;</span><span class="ident">path</span>,
-                    <span class="ident">cmd</span>.<span class="ident">clone</span>(),
-                    <span class="ident">index</span>,
-                )
-            })
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::retry</span>(<span class="ident">e</span>)))<span class="question-mark">?</span>;
+        <span class="kw">if</span> <span class="ident">current_command</span>.<span class="ident">is_none</span>() {
+            <span class="comment">// Only try to receive the next command if the</span>
+            <span class="comment">// previous command was processed successfully.</span>
+            <span class="ident">current_command</span> <span class="op">=</span> <span class="ident">cmd_rx</span>.<span class="ident">try_recv</span>().<span class="ident">ok</span>();
+        }
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cmd</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">current_command</span> {
+            <span class="ident">handle_packet_cmd</span>(
+                <span class="kw-2">&amp;mut</span> <span class="ident">link</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>(),
+                <span class="kw-2">&amp;mut</span> <span class="ident">should_clear_on_start</span>,
+                <span class="ident">clear_interval</span>,
+                <span class="kw-2">&amp;</span><span class="ident">path</span>,
+                <span class="ident">cmd</span>.<span class="ident">clone</span>(),
+            )<span class="question-mark">?</span>;
+
+            <span class="comment">// Only reset current_command if handle_packet_cmd succeeds.</span>
+            <span class="comment">// Otherwise the same command will be retried in the next step.</span>
+            <span class="ident">current_command</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         }
 
         <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
@@ -450,17 +381,14 @@
 <span class="doccomment">/// also refreshes and executes any scheduled operational</span>
 <span class="doccomment">/// data that is ready.</span>
 <span class="kw">fn</span> <span class="ident">handle_packet_cmd</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">is_first_run</span>: <span class="kw-2">&amp;mut</span> <span class="ident">bool</span>,
     <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
-    <span class="ident">clear_on_start</span>: <span class="ident">bool</span>,
+    <span class="ident">should_clear_on_start</span>: <span class="kw-2">&amp;mut</span> <span class="ident">bool</span>,
     <span class="ident">clear_interval</span>: <span class="ident">u64</span>,
     <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
     <span class="ident">cmd</span>: <span class="ident">WorkerCmd</span>,
-    <span class="ident">index</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">RetryResult</span><span class="op">&lt;</span>(), <span class="ident">u64</span><span class="op">&gt;</span> {
-    <span class="macro">trace!</span>(<span class="string">&quot;handling command {}&quot;</span>, <span class="ident">cmd</span>);
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">cmd</span> {
-        <span class="ident">WorkerCmd::IbcEvents</span> { <span class="ident">batch</span> } =&gt; <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">update_schedule</span>(<span class="ident">batch</span>),
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">RunError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> <span class="ident">cmd</span> {
+        <span class="ident">WorkerCmd::IbcEvents</span> { <span class="ident">batch</span> } =&gt; <span class="ident">handle_update_schedule</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="ident">batch</span>),
 
         <span class="comment">// Handle the arrival of an event signaling that the</span>
         <span class="comment">// source chain has advanced to a new block.</span>
@@ -468,76 +396,82 @@
             <span class="ident">height</span>,
             <span class="ident">new_block</span>: <span class="kw">_</span>,
         } =&gt; {
-            <span class="comment">// Decide if packet clearing should be scheduled.</span>
-            <span class="comment">// Packet clearing may happen once at start,</span>
-            <span class="comment">// and then at predefined block intervals.</span>
-            <span class="kw">if</span> <span class="ident">should_clear_packets</span>(
-                <span class="ident">is_first_run</span>,
-                <span class="ident">clear_on_start</span>,
-                <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">channel</span>().<span class="ident">ordering</span>,
-                <span class="ident">clear_interval</span>,
-                <span class="ident">height</span>,
-            ) {
-                <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">schedule_packet_clearing</span>(<span class="prelude-val">Some</span>(<span class="ident">height</span>))
+            <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> {
+                <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="prelude-val">Some</span>(<span class="ident">height</span>))<span class="question-mark">?</span>;
+
+                <span class="comment">// Clear the flag only if handle_clear_packet succeeds</span>
+                <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> <span class="op">=</span> <span class="bool-val">false</span>;
+                <span class="prelude-val">Ok</span>(())
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">should_clear_packets</span>(<span class="ident">clear_interval</span>, <span class="ident">height</span>) {
+                <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="prelude-val">Some</span>(<span class="ident">height</span>))
             } <span class="kw">else</span> {
                 <span class="prelude-val">Ok</span>(())
             }
         }
 
-        <span class="ident">WorkerCmd::ClearPendingPackets</span> =&gt; <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">schedule_packet_clearing</span>(<span class="prelude-val">None</span>),
-    };
-
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">result</span> {
-        <span class="macro">error!</span>(
-            <span class="ident">path</span> <span class="op">=</span> <span class="op">%</span><span class="ident">path</span>.<span class="ident">short_name</span>(),
-            <span class="ident">retry_index</span> <span class="op">=</span> <span class="op">%</span><span class="ident">index</span>,
-            <span class="string">&quot;will retry: handling command encountered error: {}&quot;</span>,
-            <span class="ident">e</span>
-        );
-
-        <span class="kw">return</span> <span class="ident">RetryResult::Retry</span>(<span class="ident">index</span>);
+        <span class="ident">WorkerCmd::ClearPendingPackets</span> =&gt; <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="prelude-val">None</span>),
     }
+}
 
-    <span class="comment">// The calls to refresh_schedule and execute_schedule depends on</span>
-    <span class="comment">// earlier calls to update_schedule and schedule_packet_clearing.</span>
-    <span class="comment">// Hence they must be retried in the same function body so that</span>
-    <span class="comment">// the same WorkerCmd is used for retrying the whole execution.</span>
-    <span class="comment">//</span>
-    <span class="comment">// The worker for spawn_packet_worker is still needed to handle</span>
-    <span class="comment">// the case when no PacketCmd arriving, so that it can still</span>
-    <span class="comment">// do the refresh and execute schedule.</span>
-    <span class="comment">// This follows the original logic here:</span>
-    <span class="comment">// https://github.com/informalsystems/ibc-rs/blob/e7a6403888f48754ddb80e35ebe2281fb7c51c04/relayer/src/worker/packet.rs#L127-L133</span>
+<span class="doccomment">/// Whether or not to clear pending packets at this `step` for the given height.</span>
+<span class="doccomment">/// Packets are cleared if `clear_interval` is not `0` and if we have reached the interval.</span>
+<span class="kw">fn</span> <span class="ident">should_clear_packets</span>(<span class="ident">clear_interval</span>: <span class="ident">u64</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="ident">bool</span> {
+    <span class="ident">clear_interval</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">height</span>.<span class="ident">revision_height</span> <span class="op">%</span> <span class="ident">clear_interval</span> <span class="op">==</span> <span class="number">0</span>
+}
 
-    <span class="kw">let</span> <span class="ident">schedule_result</span> <span class="op">=</span> <span class="ident">link</span>
-        .<span class="ident">a_to_b</span>
+<span class="kw">fn</span> <span class="ident">handle_update_schedule</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
+    <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
+    <span class="ident">clear_interval</span>: <span class="ident">u64</span>,
+    <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
+    <span class="ident">batch</span>: <span class="ident">EventBatch</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">RunError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="ident">link</span>.<span class="ident">a_to_b</span>
+        .<span class="ident">update_schedule</span>(<span class="ident">batch</span>)
+        .<span class="ident">map_err</span>(<span class="ident">handle_link_error_in_task</span>)<span class="question-mark">?</span>;
+
+    <span class="ident">handle_execute_schedule</span>(<span class="ident">link</span>, <span class="ident">path</span>, <span class="ident">Resubmit::from_clear_interval</span>(<span class="ident">clear_interval</span>))
+}
+
+<span class="kw">fn</span> <span class="ident">handle_clear_packet</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
+    <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
+    <span class="ident">clear_interval</span>: <span class="ident">u64</span>,
+    <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
+    <span class="ident">height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">RunError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="ident">link</span>.<span class="ident">a_to_b</span>
+        .<span class="ident">schedule_packet_clearing</span>(<span class="ident">height</span>)
+        .<span class="ident">map_err</span>(<span class="ident">handle_link_error_in_task</span>)<span class="question-mark">?</span>;
+
+    <span class="ident">handle_execute_schedule</span>(<span class="ident">link</span>, <span class="ident">path</span>, <span class="ident">Resubmit::from_clear_interval</span>(<span class="ident">clear_interval</span>))
+}
+
+<span class="kw">fn</span> <span class="ident">handle_execute_schedule</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
+    <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
+    <span class="ident">_path</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
+    <span class="ident">resubmit</span>: <span class="ident">Resubmit</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">RunError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="ident">link</span>.<span class="ident">a_to_b</span>
         .<span class="ident">refresh_schedule</span>()
-        .<span class="ident">and_then</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">execute_schedule</span>());
+        .<span class="ident">map_err</span>(<span class="ident">handle_link_error_in_task</span>)<span class="question-mark">?</span>;
 
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">schedule_result</span> {
+    <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">execute_schedule</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
         <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">is_expired_or_frozen_error</span>() {
-            <span class="macro">error!</span>(<span class="string">&quot;aborting due to expired or frozen client&quot;</span>);
-            <span class="kw">return</span> <span class="ident">RetryResult::Err</span>(<span class="ident">index</span>);
+            <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::link</span>(<span class="ident">e</span>))
         } <span class="kw">else</span> {
-            <span class="macro">error!</span>(
-                <span class="ident">retry_index</span> <span class="op">=</span> <span class="op">%</span><span class="ident">index</span>,
-                <span class="string">&quot;will retry: schedule execution encountered error: {}&quot;</span>,
-                <span class="ident">e</span>,
-            );
-            <span class="kw">return</span> <span class="ident">RetryResult::Retry</span>(<span class="ident">index</span>);
+            <span class="macro">error!</span>(<span class="string">&quot;will retry: schedule execution encountered error: {}&quot;</span>, <span class="ident">e</span>,);
+            <span class="ident">TaskError::Ignore</span>(<span class="ident">RunError::link</span>(<span class="ident">e</span>))
         }
-    }
+    })<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">resubmit</span> <span class="op">=</span> <span class="ident">Resubmit::from_clear_interval</span>(<span class="ident">clear_interval</span>);
     <span class="kw">let</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">process_pending_txs</span>(<span class="ident">resubmit</span>);
 
     <span class="kw">if</span> <span class="op">!</span><span class="ident">summary</span>.<span class="ident">is_empty</span>() {
         <span class="macro">trace!</span>(<span class="string">&quot;produced relay summary: {:?}&quot;</span>, <span class="ident">summary</span>);
     }
 
-    <span class="macro">telemetry!</span>(<span class="ident">packet_metrics</span>(<span class="ident">path</span>, <span class="kw-2">&amp;</span><span class="ident">summary</span>));
+    <span class="macro">telemetry!</span>(<span class="ident">packet_metrics</span>(<span class="ident">_path</span>, <span class="kw-2">&amp;</span><span class="ident">summary</span>));
 
-    <span class="ident">RetryResult::Ok</span>(())
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;telemetry&quot;</span>)]</span>
