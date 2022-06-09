@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Validators","validators is the oneof that represents either allow_list or deny_list"]],"struct":[["ValidatorVec","Validators defines list of validator addresses."]]});
+initSidebarItems({"enum":[["Validators","validators is the oneof that represents either allow_list or deny_list"]],"struct":[["ValidatorsVec","Validators defines list of validator addresses."]]});
