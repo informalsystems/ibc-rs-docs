@@ -194,6 +194,15 @@
 <span id="189">189</span>
 <span id="190">190</span>
 <span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">flex_error::define_error</span>;
 <span class="kw">use</span> <span class="ident">tendermint::abci::Code</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc::endpoint::broadcast::tx_commit::TxResult</span>;
@@ -209,8 +218,17 @@
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;Expected error code, instead got Ok&quot;</span> },
 
         <span class="ident">UnknownSdk</span>
+            {
+                <span class="ident">codespace</span>: <span class="ident">String</span>,
+                <span class="ident">code</span>: <span class="ident">u32</span>,
+            }
+            <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> {
+                <span class="macro">format_args!</span>(<span class="string">&quot;unknown SDK error with code space: {}, code: {}&quot;</span>, <span class="ident">e</span>.<span class="ident">codespace</span>, <span class="ident">e</span>.<span class="ident">code</span>)
+            },
+
+        <span class="ident">UnknownTxSync</span>
             { <span class="ident">code</span>: <span class="ident">u32</span> }
-            <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;unknown SDK error: {}&quot;</span>, <span class="ident">e</span>.<span class="ident">code</span>) },
+            <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;unknown TX sync response error: {}&quot;</span>, <span class="ident">e</span>.<span class="ident">code</span>) },
 
         <span class="ident">OutOfGas</span>
             { <span class="ident">code</span>: <span class="ident">u32</span> }
@@ -365,7 +383,7 @@
                 <span class="ident">SdkError::client</span>(<span class="ident">client_error_from_code</span>(<span class="ident">code</span>))
             } <span class="kw">else</span> {
                 <span class="comment">// TODO: Implement mapping for other codespaces in ibc-go</span>
-                <span class="ident">SdkError::unknown_sdk</span>(<span class="ident">code</span>)
+                <span class="ident">SdkError::unknown_sdk</span>(<span class="ident">codespace</span>, <span class="ident">code</span>)
             }
         }
     }
@@ -382,7 +400,7 @@
         <span class="comment">// on the Hermes side. We&#39;ll inform the user to check for misconfig.</span>
         <span class="number">11</span> =&gt; <span class="ident">SdkError::out_of_gas</span>(<span class="ident">code</span>),
         <span class="number">13</span> =&gt; <span class="ident">SdkError::insufficient_fee</span>(<span class="ident">code</span>),
-        <span class="kw">_</span> =&gt; <span class="ident">SdkError::unknown_sdk</span>(<span class="ident">code</span>),
+        <span class="kw">_</span> =&gt; <span class="ident">SdkError::unknown_tx_sync</span>(<span class="ident">code</span>),
     }
 }
 </code></pre></div>
