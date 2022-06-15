@@ -297,14 +297,6 @@
 <span id="292">292</span>
 <span id="293">293</span>
 <span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
 </pre><pre class="rust"><code><span class="doccomment">//! ICS4 (channel) context. The two traits `ChannelReader ` and `ChannelKeeper` define</span>
 <span class="doccomment">//! the interface that any host chain must implement to be able to process any `ChannelMsg`.</span>
 <span class="doccomment">//!</span>
@@ -478,28 +470,20 @@
                     <span class="ident">res</span>.<span class="ident">commitment</span>,
                 )<span class="question-mark">?</span>;
             }
-            <span class="ident">PacketResult::Recv</span>(<span class="ident">res</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">res</span> {
-                    <span class="ident">RecvPacketResult::Success</span>(<span class="ident">res</span>) =&gt; <span class="ident">res</span>,
-                    <span class="ident">RecvPacketResult::NoOp</span> =&gt; <span class="macro">unreachable!</span>(),
-                };
-                <span class="kw">match</span> <span class="ident">res</span>.<span class="ident">receipt</span> {
-                    <span class="prelude-val">None</span> =&gt; {
-                        <span class="comment">// Ordered channel</span>
-                        <span class="self">self</span>.<span class="ident">store_next_sequence_recv</span>(
-                            (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>),
-                            <span class="ident">res</span>.<span class="ident">seq_number</span>,
-                        )<span class="question-mark">?</span>
-                    }
-                    <span class="prelude-val">Some</span>(<span class="ident">r</span>) =&gt; {
-                        <span class="comment">// Unordered channel</span>
-                        <span class="self">self</span>.<span class="ident">store_packet_receipt</span>(
-                            (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>, <span class="ident">res</span>.<span class="ident">seq</span>),
-                            <span class="ident">r</span>,
-                        )<span class="question-mark">?</span>
-                    }
-                }
-            }
+            <span class="ident">PacketResult::Recv</span>(<span class="ident">res</span>) =&gt; <span class="kw">match</span> <span class="ident">res</span> {
+                <span class="ident">RecvPacketResult::Ordered</span> {
+                    <span class="ident">port_id</span>,
+                    <span class="ident">channel_id</span>,
+                    <span class="ident">next_seq_recv</span>,
+                } =&gt; <span class="self">self</span>.<span class="ident">store_next_sequence_recv</span>((<span class="ident">port_id</span>, <span class="ident">channel_id</span>), <span class="ident">next_seq_recv</span>)<span class="question-mark">?</span>,
+                <span class="ident">RecvPacketResult::Unordered</span> {
+                    <span class="ident">port_id</span>,
+                    <span class="ident">channel_id</span>,
+                    <span class="ident">sequence</span>,
+                    <span class="ident">receipt</span>,
+                } =&gt; <span class="self">self</span>.<span class="ident">store_packet_receipt</span>((<span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">sequence</span>), <span class="ident">receipt</span>)<span class="question-mark">?</span>,
+                <span class="ident">RecvPacketResult::NoOp</span> =&gt; <span class="macro">unreachable!</span>(),
+            },
             <span class="ident">PacketResult::WriteAck</span>(<span class="ident">res</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">store_packet_acknowledgement</span>(
                     (<span class="ident">res</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">channel_id</span>, <span class="ident">res</span>.<span class="ident">seq</span>),
