@@ -271,6 +271,28 @@
 <span id="266">266</span>
 <span id="267">267</span>
 <span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>};
 
@@ -372,14 +394,18 @@
     })
 }
 
-<span class="doccomment">/// Receives worker commands, which may be:</span>
-<span class="doccomment">///     - IbcEvent =&gt; then it updates schedule</span>
-<span class="doccomment">///     - NewBlock =&gt; schedules packet clearing</span>
-<span class="doccomment">///     - Shutdown =&gt; exits</span>
+<span class="doccomment">/// Receives worker commands and handles them accordingly.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Regardless of the incoming command, this method</span>
-<span class="doccomment">/// also refreshes and executes any scheduled operational</span>
-<span class="doccomment">/// data that is ready.</span>
+<span class="doccomment">/// Given an `IbcEvent` command, updates the schedule and initiates</span>
+<span class="doccomment">/// packet clearing if the `should_clear_on_start` flag has been toggled.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Given a `NewBlock` command, checks if packet clearing should occur</span>
+<span class="doccomment">/// and performs it if so.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Given a `ClearPendingPackets` command, clears pending packets.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Regardless of the incoming command, this method also refreshes and</span>
+<span class="doccomment">/// and executes any scheduled operational data that is ready.</span>
 <span class="kw">fn</span> <span class="ident">handle_packet_cmd</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
     <span class="ident">link</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
     <span class="ident">should_clear_on_start</span>: <span class="kw-2">&amp;mut</span> <span class="ident">bool</span>,
@@ -387,34 +413,52 @@
     <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
     <span class="ident">cmd</span>: <span class="ident">WorkerCmd</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">RunError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="ident">cmd</span> {
-        <span class="ident">WorkerCmd::IbcEvents</span> { <span class="ident">batch</span> } =&gt; <span class="ident">handle_update_schedule</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="ident">batch</span>),
-
-        <span class="comment">// Handle the arrival of an event signaling that the</span>
-        <span class="comment">// source chain has advanced to a new block.</span>
-        <span class="ident">WorkerCmd::NewBlock</span> {
-            <span class="ident">height</span>,
-            <span class="ident">new_block</span>: <span class="kw">_</span>,
-        } =&gt; {
+    <span class="comment">// Handle packet clearing which is triggered from a command</span>
+    <span class="kw">let</span> (<span class="ident">do_clear</span>, <span class="ident">maybe_height</span>) <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">cmd</span> {
+        <span class="ident">WorkerCmd::IbcEvents</span> { <span class="ident">batch</span> } =&gt; {
             <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> {
-                <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="prelude-val">Some</span>(<span class="ident">height</span>))<span class="question-mark">?</span>;
-
-                <span class="comment">// Clear the flag only if handle_clear_packet succeeds</span>
-                <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                <span class="prelude-val">Ok</span>(())
-            } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">should_clear_packets</span>(<span class="ident">clear_interval</span>, <span class="ident">height</span>) {
-                <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="prelude-val">Some</span>(<span class="ident">height</span>))
+                (<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(<span class="ident">batch</span>.<span class="ident">height</span>))
             } <span class="kw">else</span> {
-                <span class="prelude-val">Ok</span>(())
+                (<span class="bool-val">false</span>, <span class="prelude-val">None</span>)
             }
         }
 
-        <span class="ident">WorkerCmd::ClearPendingPackets</span> =&gt; <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="prelude-val">None</span>),
+        <span class="comment">// Handle the arrival of an event signaling that the</span>
+        <span class="comment">// source chain has advanced to a new block</span>
+        <span class="ident">WorkerCmd::NewBlock</span> { <span class="ident">height</span>, .. } =&gt; {
+            <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> <span class="op">|</span><span class="op">|</span> <span class="ident">should_clear_packets</span>(<span class="ident">clear_interval</span>, <span class="kw-2">*</span><span class="ident">height</span>) {
+                (<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">height</span>))
+            } <span class="kw">else</span> {
+                (<span class="bool-val">false</span>, <span class="prelude-val">None</span>)
+            }
+        }
+
+        <span class="ident">WorkerCmd::ClearPendingPackets</span> =&gt; (<span class="bool-val">true</span>, <span class="prelude-val">None</span>),
+    };
+
+    <span class="kw">if</span> <span class="ident">do_clear</span> {
+        <span class="ident">handle_clear_packet</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="ident">maybe_height</span>)<span class="question-mark">?</span>;
+
+        <span class="comment">// Reset the `clear_on_start` flag</span>
+        <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> {
+            <span class="kw-2">*</span><span class="ident">should_clear_on_start</span> <span class="op">=</span> <span class="bool-val">false</span>;
+        }
+    }
+
+    <span class="comment">// Handle command-specific task</span>
+    <span class="kw">if</span> <span class="kw">let</span> <span class="ident">WorkerCmd::IbcEvents</span> { <span class="ident">batch</span> } <span class="op">=</span> <span class="ident">cmd</span> {
+        <span class="ident">handle_update_schedule</span>(<span class="ident">link</span>, <span class="ident">clear_interval</span>, <span class="ident">path</span>, <span class="ident">batch</span>)
+    } <span class="kw">else</span> {
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="doccomment">/// Whether or not to clear pending packets at this `step` for the given height.</span>
-<span class="doccomment">/// Packets are cleared if `clear_interval` is not `0` and if we have reached the interval.</span>
+<span class="doccomment">/// Whether or not to clear pending packets at this `step` for some height.</span>
+<span class="doccomment">/// If the relayer has been configured to clear packets on start and that has not</span>
+<span class="doccomment">/// occurred yet, then packets are cleared.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// If the specified height is reached, then packets are cleared if `clear_interval`</span>
+<span class="doccomment">/// is not `0` and if we have reached the interval.</span>
 <span class="kw">fn</span> <span class="ident">should_clear_packets</span>(<span class="ident">clear_interval</span>: <span class="ident">u64</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="ident">bool</span> {
     <span class="ident">clear_interval</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">height</span>.<span class="ident">revision_height</span> <span class="op">%</span> <span class="ident">clear_interval</span> <span class="op">==</span> <span class="number">0</span>
 }
