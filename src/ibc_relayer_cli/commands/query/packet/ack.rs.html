@@ -71,14 +71,17 @@
 <span id="66">66</span>
 <span id="67">67</span>
 <span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
-<span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{<span class="ident">IncludeProof</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{<span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>};
 <span class="kw">use</span> <span class="ident">subtle_encoding</span>::{<span class="ident">Encoding</span>, <span class="ident">Hex</span>};
 
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet::Sequence</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">PortId</span>};
-<span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cli_utils::spawn_chain_runtime</span>;
@@ -118,7 +121,12 @@
                     <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">channel_id</span>: <span class="self">self</span>.<span class="ident">channel_id</span>,
                     <span class="ident">sequence</span>: <span class="self">self</span>.<span class="ident">sequence</span>,
-                    <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">unwrap_or</span>(<span class="number">0_u64</span>)),
+                    <span class="ident">height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(<span class="ident">HeightQuery::Latest</span>, <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
+                        <span class="ident">HeightQuery::Specific</span>(<span class="ident">ibc::Height::new</span>(
+                            <span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(),
+                            <span class="ident">revision_height</span>,
+                        ))
+                    }),
                 },
                 <span class="ident">IncludeProof::No</span>,
             )
