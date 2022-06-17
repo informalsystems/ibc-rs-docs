@@ -1868,6 +1868,35 @@
 <span id="1863">1863</span>
 <span id="1864">1864</span>
 <span id="1865">1865</span>
+<span id="1866">1866</span>
+<span id="1867">1867</span>
+<span id="1868">1868</span>
+<span id="1869">1869</span>
+<span id="1870">1870</span>
+<span id="1871">1871</span>
+<span id="1872">1872</span>
+<span id="1873">1873</span>
+<span id="1874">1874</span>
+<span id="1875">1875</span>
+<span id="1876">1876</span>
+<span id="1877">1877</span>
+<span id="1878">1878</span>
+<span id="1879">1879</span>
+<span id="1880">1880</span>
+<span id="1881">1881</span>
+<span id="1882">1882</span>
+<span id="1883">1883</span>
+<span id="1884">1884</span>
+<span id="1885">1885</span>
+<span id="1886">1886</span>
+<span id="1887">1887</span>
+<span id="1888">1888</span>
+<span id="1889">1889</span>
+<span id="1890">1890</span>
+<span id="1891">1891</span>
+<span id="1892">1892</span>
+<span id="1893">1893</span>
+<span id="1894">1894</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,</span>
@@ -2048,6 +2077,17 @@
                 <span class="macro">format_args!</span>(<span class="string">&quot;failed while trying to upgrade client id {0} for chain {1}: {2}: {3}&quot;</span>,
                     <span class="ident">e</span>.<span class="ident">client_id</span>, <span class="ident">e</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>.<span class="ident">description</span>, <span class="ident">e</span>.<span class="ident">source</span>)
             },
+
+        <span class="ident">ClientUpgradeNoSource</span>
+        {
+            <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
+            <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
+            <span class="ident">description</span>: <span class="ident">String</span>,
+        }
+        <span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+            <span class="macro">format_args!</span>(<span class="string">&quot;failed while trying to upgrade client id {0} for chain {1}: {2}&quot;</span>,
+                    <span class="ident">e</span>.<span class="ident">client_id</span>, <span class="ident">e</span>.<span class="ident">chain_id</span>, <span class="ident">e</span>.<span class="ident">description</span>)
+        },
 
         <span class="ident">ClientEventQuery</span>
             {
@@ -2300,25 +2340,31 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upgrade</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="comment">// Fetch the latest height of the source chain.</span>
-        <span class="kw">let</span> <span class="ident">src_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">query_latest_height</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-            <span class="ident">ForeignClientError::client_upgrade</span>(
-                <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
-                <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
-                <span class="string">&quot;failed while querying src chain for latest height&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">e</span>,
-            )
-        })<span class="question-mark">?</span>;
+    <span class="doccomment">/// Create and send a transaction to perform a client upgrade.</span>
+    <span class="doccomment">/// src_upgrade_height: The height on the source chain at which the chain will halt for the upgrade.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upgrade</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">src_upgrade_height</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
+        <span class="macro">info!</span>(<span class="string">&quot;[{}] upgrade Height: {}&quot;</span>, <span class="self">self</span>, <span class="ident">src_upgrade_height</span>);
 
-        <span class="macro">info!</span>(<span class="string">&quot;[{}] upgrade Height: {}&quot;</span>, <span class="self">self</span>, <span class="ident">src_height</span>);
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_update_client</span>(<span class="ident">src_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">msgs</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">build_update_client_with_trusted</span>(<span class="ident">src_upgrade_height</span>, <span class="ident">Height::zero</span>())
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                <span class="ident">ForeignClientError::client_upgrade_no_source</span>(
+                    <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
+                    <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
+                    <span class="macro">format!</span>(
+                        <span class="string">&quot;is chain {} halted at height {}?&quot;</span>,
+                        <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
+                        <span class="ident">src_upgrade_height</span>
+                    ),
+                )
+            })<span class="question-mark">?</span>;
 
         <span class="comment">// Query the host chain for the upgraded client state, consensus state &amp; their proofs.</span>
         <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="ident">proof_upgrade_client</span>) <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">src_chain</span>
-            .<span class="ident">query_upgraded_client_state</span>(<span class="ident">QueryUpgradedClientStateRequest</span> { <span class="ident">height</span>: <span class="ident">src_height</span> })
+            .<span class="ident">query_upgraded_client_state</span>(<span class="ident">QueryUpgradedClientStateRequest</span> {
+                <span class="ident">height</span>: <span class="ident">src_upgrade_height</span>,
+            })
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_upgrade</span>(
                     <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
@@ -2333,7 +2379,7 @@
         <span class="kw">let</span> (<span class="ident">consensus_state</span>, <span class="ident">proof_upgrade_consensus_state</span>) <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">src_chain</span>
             .<span class="ident">query_upgraded_consensus_state</span>(<span class="ident">QueryUpgradedConsensusStateRequest</span> {
-                <span class="ident">height</span>: <span class="ident">src_height</span>,
+                <span class="ident">height</span>: <span class="ident">src_upgrade_height</span>,
             })
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_upgrade</span>(
@@ -2655,11 +2701,11 @@
     }
 
     <span class="doccomment">/// Wrapper for build_update_client_with_trusted.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_update_client</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait_and_build_update_client</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">target_height</span>: <span class="ident">Height</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">build_update_client_with_trusted</span>(<span class="ident">target_height</span>, <span class="ident">Height::zero</span>())
+        <span class="self">self</span>.<span class="ident">wait_and_build_update_client_with_trusted</span>(<span class="ident">target_height</span>, <span class="ident">Height::zero</span>())
     }
 
     <span class="doccomment">/// Returns a trusted height that is lower than the target height, so</span>
@@ -2810,14 +2856,18 @@
         }
     }
 
-    <span class="doccomment">/// Returns a vector with a message for updating the client to height `target_height`.</span>
-    <span class="doccomment">/// If the client already stores a consensus state for this height, returns an empty vector.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_update_client_with_trusted</span>(
+    <span class="doccomment">/// Wait for the source chain application to reach height `target_height`</span>
+    <span class="doccomment">/// before building the update client messages.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns a vector with a message for updating the client to height</span>
+    <span class="doccomment">/// `target_height`. If the client already stores a consensus state for this</span>
+    <span class="doccomment">/// height, returns an empty vector.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait_and_build_update_client_with_trusted</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">target_height</span>: <span class="ident">Height</span>,
         <span class="ident">trusted_height</span>: <span class="ident">Height</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">src_network_latest_height</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="ident">src_application_latest_height</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
             <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">query_latest_height</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_create</span>(
                     <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
@@ -2828,10 +2878,18 @@
         };
 
         <span class="comment">// Wait for the source network to produce block(s) &amp; reach `target_height`.</span>
-        <span class="kw">while</span> <span class="ident">src_network_latest_height</span>()<span class="question-mark">?</span> <span class="op">&lt;</span> <span class="ident">target_height</span> {
+        <span class="kw">while</span> <span class="ident">src_application_latest_height</span>()<span class="question-mark">?</span> <span class="op">&lt;</span> <span class="ident">target_height</span> {
             <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="number">100</span>))
         }
 
+        <span class="self">self</span>.<span class="ident">build_update_client_with_trusted</span>(<span class="ident">target_height</span>, <span class="ident">trusted_height</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_update_client_with_trusted</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">target_height</span>: <span class="ident">Height</span>,
+        <span class="ident">trusted_height</span>: <span class="ident">Height</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="comment">// Get the latest client state on destination.</span>
         <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_client_state</span>()<span class="question-mark">?</span>;
 
@@ -2954,7 +3012,7 @@
             <span class="ident">height</span>
         };
 
-        <span class="kw">let</span> <span class="ident">new_msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_update_client_with_trusted</span>(<span class="ident">h</span>, <span class="ident">trusted_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">new_msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">wait_and_build_update_client_with_trusted</span>(<span class="ident">h</span>, <span class="ident">trusted_height</span>)<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="ident">new_msgs</span>.<span class="ident">is_empty</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ForeignClientError::client_already_up_to_date</span>(
                 <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
