@@ -1442,6 +1442,55 @@
 <span id="1437">1437</span>
 <span id="1438">1438</span>
 <span id="1439">1439</span>
+<span id="1440">1440</span>
+<span id="1441">1441</span>
+<span id="1442">1442</span>
+<span id="1443">1443</span>
+<span id="1444">1444</span>
+<span id="1445">1445</span>
+<span id="1446">1446</span>
+<span id="1447">1447</span>
+<span id="1448">1448</span>
+<span id="1449">1449</span>
+<span id="1450">1450</span>
+<span id="1451">1451</span>
+<span id="1452">1452</span>
+<span id="1453">1453</span>
+<span id="1454">1454</span>
+<span id="1455">1455</span>
+<span id="1456">1456</span>
+<span id="1457">1457</span>
+<span id="1458">1458</span>
+<span id="1459">1459</span>
+<span id="1460">1460</span>
+<span id="1461">1461</span>
+<span id="1462">1462</span>
+<span id="1463">1463</span>
+<span id="1464">1464</span>
+<span id="1465">1465</span>
+<span id="1466">1466</span>
+<span id="1467">1467</span>
+<span id="1468">1468</span>
+<span id="1469">1469</span>
+<span id="1470">1470</span>
+<span id="1471">1471</span>
+<span id="1472">1472</span>
+<span id="1473">1473</span>
+<span id="1474">1474</span>
+<span id="1475">1475</span>
+<span id="1476">1476</span>
+<span id="1477">1477</span>
+<span id="1478">1478</span>
+<span id="1479">1479</span>
+<span id="1480">1480</span>
+<span id="1481">1481</span>
+<span id="1482">1482</span>
+<span id="1483">1483</span>
+<span id="1484">1484</span>
+<span id="1485">1485</span>
+<span id="1486">1486</span>
+<span id="1487">1487</span>
+<span id="1488">1488</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
@@ -1482,39 +1531,48 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">version</span>;
 
-<span class="kw">mod</span> <span class="ident">retry_strategy</span> {
+<span class="kw">mod</span> <span class="ident">handshake_retry</span> {
+    <span class="doccomment">//! Provides utility methods and constants to configure the retry behavior</span>
+    <span class="doccomment">//! for the channel handshake algorithm.</span>
+
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::channel::ChannelError</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::retry</span>::{<span class="ident">clamp_total</span>, <span class="ident">ConstantGrowth</span>};
     <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
-    <span class="kw">use</span> <span class="ident">retry::delay::Fibonacci</span>;
+    <span class="doccomment">/// Approximate number of retries per block.</span>
+    <span class="kw">const</span> <span class="ident">PER_BLOCK_RETRIES</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">10</span>;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::retry::clamp_total</span>;
+    <span class="doccomment">/// Defines the increment in delay between subsequent retries.</span>
+    <span class="doccomment">/// A value of `0` will make the retry delay constant.</span>
+    <span class="kw">const</span> <span class="ident">DELAY_INCREMENT</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0</span>;
 
-    <span class="comment">// Default parameters for the retrying mechanism</span>
-    <span class="kw">const</span> <span class="ident">MAX_DELAY</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">60</span>); <span class="comment">// 1 minute</span>
-    <span class="kw">const</span> <span class="ident">MAX_TOTAL_DELAY</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">10</span> <span class="op">*</span> <span class="number">60</span>); <span class="comment">// 10 minutes</span>
-    <span class="kw">const</span> <span class="ident">INITIAL_DELAY</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">1</span>); <span class="comment">// 1 second</span>
+    <span class="doccomment">/// Maximum retry delay expressed in number of blocks</span>
+    <span class="kw">const</span> <span class="ident">BLOCK_NUMBER_DELAY</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">10</span>;
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span> {
-        <span class="ident">clamp_total</span>(<span class="ident">Fibonacci::from</span>(<span class="ident">INITIAL_DELAY</span>), <span class="ident">MAX_DELAY</span>, <span class="ident">MAX_TOTAL_DELAY</span>)
+    <span class="doccomment">/// The default retry strategy.</span>
+    <span class="doccomment">/// We retry with a constant backoff strategy. The strategy is parametrized by the</span>
+    <span class="doccomment">/// maximum block time expressed as a `Duration`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">default_strategy</span>(<span class="ident">max_block_times</span>: <span class="ident">Duration</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">retry_delay</span> <span class="op">=</span> <span class="ident">max_block_times</span> <span class="op">/</span> <span class="ident">PER_BLOCK_RETRIES</span>;
+
+        <span class="ident">clamp_total</span>(
+            <span class="ident">ConstantGrowth::new</span>(<span class="ident">retry_delay</span>, <span class="ident">Duration::from_secs</span>(<span class="ident">DELAY_INCREMENT</span>)),
+            <span class="ident">retry_delay</span>,
+            <span class="ident">max_block_times</span> <span class="op">*</span> <span class="ident">BLOCK_NUMBER_DELAY</span>,
+        )
     }
-}
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_retry_error</span>(<span class="ident">e</span>: <span class="ident">retry::Error</span><span class="op">&lt;</span><span class="ident">ChannelError</span><span class="op">&gt;</span>, <span class="ident">description</span>: <span class="ident">String</span>) -&gt; <span class="ident">ChannelError</span> {
-    <span class="kw">match</span> <span class="ident">e</span> {
-        <span class="ident">retry::Error::Operation</span> {
-            <span class="ident">error</span>,
-            <span class="ident">total_delay</span>,
-            <span class="ident">tries</span>,
-        } =&gt; {
-            <span class="kw">let</span> <span class="ident">detail</span> <span class="op">=</span> <span class="ident">error::ChannelErrorDetail::MaxRetry</span>(<span class="ident">error::MaxRetrySubdetail</span> {
-                <span class="ident">description</span>,
-                <span class="ident">tries</span>,
+    <span class="doccomment">/// Translates from an error type that the `retry` mechanism threw into</span>
+    <span class="doccomment">/// a crate specific error of [`ChannelError`] type.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_retry_error</span>(<span class="ident">e</span>: <span class="ident">retry::Error</span><span class="op">&lt;</span><span class="ident">ChannelError</span><span class="op">&gt;</span>, <span class="ident">description</span>: <span class="ident">String</span>) -&gt; <span class="ident">ChannelError</span> {
+        <span class="kw">match</span> <span class="ident">e</span> {
+            <span class="ident">retry::Error::Operation</span> {
+                <span class="ident">error</span>: <span class="kw">_</span>,
                 <span class="ident">total_delay</span>,
-                <span class="ident">source</span>: <span class="ident">Box::new</span>(<span class="ident">error</span>.<span class="number">0</span>),
-            });
-            <span class="ident">ChannelError</span>(<span class="ident">detail</span>, <span class="ident">error</span>.<span class="number">1</span>)
+                <span class="ident">tries</span>,
+            } =&gt; <span class="ident">ChannelError::max_retry</span>(<span class="ident">description</span>, <span class="ident">tries</span>, <span class="ident">total_delay</span>),
+            <span class="ident">retry::Error::Internal</span>(<span class="ident">reason</span>) =&gt; <span class="ident">ChannelError::retry_internal</span>(<span class="ident">reason</span>),
         }
-        <span class="ident">retry::Error::Internal</span>(<span class="ident">reason</span>) =&gt; <span class="ident">ChannelError::retry_internal</span>(<span class="ident">reason</span>),
     }
 }
 
@@ -1792,6 +1850,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">chain</span>
     }
 
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">a_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ChainA</span> {
+        <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">chain</span>.<span class="ident">clone</span>()
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">b_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ChainB</span> {
+        <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">chain</span>.<span class="ident">clone</span>()
+    }
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">src_client_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">ClientId</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">client_id</span>
     }
@@ -1824,12 +1890,73 @@
         <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span>()
     }
 
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">a_channel_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChannelId</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">channel_id</span>()
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">b_channel_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChannelId</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span>()
+    }
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">src_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Version</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">version</span>.<span class="ident">as_ref</span>()
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dst_version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Version</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">version</span>.<span class="ident">as_ref</span>()
+    }
+
+    <span class="kw">fn</span> <span class="ident">a_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">channel_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChannelId</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">ChannelError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">id</span>) <span class="op">=</span> <span class="ident">channel_id</span> {
+            <span class="self">self</span>.<span class="ident">a_chain</span>()
+                .<span class="ident">query_channel</span>(
+                    <span class="ident">QueryChannelRequest</span> {
+                        <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
+                        <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">id</span>,
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
+                    },
+                    <span class="ident">IncludeProof::No</span>,
+                )
+                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">channel_end</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">channel_end</span>)
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChannelError::chain_query</span>(<span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">ChannelEnd::default</span>())
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">b_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">channel_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChannelId</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">ChannelError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">id</span>) <span class="op">=</span> <span class="ident">channel_id</span> {
+            <span class="self">self</span>.<span class="ident">b_chain</span>()
+                .<span class="ident">query_channel</span>(
+                    <span class="ident">QueryChannelRequest</span> {
+                        <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
+                        <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">id</span>,
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
+                    },
+                    <span class="ident">IncludeProof::No</span>,
+                )
+                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">channel_end</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">channel_end</span>)
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChannelError::chain_query</span>(<span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">ChannelEnd::default</span>())
+        }
+    }
+
+    <span class="doccomment">/// Returns a `Duration` representing the maximum value among the</span>
+    <span class="doccomment">/// [`ChainConfig.max_block_time`] for the two networks that</span>
+    <span class="doccomment">/// this channel belongs to.</span>
+    <span class="kw">fn</span> <span class="ident">max_block_times</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Duration</span>, <span class="ident">ChannelError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">a_block_time</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">a_chain</span>()
+            .<span class="ident">config</span>()
+            .<span class="ident">map_err</span>(<span class="ident">ChannelError::relayer</span>)<span class="question-mark">?</span>
+            .<span class="ident">max_block_time</span>;
+        <span class="kw">let</span> <span class="ident">b_block_time</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">b_chain</span>()
+            .<span class="ident">config</span>()
+            .<span class="ident">map_err</span>(<span class="ident">ChannelError::relayer</span>)<span class="question-mark">?</span>
+            .<span class="ident">max_block_time</span>;
+        <span class="prelude-val">Ok</span>(<span class="ident">a_block_time</span>.<span class="ident">max</span>(<span class="ident">b_block_time</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flipped</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span> {
@@ -1841,51 +1968,211 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">do_chan_open_init_and_send</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_init_and_send</span>()<span class="question-mark">?</span>;
+    <span class="doccomment">/// Queries the chains for latest channel end information. It verifies the relayer channel</span>
+    <span class="doccomment">/// IDs and updates them if needed.</span>
+    <span class="doccomment">/// Returns the states of the two channel ends.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The relayer channel stores the channel identifiers on the two chains a and b.</span>
+    <span class="doccomment">/// These identifiers need to be cross validated with the corresponding on-chain ones at some</span>
+    <span class="doccomment">/// handshake steps.</span>
+    <span class="doccomment">/// This is required because of crossing handshake messages in the presence of multiple relayers.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Chain a is queried with the relayer&#39;s `a_side.channel_id` (`relayer_a_id`) with result</span>
+    <span class="doccomment">/// `a_channel`. If the counterparty id of this channel, `a_counterparty_id`,</span>
+    <span class="doccomment">/// is some id then it must match the relayer&#39;s `b_side.channel_id` (`relayer_b_id`).</span>
+    <span class="doccomment">/// A similar check is done for the `b_side` of the channel.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///  a                                 relayer                                    b</span>
+    <span class="doccomment">///  |                     a_side -- channel -- b_side                         |</span>
+    <span class="doccomment">///  a_id _____________&gt; relayer_a_id             relayer_b_id &lt;______________&gt; b_id</span>
+    <span class="doccomment">///  |                      \                                /                    |</span>
+    <span class="doccomment">/// a_counterparty_id &lt;_____________________________________/                     |</span>
+    <span class="doccomment">///                           \____________________________________&gt;   b_counterparty_id</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// There are two cases to consider.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Case 1 (fix channel ID):</span>
+    <span class="doccomment">///  a                                                      b</span>
+    <span class="doccomment">///  | &lt;-- Init (r1)                                        |</span>
+    <span class="doccomment">///  | a_id = 1, a_counterparty_id = None                   |</span>
+    <span class="doccomment">///  |                                         Try (r2) --&gt; |</span>
+    <span class="doccomment">///  |                    b_id = 100, b_counterparty_id = 1 |</span>
+    <span class="doccomment">///  |                                         Try (r1) --&gt; |</span>
+    <span class="doccomment">///  |                    b_id = 101, b_counterparty_id = 1 |</span>
+    <span class="doccomment">///  | &lt;-- Ack (r2)</span>
+    <span class="doccomment">///  | a_id = 1, a_counterparty_id = 100</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Here relayer r1 has a_side channel 1 and b_side channel 101</span>
+    <span class="doccomment">/// while on chain a the counterparty of channel 1 is 100. r1 needs to update</span>
+    <span class="doccomment">/// its b_side to 100</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Case 2 (update from None to some channel ID):</span>
+    <span class="doccomment">///  a                                                      b</span>
+    <span class="doccomment">///  | &lt;-- Init (r1)                                        |</span>
+    <span class="doccomment">///  | a_id = 1, a_counterparty_id = None                   |</span>
+    <span class="doccomment">///  |                                         Try (r2) --&gt; |</span>
+    <span class="doccomment">///  |                    b_id = 100, b_counterparty_id = 1 |</span>
+    <span class="doccomment">///  | &lt;-- Ack (r2)</span>
+    <span class="doccomment">///  | a_id = 1, a_counterparty_id = 100</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Here relayer r1 has a_side channel 1 and b_side is unknown</span>
+    <span class="doccomment">/// while on chain a the counterparty of channel 1 is 100. r1 needs to update</span>
+    <span class="doccomment">/// its b_side to 100</span>
+    <span class="kw">fn</span> <span class="ident">update_channel_and_query_states</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">State</span>, <span class="ident">State</span>), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">relayer_a_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">channel_id</span>();
+        <span class="kw">let</span> <span class="ident">relayer_b_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span>().<span class="ident">cloned</span>();
 
-        <span class="macro">info!</span>(<span class="string">&quot;done {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
+        <span class="kw">let</span> <span class="ident">a_channel</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">a_channel</span>(<span class="ident">relayer_a_id</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">a_counterparty_id</span> <span class="op">=</span> <span class="ident">a_channel</span>.<span class="ident">counterparty</span>().<span class="ident">channel_id</span>();
 
-        <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">channel_id</span>);
-        <span class="macro">info!</span>(<span class="string">&quot;successfully opened init channel&quot;</span>);
+        <span class="kw">if</span> <span class="ident">a_counterparty_id</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">a_counterparty_id</span> <span class="op">!</span><span class="op">=</span> <span class="ident">relayer_b_id</span>.<span class="ident">as_ref</span>() {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;updating the expected {:?} of side_b({}) since it is different than the \
+                counterparty of {:?}: {:?}, on {}. This is typically caused by crossing handshake \
+                messages in the presence of multiple relayers.&quot;</span>,
+                <span class="ident">relayer_b_id</span>,
+                <span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(),
+                <span class="ident">relayer_a_id</span>,
+                <span class="ident">a_counterparty_id</span>,
+                <span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(),
+            );
+            <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">a_counterparty_id</span>.<span class="ident">cloned</span>();
+        }
 
-        <span class="prelude-val">Ok</span>(())
+        <span class="kw">let</span> <span class="ident">updated_relayer_b_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span>();
+        <span class="kw">let</span> <span class="ident">b_channel</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">b_channel</span>(<span class="ident">updated_relayer_b_id</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">b_counterparty_id</span> <span class="op">=</span> <span class="ident">b_channel</span>.<span class="ident">counterparty</span>().<span class="ident">channel_id</span>();
+
+        <span class="kw">if</span> <span class="ident">b_counterparty_id</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">b_counterparty_id</span> <span class="op">!</span><span class="op">=</span> <span class="ident">relayer_a_id</span> {
+            <span class="kw">if</span> <span class="ident">updated_relayer_b_id</span> <span class="op">==</span> <span class="ident">relayer_b_id</span>.<span class="ident">as_ref</span>() {
+                <span class="macro">warn!</span>(
+                    <span class="string">&quot;updating the expected {:?} of side_a({}) since it is different than the \
+                counterparty of {:?}: {:?}, on {}. This is typically caused by crossing handshake \
+                messages in the presence of multiple relayers.&quot;</span>,
+                    <span class="ident">relayer_a_id</span>,
+                    <span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(),
+                    <span class="ident">updated_relayer_b_id</span>,
+                    <span class="ident">b_counterparty_id</span>,
+                    <span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(),
+                );
+                <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">b_counterparty_id</span>.<span class="ident">cloned</span>();
+            } <span class="kw">else</span> {
+                <span class="macro">panic!</span>(
+                    <span class="string">&quot;mismatched channel ids in channel ends: {} - {:?} and {} - {:?}&quot;</span>,
+                    <span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(),
+                    <span class="ident">a_channel</span>,
+                    <span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(),
+                    <span class="ident">b_channel</span>,
+                );
+            }
+        }
+        <span class="prelude-val">Ok</span>((<span class="kw-2">*</span><span class="ident">a_channel</span>.<span class="ident">state</span>(), <span class="kw-2">*</span><span class="ident">b_channel</span>.<span class="ident">state</span>()))
     }
 
-    <span class="comment">// Check that the channel was created on a_chain</span>
-    <span class="kw">fn</span> <span class="ident">do_chan_open_init_and_send_with_retry</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="ident">retry_with_index</span>(<span class="ident">retry_strategy::default</span>(), <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="self">self</span>.<span class="ident">do_chan_open_init_and_send</span>()
-        })
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="macro">error!</span>(<span class="string">&quot;failed to open channel after {} retries&quot;</span>, <span class="ident">err</span>);
+    <span class="doccomment">/// Sends a channel open handshake message.</span>
+    <span class="doccomment">/// The message sent depends on the chain status of the channel ends.</span>
+    <span class="kw">fn</span> <span class="ident">do_chan_open_handshake</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> (<span class="ident">a_state</span>, <span class="ident">b_state</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">update_channel_and_query_states</span>()<span class="question-mark">?</span>;
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;do_chan_open_handshake with channel end states: {}, {}&quot;</span>,
+            <span class="ident">a_state</span>, <span class="ident">b_state</span>
+        );
 
-            <span class="ident">from_retry_error</span>(
-                <span class="ident">err</span>,
-                <span class="macro">format!</span>(<span class="string">&quot;failed to finish channel open init for {:?}&quot;</span>, <span class="self">self</span>),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="kw">match</span> (<span class="ident">a_state</span>, <span class="ident">b_state</span>) {
+            <span class="comment">// send the Init message to chain a (source)</span>
+            (<span class="ident">State::Uninitialized</span>, <span class="ident">State::Uninitialized</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>
+                    .<span class="ident">flipped</span>()
+                    .<span class="ident">build_chan_open_init_and_send</span>()
+                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                        <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenInit {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                        <span class="ident">e</span>
+                    })<span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
+                <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">channel_id</span>);
+            }
 
-        <span class="prelude-val">Ok</span>(())
+            <span class="comment">// send the Try message to chain a (source)</span>
+            (<span class="ident">State::Uninitialized</span>, <span class="ident">State::Init</span>) <span class="op">|</span> (<span class="ident">State::Init</span>, <span class="ident">State::Init</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_try_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenTry {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                    <span class="ident">e</span>
+                })<span class="question-mark">?</span>;
+
+                <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
+                <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">channel_id</span>);
+            }
+
+            <span class="comment">// send the Try message to chain b (destination)</span>
+            (<span class="ident">State::Init</span>, <span class="ident">State::Uninitialized</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_chan_open_try_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenTry {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
+                    <span class="ident">e</span>
+                })<span class="question-mark">?</span>;
+
+                <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
+                <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">channel_id</span>);
+            }
+
+            <span class="comment">// send the Ack message to chain a (source)</span>
+            (<span class="ident">State::Init</span>, <span class="ident">State::TryOpen</span>) <span class="op">|</span> (<span class="ident">State::TryOpen</span>, <span class="ident">State::TryOpen</span>) =&gt; {
+                <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_ack_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenAck {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                    <span class="ident">e</span>
+                })<span class="question-mark">?</span>;
+            }
+
+            <span class="comment">// send the Ack message to chain b (destination)</span>
+            (<span class="ident">State::TryOpen</span>, <span class="ident">State::Init</span>) =&gt; {
+                <span class="self">self</span>.<span class="ident">build_chan_open_ack_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenAck {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
+                    <span class="ident">e</span>
+                })<span class="question-mark">?</span>;
+            }
+
+            <span class="comment">// send the Confirm message to chain b (destination)</span>
+            (<span class="ident">State::Open</span>, <span class="ident">State::TryOpen</span>) =&gt; {
+                <span class="self">self</span>.<span class="ident">build_chan_open_confirm_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenConfirm {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
+                    <span class="ident">e</span>
+                })<span class="question-mark">?</span>;
+            }
+
+            <span class="comment">// send the Confirm message to chain a (source)</span>
+            (<span class="ident">State::TryOpen</span>, <span class="ident">State::Open</span>) =&gt; {
+                <span class="self">self</span>.<span class="ident">flipped</span>()
+                    .<span class="ident">build_chan_open_confirm_and_send</span>()
+                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                        <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenConfirm {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                        <span class="ident">e</span>
+                    })<span class="question-mark">?</span>;
+            }
+
+            (<span class="ident">State::Open</span>, <span class="ident">State::Open</span>) =&gt; {
+                <span class="macro">info!</span>(<span class="string">&quot;channel handshake already finished for {:#?}\n&quot;</span>, <span class="self">self</span>);
+                <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
+            }
+
+            (<span class="ident">a_state</span>, <span class="ident">b_state</span>) =&gt; {
+                <span class="macro">warn!</span>(
+                    <span class="string">&quot;do_conn_open_handshake does not handle channel end state combination: \
+                    {}-{}, {}-{}. will retry to account for RPC node data availability issues.&quot;</span>,
+                    <span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(),
+                    <span class="ident">a_state</span>,
+                    <span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(),
+                    <span class="ident">b_state</span>
+                );
+            }
+        }
+        <span class="prelude-val">Err</span>(<span class="ident">ChannelError::handshake_finalize</span>())
     }
 
-    <span class="kw">fn</span> <span class="ident">do_chan_open_try_and_send</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_chan_open_try_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-            <span class="macro">error!</span>(<span class="string">&quot;failed ChanOpenTry {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
-            <span class="ident">e</span>
-        })<span class="question-mark">?</span>;
+    <span class="doccomment">/// Executes the channel handshake protocol (ICS004)</span>
+    <span class="kw">fn</span> <span class="ident">handshake</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">max_block_times</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">max_block_times</span>()<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">channel_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">channel_id</span>);
-
-        <span class="macro">println!</span>(<span class="string">&quot;done {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">fn</span> <span class="ident">do_chan_open_try_and_send_with_retry</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="ident">retry_with_index</span>(<span class="ident">retry_strategy::default</span>(), <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">do_chan_open_try_and_send</span>() {
+        <span class="ident">retry_with_index</span>(<span class="ident">handshake_retry::default_strategy</span>(<span class="ident">max_block_times</span>), <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">do_chan_open_handshake</span>() {
                 <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">is_expired_or_frozen_error</span>() {
                     <span class="ident">RetryResult::Err</span>(<span class="ident">e</span>)
                 } <span class="kw">else</span> {
@@ -1897,209 +2184,13 @@
         })
         .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
             <span class="macro">error!</span>(<span class="string">&quot;failed to open channel after {} retries&quot;</span>, <span class="ident">retry_count</span>(<span class="kw-2">&amp;</span><span class="ident">err</span>));
-
-            <span class="ident">from_retry_error</span>(
-                <span class="ident">err</span>,
-                <span class="macro">format!</span>(<span class="string">&quot;failed to finish channel open try for {:?}&quot;</span>, <span class="self">self</span>),
-            )
-        })<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Sends the last two steps, consisting of `Ack` and `Confirm`</span>
-    <span class="doccomment">/// messages, for finalizing the channel open handshake.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Assumes that the channel open handshake was previously</span>
-    <span class="doccomment">/// started (with `Init` &amp; `Try` steps).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `Ok` when both channel ends are in state `Open`.</span>
-    <span class="doccomment">/// Also returns `Ok` if the channel is undergoing a closing handshake.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// An `Err` can signal two cases:</span>
-    <span class="doccomment">///     - the common-case flow for the handshake protocol was interrupted,</span>
-    <span class="doccomment">///         e.g., by a competing relayer.</span>
-    <span class="doccomment">///     - Rpc problems (a query or submitting a tx failed).</span>
-    <span class="doccomment">/// In both `Err` cases, there should be retry calling this method.</span>
-    <span class="kw">fn</span> <span class="ident">do_chan_open_finalize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="kw">fn</span> <span class="ident">query_channel_states</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-            <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
-        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">State</span>, <span class="ident">State</span>), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">src_channel_id</span> <span class="op">=</span> <span class="ident">channel</span>
-                .<span class="ident">src_channel_id</span>()
-                .<span class="ident">ok_or_else</span>(<span class="ident">ChannelError::missing_local_channel_id</span>)<span class="question-mark">?</span>;
-
-            <span class="kw">let</span> <span class="ident">dst_channel_id</span> <span class="op">=</span> <span class="ident">channel</span>
-                .<span class="ident">dst_channel_id</span>()
-                .<span class="ident">ok_or_else</span>(<span class="ident">ChannelError::missing_counterparty_channel_id</span>)<span class="question-mark">?</span>;
-
-            <span class="macro">debug!</span>(
-                <span class="string">&quot;do_chan_open_finalize for src_channel_id: {}, dst_channel_id: {}&quot;</span>,
-                <span class="ident">src_channel_id</span>, <span class="ident">dst_channel_id</span>
-            );
-
-            <span class="comment">// Continue loop if query error</span>
-            <span class="kw">let</span> (<span class="ident">a_channel</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">channel</span>
-                .<span class="ident">src_chain</span>()
-                .<span class="ident">query_channel</span>(
-                    <span class="ident">QueryChannelRequest</span> {
-                        <span class="ident">port_id</span>: <span class="ident">channel</span>.<span class="ident">src_port_id</span>().<span class="ident">clone</span>(),
-                        <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">src_channel_id</span>,
-                        <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
-                    },
-                    <span class="ident">IncludeProof::No</span>,
-                )
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="ident">ChannelError::handshake_finalize</span>(
-                        <span class="ident">channel</span>.<span class="ident">src_port_id</span>().<span class="ident">clone</span>(),
-                        <span class="kw-2">*</span><span class="ident">src_channel_id</span>,
-                        <span class="ident">channel</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
-                        <span class="ident">e</span>,
-                    )
-                })<span class="question-mark">?</span>;
-
-            <span class="kw">let</span> (<span class="ident">b_channel</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">channel</span>
-                .<span class="ident">dst_chain</span>()
-                .<span class="ident">query_channel</span>(
-                    <span class="ident">QueryChannelRequest</span> {
-                        <span class="ident">port_id</span>: <span class="ident">channel</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
-                        <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">dst_channel_id</span>,
-                        <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
-                    },
-                    <span class="ident">IncludeProof::No</span>,
-                )
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="ident">ChannelError::handshake_finalize</span>(
-                        <span class="ident">channel</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
-                        <span class="kw-2">*</span><span class="ident">dst_channel_id</span>,
-                        <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
-                        <span class="ident">e</span>,
-                    )
-                })<span class="question-mark">?</span>;
-
-            <span class="prelude-val">Ok</span>((<span class="kw-2">*</span><span class="ident">a_channel</span>.<span class="ident">state</span>(), <span class="kw-2">*</span><span class="ident">b_channel</span>.<span class="ident">state</span>()))
-        }
-
-        <span class="kw">fn</span> <span class="ident">expect_channel_states</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-            <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
-            <span class="ident">a1</span>: <span class="ident">State</span>,
-            <span class="ident">b1</span>: <span class="ident">State</span>,
-        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> (<span class="ident">a2</span>, <span class="ident">b2</span>) <span class="op">=</span> <span class="ident">query_channel_states</span>(<span class="ident">ctx</span>)<span class="question-mark">?</span>;
-
-            <span class="kw">if</span> (<span class="ident">a1</span>, <span class="ident">b1</span>) <span class="op">==</span> (<span class="ident">a2</span>, <span class="ident">b2</span>) {
-                <span class="prelude-val">Ok</span>(())
-            } <span class="kw">else</span> {
-                <span class="macro">warn!</span>(
-                    <span class="string">&quot;expected channels to progress to states {}, {}), instead got ({}, {})&quot;</span>,
-                    <span class="ident">a1</span>, <span class="ident">b1</span>, <span class="ident">a2</span>, <span class="ident">b2</span>
-                );
-
-                <span class="macro">debug!</span>(<span class="string">&quot;returning PartialOpenHandshake to retry&quot;</span>);
-
-                <span class="comment">// One more step (confirm) left.</span>
-                <span class="comment">// Returning error signals that the caller should retry.</span>
-                <span class="prelude-val">Err</span>(<span class="ident">ChannelError::partial_open_handshake</span>(<span class="ident">a1</span>, <span class="ident">b1</span>))
-            }
-        }
-
-        <span class="kw">let</span> (<span class="ident">a_state</span>, <span class="ident">b_state</span>) <span class="op">=</span> <span class="ident">query_channel_states</span>(<span class="self">self</span>)<span class="question-mark">?</span>;
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;do_chan_open_finalize with channel states: {}, {}&quot;</span>,
-            <span class="ident">a_state</span>, <span class="ident">b_state</span>
-        );
-
-        <span class="kw">match</span> (<span class="ident">a_state</span>, <span class="ident">b_state</span>) {
-            <span class="comment">// Handle sending the Ack message to the source chain,</span>
-            <span class="comment">// then the Confirm message to the destination.</span>
-            (<span class="ident">State::Init</span>, <span class="ident">State::TryOpen</span>) <span class="op">|</span> (<span class="ident">State::TryOpen</span>, <span class="ident">State::TryOpen</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_ack_and_send</span>()<span class="question-mark">?</span>;
-
-                <span class="ident">expect_channel_states</span>(<span class="self">self</span>, <span class="ident">State::Open</span>, <span class="ident">State::TryOpen</span>)<span class="question-mark">?</span>;
-
-                <span class="self">self</span>.<span class="ident">build_chan_open_confirm_and_send</span>()<span class="question-mark">?</span>;
-
-                <span class="ident">expect_channel_states</span>(<span class="self">self</span>, <span class="ident">State::Open</span>, <span class="ident">State::Open</span>)<span class="question-mark">?</span>;
-
-                <span class="prelude-val">Ok</span>(())
-            }
-
-            <span class="comment">// Handle sending the Ack message to the destination chain,</span>
-            <span class="comment">// then the Confirm to the source chain.</span>
-            (<span class="ident">State::TryOpen</span>, <span class="ident">State::Init</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_ack_and_send</span>()<span class="question-mark">?</span>;
-
-                <span class="ident">expect_channel_states</span>(<span class="self">self</span>, <span class="ident">State::TryOpen</span>, <span class="ident">State::Open</span>)<span class="question-mark">?</span>;
-
-                <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_confirm_and_send</span>()<span class="question-mark">?</span>;
-
-                <span class="ident">expect_channel_states</span>(<span class="self">self</span>, <span class="ident">State::Open</span>, <span class="ident">State::Open</span>)<span class="question-mark">?</span>;
-
-                <span class="prelude-val">Ok</span>(())
-            }
-
-            <span class="comment">// Handle sending the Confirm message to the destination chain.</span>
-            (<span class="ident">State::Open</span>, <span class="ident">State::TryOpen</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">build_chan_open_confirm_and_send</span>()<span class="question-mark">?</span>;
-
-                <span class="ident">expect_channel_states</span>(<span class="self">self</span>, <span class="ident">State::Open</span>, <span class="ident">State::Open</span>)<span class="question-mark">?</span>;
-
-                <span class="prelude-val">Ok</span>(())
-            }
-
-            <span class="comment">// Send Confirm to the source chain.</span>
-            (<span class="ident">State::TryOpen</span>, <span class="ident">State::Open</span>) =&gt; {
-                <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_chan_open_confirm_and_send</span>()<span class="question-mark">?</span>;
-
-                <span class="ident">expect_channel_states</span>(<span class="self">self</span>, <span class="ident">State::Open</span>, <span class="ident">State::Open</span>)<span class="question-mark">?</span>;
-
-                <span class="prelude-val">Ok</span>(())
-            }
-
-            (<span class="ident">State::Open</span>, <span class="ident">State::Open</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;channel handshake already finished for {:#?}\n&quot;</span>, <span class="self">self</span>);
-                <span class="prelude-val">Ok</span>(())
-            }
-
-            <span class="comment">// In all other conditions, return Ok, since the channel open handshake does not apply.</span>
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(()),
-        }
-    }
-
-    <span class="doccomment">/// Takes a partially open channel and finalizes the open handshake protocol.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Pre-condition: the channel identifiers are established on both ends</span>
-    <span class="doccomment">///   (i.e., `OpenInit` and `OpenTry` have executed previously for this channel).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Post-condition: the channel state is `Open` on both ends if successful.</span>
-    <span class="kw">fn</span> <span class="ident">do_chan_open_finalize_with_retry</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="ident">retry_with_index</span>(<span class="ident">retry_strategy::default</span>(), <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">do_chan_open_finalize</span>() {
-                <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">is_expired_or_frozen_error</span>() {
-                    <span class="ident">RetryResult::Err</span>(<span class="ident">e</span>)
-                } <span class="kw">else</span> {
-                    <span class="ident">RetryResult::Retry</span>(<span class="ident">e</span>)
-                }
-            } <span class="kw">else</span> {
-                <span class="ident">RetryResult::Ok</span>(())
-            }
-        })
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="macro">error!</span>(<span class="string">&quot;failed to open channel after {} retries&quot;</span>, <span class="ident">err</span>);
-            <span class="ident">from_retry_error</span>(
+            <span class="ident">handshake_retry::from_retry_error</span>(
                 <span class="ident">err</span>,
                 <span class="macro">format!</span>(<span class="string">&quot;failed to finish channel handshake for {:?}&quot;</span>, <span class="self">self</span>),
             )
         })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Executes the channel handshake protocol (ICS004)</span>
-    <span class="kw">fn</span> <span class="ident">handshake</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">do_chan_open_init_and_send_with_retry</span>()<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">do_chan_open_try_and_send_with_retry</span>()<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">do_chan_open_finalize_with_retry</span>()
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">counterparty_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">ChannelError</span><span class="op">&gt;</span> {
@@ -2254,7 +2345,10 @@
             })<span class="question-mark">?</span>;
 
         <span class="kw">match</span> <span class="ident">result</span> {
-            <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">result</span>),
+            <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+            }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
         }
@@ -2441,7 +2535,10 @@
             })<span class="question-mark">?</span>;
 
         <span class="kw">match</span> <span class="ident">result</span> {
-            <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">result</span>),
+            <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+            }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
         }
@@ -2530,7 +2627,7 @@
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChannelError::submit</span>(<span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
             <span class="comment">// Find the relevant event for channel open ack</span>
-            <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">events</span>
+            <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
                 .<span class="ident">into_iter</span>()
                 .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
                     <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>))
@@ -2540,18 +2637,13 @@
                     <span class="ident">ChannelError::missing_event</span>(<span class="string">&quot;no chan ack event was in the response&quot;</span>.<span class="ident">to_string</span>())
                 })<span class="question-mark">?</span>;
 
-            <span class="kw">match</span> <span class="ident">event</span> {
+            <span class="kw">match</span> <span class="ident">result</span> {
                 <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">info!</span>(
-                        <span class="string">&quot;done with ChanAck step {} =&gt; {:#?}\n&quot;</span>,
-                        <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(),
-                        <span class="ident">event</span>
-                    );
-
-                    <span class="prelude-val">Ok</span>(<span class="ident">event</span>)
+                    <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                    <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
                 }
                 <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">event</span>)),
+                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
             }
         }
 
@@ -2640,7 +2732,7 @@
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChannelError::submit</span>(<span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
             <span class="comment">// Find the relevant event for channel open confirm</span>
-            <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">events</span>
+            <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
                 .<span class="ident">into_iter</span>()
                 .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
                     <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>))
@@ -2652,13 +2744,13 @@
                     )
                 })<span class="question-mark">?</span>;
 
-            <span class="kw">match</span> <span class="ident">event</span> {
+            <span class="kw">match</span> <span class="ident">result</span> {
                 <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">info!</span>(<span class="string">&quot;done {} =&gt; {:#?}\n&quot;</span>, <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
-                    <span class="prelude-val">Ok</span>(<span class="ident">event</span>)
+                    <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                    <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
                 }
                 <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">event</span>)),
+                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
             }
         }
 
@@ -2723,7 +2815,10 @@
             })<span class="question-mark">?</span>;
 
         <span class="kw">match</span> <span class="ident">result</span> {
-            <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">result</span>),
+            <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">info!</span>(<span class="string">&quot;👋 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+            }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
         }
@@ -2817,7 +2912,10 @@
             })<span class="question-mark">?</span>;
 
         <span class="kw">match</span> <span class="ident">result</span> {
-            <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">result</span>),
+            <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">info!</span>(<span class="string">&quot;👋 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+            }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
         }

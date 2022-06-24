@@ -1373,7 +1373,7 @@
 
 <span class="kw">mod</span> <span class="ident">handshake_retry</span> {
     <span class="doccomment">//! Provides utility methods and constants to configure the retry behavior</span>
-    <span class="doccomment">//! for the channel handshake algorithm.</span>
+    <span class="doccomment">//! for the connection handshake algorithm.</span>
 
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::ConnectionError</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::retry</span>::{<span class="ident">clamp_total</span>, <span class="ident">ConstantGrowth</span>};
@@ -1867,7 +1867,7 @@
         <span class="kw">if</span> <span class="ident">b_counterparty_id</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">b_counterparty_id</span> <span class="op">!</span><span class="op">=</span> <span class="ident">relayer_a_id</span> {
             <span class="kw">if</span> <span class="ident">updated_relayer_b_id</span> <span class="op">==</span> <span class="ident">relayer_b_id</span>.<span class="ident">as_ref</span>() {
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;updating the expected {:?} of side_b({}) since it is different than the \
+                    <span class="string">&quot;updating the expected {:?} of side_a({}) since it is different than the \
                 counterparty of {:?}: {:?}, on {}. This is typically caused by crossing handshake \
                 messages in the presence of multiple relayers.&quot;</span>,
                     <span class="ident">relayer_a_id</span>,
@@ -2234,7 +2234,7 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConnectionError::submit</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
         <span class="comment">// Find the relevant event for connection init</span>
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">events</span>
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
                 <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenInitConnection</span>(<span class="kw">_</span>))
@@ -2243,13 +2243,13 @@
             .<span class="ident">ok_or_else</span>(<span class="ident">ConnectionError::missing_connection_init_event</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// TODO - make chainError an actual error</span>
-        <span class="kw">match</span> <span class="ident">event</span> {
+        <span class="kw">match</span> <span class="ident">result</span> {
             <span class="ident">IbcEvent::OpenInitConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">event</span>)
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;internal error&quot;</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::invalid_event</span>(<span class="ident">result</span>)),
         }
     }
 
@@ -2375,7 +2375,7 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConnectionError::submit</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
         <span class="comment">// Find the relevant event for connection try transaction</span>
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">events</span>
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
                 <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenTryConnection</span>(<span class="kw">_</span>))
@@ -2383,13 +2383,13 @@
             })
             .<span class="ident">ok_or_else</span>(<span class="ident">ConnectionError::missing_connection_try_event</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">event</span> {
+        <span class="kw">match</span> <span class="ident">result</span> {
             <span class="ident">IbcEvent::OpenTryConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">event</span>)
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;internal error&quot;</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::invalid_event</span>(<span class="ident">result</span>)),
         }
     }
 
@@ -2481,7 +2481,7 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConnectionError::submit</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
         <span class="comment">// Find the relevant event for connection ack</span>
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">events</span>
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
                 <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenAckConnection</span>(<span class="kw">_</span>))
@@ -2489,13 +2489,13 @@
             })
             .<span class="ident">ok_or_else</span>(<span class="ident">ConnectionError::missing_connection_ack_event</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">event</span> {
+        <span class="kw">match</span> <span class="ident">result</span> {
             <span class="ident">IbcEvent::OpenAckConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">event</span>)
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;internal error&quot;</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::invalid_event</span>(<span class="ident">result</span>)),
         }
     }
 
@@ -2569,7 +2569,7 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConnectionError::submit</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
 
         <span class="comment">// Find the relevant event for connection confirm</span>
-        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">events</span>
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
                 <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenConfirmConnection</span>(<span class="kw">_</span>))
@@ -2577,13 +2577,13 @@
             })
             .<span class="ident">ok_or_else</span>(<span class="ident">ConnectionError::missing_connection_confirm_event</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">event</span> {
+        <span class="kw">match</span> <span class="ident">result</span> {
             <span class="ident">IbcEvent::OpenConfirmConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">event</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">event</span>)
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;internal error&quot;</span>),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::invalid_event</span>(<span class="ident">result</span>)),
         }
     }
 
