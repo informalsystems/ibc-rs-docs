@@ -1910,7 +1910,7 @@
 
 <span class="kw">use</span> <span class="ident">flex_error::define_error</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus</span>::{
-    <span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>, <span class="ident">ConsensusState</span>, <span class="ident">QueryClientEventRequest</span>,
+    <span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>, <span class="ident">ConsensusState</span>,
 };
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_state::AnyClientState</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_state::ClientState</span>;
@@ -1926,7 +1926,6 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>};
 <span class="kw">use</span> <span class="ident">ibc::downcast</span>;
 <span class="kw">use</span> <span class="ident">ibc::events</span>::{<span class="ident">IbcEvent</span>, <span class="ident">WithBlockDataType</span>};
-<span class="kw">use</span> <span class="ident">ibc::query::QueryTxRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc::timestamp</span>::{<span class="ident">Timestamp</span>, <span class="ident">TimestampOverflowError</span>};
 <span class="kw">use</span> <span class="ident">ibc::tx_msg::Msg</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
@@ -1934,9 +1933,9 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{
-    <span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryConsensusStateRequest</span>,
-    <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryUpgradedClientStateRequest</span>,
-    <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientEventRequest</span>, <span class="ident">QueryClientStateRequest</span>,
+    <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHeight</span>, <span class="ident">QueryTxRequest</span>,
+    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span> <span class="kw">as</span> <span class="ident">RelayerError</span>;
@@ -2307,7 +2306,7 @@
         <span class="kw">match</span> <span class="ident">host_chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         ) {
@@ -2341,7 +2340,7 @@
         <span class="macro">info!</span>(<span class="string">&quot;[{}] upgrade Height: {}&quot;</span>, <span class="self">self</span>, <span class="ident">src_upgrade_height</span>);
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">msgs</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">build_update_client_with_trusted</span>(<span class="ident">src_upgrade_height</span>, <span class="ident">Height::zero</span>())
+            .<span class="ident">build_update_client_with_trusted</span>(<span class="ident">src_upgrade_height</span>, <span class="prelude-val">None</span>)
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_upgrade_no_source</span>(
                     <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
@@ -2571,7 +2570,7 @@
                 .<span class="ident">query_client_state</span>(
                     <span class="ident">QueryClientStateRequest</span> {
                         <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
                     },
                     <span class="ident">IncludeProof::No</span>,
                 )
@@ -2700,7 +2699,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">target_height</span>: <span class="ident">Height</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">wait_and_build_update_client_with_trusted</span>(<span class="ident">target_height</span>, <span class="ident">Height::zero</span>())
+        <span class="self">self</span>.<span class="ident">wait_and_build_update_client_with_trusted</span>(<span class="ident">target_height</span>, <span class="prelude-val">None</span>)
     }
 
     <span class="doccomment">/// Returns a trusted height that is lower than the target height, so</span>
@@ -2860,7 +2859,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait_and_build_update_client_with_trusted</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">target_height</span>: <span class="ident">Height</span>,
-        <span class="ident">trusted_height</span>: <span class="ident">Height</span>,
+        <span class="ident">trusted_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">src_application_latest_height</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
             <span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">query_latest_height</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
@@ -2883,16 +2882,17 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_update_client_with_trusted</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">target_height</span>: <span class="ident">Height</span>,
-        <span class="ident">trusted_height</span>: <span class="ident">Height</span>,
+        <span class="ident">maybe_trusted_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="comment">// Get the latest client state on destination.</span>
         <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_client_state</span>()<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">trusted_height</span> <span class="op">==</span> <span class="ident">Height::zero</span>() {
-            <span class="self">self</span>.<span class="ident">solve_trusted_height</span>(<span class="ident">target_height</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)<span class="question-mark">?</span>
-        } <span class="kw">else</span> {
-            <span class="self">self</span>.<span class="ident">validate_trusted_height</span>(<span class="ident">trusted_height</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)<span class="question-mark">?</span>;
-            <span class="ident">trusted_height</span>
+        <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">maybe_trusted_height</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">trusted_height</span>) =&gt; {
+                <span class="self">self</span>.<span class="ident">validate_trusted_height</span>(<span class="ident">trusted_height</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)<span class="question-mark">?</span>;
+                <span class="ident">trusted_height</span>
+            }
+            <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">solve_trusted_height</span>(<span class="ident">target_height</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)<span class="question-mark">?</span>,
         };
 
         <span class="kw">if</span> <span class="ident">trusted_height</span> <span class="op">!</span><span class="op">=</span> <span class="ident">client_state</span>.<span class="ident">latest_height</span>() {
@@ -2987,32 +2987,32 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_latest_update_client_and_send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">build_update_client_and_send</span>(<span class="ident">Height::zero</span>(), <span class="ident">Height::zero</span>())
+        <span class="self">self</span>.<span class="ident">build_update_client_and_send</span>(<span class="ident">QueryHeight::Latest</span>, <span class="prelude-val">None</span>)
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_update_client_and_send</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">height</span>: <span class="ident">Height</span>,
-        <span class="ident">trusted_height</span>: <span class="ident">Height</span>,
+        <span class="ident">target_query_height</span>: <span class="ident">QueryHeight</span>,
+        <span class="ident">trusted_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">h</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">height</span> <span class="op">==</span> <span class="ident">Height::zero</span>() {
-            <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">query_latest_height</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+        <span class="kw">let</span> <span class="ident">target_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">target_query_height</span> {
+            <span class="ident">QueryHeight::Latest</span> =&gt; <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">query_latest_height</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="ident">ForeignClientError::client_update</span>(
                     <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
                     <span class="string">&quot;failed while querying src chain ({}) for latest height&quot;</span>.<span class="ident">to_string</span>(),
                     <span class="ident">e</span>,
                 )
-            })<span class="question-mark">?</span>
-        } <span class="kw">else</span> {
-            <span class="ident">height</span>
+            })<span class="question-mark">?</span>,
+            <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>) =&gt; <span class="ident">height</span>,
         };
 
-        <span class="kw">let</span> <span class="ident">new_msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">wait_and_build_update_client_with_trusted</span>(<span class="ident">h</span>, <span class="ident">trusted_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">new_msgs</span> <span class="op">=</span>
+            <span class="self">self</span>.<span class="ident">wait_and_build_update_client_with_trusted</span>(<span class="ident">target_height</span>, <span class="ident">trusted_height</span>)<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="ident">new_msgs</span>.<span class="ident">is_empty</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ForeignClientError::client_already_up_to_date</span>(
                 <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
                 <span class="self">self</span>.<span class="ident">src_chain</span>.<span class="ident">id</span>(),
-                <span class="ident">h</span>,
+                <span class="ident">target_height</span>,
             ));
         }
 
@@ -3055,7 +3055,7 @@
             <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>
                 .<span class="ident">dst_chain</span>
                 .<span class="ident">query_txs</span>(<span class="ident">QueryTxRequest::Client</span>(<span class="ident">QueryClientEventRequest</span> {
-                    <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+                    <span class="ident">query_height</span>: <span class="ident">QueryHeight::Latest</span>,
                     <span class="ident">event_id</span>: <span class="ident">WithBlockDataType::UpdateClient</span>,
                     <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
                     <span class="ident">consensus_height</span>,
@@ -3131,7 +3131,7 @@
                 <span class="ident">QueryConsensusStateRequest</span> {
                     <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
                     <span class="ident">consensus_height</span>: <span class="ident">height</span>,
-                    <span class="ident">query_height</span>: <span class="ident">HeightQuery::Latest</span>,
+                    <span class="ident">query_height</span>: <span class="ident">QueryHeight::Latest</span>,
                 },
                 <span class="ident">IncludeProof::No</span>,
             )
@@ -3214,7 +3214,7 @@
                 .<span class="ident">query_client_state</span>(
                     <span class="ident">QueryClientStateRequest</span> {
                         <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">id</span>().<span class="ident">clone</span>(),
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
                     },
                     <span class="ident">IncludeProof::No</span>,
                 )
@@ -3516,7 +3516,7 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle</span>::{<span class="ident">BaseChainHandle</span>, <span class="ident">ChainHandle</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::mock::test_utils::get_basic_chain_config</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::mock::MockChain</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{<span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">QueryClientStateRequest</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{<span class="ident">IncludeProof</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryHeight</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::runtime::ChainRuntime</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client::ForeignClient</span>;
 
@@ -3700,7 +3700,7 @@
         <span class="kw">let</span> <span class="ident">b_client_state_res</span> <span class="op">=</span> <span class="ident">b_chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="ident">b_client</span>,
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         );
@@ -3713,7 +3713,7 @@
         <span class="kw">let</span> <span class="ident">a_client_state_res</span> <span class="op">=</span> <span class="ident">a_chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="ident">a_client</span>,
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         );

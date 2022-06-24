@@ -443,8 +443,6 @@
 <span id="438">438</span>
 <span id="439">439</span>
 <span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 
 <span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
@@ -456,7 +454,7 @@
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{
-    <span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryClientStatesRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryClientStatesRequest</span>, <span class="ident">QueryHeight</span>,
 };
 <span class="kw">use</span> <span class="ident">ibc_relayer::config::Config</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::foreign_client</span>::{<span class="ident">CreateOptions</span>, <span class="ident">ForeignClient</span>};
@@ -568,7 +566,7 @@
         <span class="kw">let</span> <span class="ident">src_chain_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">dst_chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">dst_client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         ) {
@@ -587,21 +585,19 @@
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)).<span class="ident">exit</span>(),
         };
 
-        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">target_height</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">height</span>) =&gt; <span class="ident">ibc::Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="ident">ibc::Height::zero</span>(),
-        };
+        <span class="kw">let</span> <span class="ident">target_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">target_height</span>.<span class="ident">map_or</span>(<span class="ident">QueryHeight::Latest</span>, <span class="op">|</span><span class="ident">height</span><span class="op">|</span> {
+            <span class="ident">QueryHeight::Specific</span>(<span class="ident">Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>))
+        });
 
-        <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">trusted_height</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">height</span>) =&gt; <span class="ident">ibc::Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="ident">ibc::Height::zero</span>(),
-        };
+        <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">trusted_height</span>
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">height</span><span class="op">|</span> <span class="ident">Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>));
 
         <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">ForeignClient::find</span>(<span class="ident">src_chain</span>, <span class="ident">dst_chain</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dst_client_id</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">client</span>
-            .<span class="ident">build_update_client_and_send</span>(<span class="ident">height</span>, <span class="ident">trusted_height</span>)
+            .<span class="ident">build_update_client_and_send</span>(<span class="ident">target_height</span>, <span class="ident">trusted_height</span>)
             .<span class="ident">map_err</span>(<span class="ident">Error::foreign_client</span>);
 
         <span class="kw">match</span> <span class="ident">res</span> {
@@ -635,7 +631,7 @@
         <span class="kw">let</span> <span class="ident">src_chain_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">dst_chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         ) {

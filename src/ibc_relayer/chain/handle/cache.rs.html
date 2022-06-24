@@ -490,8 +490,6 @@
 <span id="485">485</span>
 <span id="486">486</span>
 <span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">crossbeam_channel</span> <span class="kw">as</span> <span class="ident">channel</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus</span>::{<span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">IdentifiedAnyClientState</span>};
@@ -501,7 +499,6 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::channel::IdentifiedChannelEnd</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">PacketMsgType</span>, <span class="ident">Sequence</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics23_commitment::merkle::MerkleProof</span>;
-<span class="kw">use</span> <span class="ident">ibc::query::QueryTxRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc</span>::{
     <span class="ident">core::ics02_client::header::AnyHeader</span>,
     <span class="ident">core::ics03_connection::connection::ConnectionEnd</span>,
@@ -513,7 +510,6 @@
     },
     <span class="ident">events::IbcEvent</span>,
     <span class="ident">proofs::Proofs</span>,
-    <span class="ident">query::QueryBlockRequest</span>,
     <span class="ident">signer::Signer</span>,
     <span class="ident">Height</span>,
 };
@@ -525,15 +521,15 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::endpoint</span>::{<span class="ident">ChainStatus</span>, <span class="ident">HealthCheck</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainRequest</span>, <span class="ident">Subscription</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{
-    <span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">QueryBlockRequest</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>,
     <span class="ident">QueryChannelsRequest</span>, <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
     <span class="ident">QueryClientStatesRequest</span>, <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>,
-    <span class="ident">QueryConnectionsRequest</span>, <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>,
+    <span class="ident">QueryConnectionsRequest</span>, <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHeight</span>,
     <span class="ident">QueryHostConsensusStateRequest</span>, <span class="ident">QueryNextSequenceReceiveRequest</span>,
     <span class="ident">QueryPacketAcknowledgementRequest</span>, <span class="ident">QueryPacketAcknowledgementsRequest</span>,
     <span class="ident">QueryPacketCommitmentRequest</span>, <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>,
-    <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>, <span class="ident">QueryUpgradedClientStateRequest</span>,
-    <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+    <span class="ident">QueryTxRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
+    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::ChainConfig</span>;
@@ -670,7 +666,7 @@
         <span class="kw">match</span> <span class="ident">include_proof</span> {
             <span class="ident">IncludeProof::Yes</span> =&gt; <span class="ident">handle</span>.<span class="ident">query_client_state</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::Yes</span>),
             <span class="ident">IncludeProof::No</span> =&gt; {
-                <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">request</span>.<span class="ident">height</span>, <span class="ident">HeightQuery::Latest</span>) {
+                <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">request</span>.<span class="ident">height</span>, <span class="ident">QueryHeight::Latest</span>) {
                     <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_client_state_with</span>(
                         <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">client_id</span>,
                         <span class="op">|</span><span class="op">|</span> {
@@ -745,7 +741,7 @@
         <span class="kw">match</span> <span class="ident">include_proof</span> {
             <span class="ident">IncludeProof::Yes</span> =&gt; <span class="ident">handle</span>.<span class="ident">query_connection</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::Yes</span>),
             <span class="ident">IncludeProof::No</span> =&gt; {
-                <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">request</span>.<span class="ident">height</span>, <span class="ident">HeightQuery::Latest</span>) {
+                <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">request</span>.<span class="ident">height</span>, <span class="ident">QueryHeight::Latest</span>) {
                     <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_connection_with</span>(
                         <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">connection_id</span>,
                         <span class="op">|</span><span class="op">|</span> {
@@ -806,7 +802,7 @@
         <span class="kw">match</span> <span class="ident">include_proof</span> {
             <span class="ident">IncludeProof::Yes</span> =&gt; <span class="ident">handle</span>.<span class="ident">query_channel</span>(<span class="ident">request</span>, <span class="ident">IncludeProof::Yes</span>),
             <span class="ident">IncludeProof::No</span> =&gt; {
-                <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">request</span>.<span class="ident">height</span>, <span class="ident">HeightQuery::Latest</span>) {
+                <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">request</span>.<span class="ident">height</span>, <span class="ident">QueryHeight::Latest</span>) {
                     <span class="kw">let</span> (<span class="ident">result</span>, <span class="ident">in_cache</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cache</span>.<span class="ident">get_or_try_insert_channel_with</span>(
                         <span class="kw-2">&amp;</span><span class="ident">PortChannelId::new</span>(<span class="ident">request</span>.<span class="ident">channel_id</span>, <span class="ident">request</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>()),
                         <span class="op">|</span><span class="op">|</span> {

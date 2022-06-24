@@ -262,22 +262,25 @@
 <span id="257">257</span>
 <span id="258">258</span>
 <span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
 <span class="kw">use</span> <span class="ident">tracing::debug</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{
-    <span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
-    <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">PageRequest</span>, <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientEventRequest</span>,
+    <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHeight</span>,
+    <span class="ident">QueryTxRequest</span>,
 };
 
-<span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_consensus::QueryClientEventRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_state::ClientState</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier::ChainId</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier::ClientId</span>;
 <span class="kw">use</span> <span class="ident">ibc::events::WithBlockDataType</span>;
-<span class="kw">use</span> <span class="ident">ibc::query::QueryTxRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::application::app_config</span>;
@@ -309,8 +312,8 @@
         <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(<span class="ident">HeightQuery::Latest</span>, <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
-                    <span class="ident">HeightQuery::Specific</span>(<span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>))
+                <span class="ident">height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(<span class="ident">QueryHeight::Latest</span>, <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
+                    <span class="ident">QueryHeight::Specific</span>(<span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>))
                 }),
             },
             <span class="ident">IncludeProof::No</span>,
@@ -362,7 +365,7 @@
         <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         ) {
@@ -384,9 +387,9 @@
                             <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
                             <span class="ident">consensus_height</span>,
                             <span class="ident">query_height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(
-                                <span class="ident">HeightQuery::Latest</span>,
+                                <span class="ident">QueryHeight::Latest</span>,
                                 <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
-                                    <span class="ident">HeightQuery::Specific</span>(<span class="ident">ibc::Height::new</span>(
+                                    <span class="ident">QueryHeight::Specific</span>(<span class="ident">ibc::Height::new</span>(
                                         <span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(),
                                         <span class="ident">revision_height</span>,
                                     ))
@@ -453,7 +456,7 @@
         <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">query_client_state</span>(
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
             },
             <span class="ident">IncludeProof::No</span>,
         ) {
@@ -468,10 +471,15 @@
         <span class="kw">let</span> <span class="ident">consensus_height</span> <span class="op">=</span>
             <span class="ident">ibc::Height::new</span>(<span class="ident">counterparty_chain</span>.<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">consensus_height</span>);
 
-        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">unwrap_or</span>(<span class="number">0_u64</span>));
+        <span class="kw">let</span> <span class="ident">query_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">height</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">revision_height</span>) =&gt; {
+                <span class="ident">QueryHeight::Specific</span>(<span class="ident">Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>))
+            }
+            <span class="prelude-val">None</span> =&gt; <span class="ident">QueryHeight::Latest</span>,
+        };
 
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">query_txs</span>(<span class="ident">QueryTxRequest::Client</span>(<span class="ident">QueryClientEventRequest</span> {
-            <span class="ident">height</span>,
+            <span class="ident">query_height</span>,
             <span class="ident">event_id</span>: <span class="ident">WithBlockDataType::UpdateClient</span>,
             <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
             <span class="ident">consensus_height</span>,

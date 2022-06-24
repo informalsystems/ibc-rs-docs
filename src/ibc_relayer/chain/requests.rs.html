@@ -390,12 +390,53 @@
 <span id="385">385</span>
 <span id="386">386</span>
 <span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt::Display</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet::Sequence</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>};
+<span class="kw">use</span> <span class="ident">ibc::events::WithBlockDataType</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::base::query::v1beta1::PageRequest</span> <span class="kw">as</span> <span class="ident">RawPageRequest</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::channel::v1</span>::{
@@ -418,6 +459,7 @@
 };
 
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">tendermint::abci::transaction::Hash</span> <span class="kw">as</span> <span class="ident">TxHash</span>;
 <span class="kw">use</span> <span class="ident">tendermint::block::Height</span> <span class="kw">as</span> <span class="ident">TMBlockHeight</span>;
 <span class="kw">use</span> <span class="ident">tonic::metadata::AsciiMetadataValue</span>;
 
@@ -425,42 +467,42 @@
 <span class="doccomment">/// case where the user wants to query at whatever the latest height is, as</span>
 <span class="doccomment">/// opposed to specifying a specific height.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">HeightQuery</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">QueryHeight</span> {
     <span class="ident">Latest</span>,
     <span class="ident">Specific</span>(<span class="ident">Height</span>),
 }
 
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">HeightQuery</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TMBlockHeight</span> {
+<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">QueryHeight</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TMBlockHeight</span> {
     <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">height_query</span>: <span class="ident">HeightQuery</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">height_query</span>: <span class="ident">QueryHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">height_query</span> {
-            <span class="ident">HeightQuery::Latest</span> =&gt; <span class="number">0u64</span>,
-            <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>) =&gt; <span class="ident">height</span>.<span class="ident">revision_height</span>,
+            <span class="ident">QueryHeight::Latest</span> =&gt; <span class="number">0u64</span>,
+            <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>) =&gt; <span class="ident">height</span>.<span class="ident">revision_height</span>,
         };
 
         <span class="ident"><span class="self">Self</span>::try_from</span>(<span class="ident">height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">HeightQuery</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AsciiMetadataValue</span> {
+<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">QueryHeight</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AsciiMetadataValue</span> {
     <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">height_query</span>: <span class="ident">HeightQuery</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">height_query</span>: <span class="ident">QueryHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">height_query</span> {
-            <span class="ident">HeightQuery::Latest</span> =&gt; <span class="number">0u64</span>,
-            <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>) =&gt; <span class="ident">height</span>.<span class="ident">revision_height</span>,
+            <span class="ident">QueryHeight::Latest</span> =&gt; <span class="number">0u64</span>,
+            <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>) =&gt; <span class="ident">height</span>.<span class="ident">revision_height</span>,
         };
 
         <span class="ident">str::parse</span>(<span class="kw-2">&amp;</span><span class="ident">height</span>.<span class="ident">to_string</span>()).<span class="ident">map_err</span>(<span class="ident">Error::invalid_metadata</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">HeightQuery</span> {
+<span class="kw">impl</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">QueryHeight</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">core::fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">core::fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">HeightQuery::Latest</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;latest height&quot;</span>),
-            <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">height</span>),
+            <span class="ident">QueryHeight::Latest</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;latest height&quot;</span>),
+            <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">height</span>),
         }
     }
 }
@@ -519,7 +561,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryClientStateRequest</span> {
     <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -539,7 +581,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryConsensusStateRequest</span> {
     <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
     <span class="kw">pub</span> <span class="ident">consensus_height</span>: <span class="ident">Height</span>,
-    <span class="kw">pub</span> <span class="ident">query_height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">query_height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -598,7 +640,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryConnectionRequest</span> {
     <span class="kw">pub</span> <span class="ident">connection_id</span>: <span class="ident">ConnectionId</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -633,7 +675,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryChannelRequest</span> {
     <span class="kw">pub</span> <span class="ident">port_id</span>: <span class="ident">PortId</span>,
     <span class="kw">pub</span> <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -656,7 +698,7 @@
     <span class="kw">pub</span> <span class="ident">port_id</span>: <span class="ident">PortId</span>,
     <span class="kw">pub</span> <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
     <span class="kw">pub</span> <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -681,7 +723,7 @@
     <span class="kw">pub</span> <span class="ident">port_id</span>: <span class="ident">PortId</span>,
     <span class="kw">pub</span> <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
     <span class="kw">pub</span> <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -710,7 +752,7 @@
     <span class="kw">pub</span> <span class="ident">port_id</span>: <span class="ident">PortId</span>,
     <span class="kw">pub</span> <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
     <span class="kw">pub</span> <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -761,7 +803,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryNextSequenceReceiveRequest</span> {
     <span class="kw">pub</span> <span class="ident">port_id</span>: <span class="ident">PortId</span>,
     <span class="kw">pub</span> <span class="ident">channel_id</span>: <span class="ident">ChannelId</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">QueryNextSequenceReceiveRequest</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RawQueryNextSequenceReceiveRequest</span> {
@@ -775,7 +817,45 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryHostConsensusStateRequest</span> {
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">HeightQuery</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
+}
+
+<span class="doccomment">/// Used for queries and not yet standardized in channel&#39;s query.proto</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">QueryTxRequest</span> {
+    <span class="ident">Packet</span>(<span class="ident">QueryPacketEventDataRequest</span>),
+    <span class="ident">Client</span>(<span class="ident">QueryClientEventRequest</span>),
+    <span class="ident">Transaction</span>(<span class="ident">QueryTxHash</span>),
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryTxHash</span>(<span class="kw">pub</span> <span class="ident">TxHash</span>);
+
+<span class="doccomment">/// Used to query a packet event, identified by `event_id`, for specific channel and sequences.</span>
+<span class="doccomment">/// The query is preformed for the chain context at `height`.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryPacketEventDataRequest</span> {
+    <span class="kw">pub</span> <span class="ident">event_id</span>: <span class="ident">WithBlockDataType</span>,
+    <span class="kw">pub</span> <span class="ident">source_channel_id</span>: <span class="ident">ChannelId</span>,
+    <span class="kw">pub</span> <span class="ident">source_port_id</span>: <span class="ident">PortId</span>,
+    <span class="kw">pub</span> <span class="ident">destination_channel_id</span>: <span class="ident">ChannelId</span>,
+    <span class="kw">pub</span> <span class="ident">destination_port_id</span>: <span class="ident">PortId</span>,
+    <span class="kw">pub</span> <span class="ident">sequences</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">QueryHeight</span>,
+}
+
+<span class="doccomment">/// Query request for a single client event, identified by `event_id`, for `client_id`.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryClientEventRequest</span> {
+    <span class="kw">pub</span> <span class="ident">query_height</span>: <span class="ident">QueryHeight</span>,
+    <span class="kw">pub</span> <span class="ident">event_id</span>: <span class="ident">WithBlockDataType</span>,
+    <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
+    <span class="kw">pub</span> <span class="ident">consensus_height</span>: <span class="ident">Height</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">QueryBlockRequest</span> {
+    <span class="ident">Packet</span>(<span class="ident">QueryPacketEventDataRequest</span>),
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>

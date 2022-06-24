@@ -1736,12 +1736,14 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty::unreceived_packets</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::endpoint::ChainStatus</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::HeightQuery</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::IncludeProof</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryChannelRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryClientEventRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryHeight</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryHostConsensusStateRequest</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryNextSequenceReceiveRequest</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryPacketCommitmentRequest</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryTxRequest</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryUnreceivedAcksRequest</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryUnreceivedPacketsRequest</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
@@ -1767,7 +1769,6 @@
 <span class="kw">use</span> <span class="ident">ibc</span>::{
     <span class="ident">core</span>::{
         <span class="ident">ics02_client</span>::{
-            <span class="ident">client_consensus::QueryClientEventRequest</span>,
             <span class="ident">events::ClientMisbehaviour</span> <span class="kw">as</span> <span class="ident">ClientMisbehaviourEvent</span>,
             <span class="ident">events::UpdateClient</span> <span class="kw">as</span> <span class="ident">UpdateClientEvent</span>,
         },
@@ -1784,7 +1785,6 @@
         <span class="ident">ics24_host::identifier</span>::{<span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>},
     },
     <span class="ident">events</span>::{<span class="ident">IbcEvent</span>, <span class="ident">PrettyEvents</span>, <span class="ident">WithBlockDataType</span>},
-    <span class="ident">query::QueryTxRequest</span>,
     <span class="ident">signer::Signer</span>,
     <span class="ident">timestamp::Timestamp</span>,
     <span class="ident">tx_msg::Msg</span>,
@@ -1926,7 +1926,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">channel</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">src_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height_query</span>: <span class="ident">HeightQuery</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">src_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height_query</span>: <span class="ident">QueryHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">src_chain</span>()
             .<span class="ident">query_channel</span>(
                 <span class="ident">QueryChannelRequest</span> {
@@ -1940,7 +1940,7 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">LinkError::channel</span>(<span class="ident">ChannelError::query</span>(<span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>)))
     }
 
-    <span class="kw">fn</span> <span class="ident">dst_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height_query</span>: <span class="ident">HeightQuery</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">dst_channel</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height_query</span>: <span class="ident">QueryHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">dst_chain</span>()
             .<span class="ident">query_channel</span>(
                 <span class="ident">QueryChannelRequest</span> {
@@ -2243,7 +2243,7 @@
                     <span class="comment">// to the counterparty.</span>
                     <span class="kw">if</span> <span class="self">self</span>.<span class="ident">ordered_channel</span>()
                         <span class="op">&amp;&amp;</span> <span class="self">self</span>
-                            .<span class="ident">src_channel</span>(<span class="ident">HeightQuery::Specific</span>(<span class="ident">timeout_ev</span>.<span class="ident">height</span>))<span class="question-mark">?</span>
+                            .<span class="ident">src_channel</span>(<span class="ident">QueryHeight::Specific</span>(<span class="ident">timeout_ev</span>.<span class="ident">height</span>))<span class="question-mark">?</span>
                             .<span class="ident">state_matches</span>(<span class="kw-2">&amp;</span><span class="ident">ChannelState::Closed</span>)
                     {
                         (<span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">build_chan_close_confirm_from_event</span>(<span class="ident">event</span>)<span class="question-mark">?</span>), <span class="prelude-val">None</span>)
@@ -2264,7 +2264,7 @@
                 }
                 <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="kw-2">ref</span> <span class="ident">write_ack_ev</span>) =&gt; {
                     <span class="kw">if</span> <span class="self">self</span>
-                        .<span class="ident">dst_channel</span>(<span class="ident">HeightQuery::Latest</span>)<span class="question-mark">?</span>
+                        .<span class="ident">dst_channel</span>(<span class="ident">QueryHeight::Latest</span>)<span class="question-mark">?</span>
                         .<span class="ident">state_matches</span>(<span class="kw-2">&amp;</span><span class="ident">ChannelState::Closed</span>)
                     {
                         (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
@@ -2515,7 +2515,7 @@
                     <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">src_port_id</span>().<span class="ident">clone</span>(),
                     <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">src_channel_id</span>(),
                     <span class="ident">sequence</span>: <span class="ident">packet</span>.<span class="ident">sequence</span>,
-                    <span class="ident">height</span>: <span class="ident">HeightQuery::Latest</span>,
+                    <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
                 },
                 <span class="ident">IncludeProof::No</span>,
             )
@@ -2559,7 +2559,7 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Height</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">chain</span>
             .<span class="ident">query_txs</span>(<span class="ident">QueryTxRequest::Client</span>(<span class="ident">QueryClientEventRequest</span> {
-                <span class="ident">height</span>: <span class="ident">Height::zero</span>(),
+                <span class="ident">query_height</span>: <span class="ident">QueryHeight::Latest</span>,
                 <span class="ident">event_id</span>: <span class="ident">WithBlockDataType::UpdateClient</span>,
                 <span class="ident">client_id</span>,
                 <span class="ident">consensus_height</span>,
@@ -2614,7 +2614,7 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instant</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">chain_time</span> <span class="op">=</span> <span class="ident">chain</span>
             .<span class="ident">query_host_consensus_state</span>(<span class="ident">QueryHostConsensusStateRequest</span> {
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
             })
             .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>
             .<span class="ident">timestamp</span>();
@@ -2923,7 +2923,7 @@
                     <span class="ident">QueryNextSequenceReceiveRequest</span> {
                         <span class="ident">port_id</span>: <span class="self">self</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
                         <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">dst_channel_id</span>,
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::No</span>,
                 )
@@ -3000,7 +3000,7 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">packet</span> <span class="op">=</span> <span class="ident">event</span>.<span class="ident">packet</span>.<span class="ident">clone</span>();
         <span class="kw">if</span> <span class="self">self</span>
-            .<span class="ident">dst_channel</span>(<span class="ident">HeightQuery::Specific</span>(<span class="ident">dst_info</span>.<span class="ident">height</span>))<span class="question-mark">?</span>
+            .<span class="ident">dst_channel</span>(<span class="ident">QueryHeight::Specific</span>(<span class="ident">dst_info</span>.<span class="ident">height</span>))<span class="question-mark">?</span>
             .<span class="ident">state_matches</span>(<span class="kw-2">&amp;</span><span class="ident">ChannelState::Closed</span>)
         {
             <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">build_timeout_on_close_packet</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>.<span class="ident">packet</span>, <span class="ident">dst_info</span>.<span class="ident">height</span>)<span class="question-mark">?</span>)

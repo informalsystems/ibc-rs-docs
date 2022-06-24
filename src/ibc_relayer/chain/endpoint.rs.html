@@ -584,7 +584,6 @@
 <span id="579">579</span>
 <span id="580">580</span>
 <span id="581">581</span>
-<span id="582">582</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics23_commitment::merkle::MerkleProof</span>;
@@ -606,7 +605,6 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>};
 <span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident">ibc::proofs</span>::{<span class="ident">ConsensusProof</span>, <span class="ident">Proofs</span>};
-<span class="kw">use</span> <span class="ident">ibc::query</span>::{<span class="ident">QueryBlockRequest</span>, <span class="ident">QueryTxRequest</span>};
 <span class="kw">use</span> <span class="ident">ibc::signer::Signer</span>;
 <span class="kw">use</span> <span class="ident">ibc::timestamp::Timestamp</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>;
@@ -633,8 +631,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client::LightClient</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::requests</span>::{
-    <span class="ident">HeightQuery</span>, <span class="ident">IncludeProof</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>, <span class="ident">QueryPacketCommitmentRequest</span>,
-    <span class="ident">QueryPacketReceiptRequest</span>,
+    <span class="ident">IncludeProof</span>, <span class="ident">QueryBlockRequest</span>, <span class="ident">QueryHeight</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>,
+    <span class="ident">QueryPacketCommitmentRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>, <span class="ident">QueryTxRequest</span>,
 };
 
 <span class="doccomment">/// The result of a health check.</span>
@@ -949,7 +947,7 @@
         <span class="kw">let</span> (<span class="ident">connection_end</span>, <span class="ident">maybe_connection_proof</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">query_connection</span>(
             <span class="ident">QueryConnectionRequest</span> {
                 <span class="ident">connection_id</span>: <span class="ident">connection_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
             },
             <span class="ident">IncludeProof::Yes</span>,
         )<span class="question-mark">?</span>;
@@ -987,7 +985,7 @@
                 <span class="kw">let</span> (<span class="ident">client_state_value</span>, <span class="ident">maybe_client_state_proof</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">query_client_state</span>(
                     <span class="ident">QueryClientStateRequest</span> {
                         <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::Yes</span>,
                 )<span class="question-mark">?</span>;
@@ -1003,7 +1001,7 @@
                         <span class="ident">QueryConsensusStateRequest</span> {
                             <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                             <span class="ident">consensus_height</span>: <span class="ident">client_state_value</span>.<span class="ident">latest_height</span>(),
-                            <span class="ident">query_height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                            <span class="ident">query_height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                         },
                         <span class="ident">IncludeProof::Yes</span>,
                     )<span class="question-mark">?</span>;
@@ -1050,7 +1048,7 @@
             <span class="ident">QueryChannelRequest</span> {
                 <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">clone</span>(),
                 <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">channel_id</span>,
-                <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
             },
             <span class="ident">IncludeProof::Yes</span>,
         )<span class="question-mark">?</span>;
@@ -1078,7 +1076,7 @@
                         <span class="ident">port_id</span>,
                         <span class="ident">channel_id</span>,
                         <span class="ident">sequence</span>,
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::Yes</span>,
                 )<span class="question-mark">?</span>;
@@ -1091,7 +1089,7 @@
                         <span class="ident">port_id</span>,
                         <span class="ident">channel_id</span>,
                         <span class="ident">sequence</span>,
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::Yes</span>,
                 )<span class="question-mark">?</span>;
@@ -1104,7 +1102,7 @@
                         <span class="ident">port_id</span>,
                         <span class="ident">channel_id</span>,
                         <span class="ident">sequence</span>,
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::Yes</span>,
                 )<span class="question-mark">?</span>;
@@ -1116,7 +1114,7 @@
                     <span class="ident">QueryNextSequenceReceiveRequest</span> {
                         <span class="ident">port_id</span>,
                         <span class="ident">channel_id</span>,
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::Yes</span>,
                 )<span class="question-mark">?</span>;
@@ -1129,7 +1127,7 @@
                         <span class="ident">QueryChannelRequest</span> {
                             <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">clone</span>(),
                             <span class="ident">channel_id</span>,
-                            <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                            <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                         },
                         <span class="ident">IncludeProof::Yes</span>,
                     )<span class="question-mark">?</span>;
@@ -1144,7 +1142,7 @@
                         <span class="ident">port_id</span>,
                         <span class="ident">channel_id</span>,
                         <span class="ident">sequence</span>,
-                        <span class="ident">height</span>: <span class="ident">HeightQuery::Specific</span>(<span class="ident">height</span>),
+                        <span class="ident">height</span>: <span class="ident">QueryHeight::Specific</span>(<span class="ident">height</span>),
                     },
                     <span class="ident">IncludeProof::Yes</span>,
                 )<span class="question-mark">?</span>;
