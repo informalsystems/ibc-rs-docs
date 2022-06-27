@@ -241,6 +241,17 @@
 <span id="236">236</span>
 <span id="237">237</span>
 <span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
 
@@ -273,14 +284,16 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// There are two possible ways to invoke this command:</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// `create channel --port-a &lt;Port-ID&gt; --port-b &lt;Port-ID&gt; &lt;Chain-A-ID&gt; &lt;Connection-ID&gt;` is the default</span>
-<span class="doccomment">/// way in which this command should be used, specifying a `Connection-ID` for this new channel</span>
-<span class="doccomment">/// to re-use. The command expects that `Connection-ID` is associated with chain A.</span>
+<span class="doccomment">/// `create channel --a-port &lt;A_PORT_ID&gt; --b-port &lt;B_PORT_ID&gt; --a-chain &lt;A_CHAIN_ID&gt; --a-conn &lt;A_CONNECTION_ID&gt;`</span>
+<span class="doccomment">/// is the default way in which this command should be used, specifying a `Connection-ID`</span>
+<span class="doccomment">/// associated with chain A for this new channel to re-use.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// `create channel --port-a &lt;Port-ID&gt; --port-b &lt;Port-ID&gt; &lt;Chain-A-ID&gt; &lt;Chain-B-ID&gt; --new-client-connection`</span>
-<span class="doccomment">/// to indicate that a new connection/client pair is being created as part of this new channel.</span>
-<span class="doccomment">/// This brings up an interactive yes/no prompt to ensure that the operator at least</span>
-<span class="doccomment">/// considers the fact that they&#39;re initializing a new connection with the channel.</span>
+<span class="doccomment">/// `create channel --a-port &lt;A_PORT_ID&gt; --b-port &lt;B_PORT_ID&gt; --a-chain &lt;A_CHAIN_ID&gt; --b-chain &lt;B_CHAIN_ID&gt; --new-client-conn`</span>
+<span class="doccomment">/// can alternatively be used to indicate that a new connection/client pair is being</span>
+<span class="doccomment">/// created as part of this new channel. This brings up an interactive yes/no prompt</span>
+<span class="doccomment">/// to ensure that the operator at least considers the fact that they&#39;re initializing a</span>
+<span class="doccomment">/// new connection with the channel. This prompt can be skipped by appending the `--yes`</span>
+<span class="doccomment">/// flag to the command.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Note that `Connection-ID`s have to be considered based off of the chain&#39;s perspective. Although</span>
 <span class="doccomment">/// chain A and chain B might refer to the connection with different names, they are actually referring</span>
@@ -338,7 +351,10 @@
         <span class="ident">long</span>,
         <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Indicates that a new client and connection will be created underlying the new channel&quot;</span>
     )]</span>
-    <span class="ident">new_client_connection</span>: <span class="ident">bool</span>,
+    <span class="ident">new_client_conn</span>: <span class="ident">bool</span>,
+
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Skip new_client_conn confirmation&quot;</span>)]</span>
+    <span class="ident">yes</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Runnable</span> <span class="kw">for</span> <span class="ident">CreateChannelCommand</span> {
@@ -347,40 +363,46 @@
             <span class="prelude-val">Some</span>(<span class="ident">conn</span>) =&gt; <span class="self">self</span>.<span class="ident">run_reusing_connection</span>(<span class="ident">conn</span>),
             <span class="prelude-val">None</span> =&gt; <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_b</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">chain_b</span>) =&gt; {
-                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">new_client_connection</span> {
-                        <span class="kw">match</span> <span class="ident">Confirm::new</span>()
-                            .<span class="ident">with_prompt</span>(<span class="macro">format!</span>(
-                                <span class="string">&quot;{}: {}\n{}: {}&quot;</span>,
-                                <span class="ident">style</span>(<span class="string">&quot;WARN&quot;</span>).<span class="ident">yellow</span>(),
-                                <span class="ident">PROMPT</span>,
-                                <span class="ident">style</span>(<span class="string">&quot;Hint&quot;</span>).<span class="ident">cyan</span>(),
-                                <span class="ident">HINT</span>
-                            ))
-                            .<span class="ident">interact</span>()
-                        {
-                            <span class="prelude-val">Ok</span>(<span class="ident">confirm</span>) =&gt; {
-                                <span class="kw">if</span> <span class="ident">confirm</span> {
-                                    <span class="self">self</span>.<span class="ident">run_using_new_connection</span>(<span class="ident">chain_b</span>);
-                                } <span class="kw">else</span> {
-                                    <span class="ident">Output::error</span>(<span class="string">&quot;You elected not to create new clients and connections. Please re-invoke `create channel` with a pre-existing connection ID&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">exit</span>();
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">new_client_conn</span> {
+                        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">yes</span> {
+                            <span class="self">self</span>.<span class="ident">run_using_new_connection</span>(<span class="ident">chain_b</span>);
+                        } <span class="kw">else</span> {
+                            <span class="kw">match</span> <span class="ident">Confirm::new</span>()
+                                .<span class="ident">with_prompt</span>(<span class="macro">format!</span>(
+                                    <span class="string">&quot;{}: {}\n{}: {}&quot;</span>,
+                                    <span class="ident">style</span>(<span class="string">&quot;WARN&quot;</span>).<span class="ident">yellow</span>(),
+                                    <span class="ident">PROMPT</span>,
+                                    <span class="ident">style</span>(<span class="string">&quot;Hint&quot;</span>).<span class="ident">cyan</span>(),
+                                    <span class="ident">HINT</span>
+                                ))
+                                .<span class="ident">interact</span>()
+                            {
+                                <span class="prelude-val">Ok</span>(<span class="ident">confirm</span>) =&gt; {
+                                    <span class="kw">if</span> <span class="ident">confirm</span> {
+                                        <span class="self">self</span>.<span class="ident">run_using_new_connection</span>(<span class="ident">chain_b</span>);
+                                    } <span class="kw">else</span> {
+                                        <span class="ident">Output::error</span>(<span class="string">&quot;You elected not to create new clients and connections. Please re-invoke `create channel` with a pre-existing connection ID&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">exit</span>();
+                                    }
                                 }
-                            }
-                            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-                                <span class="ident">Output::error</span>(<span class="macro">format!</span>(
-                                    <span class="string">&quot;An error occurred while waiting for user input: {}&quot;</span>,
-                                    <span class="ident">e</span>
-                                ));
+                                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+                                    <span class="ident">Output::error</span>(<span class="macro">format!</span>(
+                                        <span class="string">&quot;An error occurred while waiting for user input: {}&quot;</span>,
+                                        <span class="ident">e</span>
+                                    ));
+                                }
                             }
                         }
                     } <span class="kw">else</span> {
                         <span class="ident">Output::error</span>(
-                                <span class="string">&quot;The `--new-client-connection` flag is required if invoking with `--chain-b`&quot;</span>.<span class="ident">to_string</span>()
-                            )
-                            .<span class="ident">exit</span>();
+                            <span class="string">&quot;The `--new-client-conn` flag is required if invoking with `--b-chain`&quot;</span>
+                                .<span class="ident">to_string</span>(),
+                        )
+                        .<span class="ident">exit</span>();
                     }
                 }
-                <span class="prelude-val">None</span> =&gt; <span class="ident">Output::error</span>(<span class="string">&quot;Missing one of `&lt;chain-b&gt;` or `&lt;connection-a&gt;`&quot;</span>.<span class="ident">to_string</span>())
-                    .<span class="ident">exit</span>(),
+                <span class="prelude-val">None</span> =&gt; {
+                    <span class="ident">Output::error</span>(<span class="string">&quot;Missing one of `--b-chain` or `--a-conn`&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">exit</span>()
+                }
             },
         }
     }
