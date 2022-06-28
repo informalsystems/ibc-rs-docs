@@ -111,6 +111,9 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
 
@@ -125,13 +128,18 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Command</span>, <span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KeysDeleteCmd</span> {
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the chain&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(
+        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;chain&quot;</span>,
+        <span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>,
+        <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;CHAIN_ID&quot;</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the chain&quot;</span>
+    )]</span>
     <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;n&#39;</span>, <span class="ident">long</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;name of the key&quot;</span>)]</span>
-    <span class="ident">name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;key-name&quot;</span>, <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;KEY_NAME&quot;</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Name of the key&quot;</span>)]</span>
+    <span class="ident">key_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;a&#39;</span>, <span class="ident">long</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;delete all keys&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;all&quot;</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Delete all keys&quot;</span>)]</span>
     <span class="ident">all</span>: <span class="ident">bool</span>,
 }
 
@@ -144,17 +152,15 @@
             .<span class="ident">find_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">chain_id</span>)
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;chain &#39;{}&#39; not found in configuration file&quot;</span>, <span class="self">self</span>.<span class="ident">chain_id</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">all</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">name</span>) {
+        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">all</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">key_name</span>) {
             (<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;cannot set both -n/--name and -a/--all&quot;</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>());
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;cannot set both --key-name and --all&quot;</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>());
             }
             (<span class="bool-val">false</span>, <span class="prelude-val">None</span>) =&gt; {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;must provide either -n/--name or -a/--all&quot;</span>
-                    .<span class="ident">to_owned</span>()
-                    .<span class="ident">into</span>());
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="string">&quot;must provide either --key-name or --all&quot;</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>());
             }
             (<span class="bool-val">true</span>, <span class="prelude-val">None</span>) =&gt; <span class="ident">KeysDeleteId::All</span>,
-            (<span class="bool-val">false</span>, <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">name</span>)) =&gt; <span class="ident">KeysDeleteId::Named</span>(<span class="ident">name</span>),
+            (<span class="bool-val">false</span>, <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">key_name</span>)) =&gt; <span class="ident">KeysDeleteId::Named</span>(<span class="ident">key_name</span>),
         };
 
         <span class="prelude-val">Ok</span>(<span class="ident">KeysDeleteOptions</span> {
@@ -193,10 +199,10 @@
                 }
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)).<span class="ident">exit</span>(),
             },
-            <span class="ident">KeysDeleteId::Named</span>(<span class="ident">name</span>) =&gt; <span class="kw">match</span> <span class="ident">delete_key</span>(<span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">config</span>, <span class="ident">name</span>) {
+            <span class="ident">KeysDeleteId::Named</span>(<span class="ident">key_name</span>) =&gt; <span class="kw">match</span> <span class="ident">delete_key</span>(<span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">config</span>, <span class="ident">key_name</span>) {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="ident">Output::success_msg</span>(<span class="macro">format!</span>(
                     <span class="string">&quot;Removed key ({}) on chain {}&quot;</span>,
-                    <span class="ident">name</span>, <span class="ident">opts</span>.<span class="ident">config</span>.<span class="ident">id</span>
+                    <span class="ident">key_name</span>, <span class="ident">opts</span>.<span class="ident">config</span>.<span class="ident">id</span>
                 ))
                 .<span class="ident">exit</span>(),
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)).<span class="ident">exit</span>(),

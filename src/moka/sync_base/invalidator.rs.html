@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.8.5/src/sync/invalidator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>invalidator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.8.6/src/sync_base/invalidator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>invalidator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -488,14 +488,20 @@
 <span id="483">483</span>
 <span id="484">484</span>
 <span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused</span>)]</span>
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">base_cache::Inner</span>, <span class="ident">AccessTime</span>, <span class="ident">KvEntry</span>, <span class="ident">PredicateId</span>, <span class="ident">PredicateIdStr</span>, <span class="ident">ValueEntry</span>};
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">base_cache::Inner</span>, <span class="ident">PredicateId</span>, <span class="ident">PredicateIdStr</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">common</span>::{
-        <span class="ident">thread_pool</span>::{<span class="ident">PoolName</span>, <span class="ident">ThreadPool</span>, <span class="ident">ThreadPoolRegistry</span>},
+        <span class="ident">concurrent</span>::{
+            <span class="ident">thread_pool</span>::{<span class="ident">PoolName</span>, <span class="ident">ThreadPool</span>, <span class="ident">ThreadPoolRegistry</span>},
+            <span class="ident">unsafe_weak_pointer::UnsafeWeakPointer</span>,
+            <span class="ident">AccessTime</span>, <span class="ident">KvEntry</span>, <span class="ident">ValueEntry</span>,
+        },
         <span class="ident">time::Instant</span>,
-        <span class="ident">unsafe_weak_pointer::UnsafeWeakPointer</span>,
     },
     <span class="ident">PredicateError</span>,
 };
@@ -638,7 +644,7 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">preds</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">predicates</span>.<span class="ident">write</span>();
 
         <span class="kw">while</span> <span class="ident">tries</span> <span class="op">&lt;</span> <span class="ident">MAX_RETRY</span> {
-            <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">Uuid::new_v4</span>().<span class="ident">to_hyphenated</span>().<span class="ident">to_string</span>();
+            <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">Uuid::new_v4</span>().<span class="ident">as_hyphenated</span>().<span class="ident">to_string</span>();
             <span class="kw">if</span> <span class="ident">preds</span>.<span class="ident">contains_key</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>) {
                 <span class="ident">tries</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
 

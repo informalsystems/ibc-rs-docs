@@ -273,6 +273,11 @@
 <span id="268">268</span>
 <span id="269">269</span>
 <span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Debug</span>, <span class="ident">Error</span>, <span class="ident">Formatter</span>};
 
 <span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
@@ -295,20 +300,25 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Command</span>, <span class="ident">Debug</span>, <span class="ident">Parser</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">QueryChannelsCmd</span> {
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the chain to query&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(
+        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;chain&quot;</span>,
+        <span class="ident">required</span> <span class="op">=</span> <span class="bool-val">true</span>,
+        <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;CHAIN_ID&quot;</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the chain to query&quot;</span>
+    )]</span>
     <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
 
+    <span class="comment">// TODO: Filtering by counterparty chain does not work currently.</span>
+    <span class="comment">//  https://github.com/informalsystems/ibc-rs/issues/1132#issuecomment-1165324496</span>
+    <span class="comment">// #[clap(</span>
+    <span class="comment">//     long = &quot;counterparty-chain&quot;,</span>
+    <span class="comment">//     value_name = &quot;COUNTERPARTY_CHAIN_ID&quot;,</span>
+    <span class="comment">//     help = &quot;Filter the query response by the this counterparty chain&quot;</span>
+    <span class="comment">// )]</span>
+    <span class="comment">// dst_chain_id: Option&lt;ChainId&gt;,</span>
     <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;d&#39;</span>,
-        <span class="ident">long</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;identifier of the channel&#39;s destination chain&quot;</span>
-    )]</span>
-    <span class="ident">destination_chain</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChainId</span><span class="op">&gt;</span>,
-
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;v&#39;</span>,
-        <span class="ident">long</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;enable verbose output, displaying all client and connection ids&quot;</span>
+        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;verbose&quot;</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Enable verbose output, displaying the client and connection ids for each channel in the response&quot;</span>
     )]</span>
     <span class="ident">verbose</span>: <span class="ident">bool</span>,
 }
@@ -364,7 +374,7 @@
             <span class="kw">let</span> <span class="ident">channel_ends</span> <span class="op">=</span> <span class="ident">query_channel_ends</span>(
                 <span class="kw-2">&amp;mut</span> <span class="ident">registry</span>,
                 <span class="kw-2">&amp;</span><span class="ident">chain</span>,
-                <span class="ident">cmd</span>.<span class="ident">destination_chain</span>.<span class="ident">as_ref</span>(),
+                <span class="prelude-val">None</span>,
                 <span class="ident">channel_end</span>,
                 <span class="ident">connection_id</span>,
                 <span class="ident">chain_id</span>,
@@ -392,7 +402,7 @@
 <span class="kw">fn</span> <span class="ident">query_channel_ends</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
     <span class="ident">registry</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
     <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="ident">Chain</span>,
-    <span class="ident">destination_chain</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChainId</span><span class="op">&gt;</span>,
+    <span class="ident">dst_chain_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ChainId</span><span class="op">&gt;</span>,
     <span class="ident">channel_end</span>: <span class="ident">ChannelEnd</span>,
     <span class="ident">connection_id</span>: <span class="ident">ConnectionId</span>,
     <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
@@ -417,7 +427,7 @@
     )<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">counterparty_chain_id</span> <span class="op">=</span> <span class="ident">client_state</span>.<span class="ident">chain_id</span>();
 
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dst_chain_id</span>) <span class="op">=</span> <span class="ident">destination_chain</span> {
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">dst_chain_id</span>) <span class="op">=</span> <span class="ident">dst_chain_id</span> {
         <span class="kw">if</span> <span class="ident">dst_chain_id</span> <span class="op">!</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">counterparty_chain_id</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
                 <span class="string">&quot;mismatch between supplied destination chain ({}) and counterparty chain ({})&quot;</span>,
