@@ -477,6 +477,10 @@
 <span id="472">472</span>
 <span id="473">473</span>
 <span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 
 <span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
@@ -601,14 +605,14 @@
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;height&quot;</span>,
         <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;REFERENCE_HEIGHT&quot;</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The target height of the client update&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The target height of the client update. Leave unspecified for latest height.&quot;</span>
     )]</span>
     <span class="ident">target_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;trusted-height&quot;</span>,
         <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;REFERENCE_TRUSTED_HEIGHT&quot;</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The trusted height of the client update&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The trusted height of the client update. Leave unspecified for latest height.&quot;</span>
     )]</span>
     <span class="ident">trusted_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
@@ -645,12 +649,16 @@
         };
 
         <span class="kw">let</span> <span class="ident">target_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">target_height</span>.<span class="ident">map_or</span>(<span class="ident">QueryHeight::Latest</span>, <span class="op">|</span><span class="ident">height</span><span class="op">|</span> {
-            <span class="ident">QueryHeight::Specific</span>(<span class="ident">Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>))
+            <span class="ident">QueryHeight::Specific</span>(
+                <span class="ident">Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>)
+                    .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>),
+            )
         });
 
-        <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">trusted_height</span>
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">height</span><span class="op">|</span> <span class="ident">Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>));
+        <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">trusted_height</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">height</span><span class="op">|</span> {
+            <span class="ident">Height::new</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>)
+                .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>)
+        });
 
         <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">ForeignClient::find</span>(<span class="ident">src_chain</span>, <span class="ident">dst_chain</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dst_client_id</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);

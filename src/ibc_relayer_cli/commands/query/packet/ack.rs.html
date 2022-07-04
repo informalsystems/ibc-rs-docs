@@ -111,7 +111,7 @@
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cli_utils::spawn_chain_runtime</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::conclude::Output</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::conclude</span>::{<span class="ident">exit_with_unrecoverable_error</span>, <span class="ident">Output</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
@@ -154,7 +154,7 @@
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;height&quot;</span>,
         <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;HEIGHT&quot;</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Height of the state to query&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Height of the state to query. Leave unspecified for latest height.&quot;</span>
     )]</span>
     <span class="ident">height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
@@ -174,10 +174,10 @@
                     <span class="ident">channel_id</span>: <span class="self">self</span>.<span class="ident">channel_id</span>,
                     <span class="ident">sequence</span>: <span class="self">self</span>.<span class="ident">sequence</span>,
                     <span class="ident">height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(<span class="ident">QueryHeight::Latest</span>, <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
-                        <span class="ident">QueryHeight::Specific</span>(<span class="ident">ibc::Height::new</span>(
-                            <span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(),
-                            <span class="ident">revision_height</span>,
-                        ))
+                        <span class="ident">QueryHeight::Specific</span>(
+                            <span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>)
+                                .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>),
+                        )
                     }),
                 },
                 <span class="ident">IncludeProof::No</span>,

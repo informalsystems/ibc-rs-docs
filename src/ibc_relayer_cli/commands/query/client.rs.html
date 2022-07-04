@@ -319,6 +319,12 @@
 <span id="314">314</span>
 <span id="315">315</span>
 <span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
 <span class="kw">use</span> <span class="ident">tracing::debug</span>;
@@ -380,7 +386,10 @@
             <span class="ident">QueryClientStateRequest</span> {
                 <span class="ident">client_id</span>: <span class="self">self</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
                 <span class="ident">height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(<span class="ident">QueryHeight::Latest</span>, <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
-                    <span class="ident">QueryHeight::Specific</span>(<span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>))
+                    <span class="ident">QueryHeight::Specific</span>(
+                        <span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>)
+                            .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>),
+                    )
                 }),
             },
             <span class="ident">IncludeProof::No</span>,
@@ -456,7 +465,8 @@
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">consensus_height</span> {
             <span class="prelude-val">Some</span>(<span class="ident">cs_height</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">consensus_height</span> <span class="op">=</span> <span class="ident">ibc::Height::new</span>(<span class="ident">counterparty_chain</span>.<span class="ident">version</span>(), <span class="ident">cs_height</span>);
+                <span class="kw">let</span> <span class="ident">consensus_height</span> <span class="op">=</span> <span class="ident">ibc::Height::new</span>(<span class="ident">counterparty_chain</span>.<span class="ident">version</span>(), <span class="ident">cs_height</span>)
+                    .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
                 <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">chain</span>
                     .<span class="ident">query_consensus_state</span>(
@@ -466,10 +476,10 @@
                             <span class="ident">query_height</span>: <span class="self">self</span>.<span class="ident">height</span>.<span class="ident">map_or</span>(
                                 <span class="ident">QueryHeight::Latest</span>,
                                 <span class="op">|</span><span class="ident">revision_height</span><span class="op">|</span> {
-                                    <span class="ident">QueryHeight::Specific</span>(<span class="ident">ibc::Height::new</span>(
-                                        <span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(),
-                                        <span class="ident">revision_height</span>,
-                                    ))
+                                    <span class="ident">QueryHeight::Specific</span>(
+                                        <span class="ident">ibc::Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>)
+                                            .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>),
+                                    )
                                 },
                             ),
                         },
@@ -533,7 +543,7 @@
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;height&quot;</span>,
         <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;HEIGHT&quot;</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The chain height context for the query&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;The chain height context for the query. Leave unspecified for latest height.&quot;</span>
     )]</span>
     <span class="ident">height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
@@ -565,12 +575,14 @@
         };
 
         <span class="kw">let</span> <span class="ident">consensus_height</span> <span class="op">=</span>
-            <span class="ident">ibc::Height::new</span>(<span class="ident">counterparty_chain</span>.<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">consensus_height</span>);
+            <span class="ident">ibc::Height::new</span>(<span class="ident">counterparty_chain</span>.<span class="ident">version</span>(), <span class="self">self</span>.<span class="ident">consensus_height</span>)
+                .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="kw">let</span> <span class="ident">query_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">height</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">revision_height</span>) =&gt; {
-                <span class="ident">QueryHeight::Specific</span>(<span class="ident">Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>))
-            }
+            <span class="prelude-val">Some</span>(<span class="ident">revision_height</span>) =&gt; <span class="ident">QueryHeight::Specific</span>(
+                <span class="ident">Height::new</span>(<span class="ident">chain</span>.<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">revision_height</span>)
+                    .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>),
+            ),
             <span class="prelude-val">None</span> =&gt; <span class="ident">QueryHeight::Latest</span>,
         };
 

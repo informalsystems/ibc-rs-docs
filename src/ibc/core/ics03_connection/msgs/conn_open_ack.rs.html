@@ -265,9 +265,6 @@
 <span id="260">260</span>
 <span id="261">261</span>
 <span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck</span> <span class="kw">as</span> <span class="ident">RawMsgConnectionOpenAck</span>;
@@ -297,13 +294,10 @@
 }
 
 <span class="kw">impl</span> <span class="ident">MsgConnectionOpenAck</span> {
-    <span class="doccomment">/// Getter for accessing the `consensus_height` field from this message. Returns the special</span>
-    <span class="doccomment">/// value `Height(0)` if this field is not set.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">consensus_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Height</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">proofs</span>.<span class="ident">consensus_proof</span>() {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">Height::zero</span>(),
-            <span class="prelude-val">Some</span>(<span class="ident">p</span>) =&gt; <span class="ident">p</span>.<span class="ident">height</span>(),
-        }
+    <span class="doccomment">/// Getter for accessing the `consensus_height` field from this message.</span>
+    <span class="doccomment">/// Returns `None` if this field is not set.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">consensus_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">proofs</span>.<span class="ident">consensus_proof</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">proof</span><span class="op">|</span> <span class="ident">proof</span>.<span class="ident">height</span>())
     }
 }
 
@@ -328,8 +322,8 @@
     <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">msg</span>: <span class="ident">RawMsgConnectionOpenAck</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">consensus_height</span> <span class="op">=</span> <span class="ident">msg</span>
             .<span class="ident">consensus_height</span>
-            .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_consensus_height</span>)<span class="question-mark">?</span>
-            .<span class="ident">into</span>();
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">raw_height</span><span class="op">|</span> <span class="ident">raw_height</span>.<span class="ident">try_into</span>().<span class="ident">ok</span>())
+            .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_consensus_height</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">consensus_proof_obj</span> <span class="op">=</span> <span class="ident">ConsensusProof::new</span>(
             <span class="ident">msg</span>.<span class="ident">proof_consensus</span>
                 .<span class="ident">try_into</span>()
@@ -340,8 +334,8 @@
 
         <span class="kw">let</span> <span class="ident">proof_height</span> <span class="op">=</span> <span class="ident">msg</span>
             .<span class="ident">proof_height</span>
-            .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_proof_height</span>)<span class="question-mark">?</span>
-            .<span class="ident">into</span>();
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">raw_height</span><span class="op">|</span> <span class="ident">raw_height</span>.<span class="ident">try_into</span>().<span class="ident">ok</span>())
+            .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_proof_height</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">client_proof</span> <span class="op">=</span>
             <span class="ident">CommitmentProofBytes::try_from</span>(<span class="ident">msg</span>.<span class="ident">proof_client</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_proof</span>)<span class="question-mark">?</span>;

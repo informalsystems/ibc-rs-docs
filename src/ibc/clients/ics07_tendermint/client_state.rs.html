@@ -666,17 +666,6 @@
 <span id="661">661</span>
 <span id="662">662</span>
 <span id="663">663</span>
-<span id="664">664</span>
-<span id="665">665</span>
-<span id="666">666</span>
-<span id="667">667</span>
-<span id="668">668</span>
-<span id="669">669</span>
-<span id="670">670</span>
-<span id="671">671</span>
-<span id="672">672</span>
-<span id="673">673</span>
-<span id="674">674</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
@@ -686,6 +675,7 @@
 <span class="kw">use</span> <span class="ident">tendermint_light_client_verifier::options::Options</span>;
 <span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
 
+<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1::Height</span> <span class="kw">as</span> <span class="ident">RawHeight</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::lightclients::tendermint::v1::ClientState</span> <span class="kw">as</span> <span class="ident">RawClientState</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::clients::ics07_tendermint::error::Error</span>;
@@ -756,13 +746,6 @@
             )));
         }
 
-        <span class="comment">// Basic validation for the latest_height parameter.</span>
-        <span class="kw">if</span> <span class="ident">latest_height</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">Height::zero</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::validation</span>(
-                <span class="string">&quot;ClientState latest height must be greater than zero&quot;</span>.<span class="ident">to_string</span>(),
-            ));
-        }
-
         <span class="comment">// `TrustThreshold` is guaranteed to be in the range `[0, 1)`, but a `TrustThreshold::ZERO`</span>
         <span class="comment">// value is invalid in this context</span>
         <span class="kw">if</span> <span class="ident">trust_level</span> <span class="op">==</span> <span class="ident">TrustThreshold::ZERO</span> {
@@ -796,22 +779,18 @@
         <span class="self">self</span>.<span class="ident">latest_height</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_header</span>(<span class="self">self</span>, <span class="ident">h</span>: <span class="ident">Header</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// TODO: Clarify which fields should update.</span>
-        <span class="ident">ClientState</span> {
-            <span class="ident">latest_height</span>: <span class="self">self</span>
-                .<span class="ident">latest_height</span>
-                .<span class="ident">with_revision_height</span>(<span class="ident">u64::from</span>(<span class="ident">h</span>.<span class="ident">signed_header</span>.<span class="ident">header</span>.<span class="ident">height</span>)),
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_header</span>(<span class="self">self</span>, <span class="ident">h</span>: <span class="ident">Header</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">ClientState</span> {
+            <span class="ident">latest_height</span>: <span class="ident">Height::new</span>(
+                <span class="self">self</span>.<span class="ident">latest_height</span>.<span class="ident">revision_number</span>(),
+                <span class="ident">h</span>.<span class="ident">signed_header</span>.<span class="ident">header</span>.<span class="ident">height</span>.<span class="ident">into</span>(),
+            )
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_header_height</span>(<span class="ident">h</span>.<span class="ident">signed_header</span>.<span class="ident">header</span>.<span class="ident">height</span>.<span class="ident">value</span>()))<span class="question-mark">?</span>,
             ..<span class="self">self</span>
-        }
+        })
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_frozen_height</span>(<span class="self">self</span>, <span class="ident">h</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">h</span> <span class="op">==</span> <span class="ident">Height::zero</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::validation</span>(
-                <span class="string">&quot;ClientState frozen height must be greater than zero&quot;</span>.<span class="ident">to_string</span>(),
-            ));
-        }
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">frozen_height</span>: <span class="prelude-val">Some</span>(<span class="ident">h</span>),
             ..<span class="self">self</span>
@@ -943,14 +922,12 @@
             .<span class="ident">clone</span>()
             .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_trusting_period</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">frozen_height</span> <span class="op">=</span> <span class="ident">raw</span>.<span class="ident">frozen_height</span>.<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">raw_height</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">raw_height</span>.<span class="ident">into</span>();
-            <span class="kw">if</span> <span class="ident">height</span> <span class="op">==</span> <span class="ident">Height::zero</span>() {
-                <span class="prelude-val">None</span>
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">height</span>)
-            }
-        });
+        <span class="comment">// In `RawClientState`, a `frozen_height` of `0` means &quot;not frozen&quot;.</span>
+        <span class="comment">// See:</span>
+        <span class="comment">// https://github.com/cosmos/ibc-go/blob/8422d0c4c35ef970539466c5bdec1cd27369bab3/modules/light-clients/07-tendermint/types/client_state.go#L74</span>
+        <span class="kw">let</span> <span class="ident">frozen_height</span> <span class="op">=</span> <span class="ident">raw</span>
+            .<span class="ident">frozen_height</span>
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">raw_height</span><span class="op">|</span> <span class="ident">raw_height</span>.<span class="ident">try_into</span>().<span class="ident">ok</span>());
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="ident">raw</span>.<span class="ident">chain_id</span>.<span class="ident">as_str</span>()),
@@ -975,7 +952,8 @@
             <span class="ident">latest_height</span>: <span class="ident">raw</span>
                 .<span class="ident">latest_height</span>
                 .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_latest_height</span>)<span class="question-mark">?</span>
-                .<span class="ident">into</span>(),
+                .<span class="ident">try_into</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::missing_latest_height</span>())<span class="question-mark">?</span>,
             <span class="ident">frozen_height</span>,
             <span class="ident">upgrade_path</span>: <span class="ident">raw</span>.<span class="ident">upgrade_path</span>,
             <span class="ident">allow_update</span>: <span class="ident">AllowUpdate</span> {
@@ -995,12 +973,17 @@
             <span class="ident">trusting_period</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">trusting_period</span>.<span class="ident">into</span>()),
             <span class="ident">unbonding_period</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">unbonding_period</span>.<span class="ident">into</span>()),
             <span class="ident">max_clock_drift</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">max_clock_drift</span>.<span class="ident">into</span>()),
-            <span class="ident">frozen_height</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">frozen_height</span>.<span class="ident">unwrap_or_else</span>(<span class="ident">Height::zero</span>).<span class="ident">into</span>()),
+            <span class="ident">frozen_height</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">frozen_height</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">height</span><span class="op">|</span> <span class="ident">height</span>.<span class="ident">into</span>()).<span class="ident">unwrap_or</span>(
+                <span class="ident">RawHeight</span> {
+                    <span class="ident">revision_number</span>: <span class="number">0</span>,
+                    <span class="ident">revision_height</span>: <span class="number">0</span>,
+                },
+            )),
             <span class="ident">latest_height</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">latest_height</span>.<span class="ident">into</span>()),
             <span class="ident">proof_specs</span>: <span class="ident">value</span>.<span class="ident">proof_specs</span>.<span class="ident">into</span>(),
+            <span class="ident">upgrade_path</span>: <span class="ident">value</span>.<span class="ident">upgrade_path</span>,
             <span class="ident">allow_update_after_expiry</span>: <span class="ident">value</span>.<span class="ident">allow_update</span>.<span class="ident">after_expiry</span>,
             <span class="ident">allow_update_after_misbehaviour</span>: <span class="ident">value</span>.<span class="ident">allow_update</span>.<span class="ident">after_misbehaviour</span>,
-            <span class="ident">upgrade_path</span>: <span class="ident">value</span>.<span class="ident">upgrade_path</span>,
         }
     }
 }
@@ -1058,7 +1041,7 @@
             <span class="ident">trusting_period</span>: <span class="ident">Duration::new</span>(<span class="number">64000</span>, <span class="number">0</span>),
             <span class="ident">unbonding_period</span>: <span class="ident">Duration::new</span>(<span class="number">128000</span>, <span class="number">0</span>),
             <span class="ident">max_clock_drift</span>: <span class="ident">Duration::new</span>(<span class="number">3</span>, <span class="number">0</span>),
-            <span class="ident">latest_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">10</span>),
+            <span class="ident">latest_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">10</span>).<span class="ident">unwrap</span>(),
             <span class="ident">proof_specs</span>: <span class="ident">ProofSpecs::default</span>(),
             <span class="ident">upgrade_path</span>: <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()],
             <span class="ident">allow_update</span>: <span class="ident">AllowUpdate</span> {
@@ -1108,14 +1091,6 @@
                 <span class="ident">name</span>: <span class="string">&quot;Invalid (too small) trusting trust threshold&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">params</span>: <span class="ident">ClientStateParams</span> {
                     <span class="ident">trust_level</span>: <span class="ident">TrustThreshold::ZERO</span>,
-                    ..<span class="ident">default_params</span>.<span class="ident">clone</span>()
-                },
-                <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
-            },
-            <span class="ident">Test</span> {
-                <span class="ident">name</span>: <span class="string">&quot;Invalid (too small) latest height&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">params</span>: <span class="ident">ClientStateParams</span> {
-                    <span class="ident">latest_height</span>: <span class="ident">Height::zero</span>(),
                     ..<span class="ident">default_params</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
@@ -1181,9 +1156,9 @@
                 <span class="ident">name</span>: <span class="string">&quot;Successful delay verification&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">params</span>: <span class="ident">Params</span> {
                     <span class="ident">current_time</span>: (<span class="ident">now</span> <span class="op">+</span> <span class="ident">Duration::from_nanos</span>(<span class="number">2000</span>)).<span class="ident">unwrap</span>(),
-                    <span class="ident">current_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">5</span>),
+                    <span class="ident">current_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">5</span>).<span class="ident">unwrap</span>(),
                     <span class="ident">processed_time</span>: (<span class="ident">now</span> <span class="op">+</span> <span class="ident">Duration::from_nanos</span>(<span class="number">1000</span>)).<span class="ident">unwrap</span>(),
-                    <span class="ident">processed_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">3</span>),
+                    <span class="ident">processed_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">3</span>).<span class="ident">unwrap</span>(),
                     <span class="ident">delay_period_time</span>: <span class="ident">Duration::from_nanos</span>(<span class="number">500</span>),
                     <span class="ident">delay_period_blocks</span>: <span class="number">2</span>,
                 },
@@ -1193,9 +1168,9 @@
                 <span class="ident">name</span>: <span class="string">&quot;Delay period(time) has not elapsed&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">params</span>: <span class="ident">Params</span> {
                     <span class="ident">current_time</span>: (<span class="ident">now</span> <span class="op">+</span> <span class="ident">Duration::from_nanos</span>(<span class="number">1200</span>)).<span class="ident">unwrap</span>(),
-                    <span class="ident">current_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">5</span>),
+                    <span class="ident">current_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">5</span>).<span class="ident">unwrap</span>(),
                     <span class="ident">processed_time</span>: (<span class="ident">now</span> <span class="op">+</span> <span class="ident">Duration::from_nanos</span>(<span class="number">1000</span>)).<span class="ident">unwrap</span>(),
-                    <span class="ident">processed_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">3</span>),
+                    <span class="ident">processed_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">3</span>).<span class="ident">unwrap</span>(),
                     <span class="ident">delay_period_time</span>: <span class="ident">Duration::from_nanos</span>(<span class="number">500</span>),
                     <span class="ident">delay_period_blocks</span>: <span class="number">2</span>,
                 },
@@ -1205,9 +1180,9 @@
                 <span class="ident">name</span>: <span class="string">&quot;Delay period(blocks) has not elapsed&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">params</span>: <span class="ident">Params</span> {
                     <span class="ident">current_time</span>: (<span class="ident">now</span> <span class="op">+</span> <span class="ident">Duration::from_nanos</span>(<span class="number">2000</span>)).<span class="ident">unwrap</span>(),
-                    <span class="ident">current_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">5</span>),
+                    <span class="ident">current_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">5</span>).<span class="ident">unwrap</span>(),
                     <span class="ident">processed_time</span>: (<span class="ident">now</span> <span class="op">+</span> <span class="ident">Duration::from_nanos</span>(<span class="number">1000</span>)).<span class="ident">unwrap</span>(),
-                    <span class="ident">processed_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">4</span>),
+                    <span class="ident">processed_height</span>: <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">4</span>).<span class="ident">unwrap</span>(),
                     <span class="ident">delay_period_time</span>: <span class="ident">Duration::from_nanos</span>(<span class="number">500</span>),
                     <span class="ident">delay_period_blocks</span>: <span class="number">2</span>,
                 },
@@ -1245,7 +1220,7 @@
             <span class="ident">trusting_period</span>: <span class="ident">Duration::new</span>(<span class="number">64000</span>, <span class="number">0</span>),
             <span class="ident">unbonding_period</span>: <span class="ident">Duration::new</span>(<span class="number">128000</span>, <span class="number">0</span>),
             <span class="ident">max_clock_drift</span>: <span class="ident">Duration::new</span>(<span class="number">3</span>, <span class="number">0</span>),
-            <span class="ident">latest_height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">10</span>),
+            <span class="ident">latest_height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">10</span>).<span class="ident">unwrap</span>(),
             <span class="ident">proof_specs</span>: <span class="ident">ProofSpecs::default</span>(),
             <span class="ident">upgrade_path</span>: <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()],
             <span class="ident">allow_update</span>: <span class="ident">AllowUpdate</span> {
@@ -1264,21 +1239,23 @@
         <span class="kw">let</span> <span class="ident">tests</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Successful height verification&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">8</span>),
+                <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">8</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">setup</span>: <span class="prelude-val">None</span>,
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Invalid (too large)  client height&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">12</span>),
+                <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">12</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">setup</span>: <span class="prelude-val">None</span>,
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Invalid, client is frozen below current height&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">6</span>),
+                <span class="ident">height</span>: <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">6</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">setup</span>: <span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(<span class="op">|</span><span class="ident">client_state</span><span class="op">|</span> {
-                    <span class="ident">client_state</span>.<span class="ident">with_frozen_height</span>(<span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">5</span>)).<span class="ident">unwrap</span>()
+                    <span class="ident">client_state</span>
+                        .<span class="ident">with_frozen_height</span>(<span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">5</span>).<span class="ident">unwrap</span>())
+                        .<span class="ident">unwrap</span>()
                 })),
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -1339,7 +1316,8 @@
                 <span class="ident">Height::new</span>(
                     <span class="ident">ChainId::chain_version</span>(<span class="ident">tm_header</span>.<span class="ident">chain_id</span>.<span class="ident">as_str</span>()),
                     <span class="ident">u64::from</span>(<span class="ident">tm_header</span>.<span class="ident">height</span>),
-                ),
+                )
+                .<span class="ident">unwrap</span>(),
                 <span class="ident">Default::default</span>(),
                 <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()],
                 <span class="ident">AllowUpdate</span> {

@@ -472,7 +472,78 @@
 <span id="467">467</span>
 <span id="468">468</span>
 <span id="469">469</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::height::HeightErrorDetail</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
 
@@ -486,10 +557,16 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp</span>::{<span class="ident">Expiry::Expired</span>, <span class="ident">Timestamp</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::events</span>::{
+    <span class="ident">PKT_DST_CHANNEL_ATTRIBUTE_KEY</span>, <span class="ident">PKT_DST_PORT_ATTRIBUTE_KEY</span>, <span class="ident">PKT_SEQ_ATTRIBUTE_KEY</span>,
+    <span class="ident">PKT_SRC_CHANNEL_ATTRIBUTE_KEY</span>, <span class="ident">PKT_SRC_PORT_ATTRIBUTE_KEY</span>, <span class="ident">PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY</span>,
+    <span class="ident">PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY</span>,
+};
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::handler</span>::{
     <span class="ident">acknowledgement::AckPacketResult</span>, <span class="ident">recv_packet::RecvPacketResult</span>, <span class="ident">send_packet::SendPacketResult</span>,
     <span class="ident">timeout::TimeoutPacketResult</span>, <span class="ident">write_acknowledgement::WriteAckPacketResult</span>,
 };
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::timeout::TimeoutHeight</span>;
 
 <span class="doccomment">/// Enumeration of proof carrying ICS4 message, helper for relayer.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
@@ -580,7 +657,7 @@
     <span class="kw">pub</span> <span class="ident">destination_channel</span>: <span class="ident">ChannelId</span>,
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">serialize_with</span> <span class="op">=</span> <span class="string">&quot;crate::serializers::ser_hex_upper&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">timeout_height</span>: <span class="ident">Height</span>,
+    <span class="kw">pub</span> <span class="ident">timeout_height</span>: <span class="ident">TimeoutHeight</span>,
     <span class="kw">pub</span> <span class="ident">timeout_timestamp</span>: <span class="ident">Timestamp</span>,
 }
 
@@ -639,9 +716,12 @@
     <span class="doccomment">/// instead of the common-case where it results in</span>
     <span class="doccomment">/// [`MsgRecvPacket`](crate::core::ics04_channel::msgs::recv_packet::MsgRecvPacket).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timed_out</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">dst_chain_ts</span>: <span class="kw-2">&amp;</span><span class="ident">Timestamp</span>, <span class="ident">dst_chain_height</span>: <span class="ident">Height</span>) -&gt; <span class="ident">bool</span> {
-        (<span class="self">self</span>.<span class="ident">timeout_height</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Height::zero</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">timeout_height</span> <span class="op">&lt;</span> <span class="ident">dst_chain_height</span>)
-            <span class="op">|</span><span class="op">|</span> (<span class="self">self</span>.<span class="ident">timeout_timestamp</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Timestamp::none</span>()
-                <span class="op">&amp;&amp;</span> <span class="ident">dst_chain_ts</span>.<span class="ident">check_expiry</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">timeout_timestamp</span>) <span class="op">==</span> <span class="ident">Expired</span>)
+        <span class="kw">let</span> <span class="ident">height_timed_out</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">timeout_height</span>.<span class="ident">has_expired</span>(<span class="ident">dst_chain_height</span>);
+
+        <span class="kw">let</span> <span class="ident">timestamp_timed_out</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">timeout_timestamp</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Timestamp::none</span>()
+            <span class="op">&amp;&amp;</span> <span class="ident">dst_chain_ts</span>.<span class="ident">check_expiry</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">timeout_timestamp</span>) <span class="op">==</span> <span class="ident">Expired</span>;
+
+        <span class="ident">height_timed_out</span> <span class="op">|</span><span class="op">|</span> <span class="ident">timestamp_timed_out</span>
     }
 }
 
@@ -662,6 +742,20 @@
     }
 }
 
+<span class="doccomment">/// Parse a string into a timeout height expected to be stored in</span>
+<span class="doccomment">/// `Packet.timeout_height`. We need to parse the timeout height differently</span>
+<span class="doccomment">/// because of a quirk introduced in ibc-go. See comment in</span>
+<span class="doccomment">/// `TryFrom&lt;RawPacket&gt; for Packet`.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse_timeout_height</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TimeoutHeight</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> <span class="ident">s</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>() {
+        <span class="prelude-val">Ok</span>(<span class="ident">height</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">TimeoutHeight::from</span>(<span class="ident">height</span>)),
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">into_detail</span>() {
+            <span class="ident">HeightErrorDetail::ZeroHeight</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">TimeoutHeight::no_timeout</span>()),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::invalid_timeout_height</span>()),
+        },
+    }
+}
+
 <span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">RawPacket</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Packet</span> {
     <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
 
@@ -669,14 +763,20 @@
         <span class="kw">if</span> <span class="ident">Sequence::from</span>(<span class="ident">raw_pkt</span>.<span class="ident">sequence</span>).<span class="ident">is_zero</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::zero_packet_sequence</span>());
         }
-        <span class="kw">let</span> <span class="ident">packet_timeout_height</span>: <span class="ident">Height</span> <span class="op">=</span> <span class="ident">raw_pkt</span>
-            .<span class="ident">timeout_height</span>
-            .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_height</span>)<span class="question-mark">?</span>
-            .<span class="ident">into</span>();
 
-        <span class="kw">if</span> <span class="ident">packet_timeout_height</span>.<span class="ident">is_zero</span>() <span class="op">&amp;&amp;</span> <span class="ident">raw_pkt</span>.<span class="ident">timeout_timestamp</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::zero_packet_timeout</span>());
-        }
+        <span class="comment">// Note: ibc-go currently (July 2022) incorrectly treats the timeout</span>
+        <span class="comment">// heights `{revision_number : &gt;0, revision_height: 0}` as valid</span>
+        <span class="comment">// timeouts. However, heights with `revision_height == 0` are invalid in</span>
+        <span class="comment">// Tendermint. We explicitly reject these values because they go against</span>
+        <span class="comment">// the Tendermint spec, and shouldn&#39;t be used. To timeout on the next</span>
+        <span class="comment">// revision_number as soon as the chain starts,</span>
+        <span class="comment">// `{revision_number: old_rev + 1, revision_height: 1}`</span>
+        <span class="comment">// should be used.</span>
+        <span class="kw">let</span> <span class="ident">packet_timeout_height</span>: <span class="ident">TimeoutHeight</span> <span class="op">=</span> <span class="ident">raw_pkt</span>
+            .<span class="ident">timeout_height</span>
+            .<span class="ident">try_into</span>()
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_timeout_height</span>())<span class="question-mark">?</span>;
+
         <span class="kw">if</span> <span class="ident">raw_pkt</span>.<span class="ident">data</span>.<span class="ident">is_empty</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::zero_packet_data</span>());
         }
@@ -707,34 +807,47 @@
     <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">EventError</span>;
     <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">obj</span>: <span class="ident">RawObject</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">Packet</span> {
-            <span class="ident">sequence</span>: <span class="ident">extract_attribute</span>(<span class="kw-2">&amp;</span><span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_sequence&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>))<span class="question-mark">?</span>
-                .<span class="ident">parse</span>()
-                .<span class="ident">map_err</span>(<span class="ident">EventError::channel</span>)<span class="question-mark">?</span>,
-            <span class="ident">source_port</span>: <span class="ident">extract_attribute</span>(<span class="kw-2">&amp;</span><span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_src_port&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>))<span class="question-mark">?</span>
-                .<span class="ident">parse</span>()
-                .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
-            <span class="ident">source_channel</span>: <span class="ident">extract_attribute</span>(<span class="kw-2">&amp;</span><span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_src_channel&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>))<span class="question-mark">?</span>
-                .<span class="ident">parse</span>()
-                .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
-            <span class="ident">destination_port</span>: <span class="ident">extract_attribute</span>(<span class="kw-2">&amp;</span><span class="ident">obj</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_dst_port&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>))<span class="question-mark">?</span>
-                .<span class="ident">parse</span>()
-                .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
+            <span class="ident">sequence</span>: <span class="ident">extract_attribute</span>(
+                <span class="kw-2">&amp;</span><span class="ident">obj</span>,
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_SEQ_ATTRIBUTE_KEY</span>),
+            )<span class="question-mark">?</span>
+            .<span class="ident">parse</span>()
+            .<span class="ident">map_err</span>(<span class="ident">EventError::channel</span>)<span class="question-mark">?</span>,
+            <span class="ident">source_port</span>: <span class="ident">extract_attribute</span>(
+                <span class="kw-2">&amp;</span><span class="ident">obj</span>,
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_SRC_PORT_ATTRIBUTE_KEY</span>),
+            )<span class="question-mark">?</span>
+            .<span class="ident">parse</span>()
+            .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
+            <span class="ident">source_channel</span>: <span class="ident">extract_attribute</span>(
+                <span class="kw-2">&amp;</span><span class="ident">obj</span>,
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_SRC_CHANNEL_ATTRIBUTE_KEY</span>),
+            )<span class="question-mark">?</span>
+            .<span class="ident">parse</span>()
+            .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
+            <span class="ident">destination_port</span>: <span class="ident">extract_attribute</span>(
+                <span class="kw-2">&amp;</span><span class="ident">obj</span>,
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_DST_PORT_ATTRIBUTE_KEY</span>),
+            )<span class="question-mark">?</span>
+            .<span class="ident">parse</span>()
+            .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
             <span class="ident">destination_channel</span>: <span class="ident">extract_attribute</span>(
                 <span class="kw-2">&amp;</span><span class="ident">obj</span>,
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_dst_channel&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_DST_CHANNEL_ATTRIBUTE_KEY</span>),
             )<span class="question-mark">?</span>
             .<span class="ident">parse</span>()
             .<span class="ident">map_err</span>(<span class="ident">EventError::parse</span>)<span class="question-mark">?</span>,
             <span class="ident">data</span>: <span class="macro">vec!</span>[],
-            <span class="ident">timeout_height</span>: <span class="ident">extract_attribute</span>(
-                <span class="kw-2">&amp;</span><span class="ident">obj</span>,
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_timeout_height&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>),
-            )<span class="question-mark">?</span>
-            .<span class="ident">parse</span>()
-            .<span class="ident">map_err</span>(<span class="ident">EventError::height</span>)<span class="question-mark">?</span>,
+            <span class="ident">timeout_height</span>: {
+                <span class="kw">let</span> <span class="ident">timeout_height_str</span> <span class="op">=</span> <span class="ident">extract_attribute</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">obj</span>,
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY</span>),
+                )<span class="question-mark">?</span>;
+                <span class="ident">parse_timeout_height</span>(<span class="kw-2">&amp;</span><span class="ident">timeout_height_str</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">EventError::height</span>())<span class="question-mark">?</span>
+            },
             <span class="ident">timeout_timestamp</span>: <span class="ident">extract_attribute</span>(
                 <span class="kw-2">&amp;</span><span class="ident">obj</span>,
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.packet_timeout_timestamp&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="ident">obj</span>.<span class="ident">action</span>, <span class="ident">PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY</span>),
             )<span class="question-mark">?</span>
             .<span class="ident">parse</span>()
             .<span class="ident">map_err</span>(<span class="ident">EventError::timestamp</span>)<span class="question-mark">?</span>,
@@ -751,7 +864,7 @@
             <span class="ident">destination_port</span>: <span class="ident">packet</span>.<span class="ident">destination_port</span>.<span class="ident">to_string</span>(),
             <span class="ident">destination_channel</span>: <span class="ident">packet</span>.<span class="ident">destination_channel</span>.<span class="ident">to_string</span>(),
             <span class="ident">data</span>: <span class="ident">packet</span>.<span class="ident">data</span>,
-            <span class="ident">timeout_height</span>: <span class="prelude-val">Some</span>(<span class="ident">packet</span>.<span class="ident">timeout_height</span>.<span class="ident">into</span>()),
+            <span class="ident">timeout_height</span>: <span class="ident">packet</span>.<span class="ident">timeout_height</span>.<span class="ident">into</span>(),
             <span class="ident">timeout_timestamp</span>: <span class="ident">packet</span>.<span class="ident">timeout_timestamp</span>.<span class="ident">nanoseconds</span>(),
         }
     }
@@ -790,6 +903,7 @@
     <span class="kw">use</span> <span class="ident">test_log::test</span>;
 
     <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::channel::v1::Packet</span> <span class="kw">as</span> <span class="ident">RawPacket</span>;
+    <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1::Height</span> <span class="kw">as</span> <span class="ident">RawHeight</span>;
 
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::test_utils::get_dummy_raw_packet</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::Packet</span>;
@@ -803,19 +917,38 @@
         }
 
         <span class="kw">let</span> <span class="ident">proof_height</span> <span class="op">=</span> <span class="number">10</span>;
-        <span class="kw">let</span> <span class="ident">default_raw_msg</span> <span class="op">=</span> <span class="ident">get_dummy_raw_packet</span>(<span class="ident">proof_height</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">default_raw_packet</span> <span class="op">=</span> <span class="ident">get_dummy_raw_packet</span>(<span class="ident">proof_height</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">raw_packet_no_timeout_or_timestamp</span> <span class="op">=</span> <span class="ident">get_dummy_raw_packet</span>(<span class="number">0</span>, <span class="number">0</span>);
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">raw_packet_invalid_timeout_height</span> <span class="op">=</span> <span class="ident">get_dummy_raw_packet</span>(<span class="number">0</span>, <span class="number">0</span>);
+        <span class="ident">raw_packet_invalid_timeout_height</span>.<span class="ident">timeout_height</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">RawHeight</span> {
+            <span class="ident">revision_number</span>: <span class="number">1</span>,
+            <span class="ident">revision_height</span>: <span class="number">0</span>,
+        });
 
         <span class="kw">let</span> <span class="ident">tests</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Test</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Good parameters&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">raw</span>: <span class="ident">default_raw_msg</span>.<span class="ident">clone</span>(),
+                <span class="ident">raw</span>: <span class="ident">default_raw_packet</span>.<span class="ident">clone</span>(),
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
+            },
+            <span class="ident">Test</span> {
+                <span class="comment">// Note: ibc-go currently (July 2022) incorrectly rejects this</span>
+                <span class="comment">// case, even though it is allowed in ICS-4.</span>
+                <span class="ident">name</span>: <span class="string">&quot;Packet with no timeout of timestamp&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">raw</span>: <span class="ident">raw_packet_no_timeout_or_timestamp</span>,
+                <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
+            },
+            <span class="ident">Test</span> {
+                <span class="ident">name</span>: <span class="string">&quot;Packet with invalid timeout height&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">raw</span>: <span class="ident">raw_packet_invalid_timeout_height</span>,
+                <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Src port validation: correct&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">source_port</span>: <span class="string">&quot;srcportp34&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
@@ -823,7 +956,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad src port, name too short&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">source_port</span>: <span class="string">&quot;p&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -831,7 +964,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad src port, name too long&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">source_port</span>: <span class="string">&quot;abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfasdfasdfaklmnopqrstuabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfasdfasdfaklmnopqrstu&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -839,7 +972,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Dst port validation: correct&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">destination_port</span>: <span class="string">&quot;destportsrcp34&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
@@ -847,7 +980,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad dst port, name too short&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">destination_port</span>: <span class="string">&quot;p&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -855,7 +988,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad dst port, name too long&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">destination_port</span>: <span class="string">&quot;abcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfasdfasdfasdfaklmnopqrstuabcdefghijasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadgasgasdfas&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -863,7 +996,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Src channel validation: correct&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">source_channel</span>: <span class="string">&quot;channel-1&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
@@ -871,7 +1004,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad src channel, name too short&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">source_channel</span>: <span class="string">&quot;p&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -879,7 +1012,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad src channel, name too long&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">source_channel</span>: <span class="string">&quot;channel-12839128379182739812739879&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -887,7 +1020,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Dst channel validation: correct&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">destination_channel</span>: <span class="string">&quot;channel-34&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
@@ -895,7 +1028,7 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad dst channel, name too short&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">destination_channel</span>: <span class="string">&quot;p&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
@@ -903,17 +1036,24 @@
                 <span class="ident">name</span>: <span class="string">&quot;Bad dst channel, name too long&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">destination_channel</span>: <span class="string">&quot;channel-12839128379182739812739879&quot;</span>.<span class="ident">to_string</span>(),
-                    ..<span class="ident">default_raw_msg</span>.<span class="ident">clone</span>()
+                    ..<span class="ident">default_raw_packet</span>.<span class="ident">clone</span>()
                 },
                 <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
             },
+            <span class="comment">// Note: `timeout_height == None` is a quirk of protobuf. In</span>
+            <span class="comment">// `proto3` syntax, all structs are &quot;nullable&quot; by default and are</span>
+            <span class="comment">// represented as `Option&lt;T&gt;`. `ibc-go` defines the protobuf file</span>
+            <span class="comment">// with the extension option `gogoproto.nullable = false`, which</span>
+            <span class="comment">// means that they will always generate a field. It is left</span>
+            <span class="comment">// unspecified what a `None` value means. In this case, I believe it</span>
+            <span class="comment">// is best to assume the obvious semantic of &quot;no timeout&quot;.</span>
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Missing timeout height&quot;</span>.<span class="ident">to_string</span>(),
                 <span class="ident">raw</span>: <span class="ident">RawPacket</span> {
                     <span class="ident">timeout_height</span>: <span class="prelude-val">None</span>,
-                    ..<span class="ident">default_raw_msg</span>
+                    ..<span class="ident">default_raw_packet</span>
                 },
-                <span class="ident">want_pass</span>: <span class="bool-val">false</span>,
+                <span class="ident">want_pass</span>: <span class="bool-val">true</span>,
             },
         ];
 

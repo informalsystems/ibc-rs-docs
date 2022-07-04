@@ -206,18 +206,21 @@
 <span id="201">201</span>
 <span id="202">202</span>
 <span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
 <span class="kw">use</span> <span class="ident">flex_error</span>::{<span class="ident">define_error</span>, <span class="ident">DetailOnly</span>};
 <span class="kw">use</span> <span class="ident">ibc::applications::transfer::error::Error</span> <span class="kw">as</span> <span class="ident">Ics20Error</span>;
 <span class="kw">use</span> <span class="ident">ibc::applications::transfer::msgs::transfer::MsgTransfer</span>;
 <span class="kw">use</span> <span class="ident">ibc::applications::transfer::Amount</span>;
+<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::timeout::TimeoutHeight</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">PortId</span>};
 <span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident">ibc::signer::Signer</span>;
 <span class="kw">use</span> <span class="ident">ibc::timestamp</span>::{<span class="ident">Timestamp</span>, <span class="ident">TimestampOverflowError</span>};
 <span class="kw">use</span> <span class="ident">ibc::tx_msg::Msg</span>;
-<span class="kw">use</span> <span class="ident">ibc::Height</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::base::v1beta1::Coin</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 
@@ -273,7 +276,7 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TransferTimeout</span> {
-    <span class="kw">pub</span> <span class="ident">timeout_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">timeout_height</span>: <span class="ident">TimeoutHeight</span>,
     <span class="kw">pub</span> <span class="ident">timeout_timestamp</span>: <span class="ident">Timestamp</span>,
 }
 
@@ -294,9 +297,12 @@
         <span class="ident">destination_chain_status</span>: <span class="kw-2">&amp;</span><span class="ident">ChainStatus</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">TransferError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">timeout_height</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">timeout_height_offset</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="prelude-val">None</span>
+            <span class="ident">TimeoutHeight::no_timeout</span>()
         } <span class="kw">else</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">destination_chain_status</span>.<span class="ident">height</span>.<span class="ident">add</span>(<span class="ident">timeout_height_offset</span>))
+            <span class="ident">destination_chain_status</span>
+                .<span class="ident">height</span>
+                .<span class="ident">add</span>(<span class="ident">timeout_height_offset</span>)
+                .<span class="ident">into</span>()
         };
 
         <span class="kw">let</span> <span class="ident">timeout_timestamp</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">timeout_duration</span> <span class="op">==</span> <span class="ident">Duration::ZERO</span> {
@@ -332,7 +338,7 @@
     <span class="ident">denom</span>: <span class="ident">String</span>,
     <span class="ident">sender</span>: <span class="ident">Signer</span>,
     <span class="ident">receiver</span>: <span class="ident">Signer</span>,
-    <span class="ident">timeout_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+    <span class="ident">timeout_height</span>: <span class="ident">TimeoutHeight</span>,
     <span class="ident">timeout_timestamp</span>: <span class="ident">Timestamp</span>,
 ) -&gt; <span class="ident">Any</span> {
     <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgTransfer</span> {

@@ -299,6 +299,7 @@
 <span id="294">294</span>
 <span id="295">295</span>
 <span id="296">296</span>
+<span id="297">297</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
 
 <span class="kw">use</span> <span class="ident">tendermint_light_client</span>::{
@@ -363,7 +364,7 @@
         <span class="macro">trace!</span>(<span class="op">%</span><span class="ident">trusted</span>, <span class="op">%</span><span class="ident">target</span>, <span class="string">&quot;light client verification&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">target_height</span> <span class="op">=</span>
-            <span class="ident">TMHeight::try_from</span>(<span class="ident">target</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
+            <span class="ident">TMHeight::try_from</span>(<span class="ident">target</span>.<span class="ident">revision_height</span>()).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">prepare_client</span>(<span class="ident">client_state</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">prepare_state</span>(<span class="ident">trusted</span>)<span class="question-mark">?</span>;
@@ -390,7 +391,7 @@
     <span class="kw">fn</span> <span class="ident">fetch</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">height</span>: <span class="ident">ibc::Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">LightBlock</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">trace!</span>(<span class="op">%</span><span class="ident">height</span>, <span class="string">&quot;fetching header&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">TMHeight::try_from</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">TMHeight::try_from</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>()).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.<span class="ident">fetch_light_block</span>(<span class="ident">AtHeight::At</span>(<span class="ident">height</span>))
     }
@@ -423,7 +424,8 @@
 
         <span class="kw">let</span> <span class="ident">latest_chain_block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_light_block</span>(<span class="ident">AtHeight::Highest</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">latest_chain_height</span> <span class="op">=</span>
-            <span class="ident">ibc::Height::new</span>(<span class="self">self</span>.<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">latest_chain_block</span>.<span class="ident">height</span>().<span class="ident">into</span>());
+            <span class="ident">ibc::Height::new</span>(<span class="self">self</span>.<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">latest_chain_block</span>.<span class="ident">height</span>().<span class="ident">into</span>())
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_height_no_source</span>())<span class="question-mark">?</span>;
 
         <span class="comment">// set the target height to the minimum between the update height and latest chain height</span>
         <span class="kw">let</span> <span class="ident">target_height</span> <span class="op">=</span> <span class="ident">core::cmp::min</span>(<span class="ident">update</span>.<span class="ident">consensus_height</span>(), <span class="ident">latest_chain_height</span>);
@@ -512,7 +514,7 @@
 
     <span class="kw">fn</span> <span class="ident">prepare_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">trusted</span>: <span class="ident">ibc::Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">LightClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span>
-            <span class="ident">TMHeight::try_from</span>(<span class="ident">trusted</span>.<span class="ident">revision_height</span>).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
+            <span class="ident">TMHeight::try_from</span>(<span class="ident">trusted</span>.<span class="ident">revision_height</span>()).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">trusted_block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_light_block</span>(<span class="ident">AtHeight::At</span>(<span class="ident">trusted_height</span>))<span class="question-mark">?</span>;
 

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process",""]],"struct":[["TimeoutPacketResult",""]]});
+initSidebarItems({"fn":[["process","TimeoutPacket is called by a module which originally attempted to send a packet to a counterparty module, where the timeout height has passed on the counterparty chain without the packet being committed, to prove that the packet can no longer be executed and to allow the calling module to safely perform appropriate state transitions."]],"struct":[["TimeoutPacketResult",""]]});

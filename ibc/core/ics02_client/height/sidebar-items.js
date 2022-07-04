@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["HeightErrorDetail",""]],"struct":[["Height",""],["HeightConversionSubdetail",""],["HeightError",""]]});
+initSidebarItems({"enum":[["HeightErrorDetail",""]],"struct":[["Height",""],["HeightConversionSubdetail",""],["HeightError",""],["ZeroHeightSubdetail",""]]});
