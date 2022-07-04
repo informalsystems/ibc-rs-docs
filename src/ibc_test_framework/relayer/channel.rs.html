@@ -153,6 +153,7 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
+<span id="151">151</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">eyre::eyre</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::channel::State</span> <span class="kw">as</span> <span class="ident">ChannelState</span>;
@@ -178,7 +179,8 @@
     <span class="kw">for</span> <span class="ident">DualTagged</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span>, <span class="ident">ChannelEnd</span><span class="op">&gt;</span>
 {
     <span class="kw">fn</span> <span class="ident">tagged_counterparty_channel_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TaggedChannelId</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">contra_map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">counterparty</span>().<span class="ident">channel_id</span>).<span class="ident">transpose</span>()
+        <span class="self">self</span>.<span class="ident">contra_map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">counterparty</span>().<span class="ident">channel_id</span>.<span class="ident">clone</span>())
+            .<span class="ident">transpose</span>()
     }
 
     <span class="kw">fn</span> <span class="ident">tagged_counterparty_port_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TaggedPortId</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span> {
@@ -219,7 +221,7 @@
 
     <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="ident">channel</span>.<span class="ident">build_chan_open_init_and_send</span>()<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">channel_id</span> <span class="op">=</span> <span class="ident">extract_channel_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>.<span class="ident">clone</span>();
 
     <span class="kw">let</span> <span class="ident">channel2</span> <span class="op">=</span> <span class="ident">Channel::restore_from_event</span>(<span class="ident">handle_b</span>.<span class="ident">clone</span>(), <span class="ident">handle_a</span>.<span class="ident">clone</span>(), <span class="ident">event</span>)<span class="question-mark">?</span>;
 
@@ -234,7 +236,7 @@
     <span class="kw">let</span> (<span class="ident">channel_end</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">handle</span>.<span class="ident">query_channel</span>(
         <span class="ident">QueryChannelRequest</span> {
             <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">into_value</span>().<span class="ident">clone</span>(),
-            <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">channel_id</span>.<span class="ident">into_value</span>(),
+            <span class="ident">channel_id</span>: <span class="ident">channel_id</span>.<span class="ident">into_value</span>().<span class="ident">clone</span>(),
             <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
         },
         <span class="ident">IncludeProof::No</span>,
@@ -251,14 +253,14 @@
     <span class="kw">let</span> (<span class="ident">channel_end</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">handle</span>.<span class="ident">query_channel</span>(
         <span class="ident">QueryChannelRequest</span> {
             <span class="ident">port_id</span>: <span class="ident">port_id</span>.<span class="ident">into_value</span>().<span class="ident">clone</span>(),
-            <span class="ident">channel_id</span>: <span class="kw-2">*</span><span class="ident">channel_id</span>.<span class="ident">into_value</span>(),
+            <span class="ident">channel_id</span>: <span class="ident">channel_id</span>.<span class="ident">into_value</span>().<span class="ident">clone</span>(),
             <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
         },
         <span class="ident">IncludeProof::No</span>,
     )<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(<span class="ident">DualTagged::new</span>(<span class="ident">IdentifiedChannelEnd::new</span>(
         <span class="ident">port_id</span>.<span class="ident">into_value</span>().<span class="ident">clone</span>(),
-        <span class="kw-2">*</span><span class="ident">channel_id</span>.<span class="ident">into_value</span>(),
+        <span class="ident">channel_id</span>.<span class="ident">into_value</span>().<span class="ident">clone</span>(),
         <span class="ident">channel_end</span>,
     )))
 }

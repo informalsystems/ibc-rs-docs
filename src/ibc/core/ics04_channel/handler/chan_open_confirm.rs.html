@@ -228,6 +228,7 @@
 <span id="223">223</span>
 <span id="224">224</span>
 <span id="225">225</span>
+<span id="226">226</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Protocol logic specific to ICS4 messages of type `MsgChannelOpenConfirm`.</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">Counterparty</span>, <span class="ident">State</span>};
@@ -248,12 +249,12 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">HandlerOutput::builder</span>();
 
     <span class="comment">// Unwrap the old channel end and validate it against the message.</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">channel_end</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">channel_end</span>(<span class="kw-2">&amp;</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">msg</span>.<span class="ident">channel_id</span>))<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">channel_end</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">channel_end</span>(<span class="kw-2">&amp;</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="ident">msg</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
 
     <span class="comment">// Validate that the channel end is in a state where it can be confirmed.</span>
     <span class="kw">if</span> <span class="op">!</span><span class="ident">channel_end</span>.<span class="ident">state_matches</span>(<span class="kw-2">&amp;</span><span class="ident">State::TryOpen</span>) {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::invalid_channel_state</span>(
-            <span class="ident">msg</span>.<span class="ident">channel_id</span>,
+            <span class="ident">msg</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(),
             <span class="ident">channel_end</span>.<span class="ident">state</span>,
         ));
     }
@@ -277,7 +278,8 @@
     <span class="comment">// Proof verification in two steps:</span>
     <span class="comment">// 1. Setup: build the Channel as we expect to find it on the other party.</span>
 
-    <span class="kw">let</span> <span class="ident">expected_counterparty</span> <span class="op">=</span> <span class="ident">Counterparty::new</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="prelude-val">Some</span>(<span class="ident">msg</span>.<span class="ident">channel_id</span>));
+    <span class="kw">let</span> <span class="ident">expected_counterparty</span> <span class="op">=</span>
+        <span class="ident">Counterparty::new</span>(<span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(), <span class="prelude-val">Some</span>(<span class="ident">msg</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()));
 
     <span class="kw">let</span> <span class="ident">connection_counterparty</span> <span class="op">=</span> <span class="ident">conn</span>.<span class="ident">counterparty</span>();
     <span class="kw">let</span> <span class="ident">ccid</span> <span class="op">=</span> <span class="ident">connection_counterparty</span>.<span class="ident">connection_id</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
@@ -311,13 +313,13 @@
 
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ChannelResult</span> {
         <span class="ident">port_id</span>: <span class="ident">msg</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
-        <span class="ident">channel_id</span>: <span class="ident">msg</span>.<span class="ident">channel_id</span>,
+        <span class="ident">channel_id</span>: <span class="ident">msg</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(),
         <span class="ident">channel_id_state</span>: <span class="ident">ChannelIdState::Reused</span>,
         <span class="ident">channel_end</span>,
     };
 
     <span class="kw">let</span> <span class="ident">event_attributes</span> <span class="op">=</span> <span class="ident">Attributes</span> {
-        <span class="ident">channel_id</span>: <span class="prelude-val">Some</span>(<span class="ident">msg</span>.<span class="ident">channel_id</span>),
+        <span class="ident">channel_id</span>: <span class="prelude-val">Some</span>(<span class="ident">msg</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
         <span class="ident">height</span>: <span class="ident">ctx</span>.<span class="ident">host_height</span>(),
         ..<span class="ident">Default::default</span>()
     };
@@ -389,7 +391,7 @@
             <span class="ident">Order::default</span>(),
             <span class="ident">Counterparty::new</span>(
                 <span class="ident">msg_chan_confirm</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
-                <span class="prelude-val">Some</span>(<span class="ident">msg_chan_confirm</span>.<span class="ident">channel_id</span>),
+                <span class="prelude-val">Some</span>(<span class="ident">msg_chan_confirm</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>()),
             ),
             <span class="macro">vec!</span>[<span class="ident">conn_id</span>.<span class="ident">clone</span>()],
             <span class="ident">Version::default</span>(),
@@ -405,7 +407,7 @@
                 .<span class="ident">with_connection</span>(<span class="ident">conn_id</span>, <span class="ident">conn_end</span>)
                 .<span class="ident">with_channel</span>(
                     <span class="ident">msg_chan_confirm</span>.<span class="ident">port_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">msg_chan_confirm</span>.<span class="ident">channel_id</span>,
+                    <span class="ident">msg_chan_confirm</span>.<span class="ident">channel_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">chan_end</span>,
                 ),
             <span class="ident">msg</span>: <span class="ident">ChannelMsg::ChannelOpenConfirm</span>(<span class="ident">msg_chan_confirm</span>),
