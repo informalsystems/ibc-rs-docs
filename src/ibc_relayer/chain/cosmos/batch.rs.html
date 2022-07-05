@@ -154,6 +154,22 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 <span class="kw">use</span> <span class="ident">prost::Message</span>;
@@ -162,7 +178,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::retry::send_tx_with_account_sequence_retry</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::account::Account</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::config::TxConfig</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::tx::TxSyncResult</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::tx</span>::{<span class="ident">TxStatus</span>, <span class="ident">TxSyncResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::wait::wait_for_block_commits</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::types</span>::{<span class="ident">MaxMsgNum</span>, <span class="ident">MaxTxSize</span>, <span class="ident">Memo</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
@@ -255,18 +271,34 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tx_sync_results</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
 
     <span class="kw">for</span> <span class="ident">batch</span> <span class="kw">in</span> <span class="ident">batches</span> {
-        <span class="kw">let</span> <span class="ident">events_per_tx</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">IbcEvent::default</span>(); <span class="ident">batch</span>.<span class="ident">len</span>()];
+        <span class="kw">let</span> <span class="ident">message_count</span> <span class="op">=</span> <span class="ident">batch</span>.<span class="ident">len</span>();
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span>
             <span class="ident">send_tx_with_account_sequence_retry</span>(<span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">batch</span>, <span class="number">0</span>)
                 .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">tx_sync_result</span> <span class="op">=</span> <span class="ident">TxSyncResult</span> {
-            <span class="ident">response</span>,
-            <span class="ident">events</span>: <span class="ident">events_per_tx</span>,
-        };
+        <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">code</span>.<span class="ident">is_err</span>() {
+            <span class="kw">let</span> <span class="ident">events_per_tx</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">IbcEvent::ChainError</span>(<span class="macro">format!</span>(
+                <span class="string">&quot;check_tx (broadcast_tx_sync) on chain {} for Tx hash {} reports error: code={:?}, log={:?}&quot;</span>,
+                <span class="ident">config</span>.<span class="ident">chain_id</span>, <span class="ident">response</span>.<span class="ident">hash</span>, <span class="ident">response</span>.<span class="ident">code</span>, <span class="ident">response</span>.<span class="ident">log</span>
+            )); <span class="ident">message_count</span>];
 
-        <span class="ident">tx_sync_results</span>.<span class="ident">push</span>(<span class="ident">tx_sync_result</span>);
+            <span class="kw">let</span> <span class="ident">tx_sync_result</span> <span class="op">=</span> <span class="ident">TxSyncResult</span> {
+                <span class="ident">response</span>,
+                <span class="ident">events</span>: <span class="ident">events_per_tx</span>,
+                <span class="ident">status</span>: <span class="ident">TxStatus::ReceivedResponse</span>,
+            };
+
+            <span class="ident">tx_sync_results</span>.<span class="ident">push</span>(<span class="ident">tx_sync_result</span>);
+        } <span class="kw">else</span> {
+            <span class="kw">let</span> <span class="ident">tx_sync_result</span> <span class="op">=</span> <span class="ident">TxSyncResult</span> {
+                <span class="ident">response</span>,
+                <span class="ident">events</span>: <span class="ident">Vec::new</span>(),
+                <span class="ident">status</span>: <span class="ident">TxStatus::Pending</span> { <span class="ident">message_count</span> },
+            };
+
+            <span class="ident">tx_sync_results</span>.<span class="ident">push</span>(<span class="ident">tx_sync_result</span>);
+        }
     }
 
     <span class="prelude-val">Ok</span>(<span class="ident">tx_sync_results</span>)

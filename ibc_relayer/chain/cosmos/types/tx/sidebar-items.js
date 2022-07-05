@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SignedTx",""],["TxSyncResult",""]]});
+initSidebarItems({"enum":[["TxStatus",""]],"struct":[["SignedTx",""],["TxSyncResult",""]]});

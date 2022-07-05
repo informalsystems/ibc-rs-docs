@@ -293,7 +293,6 @@
 <span id="288">288</span>
 <span id="289">289</span>
 <span id="290">290</span>
-<span id="291">291</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::iter::Iterator</span>;
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">std::time::Instant</span>;
@@ -474,8 +473,7 @@
             <span class="macro">trace!</span>(<span class="string">&quot;trying to confirm {} &quot;</span>, <span class="ident">tx_hashes</span>);
 
             <span class="comment">// Check for TX events for the given pending transaction hashes.</span>
-            <span class="kw">let</span> <span class="ident">events_result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">check_tx_events</span>(<span class="ident">tx_hashes</span>);
-            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">events_result</span> {
+            <span class="kw">let</span> <span class="ident">relay_summary</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">check_tx_events</span>(<span class="ident">tx_hashes</span>) {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
                     <span class="comment">// There is no events for the associated transactions.</span>
                     <span class="comment">// This means the transaction has not yet been committed.</span>
@@ -526,7 +524,7 @@
                         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
                     }
                 }
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">events</span>)) =&gt; {
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">events</span>)) =&gt; {
                     <span class="comment">// We get a list of events for the transaction hashes,</span>
                     <span class="comment">// Meaning the transaction has been committed successfully</span>
                     <span class="comment">// to the chain.</span>
@@ -548,11 +546,11 @@
                         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">counterparty_chain_id</span>
                     );
 
-                    <span class="comment">// Convert the events to RelaySummary and return them.</span>
-                    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">summary</span> <span class="op">=</span> <span class="ident">RelaySummary::from_events</span>(<span class="ident">events</span>);
-                    <span class="ident">summary</span>.<span class="ident">extend</span>(<span class="ident">RelaySummary::from_events</span>(<span class="ident">pending</span>.<span class="ident">error_events</span>));
+                    <span class="comment">// Append the events corresponding to errors from the pending tx.</span>
+                    <span class="ident">events</span>.<span class="ident">extend</span>(<span class="ident">pending</span>.<span class="ident">error_events</span>);
 
-                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">summary</span>))
+                    <span class="comment">// Convert the events to RelaySummary and return them.</span>
+                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">RelaySummary::from_events</span>(<span class="ident">events</span>)))
                 }
                 <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
                     <span class="comment">// There are errors querying for the transaction hashes.</span>
@@ -579,7 +577,7 @@
                 );
             }
 
-            <span class="ident">res</span>
+            <span class="ident">relay_summary</span>
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
