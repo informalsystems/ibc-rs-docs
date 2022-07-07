@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["EntryPoint","Entry point for Hermes CLI."]]});

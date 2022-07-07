@@ -4,7 +4,12 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../../axum/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"><a href="#">Module response</a></h2><div class="sidebar-elems"><section><div class="block"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Definitions</a></li></ul></div></section><div id="sidebar-vars" data-name="response" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../axum/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">axum</a>::<wbr><a class="mod" href="#">response</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/axum/response/mod.rs.html#1-221">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Types and traits for generating responses.</p>
+    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">axum</a>::<wbr><a class="mod" href="#">response</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/axum/response/mod.rs.html#1-225">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Types and traits for generating responses.</p>
+<h2 id="table-of-contents"><a href="#table-of-contents">Table of contents</a></h2>
+<ul>
+<li><a href="#building-responses">Building responses</a></li>
+<li><a href="#returning-different-response-types">Returning different response types</a></li>
+</ul>
 <h2 id="building-responses"><a href="#building-responses">Building responses</a></h2>
 <p>Anything that implements <a href="trait.IntoResponse.html"><code>IntoResponse</code></a> can be returned from a handler. axum
 provides implementations for common types:</p>
@@ -133,7 +138,7 @@ individual parts.</p>
     (
         <span class="comment">// set status code</span>
         <span class="ident">StatusCode::NOT_FOUND</span>,
-        <span class="comment">// headers ith an array</span>
+        <span class="comment">// headers with an array</span>
         [(<span class="string">&quot;x-custom&quot;</span>, <span class="string">&quot;custom&quot;</span>)],
         <span class="comment">// some extensions</span>
         <span class="ident">Extension</span>(<span class="ident">Foo</span>(<span class="string">&quot;foo&quot;</span>)),
@@ -161,16 +166,45 @@ setting headers and extensions.</p>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{
     <span class="ident">Json</span>,
     <span class="ident">response</span>::{<span class="ident">IntoResponse</span>, <span class="ident">Response</span>},
-    <span class="ident">body::Full</span>,
+    <span class="ident">body</span>::{<span class="ident">Full</span>, <span class="ident">Bytes</span>},
     <span class="ident">http::StatusCode</span>,
 };
 
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">response</span>() -&gt; <span class="kw">impl</span> <span class="ident">IntoResponse</span> {
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">response</span>() -&gt; <span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Full</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="ident">Response::builder</span>()
         .<span class="ident">status</span>(<span class="ident">StatusCode::NOT_FOUND</span>)
         .<span class="ident">header</span>(<span class="string">&quot;x-foo&quot;</span>, <span class="string">&quot;custom header&quot;</span>)
         .<span class="ident">body</span>(<span class="ident">Full::from</span>(<span class="string">&quot;not found&quot;</span>))
         .<span class="ident">unwrap</span>()
+}</code></pre></div>
+<h2 id="returning-different-response-types"><a href="#returning-different-response-types">Returning different response types</a></h2>
+<p>If you need to return multiple response types, and <code>Result&lt;T, E&gt;</code> isn’t appropriate, you can call
+<code>.into_response()</code> to turn things into <code>axum::response::Response</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{
+    <span class="ident">response</span>::{<span class="ident">IntoResponse</span>, <span class="ident">Redirect</span>, <span class="ident">Response</span>},
+    <span class="ident">http::StatusCode</span>,
+};
+
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>() -&gt; <span class="ident">Response</span> {
+    <span class="kw">if</span> <span class="ident">something</span>() {
+        <span class="string">&quot;All good!&quot;</span>.<span class="ident">into_response</span>()
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">something_else</span>() {
+        (
+            <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
+            <span class="string">&quot;Something went wrong...&quot;</span>,
+        ).<span class="ident">into_response</span>()
+    } <span class="kw">else</span> {
+        <span class="ident">Redirect::to</span>(<span class="string">&quot;/&quot;</span>).<span class="ident">into_response</span>()
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">something</span>() -&gt; <span class="ident">bool</span> {
+    <span class="comment">// ...</span>
+}
+
+<span class="kw">fn</span> <span class="ident">something_else</span>() -&gt; <span class="ident">bool</span> {
+    <span class="comment">// ...</span>
 }</code></pre></div>
 </div></details><h2 id="reexports" class="small-section-header"><a href="#reexports">Re-exports</a></h2>
 <div class="item-table"><div class="item-row"><div class="item-left import-item"><code>pub use crate::<a class="struct" href="../struct.Extension.html" title="struct axum::Extension">Extension</a>;</code></div><div class="item-right docblock-short"></div></div></div><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2>

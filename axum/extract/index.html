@@ -4,7 +4,22 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../../axum/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"><a href="#">Module extract</a></h2><div class="sidebar-elems"><section><div class="block"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div></section><div id="sidebar-vars" data-name="extract" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../axum/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">axum</a>::<wbr><a class="mod" href="#">extract</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/axum/extract/mod.rs.html#1-119">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Types and traits for extracting data from requests.</p>
+    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">axum</a>::<wbr><a class="mod" href="#">extract</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/axum/extract/mod.rs.html#1-116">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Types and traits for extracting data from requests.</p>
+<h2 id="table-of-contents"><a href="#table-of-contents">Table of contents</a></h2>
+<ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#common-extractors">Common extractors</a></li>
+<li><a href="#applying-multiple-extractors">Applying multiple extractors</a></li>
+<li><a href="#be-careful-when-extracting-request">Be careful when extracting <code>Request</code></a></li>
+<li><a href="#optional-extractors">Optional extractors</a></li>
+<li><a href="#customizing-extractor-responses">Customizing extractor responses</a></li>
+<li><a href="#accessing-inner-errors">Accessing inner errors</a></li>
+<li><a href="#defining-custom-extractors">Defining custom extractors</a></li>
+<li><a href="#accessing-other-extractors-in-fromrequest-implementations">Accessing other extractors in <code>FromRequest</code> implementations</a></li>
+<li><a href="#request-body-extractors">Request body extractors</a></li>
+<li><a href="#running-extractors-from-middleware">Running extractors from middleware</a></li>
+</ul>
+<h2 id="intro"><a href="#intro">Intro</a></h2>
 <p>A handler function is an async function that takes any number of
 “extractors” as arguments. An extractor is a type that implements
 <a href="trait.FromRequest.html"><code>FromRequest</code></a>.</p>
@@ -270,7 +285,9 @@ methods from <a href="https://doc.rust-lang.org/1.61.0/std/error/trait.Error.htm
 };
 <span class="kw">use</span> <span class="ident">serde_json</span>::{<span class="ident">json</span>, <span class="ident">Value</span>};
 
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handler</span>(<span class="ident">result</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Json</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>, <span class="ident">JsonRejection</span><span class="op">&gt;</span>) -&gt; <span class="kw">impl</span> <span class="ident">IntoResponse</span> {
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handler</span>(
+    <span class="ident">result</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Json</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>, <span class="ident">JsonRejection</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Json</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span>, (<span class="ident">StatusCode</span>, <span class="ident">String</span>)<span class="op">&gt;</span> {
     <span class="kw">match</span> <span class="ident">result</span> {
         <span class="comment">// if the client sent valid JSON then we&#39;re good</span>
         <span class="prelude-val">Ok</span>(<span class="ident">Json</span>(<span class="ident">payload</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Json</span>(<span class="macro">json!</span>({ <span class="string">&quot;payload&quot;</span>: <span class="ident">payload</span> }))),
@@ -491,6 +508,56 @@ you might have to apply a different body type to some extractors:</p>
     )
     <span class="comment">// middleware that changes the request body type</span>
     .<span class="ident">layer</span>(<span class="ident">MapRequestBodyLayer::new</span>(<span class="ident">MyBody</span>));</code></pre></div>
+<h2 id="running-extractors-from-middleware"><a href="#running-extractors-from-middleware">Running extractors from middleware</a></h2>
+<p>Extractors can also be run from middleware by making a <a href="struct.RequestParts.html" title="RequestParts"><code>RequestParts</code></a> and
+running your extractor:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">axum</span>::{
+    <span class="ident">Router</span>,
+    <span class="ident">middleware</span>::{<span class="self">self</span>, <span class="ident">Next</span>},
+    <span class="ident">extract</span>::{<span class="ident">RequestParts</span>, <span class="ident">TypedHeader</span>},
+    <span class="ident">http</span>::{<span class="ident">Request</span>, <span class="ident">StatusCode</span>},
+    <span class="ident">response::Response</span>,
+    <span class="ident">headers::authorization</span>::{<span class="ident">Authorization</span>, <span class="ident">Bearer</span>},
+};
+
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">auth_middleware</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
+    <span class="ident">request</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
+    <span class="ident">next</span>: <span class="ident">Next</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span>, <span class="ident">StatusCode</span><span class="op">&gt;</span>
+<span class="kw">where</span>
+    <span class="ident">B</span>: <span class="ident">Send</span>,
+{
+    <span class="comment">// running extractors requires a `RequestParts`</span>
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">request_parts</span> <span class="op">=</span> <span class="ident">RequestParts::new</span>(<span class="ident">request</span>);
+
+    <span class="comment">// `TypedHeader&lt;Authorization&lt;Bearer&gt;&gt;` extracts the auth token but</span>
+    <span class="comment">// `RequestParts::extract` works with anything that implements `FromRequest`</span>
+    <span class="kw">let</span> <span class="ident">auth</span> <span class="op">=</span> <span class="ident">request_parts</span>.<span class="ident">extract</span>::<span class="op">&lt;</span><span class="ident">TypedHeader</span><span class="op">&lt;</span><span class="ident">Authorization</span><span class="op">&lt;</span><span class="ident">Bearer</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+        .<span class="kw">await</span>
+        .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">StatusCode::UNAUTHORIZED</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">if</span> <span class="op">!</span><span class="ident">token_is_valid</span>(<span class="ident">auth</span>.<span class="ident">token</span>()) {
+        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">StatusCode::UNAUTHORIZED</span>);
+    }
+
+    <span class="comment">// get the request back so we can run `next`</span>
+    <span class="comment">//</span>
+    <span class="comment">// `try_into_request` will fail if you have extracted the request body. We</span>
+    <span class="comment">// know that `TypedHeader` never does that.</span>
+    <span class="comment">//</span>
+    <span class="comment">// see the `consume-body-in-extractor-or-middleware` example if you need to</span>
+    <span class="comment">// extract the body</span>
+    <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">request_parts</span>.<span class="ident">try_into_request</span>().<span class="ident">expect</span>(<span class="string">&quot;body extracted&quot;</span>);
+
+    <span class="prelude-val">Ok</span>(<span class="ident">next</span>.<span class="ident">run</span>(<span class="ident">request</span>).<span class="kw">await</span>)
+}
+
+<span class="kw">fn</span> <span class="ident">token_is_valid</span>(<span class="ident">token</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">bool</span> {
+    <span class="comment">// ...</span>
+}
+
+<span class="kw">let</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">Router::new</span>().<span class="ident">layer</span>(<span class="ident">middleware::from_fn</span>(<span class="ident">auth_middleware</span>));</code></pre></div>
 </div></details><h2 id="reexports" class="small-section-header"><a href="#reexports">Re-exports</a></h2>
 <div class="item-table"><div class="item-row"><div class="item-left import-item"><code>pub use crate::<a class="struct" href="../struct.Extension.html" title="struct axum::Extension">Extension</a>;</code></div><div class="item-right docblock-short"></div></div></div><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2>
 <div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="mod" href="connect_info/index.html" title="axum::extract::connect_info mod">connect_info</a></div><div class="item-right docblock-short"><p>Extractor for getting connection information from a client.</p>
