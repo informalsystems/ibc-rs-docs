@@ -266,6 +266,91 @@
 <span id="261">261</span>
 <span id="262">262</span>
 <span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">fs</span>,
@@ -280,6 +365,7 @@
     <span class="ident">config</span>::{<span class="ident">ChainConfig</span>, <span class="ident">Config</span>},
     <span class="ident">keyring</span>::{<span class="ident">HDPath</span>, <span class="ident">KeyEntry</span>, <span class="ident">KeyRing</span>, <span class="ident">Store</span>},
 };
+<span class="kw">use</span> <span class="ident">tracing::warn</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::application::app_config</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::conclude::Output</span>;
@@ -347,6 +433,12 @@
         <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>
     )]</span>
     <span class="ident">hd_path</span>: <span class="ident">String</span>,
+
+    <span class="attribute">#[<span class="ident">clap</span>(
+        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;overwrite&quot;</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Overwrite the key if there is already one with the same key name&quot;</span>
+    )]</span>
+    <span class="ident">overwrite</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">KeysAddCmd</span> {
@@ -390,7 +482,13 @@
         <span class="comment">// Check if --key-file or --mnemonic-file was given as input.</span>
         <span class="kw">match</span> (<span class="self">self</span>.<span class="ident">key_file</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">mnemonic_file</span>.<span class="ident">clone</span>()) {
             (<span class="prelude-val">Some</span>(<span class="ident">key_file</span>), <span class="kw">_</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">add_key</span>(<span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">key_file</span>, <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">hd_path</span>);
+                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">add_key</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">config</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">name</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">key_file</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">hd_path</span>,
+                    <span class="self">self</span>.<span class="ident">overwrite</span>,
+                );
                 <span class="kw">match</span> <span class="ident">key</span> {
                     <span class="prelude-val">Ok</span>(<span class="ident">key</span>) =&gt; <span class="ident">Output::success_msg</span>(<span class="macro">format!</span>(
                         <span class="string">&quot;Added key &#39;{}&#39; ({}) on chain {}&quot;</span>,
@@ -405,7 +503,13 @@
                 }
             }
             (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="ident">mnemonic_file</span>)) =&gt; {
-                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">restore_key</span>(<span class="kw-2">&amp;</span><span class="ident">mnemonic_file</span>, <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">hd_path</span>, <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">config</span>);
+                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">restore_key</span>(
+                    <span class="kw-2">&amp;</span><span class="ident">mnemonic_file</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">name</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">hd_path</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">config</span>,
+                    <span class="self">self</span>.<span class="ident">overwrite</span>,
+                );
 
                 <span class="kw">match</span> <span class="ident">key</span> {
                     <span class="prelude-val">Ok</span>(<span class="ident">key</span>) =&gt; <span class="ident">Output::success_msg</span>(<span class="macro">format!</span>(
@@ -436,8 +540,11 @@
     <span class="ident">key_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     <span class="ident">file</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">hd_path</span>: <span class="kw-2">&amp;</span><span class="ident">HDPath</span>,
+    <span class="ident">overwrite</span>: <span class="ident">bool</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">KeyEntry</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">keyring</span> <span class="op">=</span> <span class="ident">KeyRing::new</span>(<span class="ident">Store::Test</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">account_prefix</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">id</span>)<span class="question-mark">?</span>;
+
+    <span class="ident">check_key_exists</span>(<span class="kw-2">&amp;</span><span class="ident">keyring</span>, <span class="ident">key_name</span>, <span class="ident">overwrite</span>);
 
     <span class="kw">let</span> <span class="ident">key_contents</span> <span class="op">=</span> <span class="ident">fs::read_to_string</span>(<span class="ident">file</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;error reading the key file&quot;</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">keyring</span>.<span class="ident">key_from_seed_file</span>(<span class="kw-2">&amp;</span><span class="ident">key_contents</span>, <span class="ident">hd_path</span>)<span class="question-mark">?</span>;
@@ -451,15 +558,32 @@
     <span class="ident">key_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     <span class="ident">hdpath</span>: <span class="kw-2">&amp;</span><span class="ident">HDPath</span>,
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">ChainConfig</span>,
+    <span class="ident">overwrite</span>: <span class="ident">bool</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">KeyEntry</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">mnemonic_content</span> <span class="op">=</span>
         <span class="ident">fs::read_to_string</span>(<span class="ident">mnemonic</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;error reading the mnemonic file&quot;</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">keyring</span> <span class="op">=</span> <span class="ident">KeyRing::new</span>(<span class="ident">Store::Test</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">account_prefix</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">id</span>)<span class="question-mark">?</span>;
+
+    <span class="ident">check_key_exists</span>(<span class="kw-2">&amp;</span><span class="ident">keyring</span>, <span class="ident">key_name</span>, <span class="ident">overwrite</span>);
+
     <span class="kw">let</span> <span class="ident">key_entry</span> <span class="op">=</span> <span class="ident">keyring</span>.<span class="ident">key_from_mnemonic</span>(<span class="kw-2">&amp;</span><span class="ident">mnemonic_content</span>, <span class="ident">hdpath</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">address_type</span>)<span class="question-mark">?</span>;
 
     <span class="ident">keyring</span>.<span class="ident">add_key</span>(<span class="ident">key_name</span>, <span class="ident">key_entry</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(<span class="ident">key_entry</span>)
+}
+
+<span class="doccomment">/// Check if the key with the given key name already exists.</span>
+<span class="doccomment">/// If it already exists and overwrite is false, abort the command with an error.</span>
+<span class="doccomment">/// If overwrite is true, output a warning message informing the key will be overwritten.</span>
+<span class="kw">fn</span> <span class="ident">check_key_exists</span>(<span class="ident">keyring</span>: <span class="kw-2">&amp;</span><span class="ident">KeyRing</span>, <span class="ident">key_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">overwrite</span>: <span class="ident">bool</span>) {
+    <span class="kw">if</span> <span class="ident">keyring</span>.<span class="ident">get_key</span>(<span class="ident">key_name</span>).<span class="ident">is_ok</span>() {
+        <span class="kw">if</span> <span class="ident">overwrite</span> {
+            <span class="macro">warn!</span>(<span class="string">&quot;Key {} will be overwritten&quot;</span>, <span class="ident">key_name</span>);
+        } <span class="kw">else</span> {
+            <span class="ident">Output::error</span>(<span class="macro">format!</span>(<span class="string">&quot;A key with name &#39;{}&#39; already exists&quot;</span>, <span class="ident">key_name</span>)).<span class="ident">exit</span>();
+        }
+    }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
@@ -479,7 +603,8 @@
                 <span class="ident">key_file</span>: <span class="prelude-val">Some</span>(<span class="ident">PathBuf::from</span>(<span class="string">&quot;key_file&quot;</span>)),
                 <span class="ident">mnemonic_file</span>: <span class="prelude-val">None</span>,
                 <span class="ident">key_name</span>: <span class="prelude-val">None</span>,
-                <span class="ident">hd_path</span>: <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>.<span class="ident">to_string</span>()
+                <span class="ident">hd_path</span>: <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">overwrite</span>: <span class="bool-val">false</span>,
             },
             <span class="ident">KeysAddCmd::parse_from</span>(<span class="kw-2">&amp;</span>[<span class="string">&quot;test&quot;</span>, <span class="string">&quot;--chain&quot;</span>, <span class="string">&quot;chain_id&quot;</span>, <span class="string">&quot;--key-file&quot;</span>, <span class="string">&quot;key_file&quot;</span>])
         )
@@ -493,7 +618,8 @@
                 <span class="ident">key_file</span>: <span class="prelude-val">None</span>,
                 <span class="ident">mnemonic_file</span>: <span class="prelude-val">Some</span>(<span class="ident">PathBuf::from</span>(<span class="string">&quot;mnemonic_file&quot;</span>)),
                 <span class="ident">key_name</span>: <span class="prelude-val">None</span>,
-                <span class="ident">hd_path</span>: <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>.<span class="ident">to_string</span>()
+                <span class="ident">hd_path</span>: <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">overwrite</span>: <span class="bool-val">false</span>
             },
             <span class="ident">KeysAddCmd::parse_from</span>(<span class="kw-2">&amp;</span>[
                 <span class="string">&quot;test&quot;</span>,
@@ -501,6 +627,50 @@
                 <span class="string">&quot;chain_id&quot;</span>,
                 <span class="string">&quot;--mnemonic-file&quot;</span>,
                 <span class="string">&quot;mnemonic_file&quot;</span>
+            ])
+        )
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_keys_add_key_file_overwrite</span>() {
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">KeysAddCmd</span> {
+                <span class="ident">chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_id&quot;</span>),
+                <span class="ident">key_file</span>: <span class="prelude-val">Some</span>(<span class="ident">PathBuf::from</span>(<span class="string">&quot;key_file&quot;</span>)),
+                <span class="ident">mnemonic_file</span>: <span class="prelude-val">None</span>,
+                <span class="ident">key_name</span>: <span class="prelude-val">None</span>,
+                <span class="ident">hd_path</span>: <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">overwrite</span>: <span class="bool-val">true</span>,
+            },
+            <span class="ident">KeysAddCmd::parse_from</span>(<span class="kw-2">&amp;</span>[
+                <span class="string">&quot;test&quot;</span>,
+                <span class="string">&quot;--chain&quot;</span>,
+                <span class="string">&quot;chain_id&quot;</span>,
+                <span class="string">&quot;--key-file&quot;</span>,
+                <span class="string">&quot;key_file&quot;</span>,
+                <span class="string">&quot;--overwrite&quot;</span>
+            ])
+        )
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_keys_add_mnemonic_file_overwrite</span>() {
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">KeysAddCmd</span> {
+                <span class="ident">chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_id&quot;</span>),
+                <span class="ident">key_file</span>: <span class="prelude-val">None</span>,
+                <span class="ident">mnemonic_file</span>: <span class="prelude-val">Some</span>(<span class="ident">PathBuf::from</span>(<span class="string">&quot;mnemonic_file&quot;</span>)),
+                <span class="ident">key_name</span>: <span class="prelude-val">None</span>,
+                <span class="ident">hd_path</span>: <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>.<span class="ident">to_string</span>(),
+                <span class="ident">overwrite</span>: <span class="bool-val">true</span>,
+            },
+            <span class="ident">KeysAddCmd::parse_from</span>(<span class="kw-2">&amp;</span>[
+                <span class="string">&quot;test&quot;</span>,
+                <span class="string">&quot;--chain&quot;</span>,
+                <span class="string">&quot;chain_id&quot;</span>,
+                <span class="string">&quot;--mnemonic-file&quot;</span>,
+                <span class="string">&quot;mnemonic_file&quot;</span>,
+                <span class="string">&quot;--overwrite&quot;</span>
             ])
         )
     }
