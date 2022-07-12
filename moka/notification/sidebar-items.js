@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["DeliveryMode","Specifies how and when an eviction notification should be delivered to an eviction listener."],["RemovalCause","Indicates the reason why a cached entry was removed."]],"struct":[["Configuration","Configuration for an eviction listener of a cache."],["ConfigurationBuilder","Builds a `Configuration` with some configuration knobs."]]});
