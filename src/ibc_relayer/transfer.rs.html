@@ -209,7 +209,19 @@
 <span id="204">204</span>
 <span id="205">205</span>
 <span id="206">206</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc::signer::SignerError</span>;
+<span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
+
+<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
 <span class="kw">use</span> <span class="ident">flex_error</span>::{<span class="ident">define_error</span>, <span class="ident">DetailOnly</span>};
 <span class="kw">use</span> <span class="ident">ibc::applications::transfer::error::Error</span> <span class="kw">as</span> <span class="ident">Ics20Error</span>;
@@ -231,6 +243,9 @@
 
 <span class="macro">define_error!</span> {
     <span class="ident">TransferError</span> {
+        <span class="ident">ReceiverAddress</span>
+            [ <span class="ident">SignerError</span> ]
+            <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;receiver address error &quot;</span>},
         <span class="ident">Relayer</span>
             [ <span class="ident">Error</span> ]
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;relayer error&quot;</span> },
@@ -362,7 +377,10 @@
     <span class="ident">packet_dst_chain</span>: <span class="kw-2">&amp;</span><span class="ident">DstChain</span>, <span class="comment">// the chain whose account eventually gets credited</span>
     <span class="ident">opts</span>: <span class="kw-2">&amp;</span><span class="ident">TransferOptions</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">TransferError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">receiver</span> <span class="op">=</span> <span class="ident">packet_dst_chain</span>.<span class="ident">get_signer</span>().<span class="ident">map_err</span>(<span class="ident">TransferError::key</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">receiver</span> <span class="op">=</span> <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">receiver</span> {
+        <span class="prelude-val">Some</span>(<span class="ident">receiver</span>) =&gt; <span class="ident">Signer::from_str</span>(<span class="ident">receiver</span>).<span class="ident">map_err</span>(<span class="ident">TransferError::receiver_address</span>)<span class="question-mark">?</span>,
+        <span class="prelude-val">None</span> =&gt; <span class="ident">packet_dst_chain</span>.<span class="ident">get_signer</span>().<span class="ident">map_err</span>(<span class="ident">TransferError::key</span>)<span class="question-mark">?</span>,
+    };
 
     <span class="kw">let</span> <span class="ident">sender</span> <span class="op">=</span> <span class="ident">packet_src_chain</span>.<span class="ident">get_signer</span>().<span class="ident">map_err</span>(<span class="ident">TransferError::key</span>)<span class="question-mark">?</span>;
 
