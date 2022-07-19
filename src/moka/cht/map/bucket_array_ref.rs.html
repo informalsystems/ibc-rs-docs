@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.0/src/cht/map/bucket_array_ref.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bucket_array_ref.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.1/src/cht/map/bucket_array_ref.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bucket_array_ref.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -337,34 +337,9 @@
 <span id="332">332</span>
 <span id="333">333</span>
 <span id="334">334</span>
-<span id="335">335</span>
-<span id="336">336</span>
-<span id="337">337</span>
-<span id="338">338</span>
-<span id="339">339</span>
-<span id="340">340</span>
-<span id="341">341</span>
-<span id="342">342</span>
-<span id="343">343</span>
-<span id="344">344</span>
-<span id="345">345</span>
-<span id="346">346</span>
-<span id="347">347</span>
-<span id="348">348</span>
-<span id="349">349</span>
-<span id="350">350</span>
-<span id="351">351</span>
-<span id="352">352</span>
-<span id="353">353</span>
-<span id="354">354</span>
-<span id="355">355</span>
-<span id="356">356</span>
-<span id="357">357</span>
-<span id="358">358</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::bucket</span>::{<span class="self">self</span>, <span class="ident">Bucket</span>, <span class="ident">BucketArray</span>, <span class="ident">InsertOrModifyState</span>, <span class="ident">RehashOp</span>};
 
 <span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">borrow::Borrow</span>,
     <span class="ident">hash</span>::{<span class="ident">BuildHasher</span>, <span class="ident">Hash</span>},
     <span class="ident">sync::atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>},
 };
@@ -382,17 +357,12 @@
     <span class="ident">K</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span>,
     <span class="ident">S</span>: <span class="ident">BuildHasher</span>,
 {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">get_key_value_and_then</span><span class="op">&lt;</span><span class="ident">Q</span>, <span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">get_key_value_and_then</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Q</span>,
         <span class="ident">hash</span>: <span class="ident">u64</span>,
-        <span class="ident">with_entry</span>: <span class="ident">F</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Q</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
-        <span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>,
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    {
+        <span class="kw-2">mut</span> <span class="ident">eq</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="ident">bool</span>,
+        <span class="ident">with_entry</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">crossbeam_epoch::pin</span>();
         <span class="kw">let</span> <span class="ident">current_ref</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get</span>(<span class="ident">guard</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bucket_array_ref</span> <span class="op">=</span> <span class="ident">current_ref</span>;
@@ -401,7 +371,7 @@
 
         <span class="kw">loop</span> {
             <span class="kw">match</span> <span class="ident">bucket_array_ref</span>
-                .<span class="ident">get</span>(<span class="ident">guard</span>, <span class="ident">hash</span>, <span class="ident">key</span>)
+                .<span class="ident">get</span>(<span class="ident">guard</span>, <span class="ident">hash</span>, <span class="kw-2">&amp;mut</span> <span class="ident">eq</span>)
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="kw">unsafe</span> { <span class="ident">p</span>.<span class="ident">as_ref</span>() })
             {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">Bucket</span> {
@@ -427,19 +397,13 @@
         <span class="ident">result</span>
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">remove_entry_if_and</span><span class="op">&lt;</span><span class="ident">Q</span>, <span class="ident">F</span>, <span class="ident">G</span>, <span class="ident">T</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">remove_entry_if_and</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Q</span>,
         <span class="ident">hash</span>: <span class="ident">u64</span>,
-        <span class="kw-2">mut</span> <span class="ident">condition</span>: <span class="ident">F</span>,
-        <span class="ident">with_previous_entry</span>: <span class="ident">G</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Q</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
-        <span class="ident">K</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">Q</span><span class="op">&gt;</span>,
-        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">bool</span>,
-        <span class="ident">G</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">T</span>,
-    {
+        <span class="kw-2">mut</span> <span class="ident">eq</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="ident">bool</span>,
+        <span class="kw-2">mut</span> <span class="ident">condition</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">bool</span>,
+        <span class="ident">with_previous_entry</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">T</span>,
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">crossbeam_epoch::pin</span>();
         <span class="kw">let</span> <span class="ident">current_ref</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get</span>(<span class="ident">guard</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bucket_array_ref</span> <span class="op">=</span> <span class="ident">current_ref</span>;
@@ -459,7 +423,7 @@
                 <span class="ident">bucket_array_ref</span> <span class="op">=</span> <span class="ident">bucket_array_ref</span>.<span class="ident">rehash</span>(<span class="ident">guard</span>, <span class="self">self</span>.<span class="ident">build_hasher</span>, <span class="ident">rehash_op</span>);
             }
 
-            <span class="kw">match</span> <span class="ident">bucket_array_ref</span>.<span class="ident">remove_if</span>(<span class="ident">guard</span>, <span class="ident">hash</span>, <span class="ident">key</span>, <span class="ident">condition</span>) {
+            <span class="kw">match</span> <span class="ident">bucket_array_ref</span>.<span class="ident">remove_if</span>(<span class="ident">guard</span>, <span class="ident">hash</span>, <span class="kw-2">&amp;mut</span> <span class="ident">eq</span>, <span class="ident">condition</span>) {
                 <span class="prelude-val">Ok</span>(<span class="ident">previous_bucket_ptr</span>) =&gt; {
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">previous_bucket_ref</span>) <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">previous_bucket_ptr</span>.<span class="ident">as_ref</span>() } {
                         <span class="kw">let</span> <span class="ident">Bucket</span> {
@@ -492,17 +456,13 @@
         <span class="ident">result</span>
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">insert_if_not_present_and</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">G</span>, <span class="ident">T</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">insert_if_not_present_and</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">key</span>: <span class="ident">K</span>,
         <span class="ident">hash</span>: <span class="ident">u64</span>,
-        <span class="ident">on_insert</span>: <span class="ident">F</span>,
-        <span class="ident">with_existing_entry</span>: <span class="ident">G</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident">V</span>,
-        <span class="ident">G</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">T</span>,
-    {
+        <span class="ident">on_insert</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="ident">V</span>,
+        <span class="ident">with_existing_entry</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">T</span>,
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="ident">bucket::InsertionResult</span>;
 
         <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">crossbeam_epoch::pin</span>();
@@ -561,19 +521,14 @@
         <span class="ident">result</span>
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">insert_with_or_modify_entry_and</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">F</span>, <span class="ident">G</span>, <span class="ident">H</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">insert_with_or_modify_entry_and</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">key</span>: <span class="ident">K</span>,
         <span class="ident">hash</span>: <span class="ident">u64</span>,
-        <span class="ident">on_insert</span>: <span class="ident">F</span>,
-        <span class="kw-2">mut</span> <span class="ident">on_modify</span>: <span class="ident">G</span>,
-        <span class="ident">with_old_entry</span>: <span class="ident">H</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident">V</span>,
-        <span class="ident">G</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">V</span>,
-        <span class="ident">H</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">T</span>,
-    {
+        <span class="ident">on_insert</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="ident">V</span>,
+        <span class="kw-2">mut</span> <span class="ident">on_modify</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">V</span>,
+        <span class="ident">with_old_entry</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>, <span class="kw-2">&amp;</span><span class="ident">V</span>) -&gt; <span class="ident">T</span>,
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">crossbeam_epoch::pin</span>();
         <span class="kw">let</span> <span class="ident">current_ref</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get</span>(<span class="ident">guard</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bucket_array_ref</span> <span class="op">=</span> <span class="ident">current_ref</span>;
@@ -630,10 +585,7 @@
         <span class="ident">result</span>
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">keys</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">with_key</span>: <span class="ident">F</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="ident">T</span>,
-    {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">keys</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">with_key</span>: <span class="kw">impl</span> <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">K</span>) -&gt; <span class="ident">T</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">guard</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">crossbeam_epoch::pin</span>();
         <span class="kw">let</span> <span class="ident">current_ref</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get</span>(<span class="ident">guard</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bucket_array_ref</span> <span class="op">=</span> <span class="ident">current_ref</span>;
