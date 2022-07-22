@@ -148,48 +148,7 @@
 <span id="143">143</span>
 <span id="144">144</span>
 <span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
-<span id="159">159</span>
-<span id="160">160</span>
-<span id="161">161</span>
-<span id="162">162</span>
-<span id="163">163</span>
-<span id="164">164</span>
-<span id="165">165</span>
-<span id="166">166</span>
-<span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
-<span id="176">176</span>
-<span id="177">177</span>
-<span id="178">178</span>
-<span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::future::Future</span>;
-<span class="kw">use</span> <span class="ident">core::pin::Pin</span>;
-<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 <span class="kw">use</span> <span class="ident">tendermint::abci::Code</span>;
@@ -206,23 +165,16 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::sdk_error::sdk_error_from_tx_sync_error_code</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::telemetry</span>;
 
-<span class="comment">// Maximum number of retries for send_tx in the case of</span>
-<span class="comment">// an account sequence mismatch at broadcast step.</span>
-<span class="kw">const</span> <span class="ident">MAX_ACCOUNT_SEQUENCE_RETRY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">1</span>;
-
-<span class="comment">// Backoff multiplier to apply while retrying in the case</span>
-<span class="comment">// of account sequence mismatch.</span>
-<span class="kw">const</span> <span class="ident">BACKOFF_MULTIPLIER_ACCOUNT_SEQUENCE_RETRY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">300</span>;
+<span class="comment">// Delay in milliseconds before retrying in the case of account sequence mismatch.</span>
+<span class="kw">const</span> <span class="ident">ACCOUNT_SEQUENCE_RETRY_DELAY</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">300</span>;
 
 <span class="comment">// The error &quot;incorrect account sequence&quot; is defined as the unique error code 32 in cosmos-sdk:</span>
 <span class="comment">// https://github.com/cosmos/cosmos-sdk/blob/v0.44.0/types/errors/errors.go#L115-L117</span>
 <span class="kw">const</span> <span class="ident">INCORRECT_ACCOUNT_SEQUENCE_ERR</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">32</span>;
 
-<span class="doccomment">/// Try to `send_tx` with retry on account sequence error.</span>
+<span class="doccomment">/// Try to `send_tx` and retry on account sequence error with re-cached account s.n.</span>
 <span class="doccomment">/// An account sequence error can occur if the account sequence that</span>
-<span class="doccomment">/// the relayer caches becomes outdated. This may happen if the relayer</span>
-<span class="doccomment">/// wallet is used concurrently elsewhere, or when tx fees are mis-configured</span>
-<span class="doccomment">/// leading to transactions hanging in the mempool.</span>
+<span class="doccomment">/// the relayer caches becomes outdated.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Account sequence mismatch error can occur at two separate steps:</span>
 <span class="doccomment">///   1. as Err variant, propagated from the `estimate_gas` step.</span>
@@ -230,17 +182,13 @@
 <span class="doccomment">///     the `broadcast_tx_sync` step.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// We treat both cases by re-fetching the account sequence number</span>
-<span class="doccomment">/// from the full node.</span>
-<span class="doccomment">/// Upon case #1, we do not retry submitting the same tx (retry happens</span>
-<span class="doccomment">/// nonetheless at the worker `step` level). Upon case #2, we retry</span>
-<span class="doccomment">/// submitting the same transaction.</span>
+<span class="doccomment">/// from the full node and retrying once with the new account s.n.</span>
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">send_tx_with_account_sequence_retry</span>(
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">TxConfig</span>,
     <span class="ident">key_entry</span>: <span class="kw-2">&amp;</span><span class="ident">KeyEntry</span>,
     <span class="ident">account</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Account</span>,
     <span class="ident">tx_memo</span>: <span class="kw-2">&amp;</span><span class="ident">Memo</span>,
     <span class="ident">messages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>,
-    <span class="ident">retry_counter</span>: <span class="ident">u64</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="macro">crate::time!</span>(<span class="string">&quot;send_tx_with_account_sequence_retry&quot;</span>);
 
@@ -249,114 +197,88 @@
 
     <span class="macro">telemetry!</span>(<span class="ident">msg_num</span>, <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">chain_id</span>, <span class="ident">messages</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>);
 
-    <span class="ident">do_send_tx_with_account_sequence_retry</span>(
-        <span class="ident">config</span>,
-        <span class="ident">key_entry</span>,
-        <span class="ident">account</span>,
-        <span class="ident">tx_memo</span>,
-        <span class="ident">messages</span>,
-        <span class="ident">retry_counter</span>,
-    )
-    .<span class="kw">await</span>
+    <span class="ident">do_send_tx_with_account_sequence_retry</span>(<span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">messages</span>).<span class="kw">await</span>
 }
 
-<span class="comment">// We have to do explicit return of `Box&lt;dyn Future&gt;` because Rust</span>
-<span class="comment">// do not currently support recursive async functions behind the</span>
-<span class="comment">// `async fn` syntactic sugar.</span>
-<span class="kw">fn</span> <span class="ident">do_send_tx_with_account_sequence_retry</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">TxConfig</span>,
-    <span class="ident">key_entry</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">KeyEntry</span>,
-    <span class="ident">account</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Account</span>,
-    <span class="ident">tx_memo</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Memo</span>,
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">refresh_account_and_retry_send_tx_with_account_sequence</span>(
+    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">TxConfig</span>,
+    <span class="ident">key_entry</span>: <span class="kw-2">&amp;</span><span class="ident">KeyEntry</span>,
+    <span class="ident">account</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Account</span>,
+    <span class="ident">tx_memo</span>: <span class="kw-2">&amp;</span><span class="ident">Memo</span>,
     <span class="ident">messages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>,
-    <span class="ident">retry_counter</span>: <span class="ident">u64</span>,
-) -&gt; <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> {
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;sending {} messages using account sequence {}&quot;</span>,
-            <span class="ident">messages</span>.<span class="ident">len</span>(),
-            <span class="ident">account</span>.<span class="ident">sequence</span>,
-        );
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="comment">// Re-fetch the account s.n.</span>
+    <span class="ident">refresh_account</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">grpc_address</span>, <span class="kw-2">&amp;</span><span class="ident">key_entry</span>.<span class="ident">account</span>, <span class="ident">account</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="comment">// Retry after delay.</span>
+    <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="ident">ACCOUNT_SEQUENCE_RETRY_DELAY</span>));
+    <span class="ident">estimate_fee_and_send_tx</span>(<span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">messages</span>.<span class="ident">clone</span>()).<span class="kw">await</span>
+}
 
-        <span class="kw">let</span> <span class="ident">tx_result</span> <span class="op">=</span>
-            <span class="ident">estimate_fee_and_send_tx</span>(<span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">messages</span>.<span class="ident">clone</span>()).<span class="kw">await</span>;
+<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">do_send_tx_with_account_sequence_retry</span>(
+    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">TxConfig</span>,
+    <span class="ident">key_entry</span>: <span class="kw-2">&amp;</span><span class="ident">KeyEntry</span>,
+    <span class="ident">account</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Account</span>,
+    <span class="ident">tx_memo</span>: <span class="kw-2">&amp;</span><span class="ident">Memo</span>,
+    <span class="ident">messages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> <span class="ident">estimate_fee_and_send_tx</span>(<span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">messages</span>.<span class="ident">clone</span>()).<span class="kw">await</span> {
+        <span class="comment">// Gas estimation failed with acct. s.n. mismatch at estimate gas step.</span>
+        <span class="comment">// It indicates that the account sequence cached by hermes is stale (got &lt; expected).</span>
+        <span class="comment">// This can happen when the same account is used by another agent.</span>
+        <span class="prelude-val">Err</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) <span class="kw">if</span> <span class="ident">mismatch_account_sequence_number_error_requires_refresh</span>(<span class="ident">e</span>) =&gt; {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;failed at estimate_gas step mismatching account sequence {}. \
+                refresh account sequence number and retry once&quot;</span>,
+                <span class="ident">e</span>
+            );
+            <span class="ident">refresh_account_and_retry_send_tx_with_account_sequence</span>(
+                <span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">messages</span>,
+            )
+            .<span class="kw">await</span>
+        }
 
-        <span class="kw">match</span> <span class="ident">tx_result</span> {
-            <span class="comment">// Gas estimation failed with acct. s.n. mismatch at estimate gas step.</span>
-            <span class="comment">// It indicates that the account sequence cached by hermes is stale.</span>
-            <span class="comment">// This can happen when the same account is used by another agent.</span>
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="kw">if</span> <span class="ident">mismatch_account_sequence_number_error_requires_refresh</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>) =&gt; {
-                <span class="macro">warn!</span>(<span class="string">&quot;failed at estimate_gas step mismatching account sequence: dropping the tx &amp; refreshing account sequence number&quot;</span>);
-                <span class="ident">refresh_account</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">grpc_address</span>, <span class="kw-2">&amp;</span><span class="ident">key_entry</span>.<span class="ident">account</span>, <span class="ident">account</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="comment">// Note: propagating error here can lead to bug &amp; dropped packets:</span>
-                <span class="comment">// https://github.com/informalsystems/ibc-rs/issues/1153</span>
-                <span class="comment">// But periodic packet clearing will catch any dropped packets.</span>
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>)
-            }
+        <span class="comment">// Gas estimation succeeded but broadcast_tx_sync failed with a retry-able error.</span>
+        <span class="prelude-val">Ok</span>(<span class="kw-2">ref</span> <span class="ident">response</span>) <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">code</span> <span class="op">==</span> <span class="ident">Code::Err</span>(<span class="ident">INCORRECT_ACCOUNT_SEQUENCE_ERR</span>) =&gt; {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;failed at broadcast_tx_sync step with incorrect account sequence {:?}.  \
+                refresh account sequence number and retry once&quot;</span>,
+                <span class="ident">response</span>
+            );
+            <span class="ident">refresh_account_and_retry_send_tx_with_account_sequence</span>(
+                <span class="ident">config</span>, <span class="ident">key_entry</span>, <span class="ident">account</span>, <span class="ident">tx_memo</span>, <span class="ident">messages</span>,
+            )
+            .<span class="kw">await</span>
+        }
 
-            <span class="comment">// Gas estimation succeeded. Broadcasting failed with a retry-able error.</span>
-            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">code</span> <span class="op">==</span> <span class="ident">Code::Err</span>(<span class="ident">INCORRECT_ACCOUNT_SEQUENCE_ERR</span>) =&gt; {
-                <span class="kw">if</span> <span class="ident">retry_counter</span> <span class="op">&lt;</span> <span class="ident">MAX_ACCOUNT_SEQUENCE_RETRY</span> {
-                    <span class="kw">let</span> <span class="ident">retry_counter</span> <span class="op">=</span> <span class="ident">retry_counter</span> <span class="op">+</span> <span class="number">1</span>;
-                    <span class="macro">warn!</span>(<span class="string">&quot;failed at broadcast step with incorrect account sequence. retrying ({}/{})&quot;</span>,
-                        <span class="ident">retry_counter</span>, <span class="ident">MAX_ACCOUNT_SEQUENCE_RETRY</span>);
-                    <span class="comment">// Backoff &amp; re-fetch the account s.n.</span>
-                    <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">retry_counter</span> <span class="op">*</span> <span class="ident">BACKOFF_MULTIPLIER_ACCOUNT_SEQUENCE_RETRY</span>;
+        <span class="comment">// Gas estimation succeeded and broadcast_tx_sync was either successful or has failed with</span>
+        <span class="comment">// an unrecoverable error.</span>
+        <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; {
+            <span class="comment">// Gas estimation and broadcast_tx_sync were successful.</span>
+            <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">code</span> {
+                <span class="ident">Code::Ok</span> =&gt; {
+                    <span class="comment">// Increase account s.n.</span>
+                    <span class="macro">debug!</span>(<span class="string">&quot;broadcast_tx_sync: {:?}&quot;</span>, <span class="ident">response</span>);
+                    <span class="ident">account</span>.<span class="ident">sequence</span>.<span class="ident">increment_mut</span>();
+                    <span class="prelude-val">Ok</span>(<span class="ident">response</span>)
+                }
 
-                    <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="ident">backoff</span>));
-                    <span class="ident">refresh_account</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">grpc_address</span>, <span class="kw-2">&amp;</span><span class="ident">key_entry</span>.<span class="ident">account</span>, <span class="ident">account</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-
-                    <span class="comment">// Now retry.</span>
-                    <span class="ident">do_send_tx_with_account_sequence_retry</span>(
-                        <span class="ident">config</span>,
-                        <span class="ident">key_entry</span>,
-                        <span class="ident">account</span>,
-                        <span class="ident">tx_memo</span>,
-                        <span class="ident">messages</span>,
-                        <span class="ident">retry_counter</span> <span class="op">+</span> <span class="number">1</span>,
-                    )
-                    .<span class="kw">await</span>
-                } <span class="kw">else</span> {
-                    <span class="comment">// If after the max retry we still get an account sequence mismatch error,</span>
-                    <span class="comment">// we ignore the error and return the original response to downstream.</span>
-                    <span class="comment">// We do not return an error here, because the current convention</span>
-                    <span class="comment">// let the caller handle error responses separately.</span>
-                    <span class="macro">error!</span>(<span class="string">&quot;failed due to account sequence errors. the relayer wallet may be used elsewhere concurrently.&quot;</span>);
+                <span class="comment">// Gas estimation succeeded, but broadcast_tx_sync failed with unrecoverable error.</span>
+                <span class="ident">Code::Err</span>(<span class="ident">code</span>) =&gt; {
+                    <span class="comment">// Do not increase the account s.n. since CheckTx step of broadcast_tx_sync has failed.</span>
+                    <span class="comment">// Log the error.</span>
+                    <span class="macro">error!</span>(
+                        <span class="string">&quot;broadcast_tx_sync: {:?}: diagnostic: {:?}&quot;</span>,
+                        <span class="ident">response</span>,
+                        <span class="ident">sdk_error_from_tx_sync_error_code</span>(<span class="ident">code</span>)
+                    );
                     <span class="prelude-val">Ok</span>(<span class="ident">response</span>)
                 }
             }
-
-            <span class="comment">// Catch-all arm for the Ok variant.</span>
-            <span class="comment">// This is the case when gas estimation succeeded.</span>
-            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; {
-                <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">code</span> {
-                    <span class="comment">// Gas estimation succeeded and broadcasting was successful.</span>
-                    <span class="ident">Code::Ok</span> =&gt; {
-                        <span class="macro">debug!</span>(<span class="string">&quot;broadcast_tx_sync: {:?}&quot;</span>, <span class="ident">response</span>);
-
-                        <span class="ident">account</span>.<span class="ident">sequence</span>.<span class="ident">increment_mut</span>();
-                        <span class="prelude-val">Ok</span>(<span class="ident">response</span>)
-                    }
-
-                    <span class="comment">// Gas estimation succeeded, but broadcasting failed with unrecoverable error.</span>
-                    <span class="ident">Code::Err</span>(<span class="ident">code</span>) =&gt; {
-                        <span class="comment">// Do not increase the account s.n. if CheckTx failed.</span>
-                        <span class="comment">// Log the error.</span>
-                        <span class="macro">error!</span>(
-                            <span class="string">&quot;broadcast_tx_sync: {:?}: diagnostic: {:?}&quot;</span>,
-                            <span class="ident">response</span>,
-                            <span class="ident">sdk_error_from_tx_sync_error_code</span>(<span class="ident">code</span>)
-                        );
-                        <span class="prelude-val">Ok</span>(<span class="ident">response</span>)
-                    }
-                }
-            }
-
-            <span class="comment">// Catch-all case for the Err variant.</span>
-            <span class="comment">// Gas estimation failure or other unrecoverable error, propagate.</span>
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>),
         }
-    })
+
+        <span class="comment">// Gas estimation failure or other unrecoverable error, propagate.</span>
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+    }
 }
 
 <span class="doccomment">/// Determine whether the given error yielded by `tx_simulate`</span>
