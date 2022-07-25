@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.1/src/cht/map/bucket.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bucket.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.2/src/cht/map/bucket.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bucket.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script src="../../../../crates.js"></script><script defer src="../../../../main.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -894,17 +894,46 @@
 <span id="889">889</span>
 <span id="890">890</span>
 <span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+<span id="903">903</span>
+<span id="904">904</span>
+<span id="905">905</span>
+<span id="906">906</span>
+<span id="907">907</span>
+<span id="908">908</span>
+<span id="909">909</span>
+<span id="910">910</span>
+<span id="911">911</span>
+<span id="912">912</span>
+<span id="913">913</span>
+<span id="914">914</span>
+<span id="915">915</span>
+<span id="916">916</span>
+<span id="917">917</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">hash</span>::{<span class="ident">BuildHasher</span>, <span class="ident">Hash</span>, <span class="ident">Hasher</span>},
     <span class="ident">mem</span>::{<span class="self">self</span>, <span class="ident">MaybeUninit</span>},
     <span class="ident">ptr</span>,
-    <span class="ident">sync::atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>},
+    <span class="ident">sync</span>::{
+        <span class="ident">atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>},
+        <span class="ident">Arc</span>, <span class="ident">Mutex</span>, <span class="ident">TryLockError</span>,
+    },
 };
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable-debug-counters&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::common::concurrent::debug_counters</span>;
 
-<span class="kw">use</span> <span class="ident">crossbeam_epoch</span>::{<span class="ident">Atomic</span>, <span class="ident">CompareAndSetError</span>, <span class="ident">Guard</span>, <span class="ident">Owned</span>, <span class="ident">Shared</span>};
+<span class="kw">use</span> <span class="ident">crossbeam_epoch</span>::{<span class="ident">Atomic</span>, <span class="ident">CompareExchangeError</span>, <span class="ident">Guard</span>, <span class="ident">Owned</span>, <span class="ident">Shared</span>};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">BUCKET_ARRAY_DEFAULT_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
 
@@ -912,6 +941,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">buckets</span>: <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">Atomic</span><span class="op">&lt;</span><span class="ident">Bucket</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>]<span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">next</span>: <span class="ident">Atomic</span><span class="op">&lt;</span><span class="ident">BucketArray</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">epoch</span>: <span class="ident">usize</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">rehash_lock</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">tombstone_count</span>: <span class="ident">AtomicUsize</span>,
 }
 
@@ -945,6 +975,7 @@
             <span class="ident">buckets</span>,
             <span class="ident">next</span>: <span class="ident">Atomic::null</span>(),
             <span class="ident">epoch</span>,
+            <span class="ident">rehash_lock</span>: <span class="ident">Arc::new</span>(<span class="ident">Mutex::new</span>(())),
             <span class="ident">tombstone_count</span>: <span class="ident">Default::default</span>(),
         }
     }
@@ -1043,10 +1074,11 @@
 
             <span class="kw">let</span> <span class="ident">new_bucket_ptr</span> <span class="op">=</span> <span class="ident">this_bucket_ptr</span>.<span class="ident">with_tag</span>(<span class="ident">TOMBSTONE_TAG</span>);
 
-            <span class="kw">match</span> <span class="ident">this_bucket</span>.<span class="ident">compare_and_set_weak</span>(
+            <span class="kw">match</span> <span class="ident">this_bucket</span>.<span class="ident">compare_exchange_weak</span>(
                 <span class="ident">this_bucket_ptr</span>,
                 <span class="ident">new_bucket_ptr</span>,
-                (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                <span class="ident">Ordering::AcqRel</span>,
+                <span class="ident">Ordering::Relaxed</span>,
                 <span class="ident">guard</span>,
             ) {
                 <span class="comment">// Succeeded. Return the removed value. (can be null)</span>
@@ -1096,10 +1128,11 @@
 
             <span class="kw">let</span> <span class="ident">new_bucket</span> <span class="op">=</span> <span class="ident">state</span>.<span class="ident">into_insert_bucket</span>();
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">CompareAndSetError</span> { <span class="ident">new</span>, .. }) <span class="op">=</span> <span class="ident">this_bucket</span>.<span class="ident">compare_and_set_weak</span>(
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">CompareExchangeError</span> { <span class="ident">new</span>, .. }) <span class="op">=</span> <span class="ident">this_bucket</span>.<span class="ident">compare_exchange_weak</span>(
                 <span class="ident">this_bucket_ptr</span>,
                 <span class="ident">new_bucket</span>,
-                (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                <span class="ident">Ordering::AcqRel</span>,
+                <span class="ident">Ordering::Relaxed</span>,
                 <span class="ident">guard</span>,
             ) {
                 <span class="ident">maybe_state</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">InsertOrModifyState::from_bucket_value</span>(<span class="ident">new</span>, <span class="prelude-val">None</span>));
@@ -1161,10 +1194,11 @@
                     (<span class="ident">state</span>.<span class="ident">into_insert_bucket</span>(), <span class="prelude-val">None</span>)
                 };
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">CompareAndSetError</span> { <span class="ident">new</span>, .. }) <span class="op">=</span> <span class="ident">this_bucket</span>.<span class="ident">compare_and_set_weak</span>(
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">CompareExchangeError</span> { <span class="ident">new</span>, .. }) <span class="op">=</span> <span class="ident">this_bucket</span>.<span class="ident">compare_exchange_weak</span>(
                 <span class="ident">this_bucket_ptr</span>,
                 <span class="ident">new_bucket</span>,
-                (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                <span class="ident">Ordering::AcqRel</span>,
+                <span class="ident">Ordering::Relaxed</span>,
                 <span class="ident">guard</span>,
             ) {
                 <span class="comment">// Failed. Reload to retry.</span>
@@ -1210,10 +1244,11 @@
             <span class="kw">if</span> <span class="ident">this_bucket_ptr</span>.<span class="ident">is_null</span>() <span class="op">&amp;&amp;</span> <span class="ident">is_tombstone</span>(<span class="ident">bucket_ptr</span>) {
                 <span class="ident">ProbeLoopAction::Return</span>(<span class="prelude-val">None</span>)
             } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">this_bucket</span>
-                .<span class="ident">compare_and_set_weak</span>(
+                .<span class="ident">compare_exchange_weak</span>(
                     <span class="ident">this_bucket_ptr</span>,
                     <span class="ident">bucket_ptr</span>,
-                    (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                    <span class="ident">Ordering::AcqRel</span>,
+                    <span class="ident">Ordering::Relaxed</span>,
                     <span class="ident">guard</span>,
                 )
                 .<span class="ident">is_ok</span>()
@@ -1290,11 +1325,24 @@
         <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Guard</span>,
         <span class="ident">build_hasher</span>: <span class="kw-2">&amp;</span><span class="ident">H</span>,
         <span class="ident">rehash_op</span>: <span class="ident">RehashOp</span>,
-    ) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">BucketArray</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">BucketArray</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">K</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span>,
         <span class="ident">H</span>: <span class="ident">BuildHasher</span>,
     {
+        <span class="comment">// Ensure that the rehashing is not performed concurrently.</span>
+        <span class="kw">let</span> <span class="ident">lock</span>;
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">rehash_lock</span>.<span class="ident">try_lock</span>() {
+            <span class="prelude-val">Ok</span>(<span class="ident">lk</span>) =&gt; <span class="ident">lock</span> <span class="op">=</span> <span class="ident">lk</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">TryLockError::WouldBlock</span>) =&gt; {
+                <span class="comment">// Wait until the lock become available.</span>
+                <span class="ident">std::mem::drop</span>(<span class="self">self</span>.<span class="ident">rehash_lock</span>.<span class="ident">lock</span>());
+                <span class="comment">// We need to return here to see if rehashing is still needed.</span>
+                <span class="kw">return</span> <span class="prelude-val">None</span>;
+            }
+            <span class="prelude-val">Err</span>(<span class="ident">e</span> @ <span class="ident">TryLockError::Poisoned</span>(<span class="kw">_</span>)) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>),
+        };
+
         <span class="kw">let</span> <span class="ident">next_array</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">next_array</span>(<span class="ident">guard</span>, <span class="ident">rehash_op</span>);
 
         <span class="kw">for</span> <span class="ident">this_bucket</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">buckets</span>.<span class="ident">iter</span>() {
@@ -1316,10 +1364,11 @@
 
                     <span class="kw">while</span> <span class="ident">is_borrowed</span>(<span class="ident">next_bucket_ptr</span>)
                         <span class="op">&amp;&amp;</span> <span class="ident">next_bucket</span>
-                            .<span class="ident">compare_and_set_weak</span>(
+                            .<span class="ident">compare_exchange_weak</span>(
                                 <span class="ident">next_bucket_ptr</span>,
                                 <span class="ident">to_put_ptr</span>,
-                                (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                                <span class="ident">Ordering::AcqRel</span>,
+                                <span class="ident">Ordering::Relaxed</span>,
                                 <span class="ident">guard</span>,
                             )
                             .<span class="ident">is_err</span>()
@@ -1336,10 +1385,11 @@
                 }
 
                 <span class="kw">if</span> <span class="ident">this_bucket</span>
-                    .<span class="ident">compare_and_set_weak</span>(
+                    .<span class="ident">compare_exchange_weak</span>(
                         <span class="ident">this_bucket_ptr</span>,
                         <span class="ident">Shared::null</span>().<span class="ident">with_tag</span>(<span class="ident">SENTINEL_TAG</span>),
-                        (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                        <span class="ident">Ordering::AcqRel</span>,
+                        <span class="ident">Ordering::Relaxed</span>,
                         <span class="ident">guard</span>,
                     )
                     .<span class="ident">is_ok</span>()
@@ -1356,8 +1406,9 @@
                 }
             }
         }
+        <span class="ident">std::mem::drop</span>(<span class="ident">lock</span>);
 
-        <span class="ident">next_array</span>
+        <span class="prelude-val">Some</span>(<span class="ident">next_array</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">next_array</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">Guard</span>, <span class="ident">rehash_op</span>: <span class="ident">RehashOp</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;g</span> <span class="ident">BucketArray</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
@@ -1375,14 +1426,15 @@
                 <span class="ident">Owned::new</span>(<span class="ident">BucketArray::with_length</span>(<span class="self">self</span>.<span class="ident">epoch</span> <span class="op">+</span> <span class="number">1</span>, <span class="ident">new_length</span>))
             });
 
-            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">next</span>.<span class="ident">compare_and_set_weak</span>(
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">next</span>.<span class="ident">compare_exchange_weak</span>(
                 <span class="ident">Shared::null</span>(),
                 <span class="ident">new_next</span>,
-                (<span class="ident">Ordering::Release</span>, <span class="ident">Ordering::Relaxed</span>),
+                <span class="ident">Ordering::AcqRel</span>,
+                <span class="ident">Ordering::Relaxed</span>,
                 <span class="ident">guard</span>,
             ) {
                 <span class="prelude-val">Ok</span>(<span class="ident">p</span>) =&gt; <span class="kw">return</span> <span class="kw">unsafe</span> { <span class="ident">p</span>.<span class="ident">deref</span>() },
-                <span class="prelude-val">Err</span>(<span class="ident">CompareAndSetError</span> { <span class="ident">new</span>, .. }) =&gt; {
+                <span class="prelude-val">Err</span>(<span class="ident">CompareExchangeError</span> { <span class="ident">new</span>, .. }) =&gt; {
                     <span class="ident">maybe_new_next</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">new</span>);
                 }
             }

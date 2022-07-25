@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crypto-bigint-0.3.2/src/limb/mul.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mul.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crypto-bigint-0.4.8/src/limb/mul.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mul.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../crypto_bigint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -200,12 +200,9 @@
 <span id="193">193</span>
 <span id="194">194</span>
 <span id="195">195</span>
-<span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Limb multiplication</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Checked</span>, <span class="ident">CheckedMul</span>, <span class="ident">Limb</span>, <span class="ident">LimbUInt</span>, <span class="ident">WideLimbUInt</span>, <span class="ident">Wrapping</span>, <span class="ident">Zero</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Checked</span>, <span class="ident">CheckedMul</span>, <span class="ident">Limb</span>, <span class="ident">WideWord</span>, <span class="ident">Word</span>, <span class="ident">Wrapping</span>, <span class="ident">Zero</span>};
 <span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Mul</span>, <span class="ident">MulAssign</span>};
 <span class="kw">use</span> <span class="ident">subtle::CtOption</span>;
 
@@ -213,15 +210,12 @@
     <span class="doccomment">/// Computes `self + (b * c) + carry`, returning the result along with the new carry.</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mac</span>(<span class="self">self</span>, <span class="ident">b</span>: <span class="ident">Limb</span>, <span class="ident">c</span>: <span class="ident">Limb</span>, <span class="ident">carry</span>: <span class="ident">Limb</span>) -&gt; (<span class="ident">Limb</span>, <span class="ident">Limb</span>) {
-        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>;
-        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>;
-        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>;
-        <span class="kw">let</span> <span class="ident">carry</span> <span class="op">=</span> <span class="ident">carry</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>;
+        <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideWord</span>;
+        <span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">b</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideWord</span>;
+        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">c</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideWord</span>;
+        <span class="kw">let</span> <span class="ident">carry</span> <span class="op">=</span> <span class="ident">carry</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideWord</span>;
         <span class="kw">let</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">a</span> <span class="op">+</span> (<span class="ident">b</span> <span class="op">*</span> <span class="ident">c</span>) <span class="op">+</span> <span class="ident">carry</span>;
-        (
-            <span class="ident">Limb</span>(<span class="ident">ret</span> <span class="kw">as</span> <span class="ident">LimbUInt</span>),
-            <span class="ident">Limb</span>((<span class="ident">ret</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::BIT_SIZE</span>) <span class="kw">as</span> <span class="ident">LimbUInt</span>),
-        )
+        (<span class="ident">Limb</span>(<span class="ident">ret</span> <span class="kw">as</span> <span class="ident">Word</span>), <span class="ident">Limb</span>((<span class="ident">ret</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::BIT_SIZE</span>) <span class="kw">as</span> <span class="ident">Word</span>))
     }
 
     <span class="doccomment">/// Perform saturating multiplication.</span>
@@ -237,8 +231,8 @@
     }
 
     <span class="doccomment">/// Compute &quot;wide&quot; multiplication, with a product twice the size of the input.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mul_wide</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) -&gt; <span class="ident">WideLimbUInt</span> {
-        (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>) <span class="op">*</span> (<span class="ident">rhs</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mul_wide</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) -&gt; <span class="ident">WideWord</span> {
+        (<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideWord</span>) <span class="op">*</span> (<span class="ident">rhs</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">WideWord</span>)
     }
 }
 
@@ -248,8 +242,8 @@
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">checked_mul</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) -&gt; <span class="ident">CtOption</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">mul_wide</span>(<span class="ident">rhs</span>);
-        <span class="kw">let</span> <span class="ident">overflow</span> <span class="op">=</span> <span class="ident">Limb</span>((<span class="ident">result</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::BIT_SIZE</span>) <span class="kw">as</span> <span class="ident">LimbUInt</span>);
-        <span class="ident">CtOption::new</span>(<span class="ident">Limb</span>(<span class="ident">result</span> <span class="kw">as</span> <span class="ident">LimbUInt</span>), <span class="ident">overflow</span>.<span class="ident">is_zero</span>())
+        <span class="kw">let</span> <span class="ident">overflow</span> <span class="op">=</span> <span class="ident">Limb</span>((<span class="ident">result</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::BIT_SIZE</span>) <span class="kw">as</span> <span class="ident">Word</span>);
+        <span class="ident">CtOption::new</span>(<span class="ident">Limb</span>(<span class="ident">result</span> <span class="kw">as</span> <span class="ident">Word</span>), <span class="ident">overflow</span>.<span class="ident">is_zero</span>())
     }
 }
 
@@ -355,7 +349,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">CheckedMul</span>, <span class="ident">Limb</span>, <span class="ident">WideLimbUInt</span>};
+    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">CheckedMul</span>, <span class="ident">Limb</span>, <span class="ident">WideWord</span>};
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">mul_wide_zero_and_one</span>() {
@@ -372,7 +366,7 @@
         <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">a_int</span> <span class="kw">in</span> <span class="ident">primes</span> {
             <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">b_int</span> <span class="kw">in</span> <span class="ident">primes</span> {
                 <span class="kw">let</span> <span class="ident">actual</span> <span class="op">=</span> <span class="ident">Limb::from_u32</span>(<span class="ident">a_int</span>).<span class="ident">mul_wide</span>(<span class="ident">Limb::from_u32</span>(<span class="ident">b_int</span>));
-                <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">a_int</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span> <span class="op">*</span> <span class="ident">b_int</span> <span class="kw">as</span> <span class="ident">WideLimbUInt</span>;
+                <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">a_int</span> <span class="kw">as</span> <span class="ident">WideWord</span> <span class="op">*</span> <span class="ident">b_int</span> <span class="kw">as</span> <span class="ident">WideWord</span>;
                 <span class="macro">assert_eq!</span>(<span class="ident">actual</span>, <span class="ident">expected</span>);
             }
         }

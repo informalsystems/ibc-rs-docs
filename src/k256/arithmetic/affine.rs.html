@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/k256-0.10.4/src/arithmetic/affine.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>affine.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/k256-0.11.3/src/arithmetic/affine.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>affine.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../k256/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -402,19 +402,61 @@
 <span id="395">395</span>
 <span id="396">396</span>
 <span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Affine points</span>
 
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::op_ref</span>)]</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">FieldElement</span>, <span class="ident">ProjectivePoint</span>, <span class="ident">CURVE_EQUATION_B</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">CompressedPoint</span>, <span class="ident">EncodedPoint</span>, <span class="ident">FieldBytes</span>, <span class="ident">Scalar</span>, <span class="ident">Secp256k1</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">CompressedPoint</span>, <span class="ident">EncodedPoint</span>, <span class="ident">FieldBytes</span>, <span class="ident">PublicKey</span>, <span class="ident">Scalar</span>, <span class="ident">Secp256k1</span>};
 <span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Mul</span>, <span class="ident">Neg</span>};
 <span class="kw">use</span> <span class="ident">elliptic_curve</span>::{
     <span class="ident">group</span>::{<span class="ident">prime::PrimeCurveAffine</span>, <span class="ident">GroupEncoding</span>},
     <span class="ident">sec1</span>::{<span class="self">self</span>, <span class="ident">FromEncodedPoint</span>, <span class="ident">ToEncodedPoint</span>},
     <span class="ident">subtle</span>::{<span class="ident">Choice</span>, <span class="ident">ConditionallySelectable</span>, <span class="ident">ConstantTimeEq</span>, <span class="ident">CtOption</span>},
     <span class="ident">zeroize::DefaultIsZeroes</span>,
-    <span class="ident">AffineArithmetic</span>, <span class="ident">AffineXCoordinate</span>, <span class="ident">DecompressPoint</span>, <span class="ident">Error</span>, <span class="prelude-ty">Result</span>,
+    <span class="ident">AffineArithmetic</span>, <span class="ident">AffineXCoordinate</span>, <span class="ident">DecompactPoint</span>, <span class="ident">DecompressPoint</span>, <span class="ident">Error</span>, <span class="prelude-ty">Result</span>,
 };
 
 <span class="kw">impl</span> <span class="ident">AffineArithmetic</span> <span class="kw">for</span> <span class="ident">Secp256k1</span> {
@@ -422,7 +464,7 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">elliptic_curve::serde</span>::{<span class="ident">de</span>, <span class="ident">ser</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">serdect::serde</span>::{<span class="ident">de</span>, <span class="ident">ser</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
 <span class="doccomment">/// secp256k1 curve point expressed in affine coordinates.</span>
 <span class="doccomment">///</span>
@@ -481,6 +523,13 @@
         ]),
         <span class="ident">infinity</span>: <span class="number">0</span>,
     };
+}
+
+<span class="kw">impl</span> <span class="ident">AffinePoint</span> {
+    <span class="doccomment">/// Create a new [`AffinePoint`] with the given coordinates.</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">x</span>: <span class="ident">FieldElement</span>, <span class="ident">y</span>: <span class="ident">FieldElement</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { <span class="ident">x</span>, <span class="ident">y</span>, <span class="ident">infinity</span>: <span class="number">0</span> }
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">PrimeCurveAffine</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
@@ -548,6 +597,34 @@
 
 <span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {}
 
+<span class="kw">impl</span> <span class="ident">Mul</span><span class="op">&lt;</span><span class="ident">Scalar</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">ProjectivePoint</span>;
+
+    <span class="kw">fn</span> <span class="ident">mul</span>(<span class="self">self</span>, <span class="ident">scalar</span>: <span class="ident">Scalar</span>) -&gt; <span class="ident">ProjectivePoint</span> {
+        <span class="ident">ProjectivePoint::from</span>(<span class="self">self</span>) <span class="op">*</span> <span class="ident">scalar</span>
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Mul</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Scalar</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">ProjectivePoint</span>;
+
+    <span class="kw">fn</span> <span class="ident">mul</span>(<span class="self">self</span>, <span class="ident">scalar</span>: <span class="kw-2">&amp;</span><span class="ident">Scalar</span>) -&gt; <span class="ident">ProjectivePoint</span> {
+        <span class="ident">ProjectivePoint::from</span>(<span class="self">self</span>) <span class="op">*</span> <span class="ident">scalar</span>
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Neg</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">AffinePoint</span>;
+
+    <span class="kw">fn</span> <span class="ident">neg</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Output</span> {
+        <span class="ident">AffinePoint</span> {
+            <span class="ident">x</span>: <span class="self">self</span>.<span class="ident">x</span>,
+            <span class="ident">y</span>: <span class="self">self</span>.<span class="ident">y</span>.<span class="ident">negate</span>(<span class="number">1</span>).<span class="ident">normalize_weak</span>(),
+            <span class="ident">infinity</span>: <span class="self">self</span>.<span class="ident">infinity</span>,
+        }
+    }
+}
+
 <span class="kw">impl</span> <span class="ident">DecompressPoint</span><span class="op">&lt;</span><span class="ident">Secp256k1</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
     <span class="kw">fn</span> <span class="ident">decompress</span>(<span class="ident">x_bytes</span>: <span class="kw-2">&amp;</span><span class="ident">FieldBytes</span>, <span class="ident">y_is_odd</span>: <span class="ident">Choice</span>) -&gt; <span class="ident">CtOption</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="ident">FieldElement::from_bytes</span>(<span class="ident">x_bytes</span>).<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> {
@@ -562,13 +639,18 @@
                     <span class="ident">beta</span>.<span class="ident">is_odd</span>().<span class="ident">ct_eq</span>(<span class="kw-2">&amp;</span><span class="ident">y_is_odd</span>),
                 );
 
-                <span class="self">Self</span> {
-                    <span class="ident">x</span>,
-                    <span class="ident">y</span>: <span class="ident">y</span>.<span class="ident">normalize</span>(),
-                    <span class="ident">infinity</span>: <span class="number">0</span>,
-                }
+                <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">x</span>, <span class="ident">y</span>.<span class="ident">normalize</span>())
             })
         })
+    }
+}
+
+<span class="doccomment">/// Decompaction using Taproot conventions as described in [BIP 340].</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [BIP 340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki</span>
+<span class="kw">impl</span> <span class="ident">DecompactPoint</span><span class="op">&lt;</span><span class="ident">Secp256k1</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
+    <span class="kw">fn</span> <span class="ident">decompact</span>(<span class="ident">x_bytes</span>: <span class="kw-2">&amp;</span><span class="ident">FieldBytes</span>) -&gt; <span class="ident">CtOption</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="ident"><span class="self">Self</span>::decompress</span>(<span class="ident">x_bytes</span>, <span class="ident">Choice::from</span>(<span class="number">0</span>))
     }
 }
 
@@ -609,10 +691,7 @@
     <span class="kw">fn</span> <span class="ident">from_encoded_point</span>(<span class="ident">encoded_point</span>: <span class="kw-2">&amp;</span><span class="ident">EncodedPoint</span>) -&gt; <span class="ident">CtOption</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">encoded_point</span>.<span class="ident">coordinates</span>() {
             <span class="ident">sec1::Coordinates::Identity</span> =&gt; <span class="ident">CtOption::new</span>(<span class="ident"><span class="self">Self</span>::IDENTITY</span>, <span class="number">1</span>.<span class="ident">into</span>()),
-            <span class="ident">sec1::Coordinates::Compact</span> { .. } =&gt; {
-                <span class="comment">// TODO(tarcieri): add decompaction support</span>
-                <span class="ident">CtOption::new</span>(<span class="ident"><span class="self">Self</span>::default</span>(), <span class="number">0</span>.<span class="ident">into</span>())
-            }
+            <span class="ident">sec1::Coordinates::Compact</span> { <span class="ident">x</span> } =&gt; <span class="ident"><span class="self">Self</span>::decompact</span>(<span class="ident">x</span>),
             <span class="ident">sec1::Coordinates::Compressed</span> { <span class="ident">x</span>, <span class="ident">y_is_odd</span> } =&gt; {
                 <span class="ident">AffinePoint::decompress</span>(<span class="ident">x</span>, <span class="ident">Choice::from</span>(<span class="ident">y_is_odd</span> <span class="kw">as</span> <span class="ident">u8</span>))
             }
@@ -625,7 +704,7 @@
                         <span class="comment">// Check that the point is on the curve</span>
                         <span class="kw">let</span> <span class="ident">lhs</span> <span class="op">=</span> (<span class="ident">y</span> <span class="op">*</span> <span class="kw-2">&amp;</span><span class="ident">y</span>).<span class="ident">negate</span>(<span class="number">1</span>);
                         <span class="kw">let</span> <span class="ident">rhs</span> <span class="op">=</span> <span class="ident">x</span> <span class="op">*</span> <span class="kw-2">&amp;</span><span class="ident">x</span> <span class="op">*</span> <span class="kw-2">&amp;</span><span class="ident">x</span> <span class="op">+</span> <span class="kw-2">&amp;</span><span class="ident">CURVE_EQUATION_B</span>;
-                        <span class="kw">let</span> <span class="ident">point</span> <span class="op">=</span> <span class="ident">AffinePoint</span> { <span class="ident">x</span>, <span class="ident">y</span>, <span class="ident">infinity</span>: <span class="number">0</span> };
+                        <span class="kw">let</span> <span class="ident">point</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">x</span>, <span class="ident">y</span>);
                         <span class="ident">CtOption::new</span>(<span class="ident">point</span>, (<span class="ident">lhs</span> <span class="op">+</span> <span class="kw-2">&amp;</span><span class="ident">rhs</span>).<span class="ident">normalizes_to_zero</span>())
                     })
                 })
@@ -665,37 +744,42 @@
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">AffinePoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EncodedPoint</span> {
-    <span class="doccomment">/// Returns the SEC1 compressed encoding of this point.</span>
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">affine_point</span>: <span class="ident">AffinePoint</span>) -&gt; <span class="ident">EncodedPoint</span> {
+        <span class="ident">EncodedPoint::from</span>(<span class="kw-2">&amp;</span><span class="ident">affine_point</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">AffinePoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EncodedPoint</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">affine_point</span>: <span class="kw-2">&amp;</span><span class="ident">AffinePoint</span>) -&gt; <span class="ident">EncodedPoint</span> {
         <span class="ident">affine_point</span>.<span class="ident">to_encoded_point</span>(<span class="bool-val">true</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Mul</span><span class="op">&lt;</span><span class="ident">Scalar</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">ProjectivePoint</span>;
-
-    <span class="kw">fn</span> <span class="ident">mul</span>(<span class="self">self</span>, <span class="ident">scalar</span>: <span class="ident">Scalar</span>) -&gt; <span class="ident">ProjectivePoint</span> {
-        <span class="ident">ProjectivePoint::from</span>(<span class="self">self</span>) <span class="op">*</span> <span class="ident">scalar</span>
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">PublicKey</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">public_key</span>: <span class="ident">PublicKey</span>) -&gt; <span class="ident">AffinePoint</span> {
+        <span class="kw-2">*</span><span class="ident">public_key</span>.<span class="ident">as_affine</span>()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Mul</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Scalar</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">ProjectivePoint</span>;
-
-    <span class="kw">fn</span> <span class="ident">mul</span>(<span class="self">self</span>, <span class="ident">scalar</span>: <span class="kw-2">&amp;</span><span class="ident">Scalar</span>) -&gt; <span class="ident">ProjectivePoint</span> {
-        <span class="ident">ProjectivePoint::from</span>(<span class="self">self</span>) <span class="op">*</span> <span class="ident">scalar</span>
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">PublicKey</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">public_key</span>: <span class="kw-2">&amp;</span><span class="ident">PublicKey</span>) -&gt; <span class="ident">AffinePoint</span> {
+        <span class="ident">AffinePoint::from</span>(<span class="kw-2">*</span><span class="ident">public_key</span>)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Neg</span> <span class="kw">for</span> <span class="ident">AffinePoint</span> {
-    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">AffinePoint</span>;
+<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">AffinePoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PublicKey</span> {
+    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
 
-    <span class="kw">fn</span> <span class="ident">neg</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="self">Self</span>::Output</span> {
-        <span class="ident">AffinePoint</span> {
-            <span class="ident">x</span>: <span class="self">self</span>.<span class="ident">x</span>,
-            <span class="ident">y</span>: <span class="self">self</span>.<span class="ident">y</span>.<span class="ident">negate</span>(<span class="number">1</span>).<span class="ident">normalize_weak</span>(),
-            <span class="ident">infinity</span>: <span class="self">self</span>.<span class="ident">infinity</span>,
-        }
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">affine_point</span>: <span class="ident">AffinePoint</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PublicKey</span><span class="op">&gt;</span> {
+        <span class="ident">PublicKey::from_affine</span>(<span class="ident">affine_point</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">AffinePoint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PublicKey</span> {
+    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
+
+    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">affine_point</span>: <span class="kw-2">&amp;</span><span class="ident">AffinePoint</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PublicKey</span><span class="op">&gt;</span> {
+        <span class="ident">PublicKey::try_from</span>(<span class="kw-2">*</span><span class="ident">affine_point</span>)
     }
 }
 

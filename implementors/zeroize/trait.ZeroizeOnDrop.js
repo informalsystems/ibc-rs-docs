@@ -1,3 +1,5 @@
 (function() {var implementors = {};
+implementors["der"] = [{"text":"impl <a class=\"trait\" href=\"zeroize/trait.ZeroizeOnDrop.html\" title=\"trait zeroize::ZeroizeOnDrop\">ZeroizeOnDrop</a> for <a class=\"struct\" href=\"der/struct.SecretDocument.html\" title=\"struct der::SecretDocument\">SecretDocument</a>","synthetic":false,"types":["der::document::SecretDocument"]}];
+implementors["elliptic_curve"] = [{"text":"impl&lt;C&gt; <a class=\"trait\" href=\"zeroize/trait.ZeroizeOnDrop.html\" title=\"trait zeroize::ZeroizeOnDrop\">ZeroizeOnDrop</a> for <a class=\"struct\" href=\"elliptic_curve/struct.SecretKey.html\" title=\"struct elliptic_curve::SecretKey\">SecretKey</a>&lt;C&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;C: <a class=\"trait\" href=\"elliptic_curve/trait.Curve.html\" title=\"trait elliptic_curve::Curve\">Curve</a>,&nbsp;</span>","synthetic":false,"types":["elliptic_curve::secret_key::SecretKey"]}];
 implementors["zeroize"] = [];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

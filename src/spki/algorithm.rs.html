@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/spki-0.5.4/src/algorithm.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>algorithm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/spki-0.6.0/src/algorithm.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>algorithm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../spki/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -118,14 +118,31 @@
 <span id="111">111</span>
 <span id="112">112</span>
 <span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
 </pre><pre class="rust"><code><span class="doccomment">//! X.509 `AlgorithmIdentifier`</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">core::cmp::Ordering</span>;
-<span class="kw">use</span> <span class="ident">der</span>::{
-    <span class="ident">asn1</span>::{<span class="ident">Any</span>, <span class="ident">ObjectIdentifier</span>},
-    <span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">DerOrd</span>, <span class="ident">Encodable</span>, <span class="ident">Sequence</span>, <span class="ident">ValueOrd</span>,
-};
+<span class="kw">use</span> <span class="ident">der::asn1</span>::{<span class="ident">AnyRef</span>, <span class="ident">ObjectIdentifier</span>};
+<span class="kw">use</span> <span class="ident">der</span>::{<span class="ident">Decode</span>, <span class="ident">DecodeValue</span>, <span class="ident">DerOrd</span>, <span class="ident">Encode</span>, <span class="ident">Header</span>, <span class="ident">Reader</span>, <span class="ident">Sequence</span>, <span class="ident">ValueOrd</span>};
 
 <span class="doccomment">/// X.509 `AlgorithmIdentifier` as defined in [RFC 5280 Section 4.1.1.2].</span>
 <span class="doccomment">///</span>
@@ -136,14 +153,14 @@
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// [RFC 5280 Section 4.1.1.2]: https://tools.ietf.org/html/rfc5280#section-4.1.1.2</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AlgorithmIdentifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Algorithm OID, i.e. the `algorithm` field in the `AlgorithmIdentifier`</span>
     <span class="doccomment">/// ASN.1 schema.</span>
     <span class="kw">pub</span> <span class="ident">oid</span>: <span class="ident">ObjectIdentifier</span>,
 
     <span class="doccomment">/// Algorithm `parameters`.</span>
-    <span class="kw">pub</span> <span class="ident">parameters</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">parameters</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AnyRef</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">AlgorithmIdentifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
@@ -181,10 +198,10 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Get the `parameters` field as an [`Any`].</span>
+    <span class="doccomment">/// Get the `parameters` field as an [`AnyRef`].</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returns an error if `parameters` are `None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parameters_any</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parameters_any</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyRef</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">parameters</span>.<span class="ident">ok_or</span>(<span class="ident">Error::AlgorithmParametersMissing</span>)
     }
 
@@ -194,14 +211,35 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parameters_oid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ObjectIdentifier</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">ObjectIdentifier::try_from</span>(<span class="self">self</span>.<span class="ident">parameters_any</span>()<span class="question-mark">?</span>)<span class="question-mark">?</span>)
     }
+
+    <span class="doccomment">/// Convert to a pair of [`ObjectIdentifier`]s.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This method is helpful for decomposing in match statements. Note in</span>
+    <span class="doccomment">/// particular that `NULL` parameters are treated the same as missing</span>
+    <span class="doccomment">/// parameters.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns an error if parameters are present but not an OID.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">oids</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">der::Result</span><span class="op">&lt;</span>(<span class="ident">ObjectIdentifier</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ObjectIdentifier</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>((
+            <span class="self">self</span>.<span class="ident">oid</span>,
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">parameters</span> {
+                <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">p</span>) =&gt; <span class="kw">match</span> <span class="ident">p</span> {
+                    <span class="ident">AnyRef::NULL</span> =&gt; <span class="prelude-val">None</span>,
+                    <span class="kw">_</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">p</span>.<span class="ident">oid</span>()<span class="question-mark">?</span>),
+                },
+            },
+        ))
+    }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Decodable</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AlgorithmIdentifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">decode</span>(<span class="ident">decoder</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Decoder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) -&gt; <span class="ident">der::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">decoder</span>.<span class="ident">sequence</span>(<span class="op">|</span><span class="ident">decoder</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">oid</span> <span class="op">=</span> <span class="ident">decoder</span>.<span class="ident">decode</span>()<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">parameters</span> <span class="op">=</span> <span class="ident">decoder</span>.<span class="ident">decode</span>()<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">oid</span>, <span class="ident">parameters</span> })
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">DecodeValue</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AlgorithmIdentifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">decode_value</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Reader</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>, <span class="ident">header</span>: <span class="ident">Header</span>) -&gt; <span class="ident">der::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="ident">reader</span>.<span class="ident">read_nested</span>(<span class="ident">header</span>.<span class="ident">length</span>, <span class="op">|</span><span class="ident">reader</span><span class="op">|</span> {
+            <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
+                <span class="ident">oid</span>: <span class="ident">reader</span>.<span class="ident">decode</span>()<span class="question-mark">?</span>,
+                <span class="ident">parameters</span>: <span class="ident">reader</span>.<span class="ident">decode</span>()<span class="question-mark">?</span>,
+            })
         })
     }
 }
@@ -209,7 +247,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sequence</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AlgorithmIdentifier</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">fields</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="ident">der::Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Encodable</span>]) -&gt; <span class="ident">der::Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Encode</span>]) -&gt; <span class="ident">der::Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
     {
         <span class="ident">f</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">oid</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">parameters</span>])
     }

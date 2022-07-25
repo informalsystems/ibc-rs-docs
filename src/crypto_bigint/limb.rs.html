@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crypto-bigint-0.3.2/src/limb.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>limb.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/crypto-bigint-0.4.8/src/limb.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>limb.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../crypto_bigint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -153,6 +153,45 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Big integers are represented as an array of smaller CPU word-size integers</span>
 <span class="doccomment">//! called &quot;limbs&quot;.</span>
 
@@ -177,6 +216,9 @@
 <span class="kw">use</span> <span class="ident">core::fmt</span>;
 <span class="kw">use</span> <span class="ident">subtle</span>::{<span class="ident">Choice</span>, <span class="ident">ConditionallySelectable</span>};
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident">serdect::serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Deserializer</span>, <span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">any</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>, <span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)))]</span>
 <span class="macro">compile_error!</span>(<span class="string">&quot;this crate builds on 32-bit and 64-bit platforms only&quot;</span>);
 
@@ -186,19 +228,19 @@
 
 <span class="doccomment">/// Inner integer type that the [`Limb`] newtype wraps.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">LimbUInt</span> <span class="op">=</span> <span class="ident">u32</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Word</span> <span class="op">=</span> <span class="ident">u32</span>;
 
-<span class="doccomment">/// Signed integer type that corresponds to [`LimbUInt`].</span>
+<span class="doccomment">/// Signed integer type that corresponds to [`Word`].</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">LimbInt</span> <span class="op">=</span> <span class="ident">i32</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">SignedWord</span> <span class="op">=</span> <span class="ident">i32</span>;
 
-<span class="doccomment">/// Unsigned wide integer type: double the width of [`LimbUInt`].</span>
+<span class="doccomment">/// Unsigned wide integer type: double the width of [`Word`].</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WideLimbUInt</span> <span class="op">=</span> <span class="ident">u64</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WideWord</span> <span class="op">=</span> <span class="ident">u64</span>;
 
 <span class="doccomment">/// Signed wide integer type: double the width of [`Limb`].</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;32&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">WideLimbInt</span> <span class="op">=</span> <span class="ident">i64</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">WideSignedWord</span> <span class="op">=</span> <span class="ident">i64</span>;
 
 <span class="comment">//</span>
 <span class="comment">// 64-bit definitions</span>
@@ -206,19 +248,33 @@
 
 <span class="doccomment">/// Unsigned integer type that the [`Limb`] newtype wraps.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">LimbUInt</span> <span class="op">=</span> <span class="ident">u64</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Word</span> <span class="op">=</span> <span class="ident">u64</span>;
 
-<span class="doccomment">/// Signed integer type that corresponds to [`LimbUInt`].</span>
+<span class="doccomment">/// Signed integer type that corresponds to [`Word`].</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">LimbInt</span> <span class="op">=</span> <span class="ident">i64</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">SignedWord</span> <span class="op">=</span> <span class="ident">i64</span>;
 
-<span class="doccomment">/// Wide integer type: double the width of [`LimbUInt`].</span>
+<span class="doccomment">/// Wide integer type: double the width of [`Word`].</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WideLimbUInt</span> <span class="op">=</span> <span class="ident">u128</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WideWord</span> <span class="op">=</span> <span class="ident">u128</span>;
 
-<span class="doccomment">/// Signed wide integer type: double the width of [`Limb`].</span>
+<span class="doccomment">/// Signed wide integer type: double the width of [`SignedWord`].</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_pointer_width</span> <span class="op">=</span> <span class="string">&quot;64&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">WideLimbInt</span> <span class="op">=</span> <span class="ident">i128</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">WideSignedWord</span> <span class="op">=</span> <span class="ident">i128</span>;
+
+<span class="comment">//</span>
+<span class="comment">// Deprecated legacy names</span>
+<span class="comment">//</span>
+
+<span class="comment">// TODO(tarcieri): remove these in the next breaking release</span>
+
+<span class="doccomment">/// Deprecated: unsigned integer type that the [`Limb`] newtype wraps.</span>
+<span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.4.8&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;please use `Word` instead&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">LimbUInt</span> <span class="op">=</span> <span class="ident">Word</span>;
+
+<span class="doccomment">/// Deprecated: wide integer type which is double the width of [`Word`].</span>
+<span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.4.8&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;please use `WideWord` instead&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">WideLimbUInt</span> <span class="op">=</span> <span class="ident">WideWord</span>;
 
 <span class="doccomment">/// Highest bit in a [`Limb`].</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">HI_BIT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">Limb::BIT_SIZE</span> <span class="op">-</span> <span class="number">1</span>;
@@ -227,7 +283,7 @@
 <span class="doccomment">/// called &quot;limbs&quot;.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Limb</span>(<span class="kw">pub</span> <span class="ident">LimbUInt</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Limb</span>(<span class="kw">pub</span> <span class="ident">Word</span>);
 
 <span class="kw">impl</span> <span class="ident">Limb</span> {
     <span class="doccomment">/// The value `0`.</span>
@@ -237,7 +293,7 @@
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ONE</span>: <span class="self">Self</span> <span class="op">=</span> <span class="ident">Limb</span>(<span class="number">1</span>);
 
     <span class="doccomment">/// Maximum value this [`Limb`] can express.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX</span>: <span class="self">Self</span> <span class="op">=</span> <span class="ident">Limb</span>(<span class="ident">LimbUInt::MAX</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX</span>: <span class="self">Self</span> <span class="op">=</span> <span class="ident">Limb</span>(<span class="ident">Word::MAX</span>);
 
     <span class="comment">// 32-bit</span>
 
@@ -261,7 +317,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Const-friendly: we can&#39;t yet use `subtle` in `const fn` contexts.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">ct_select</span>(<span class="ident">a</span>: <span class="self">Self</span>, <span class="ident">b</span>: <span class="self">Self</span>, <span class="ident">c</span>: <span class="ident">LimbUInt</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">ct_select</span>(<span class="ident">a</span>: <span class="self">Self</span>, <span class="ident">b</span>: <span class="self">Self</span>, <span class="ident">c</span>: <span class="ident">Word</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span>(<span class="ident">a</span>.<span class="number">0</span> <span class="op">^</span> (<span class="ident">c</span> <span class="op">&amp;</span> (<span class="ident">a</span>.<span class="number">0</span> <span class="op">^</span> <span class="ident">b</span>.<span class="number">0</span>)))
     }
 }
@@ -269,7 +325,7 @@
 <span class="kw">impl</span> <span class="ident">ConditionallySelectable</span> <span class="kw">for</span> <span class="ident">Limb</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">conditional_select</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">choice</span>: <span class="ident">Choice</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span>(<span class="ident">LimbUInt::conditional_select</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="number">0</span>, <span class="ident">choice</span>))
+        <span class="self">Self</span>(<span class="ident">Word::conditional_select</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">b</span>.<span class="number">0</span>, <span class="ident">choice</span>))
     }
 }
 
@@ -287,14 +343,36 @@
 <span class="kw">impl</span> <span class="ident">fmt::LowerHex</span> <span class="kw">for</span> <span class="ident">Limb</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">fmt::LowerHex::fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="ident">f</span>)
+        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{:0width$x}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="ident">width</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::BYTE_SIZE</span> <span class="op">*</span> <span class="number">2</span>)
     }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::UpperHex</span> <span class="kw">for</span> <span class="ident">Limb</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="ident">fmt::UpperHex::fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="ident">f</span>)
+        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{:0width$X}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="ident">width</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::BYTE_SIZE</span> <span class="op">*</span> <span class="number">2</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)))]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Limb</span> {
+    <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">D</span>: <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+    {
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">Word::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>))
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)))]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">Limb</span> {
+    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">S</span>: <span class="ident">Serializer</span>,
+    {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">serialize</span>(<span class="ident">serializer</span>)
     }
 }
 
