@@ -668,9 +668,52 @@
 <span id="663">663</span>
 <span id="664">664</span>
 <span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
+<span id="706">706</span>
+<span id="707">707</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
 
+<span class="kw">use</span> <span class="ident">dashmap::DashMap</span>;
 <span class="kw">use</span> <span class="ident">opentelemetry</span>::{
     <span class="ident">global</span>,
     <span class="ident">metrics</span>::{<span class="ident">Counter</span>, <span class="ident">UpDownCounter</span>, <span class="ident">ValueRecorder</span>},
@@ -682,13 +725,11 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">PortId</span>};
 <span class="kw">use</span> <span class="ident">tendermint::Time</span>;
 
-<span class="kw">use</span> <span class="ident">dashmap::DashMap</span>;
-
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path_identifier::PathIdentifier</span>;
 
-<span class="kw">const</span> <span class="ident">NO_PENDING_PACKETS</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">const</span> <span class="ident">HISTORY_SET_CAPACITY</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1000</span>;
-<span class="kw">const</span> <span class="ident">HISTORY_RESET_THRESHOLD</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">900</span>;
+<span class="kw">const</span> <span class="ident">EMPTY_BACKLOG_SYMBOL</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">0</span>;
+<span class="kw">const</span> <span class="ident">BACKLOG_CAPACITY</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1000</span>;
+<span class="kw">const</span> <span class="ident">BACKLOG_RESET_THRESHOLD</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">900</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">WorkerType</span> {
@@ -764,10 +805,10 @@
     <span class="doccomment">/// Used for computing the `tx_latency` metric.</span>
     <span class="ident">in_flight_events</span>: <span class="ident">moka::sync::Cache</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Instant</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Counts the number of SendPacket Hermes transfers.</span>
+    <span class="doccomment">/// Counts the number of SendPacket Hermes relays.</span>
     <span class="ident">send_packet_count</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Counts the number of WriteAcknowledgement Hermes transfers.</span>
+    <span class="doccomment">/// Counts the number of WriteAcknowledgement Hermes relays.</span>
     <span class="ident">acknowledgement_count</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Counts the number of SendPacket events Hermes processes from ClearPendingPackets.</span>
@@ -776,17 +817,27 @@
     <span class="doccomment">/// Counts the number of WriteAcknowledgment events Hermes processes from ClearPendingPackets.</span>
     <span class="ident">cleared_acknowledgment_count</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Records the sequence number of the oldest SendPacket for which no</span>
-    <span class="doccomment">/// WriteAcknowledgement has been received. The value is 0 if all the</span>
-    <span class="doccomment">/// WriteAcknowledgement were received.</span>
-    <span class="ident">oldest_sequence</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Records the sequence number of the oldest pending packet. This corresponds to</span>
+    <span class="doccomment">/// the sequence number of the oldest SendPacket event for which no</span>
+    <span class="doccomment">/// WriteAcknowledgement or Timeout events have been received. The value is 0 if all the</span>
+    <span class="doccomment">/// SendPacket events were relayed.</span>
+    <span class="ident">backlog_oldest_sequence</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Record the timestamp related to the oldest sequence number.</span>
+    <span class="doccomment">/// Record the timestamp related to `backlog_oldest_sequence`.</span>
     <span class="doccomment">/// The timestamp is the time passed since since the unix epoch in seconds.</span>
-    <span class="ident">oldest_timestamp</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="ident">backlog_oldest_timestamp</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// History of SendPacket sequence numbers received and not yet Acknowledged.</span>
-    <span class="ident">sequences_histories</span>: <span class="ident">DashMap</span><span class="op">&lt;</span><span class="ident">PathIdentifier</span>, <span class="ident">DashMap</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">u64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Records the length of the backlog, i.e., how many packets are pending.</span>
+    <span class="ident">backlog_size</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+
+    <span class="doccomment">/// Stores the backlogs for all the paths the relayer is active on.</span>
+    <span class="doccomment">/// This is a map of multiple inner backlogs, one inner backlog per path.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Each inner backlog is represented as a [`DashMap`].</span>
+    <span class="doccomment">/// Each inner backlog captures the sequence numbers &amp; timestamp for all SendPacket events</span>
+    <span class="doccomment">/// that the relayer observed, and for which there was no associated Acknowledgement or</span>
+    <span class="doccomment">/// Timeout event.</span>
+    <span class="ident">backlogs</span>: <span class="ident">DashMap</span><span class="op">&lt;</span><span class="ident">PathIdentifier</span>, <span class="ident">DashMap</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">u64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">TelemetryState</span> {
@@ -1068,17 +1119,18 @@
         <span class="self">self</span>.<span class="ident">cleared_acknowledgment_count</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">record_send_history</span>(
+    <span class="doccomment">/// Inserts in the backlog a new event for the given sequence number.</span>
+    <span class="doccomment">/// This happens when the relayer observed a new SendPacket event.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">backlog_insert</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">seq_nr</span>: <span class="ident">u64</span>,
-        <span class="ident">_height</span>: <span class="ident">u64</span>,
         <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
         <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
-        <span class="comment">// Unique Identifier for a chain/channel/port.</span>
-        <span class="kw">let</span> <span class="ident">uid</span>: <span class="ident">PathIdentifier</span> <span class="op">=</span> <span class="ident">PathIdentifier::new</span>(
+        <span class="comment">// Unique identifier for a chain/channel/port.</span>
+        <span class="kw">let</span> <span class="ident">path_uid</span>: <span class="ident">PathIdentifier</span> <span class="op">=</span> <span class="ident">PathIdentifier::new</span>(
             <span class="ident">chain_id</span>.<span class="ident">to_string</span>(),
             <span class="ident">channel_id</span>.<span class="ident">to_string</span>(),
             <span class="ident">port_id</span>.<span class="ident">to_string</span>(),
@@ -1091,53 +1143,73 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="comment">// Retrieve timestamp for recieved SendPacket.</span>
+        <span class="comment">// Retrieve local timestamp when this SendPacket event was recorded.</span>
         <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">Time::now</span>();
         <span class="kw">let</span> <span class="ident">timestamp</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">now</span>.<span class="ident">duration_since</span>(<span class="ident">Time::unix_epoch</span>()) {
             <span class="prelude-val">Ok</span>(<span class="ident">ts</span>) =&gt; <span class="ident">ts</span>.<span class="ident">as_secs</span>(),
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="number">0</span>,
         };
 
-        <span class="comment">// If there are no HashSet for this uid, create a new one.</span>
-        <span class="comment">// Else update the min value.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">set</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">sequences_histories</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">uid</span>) {
-            <span class="comment">// Avoid having the DashSet growing more than a given threshold, by removing</span>
+        <span class="comment">// Update the backlog with the incoming data and retrieve the oldest values</span>
+        <span class="kw">let</span> (<span class="ident">oldest_sn</span>, <span class="ident">oldest_ts</span>, <span class="ident">total</span>) <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">path_backlog</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">backlogs</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">path_uid</span>)
+        {
+            <span class="comment">// Avoid having the inner backlog map growing more than a given threshold, by removing</span>
             <span class="comment">// the oldest sequence number entry.</span>
-            <span class="kw">if</span> <span class="ident">set</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">HISTORY_RESET_THRESHOLD</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min</span>) <span class="op">=</span> <span class="ident">set</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
-                    <span class="ident">set</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">min</span>);
+            <span class="kw">if</span> <span class="ident">path_backlog</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">BACKLOG_RESET_THRESHOLD</span> {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
+                    <span class="ident">path_backlog</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">min</span>);
                 }
             }
-            <span class="ident">set</span>.<span class="ident">insert</span>(<span class="ident">seq_nr</span>, <span class="ident">timestamp</span>);
-            <span class="comment">// Record the min of the HashSet as the oldest sequence.</span>
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min</span>) <span class="op">=</span> <span class="ident">set</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
-                <span class="comment">// Updated oldest sequence number and add associated timestamp to labels.</span>
-                <span class="self">self</span>.<span class="ident">oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">min</span>, <span class="ident">labels</span>);
-                <span class="self">self</span>.<span class="ident">oldest_timestamp</span>.<span class="ident">record</span>(<span class="ident">timestamp</span>, <span class="ident">labels</span>);
+            <span class="ident">path_backlog</span>.<span class="ident">insert</span>(<span class="ident">seq_nr</span>, <span class="ident">timestamp</span>);
+
+            <span class="comment">// Return the oldest event information to be recorded in telemetry</span>
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">oldest</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">min</span>) {
+                    (<span class="ident">min</span>, <span class="kw-2">*</span><span class="ident">oldest</span>.<span class="ident">value</span>(), <span class="ident">path_backlog</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>)
+                } <span class="kw">else</span> {
+                    <span class="comment">// Timestamp was not found, this should not happen, record a 0 ts.</span>
+                    (<span class="ident">min</span>, <span class="number">0</span>, <span class="ident">path_backlog</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>)
+                }
+            } <span class="kw">else</span> {
+                <span class="comment">// We just inserted a new key/value, so this else branch is unlikely to activate,</span>
+                <span class="comment">// but it can happen in case of concurrent updates to the backlog.</span>
+                (
+                    <span class="ident">EMPTY_BACKLOG_SYMBOL</span>,
+                    <span class="ident">EMPTY_BACKLOG_SYMBOL</span>,
+                    <span class="ident">EMPTY_BACKLOG_SYMBOL</span>,
+                )
             }
         } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">new_dashmap</span> <span class="op">=</span> <span class="ident">DashMap::with_capacity</span>(<span class="ident">HISTORY_SET_CAPACITY</span>);
-            <span class="ident">new_dashmap</span>.<span class="ident">insert</span>(<span class="ident">seq_nr</span>, <span class="ident">timestamp</span>);
+            <span class="comment">// If there is no inner backlog for this path, create a new map to store it.</span>
+            <span class="kw">let</span> <span class="ident">new_path_backlog</span> <span class="op">=</span> <span class="ident">DashMap::with_capacity</span>(<span class="ident">BACKLOG_CAPACITY</span>);
+            <span class="ident">new_path_backlog</span>.<span class="ident">insert</span>(<span class="ident">seq_nr</span>, <span class="ident">timestamp</span>);
+            <span class="comment">// Record it in the global backlog</span>
+            <span class="self">self</span>.<span class="ident">backlogs</span>.<span class="ident">insert</span>(<span class="ident">path_uid</span>, <span class="ident">new_path_backlog</span>);
 
-            <span class="comment">// Updated oldest sequence number and add associated timestamp to labels.</span>
-            <span class="self">self</span>.<span class="ident">oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">seq_nr</span>, <span class="ident">labels</span>);
-            <span class="self">self</span>.<span class="ident">oldest_timestamp</span>.<span class="ident">record</span>(<span class="ident">timestamp</span>, <span class="ident">labels</span>);
+            <span class="comment">// Return the current event information to be recorded in telemetry</span>
+            (<span class="ident">seq_nr</span>, <span class="ident">timestamp</span>, <span class="number">1</span>)
+        };
 
-            <span class="self">self</span>.<span class="ident">sequences_histories</span>.<span class="ident">insert</span>(<span class="ident">uid</span>, <span class="ident">new_dashmap</span>);
-        }
+        <span class="comment">// Update metrics to reflect the new state of the backlog</span>
+        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">oldest_sn</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">record</span>(<span class="ident">oldest_ts</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="ident">total</span>, <span class="ident">labels</span>);
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">record_ack_history</span>(
+    <span class="doccomment">/// Evicts from the backlog the event for the given sequence number.</span>
+    <span class="doccomment">/// Removing events happens when the relayer observed either an acknowledgment</span>
+    <span class="doccomment">/// or a timeout for a packet sequence number, which means that the corresponding</span>
+    <span class="doccomment">/// packet was relayed.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">backlog_remove</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">seq_nr</span>: <span class="ident">u64</span>,
-        <span class="ident">_height</span>: <span class="ident">u64</span>,
         <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
         <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
-        <span class="comment">// Unique Identifier for a chain/channel/port.</span>
-        <span class="kw">let</span> <span class="ident">uid</span>: <span class="ident">PathIdentifier</span> <span class="op">=</span> <span class="ident">PathIdentifier::new</span>(
+        <span class="comment">// Unique identifier for a chain/channel/port path.</span>
+        <span class="kw">let</span> <span class="ident">path_uid</span>: <span class="ident">PathIdentifier</span> <span class="op">=</span> <span class="ident">PathIdentifier::new</span>(
             <span class="ident">chain_id</span>.<span class="ident">to_string</span>(),
             <span class="ident">channel_id</span>.<span class="ident">to_string</span>(),
             <span class="ident">port_id</span>.<span class="ident">to_string</span>(),
@@ -1150,23 +1222,29 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="comment">// If there are no HashSet for this uid, create a new one.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">set</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">sequences_histories</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">uid</span>) {
-            <span class="kw">match</span> <span class="ident">set</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">seq_nr</span>) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">path_backlog</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">backlogs</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">path_uid</span>) {
+            <span class="kw">match</span> <span class="ident">path_backlog</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">seq_nr</span>) {
                 <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                    <span class="comment">// Record the min of the HashSet as the oldest sequence.</span>
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min</span>) <span class="op">=</span> <span class="ident">set</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">timestamp</span>) <span class="op">=</span> <span class="ident">set</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">min</span>) {
-                            <span class="self">self</span>.<span class="ident">oldest_timestamp</span>.<span class="ident">record</span>(<span class="kw-2">*</span><span class="ident">timestamp</span>, <span class="ident">labels</span>);
+                    <span class="comment">// The oldest pending sequence number is the minimum key in the inner (path) backlog.</span>
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min_key</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
+                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">oldest</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">min_key</span>) {
+                            <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>
+                                .<span class="ident">record</span>(<span class="kw-2">*</span><span class="ident">oldest</span>.<span class="ident">value</span>(), <span class="ident">labels</span>);
                         } <span class="kw">else</span> {
-                            <span class="self">self</span>.<span class="ident">oldest_timestamp</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+                            <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
                         }
-                        <span class="self">self</span>.<span class="ident">oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">min</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">min_key</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="ident">path_backlog</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">labels</span>);
                     } <span class="kw">else</span> {
-                        <span class="self">self</span>.<span class="ident">oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">NO_PENDING_PACKETS</span>, <span class="ident">labels</span>);
-                        <span class="self">self</span>.<span class="ident">oldest_timestamp</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+                        <span class="comment">// No mimimum found, update the metrics to reflect an empty backlog</span>
+                        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>
+                            .<span class="ident">record</span>(<span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>
+                            .<span class="ident">record</span>(<span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
                     }
                 }
+                <span class="comment">// No change performed to the backlog, no need to update the metrics.</span>
                 <span class="prelude-val">None</span> =&gt; {}
             }
         }
@@ -1186,8 +1264,9 @@
     <span class="kw">fn</span> <span class="ident">aggregator_for</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">descriptor</span>: <span class="kw-2">&amp;</span><span class="ident">Descriptor</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Aggregator</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">descriptor</span>.<span class="ident">name</span>() {
             <span class="string">&quot;wallet_balance&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">last_value</span>())),
-            <span class="string">&quot;oldest_sequence&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">last_value</span>())),
-            <span class="string">&quot;oldest_timestamp&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">last_value</span>())),
+            <span class="string">&quot;backlog_oldest_sequence&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">last_value</span>())),
+            <span class="string">&quot;backlog_oldest_timestamp&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">last_value</span>())),
+            <span class="string">&quot;backlog_size&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">last_value</span>())),
             <span class="comment">// Prometheus&#39; supports only collector for histogram, sum, and last value aggregators.</span>
             <span class="comment">// https://docs.rs/opentelemetry-prometheus/0.10.0/src/opentelemetry_prometheus/lib.rs.html#411-418</span>
             <span class="comment">// TODO: Once quantile sketches are supported, replace histograms with that.</span>
@@ -1318,17 +1397,22 @@
                 .<span class="ident">time_to_idle</span>(<span class="ident">Duration::from_secs</span>(<span class="number">30</span> <span class="op">*</span> <span class="number">60</span>)) <span class="comment">// Remove entries if they have been idle for 30 minutes</span>
                 .<span class="ident">build</span>(),
 
-            <span class="ident">sequences_histories</span>: <span class="ident">DashMap::new</span>(),
+            <span class="ident">backlogs</span>: <span class="ident">DashMap::new</span>(),
 
-            <span class="ident">oldest_sequence</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;oldest_sequence&quot;</span>)
-                .<span class="ident">with_description</span>(<span class="string">&quot;The sequence number of the oldest SendPacket event observed without its corresponding WriteAcknowledgement event. If this value is 0, it means Hermes observed a WriteAcknowledgment event for all the SendPacket events&quot;</span>)
+            <span class="ident">backlog_oldest_sequence</span>: <span class="ident">meter</span>
+                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;backlog_oldest_sequence&quot;</span>)
+                .<span class="ident">with_description</span>(<span class="string">&quot;Sequence number of the oldest pending packet in the backlog, per channel&quot;</span>)
                 .<span class="ident">init</span>(),
 
-            <span class="ident">oldest_timestamp</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;oldest_timestamp&quot;</span>)
+            <span class="ident">backlog_oldest_timestamp</span>: <span class="ident">meter</span>
+                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;backlog_oldest_timestamp&quot;</span>)
                 .<span class="ident">with_unit</span>(<span class="ident">Unit::new</span>(<span class="string">&quot;seconds&quot;</span>))
-                .<span class="ident">with_description</span>(<span class="string">&quot;The timestamp of the oldest sequence number in seconds&quot;</span>)
+                .<span class="ident">with_description</span>(<span class="string">&quot;Local timestamp for the oldest pending packet in the backlog, per channel&quot;</span>)
+                .<span class="ident">init</span>(),
+
+            <span class="ident">backlog_size</span>: <span class="ident">meter</span>
+                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;backlog_size&quot;</span>)
+                .<span class="ident">with_description</span>(<span class="string">&quot;Total number of pending packets, per channel&quot;</span>)
                 .<span class="ident">init</span>(),
         }
     }
