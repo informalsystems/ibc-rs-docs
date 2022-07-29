@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["try_from_tx",""]],"struct":[["Attributes",""],["OpenAck",""],["OpenConfirm",""],["OpenInit",""],["OpenTry",""]]});
+initSidebarItems({"constant":[["CLIENT_ID_ATTRIBUTE_KEY",""],["CONN_ID_ATTRIBUTE_KEY",""],["COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY",""],["COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY",""],["HEIGHT_ATTRIBUTE_KEY","The content of the `key` field for the attribute containing the connection identifier."]],"struct":[["Attributes",""],["OpenAck",""],["OpenConfirm",""],["OpenInit",""],["OpenTry",""]]});

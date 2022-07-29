@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["extract_attribute",""],["maybe_extract_attribute",""],["parse_timeout_height","Parse a string into a timeout height expected to be stored in `Packet.timeout_height`. We need to parse the timeout height differently because of a quirk introduced in ibc-go. See comment in `TryFrom<RawPacket> for Packet`."],["try_from_tx",""]],"struct":[["RawObject",""]]});

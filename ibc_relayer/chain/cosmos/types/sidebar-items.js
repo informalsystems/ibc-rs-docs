@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["account",""],["config",""],["gas",""],["tx",""]]});
+initSidebarItems({"mod":[["account",""],["config",""],["events",""],["gas",""],["tx",""]]});
