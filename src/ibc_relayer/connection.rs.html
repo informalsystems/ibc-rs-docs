@@ -1335,7 +1335,50 @@
 <span id="1330">1330</span>
 <span id="1331">1331</span>
 <span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
+<span id="1338">1338</span>
+<span id="1339">1339</span>
+<span id="1340">1340</span>
+<span id="1341">1341</span>
+<span id="1342">1342</span>
+<span id="1343">1343</span>
+<span id="1344">1344</span>
+<span id="1345">1345</span>
+<span id="1346">1346</span>
+<span id="1347">1347</span>
+<span id="1348">1348</span>
+<span id="1349">1349</span>
+<span id="1350">1350</span>
+<span id="1351">1351</span>
+<span id="1352">1352</span>
+<span id="1353">1353</span>
+<span id="1354">1354</span>
+<span id="1355">1355</span>
+<span id="1356">1356</span>
+<span id="1357">1357</span>
+<span id="1358">1358</span>
+<span id="1359">1359</span>
+<span id="1360">1360</span>
+<span id="1361">1361</span>
+<span id="1362">1362</span>
+<span id="1363">1363</span>
+<span id="1364">1364</span>
+<span id="1365">1365</span>
+<span id="1366">1366</span>
+<span id="1367">1367</span>
+<span id="1368">1368</span>
+<span id="1369">1369</span>
+<span id="1370">1370</span>
+<span id="1371">1371</span>
+<span id="1372">1372</span>
+<span id="1373">1373</span>
+<span id="1374">1374</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+<span class="kw">use</span> <span class="ident">std::thread</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 <span class="kw">use</span> <span class="ident">serde::Serialize</span>;
@@ -2253,8 +2296,35 @@
         }
     }
 
+    <span class="doccomment">/// Wait for the application on destination chain to advance beyond `consensus_height`.</span>
+    <span class="kw">fn</span> <span class="ident">wait_for_dest_app_height_higher_than_consensus_proof_height</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">consensus_height</span>: <span class="ident">Height</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">dst_application_latest_height</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> {
+            <span class="self">self</span>.<span class="ident">dst_chain</span>()
+                .<span class="ident">query_latest_height</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConnectionError::chain_query</span>(<span class="self">self</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))
+        };
+
+        <span class="kw">while</span> <span class="ident">consensus_height</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">dst_application_latest_height</span>()<span class="question-mark">?</span> {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;client consensus proof height too high, \
+                 waiting for destination chain to advance beyond {}&quot;</span>,
+                <span class="ident">consensus_height</span>
+            );
+
+            <span class="ident">thread::sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="number">500</span>));
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
     <span class="doccomment">/// Attempts to build a MsgConnOpenTry.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_conn_try</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Return the messages and the app height the destination chain must reach</span>
+    <span class="doccomment">/// before we send the messages.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_conn_try</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">Height</span>), <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">src_connection_id</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">src_connection_id</span>()
             .<span class="ident">ok_or_else</span>(<span class="ident">ConnectionError::missing_local_connection_id</span>)<span class="question-mark">?</span>;
@@ -2361,11 +2431,16 @@
         };
 
         <span class="ident">msgs</span>.<span class="ident">push</span>(<span class="ident">new_msg</span>.<span class="ident">to_any</span>());
-        <span class="prelude-val">Ok</span>(<span class="ident">msgs</span>)
+
+        <span class="prelude-val">Ok</span>((<span class="ident">msgs</span>, <span class="ident">src_client_target_height</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_conn_try_and_send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">IbcEvent</span>, <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">dst_msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_conn_try</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">dst_msgs</span>, <span class="ident">src_client_target_height</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_conn_try</span>()<span class="question-mark">?</span>;
+
+        <span class="comment">// Wait for the height of the application on the destination chain to be higher than</span>
+        <span class="comment">// the height of the consensus state included in the proofs.</span>
+        <span class="self">self</span>.<span class="ident">wait_for_dest_app_height_higher_than_consensus_proof_height</span>(<span class="ident">src_client_target_height</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">tm</span> <span class="op">=</span> <span class="ident">TrackedMsgs::new_static</span>(<span class="ident">dst_msgs</span>, <span class="string">&quot;ConnectionOpenTry&quot;</span>);
 
@@ -2394,7 +2469,10 @@
     }
 
     <span class="doccomment">/// Attempts to build a MsgConnOpenAck.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_conn_ack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Return the messages and the app height the destination chain must reach</span>
+    <span class="doccomment">/// before we send the messages.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_conn_ack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>, <span class="ident">Height</span>), <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">src_connection_id</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">src_connection_id</span>()
             .<span class="ident">ok_or_else</span>(<span class="ident">ConnectionError::missing_local_connection_id</span>)<span class="question-mark">?</span>;
@@ -2424,6 +2502,7 @@
             .<span class="ident">dst_chain</span>()
             .<span class="ident">query_latest_height</span>()
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConnectionError::chain_query</span>(<span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
+
         <span class="kw">let</span> <span class="ident">client_msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_update_client_on_src</span>(<span class="ident">src_client_target_height</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">tm</span> <span class="op">=</span>
@@ -2467,11 +2546,16 @@
         };
 
         <span class="ident">msgs</span>.<span class="ident">push</span>(<span class="ident">new_msg</span>.<span class="ident">to_any</span>());
-        <span class="prelude-val">Ok</span>(<span class="ident">msgs</span>)
+
+        <span class="prelude-val">Ok</span>((<span class="ident">msgs</span>, <span class="ident">src_client_target_height</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_conn_ack_and_send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">IbcEvent</span>, <span class="ident">ConnectionError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">dst_msgs</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_conn_ack</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">dst_msgs</span>, <span class="ident">src_client_target_height</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_conn_ack</span>()<span class="question-mark">?</span>;
+
+        <span class="comment">// Wait for the height of the application on the destination chain to be higher than</span>
+        <span class="comment">// the height of the consensus state included in the proofs.</span>
+        <span class="self">self</span>.<span class="ident">wait_for_dest_app_height_higher_than_consensus_proof_height</span>(<span class="ident">src_client_target_height</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">tm</span> <span class="op">=</span> <span class="ident">TrackedMsgs::new_static</span>(<span class="ident">dst_msgs</span>, <span class="string">&quot;ConnectionOpenAck&quot;</span>);
 
