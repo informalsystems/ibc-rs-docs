@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/ics23-0.8.0-alpha/src/api.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>api.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/ics23-0.8.1/src/api.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>api.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ics23/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -639,18 +639,24 @@
 <span id="634">634</span>
 <span id="635">635</span>
 <span id="636">636</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::btree_map::BTreeMap</span>;
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">std::prelude</span>::<span class="kw-2">*</span>;
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::btree_map::BTreeMap</span>;
+<span class="kw">use</span> <span class="ident">alloc::vec</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::compress</span>::{<span class="ident">decompress</span>, <span class="ident">is_compressed</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::host_functions::HostFunctionsProvider</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ics23</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::verify</span>::{<span class="ident">verify_existence</span>, <span class="ident">verify_non_existence</span>, <span class="ident">CommitmentRoot</span>};
 
 <span class="comment">// Use CommitmentRoot vs &amp;[u8] to stick with ics naming</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::ptr_arg</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_membership</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_membership</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">HostFunctionsProvider</span><span class="op">&gt;</span>(
     <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::CommitmentProof</span>,
     <span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::ProofSpec</span>,
     <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
@@ -671,7 +677,7 @@
 
     <span class="comment">//    if let Some(ics23::commitment_proof::Proof::Exist(ex)) = &amp;proof.proof {</span>
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">ex</span>) <span class="op">=</span> <span class="ident">get_exist_proof</span>(<span class="ident">proof</span>, <span class="ident">key</span>) {
-        <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident">verify_existence</span>(<span class="ident">ex</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>, <span class="ident">value</span>);
+        <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident">verify_existence</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">ex</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>, <span class="ident">value</span>);
         <span class="ident">valid</span>.<span class="ident">is_ok</span>()
     } <span class="kw">else</span> {
         <span class="bool-val">false</span>
@@ -680,7 +686,7 @@
 
 <span class="comment">// Use CommitmentRoot vs &amp;[u8] to stick with ics naming</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::ptr_arg</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_non_membership</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_non_membership</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">HostFunctionsProvider</span><span class="op">&gt;</span>(
     <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::CommitmentProof</span>,
     <span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::ProofSpec</span>,
     <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
@@ -699,7 +705,7 @@
     }
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">non</span>) <span class="op">=</span> <span class="ident">get_nonexist_proof</span>(<span class="ident">proof</span>, <span class="ident">key</span>) {
-        <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident">verify_non_existence</span>(<span class="ident">non</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>);
+        <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident">verify_non_existence</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">non</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>);
         <span class="ident">valid</span>.<span class="ident">is_ok</span>()
     } <span class="kw">else</span> {
         <span class="bool-val">false</span>
@@ -707,7 +713,7 @@
 }
 
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::ptr_arg</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_batch_membership</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_batch_membership</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">HostFunctionsProvider</span><span class="op">&gt;</span>(
     <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::CommitmentProof</span>,
     <span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::ProofSpec</span>,
     <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
@@ -727,11 +733,11 @@
 
     <span class="ident">items</span>
         .<span class="ident">iter</span>()
-        .<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">key</span>, <span class="ident">value</span>)<span class="op">|</span> <span class="ident">verify_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>, <span class="ident">value</span>))
+        .<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">key</span>, <span class="ident">value</span>)<span class="op">|</span> <span class="ident">verify_membership</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>, <span class="ident">value</span>))
 }
 
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::ptr_arg</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_batch_non_membership</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_batch_non_membership</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">HostFunctionsProvider</span><span class="op">&gt;</span>(
     <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::CommitmentProof</span>,
     <span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">ics23::ProofSpec</span>,
     <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
@@ -750,7 +756,7 @@
     }
 
     <span class="ident">keys</span>.<span class="ident">iter</span>()
-        .<span class="ident">all</span>(<span class="op">|</span><span class="ident">key</span><span class="op">|</span> <span class="ident">verify_non_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>))
+        .<span class="ident">all</span>(<span class="op">|</span><span class="ident">key</span><span class="op">|</span> <span class="ident">verify_non_membership</span>::<span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="ident">root</span>, <span class="ident">key</span>))
 }
 
 <span class="kw">fn</span> <span class="ident">get_exist_proof</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(
@@ -872,21 +878,21 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">std</span> <span class="kw">as</span> <span class="ident">_std</span>;
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-    <span class="kw">use</span> <span class="ident">_std::fs::File</span>;
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-    <span class="kw">use</span> <span class="ident">_std::io::prelude</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">alloc::string::String</span>;
+    <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
     <span class="kw">use</span> <span class="ident">anyhow</span>::{<span class="ident">bail</span>, <span class="ident">ensure</span>};
     <span class="kw">use</span> <span class="ident">prost::Message</span>;
     <span class="kw">use</span> <span class="ident">serde::Deserialize</span>;
-    <span class="kw">use</span> <span class="ident">std::vec::Vec</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
+    <span class="kw">use</span> <span class="ident">std::fs::File</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
+    <span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
 
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::compress::compress</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::helpers::Result</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::host_functions::host_functions_impl::HostFunctionsManager</span>;
 
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
     <span class="kw">struct</span> <span class="ident">TestVector</span> {
@@ -930,11 +936,14 @@
         <span class="kw">let</span> (<span class="ident">proof</span>, <span class="ident">data</span>) <span class="op">=</span> <span class="ident">load_file</span>(<span class="ident">filename</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="ident">data</span>.<span class="ident">value</span> {
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::verify_membership</span>(<span class="kw-2">&amp;</span><span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>, <span class="kw-2">&amp;</span><span class="ident">value</span>);
+            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident">verify_membership</span>::<span class="op">&lt;</span><span class="ident">HostFunctionsManager</span><span class="op">&gt;</span>(
+                <span class="kw-2">&amp;</span><span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>, <span class="kw-2">&amp;</span><span class="ident">value</span>,
+            );
             <span class="macro">ensure!</span>(<span class="ident">valid</span>, <span class="string">&quot;invalid test vector&quot;</span>);
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::verify_non_membership</span>(<span class="kw-2">&amp;</span><span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>);
+            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span>
+                <span class="ident">verify_non_membership</span>::<span class="op">&lt;</span><span class="ident">HostFunctionsManager</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>);
             <span class="macro">ensure!</span>(<span class="ident">valid</span>, <span class="string">&quot;invalid test vector&quot;</span>);
             <span class="prelude-val">Ok</span>(())
         }
@@ -1104,18 +1113,23 @@
         <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="ident">RefData</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">value</span> {
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::verify_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>, <span class="ident">value</span>);
+            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident">verify_membership</span>::<span class="op">&lt;</span><span class="ident">HostFunctionsManager</span><span class="op">&gt;</span>(
+                <span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>, <span class="ident">value</span>,
+            );
             <span class="macro">ensure!</span>(<span class="ident">valid</span>, <span class="string">&quot;invalid test vector&quot;</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">items</span> <span class="op">=</span> <span class="ident">BTreeMap::new</span>();
             <span class="ident">items</span>.<span class="ident">insert</span>(<span class="ident">data</span>.<span class="ident">key</span>.<span class="ident">as_slice</span>(), <span class="ident">value</span>.<span class="ident">as_slice</span>());
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::verify_batch_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="ident">items</span>);
+            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span>
+                <span class="ident">verify_batch_membership</span>::<span class="op">&lt;</span><span class="ident">HostFunctionsManager</span><span class="op">&gt;</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="ident">items</span>);
             <span class="macro">ensure!</span>(<span class="ident">valid</span>, <span class="string">&quot;invalid test vector&quot;</span>);
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::verify_non_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>);
+            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span>
+                <span class="ident">verify_non_membership</span>::<span class="op">&lt;</span><span class="ident">HostFunctionsManager</span><span class="op">&gt;</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">key</span>);
             <span class="macro">ensure!</span>(<span class="ident">valid</span>, <span class="string">&quot;invalid test vector&quot;</span>);
             <span class="kw">let</span> <span class="ident">keys</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">data</span>.<span class="ident">key</span>.<span class="ident">as_slice</span>()];
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="ident"><span class="kw">super</span>::verify_batch_non_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="ident">keys</span>);
+            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span>
+                <span class="ident">verify_batch_non_membership</span>::<span class="op">&lt;</span><span class="ident">HostFunctionsManager</span><span class="op">&gt;</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">data</span>.<span class="ident">root</span>, <span class="ident">keys</span>);
             <span class="macro">ensure!</span>(<span class="ident">valid</span>, <span class="string">&quot;invalid test vector&quot;</span>);
             <span class="prelude-val">Ok</span>(())
         }

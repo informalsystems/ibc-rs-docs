@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tungstenite-0.12.0/src/handshake/client.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>client.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tungstenite-0.17.3/src/handshake/client.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>client.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tungstenite/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -327,6 +327,33 @@
 <span id="322">322</span>
 <span id="323">323</span>
 <span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Client handshake machine.</span>
 
 <span class="kw">use</span> <span class="ident">std</span>::{
@@ -334,18 +361,20 @@
     <span class="ident">marker::PhantomData</span>,
 };
 
-<span class="kw">use</span> <span class="ident">http</span>::{<span class="ident">HeaderMap</span>, <span class="ident">Request</span> <span class="kw">as</span> <span class="ident">HttpRequest</span>, <span class="ident">Response</span> <span class="kw">as</span> <span class="ident">HttpResponse</span>, <span class="ident">StatusCode</span>};
+<span class="kw">use</span> <span class="ident">http</span>::{
+    <span class="ident">header::HeaderName</span>, <span class="ident">HeaderMap</span>, <span class="ident">Request</span> <span class="kw">as</span> <span class="ident">HttpRequest</span>, <span class="ident">Response</span> <span class="kw">as</span> <span class="ident">HttpResponse</span>, <span class="ident">StatusCode</span>,
+};
 <span class="kw">use</span> <span class="ident">httparse::Status</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">convert_key</span>,
+    <span class="ident">derive_accept_key</span>,
     <span class="ident">headers</span>::{<span class="ident">FromHttparse</span>, <span class="ident">MAX_HEADERS</span>},
     <span class="ident">machine</span>::{<span class="ident">HandshakeMachine</span>, <span class="ident">StageResult</span>, <span class="ident">TryParse</span>},
     <span class="ident">HandshakeRole</span>, <span class="ident">MidHandshake</span>, <span class="ident">ProcessingResult</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">error</span>::{<span class="ident">Error</span>, <span class="prelude-ty">Result</span>},
+    <span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">ProtocolError</span>, <span class="prelude-ty">Result</span>, <span class="ident">UrlError</span>},
     <span class="ident">protocol</span>::{<span class="ident">Role</span>, <span class="ident">WebSocket</span>, <span class="ident">WebSocketConfig</span>},
 };
 
@@ -371,25 +400,24 @@
         <span class="ident">config</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">WebSocketConfig</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">MidHandshake</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">method</span>() <span class="op">!</span><span class="op">=</span> <span class="ident">http::Method::GET</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="string">&quot;Invalid HTTP method, only GET supported&quot;</span>.<span class="ident">into</span>()));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::WrongHttpMethod</span>));
         }
 
         <span class="kw">if</span> <span class="ident">request</span>.<span class="ident">version</span>() <span class="op">&lt;</span> <span class="ident">http::Version::HTTP_11</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="string">&quot;HTTP version should be 1.1 or higher&quot;</span>.<span class="ident">into</span>()));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::WrongHttpVersion</span>));
         }
 
         <span class="comment">// Check the URI scheme: only ws or wss are supported</span>
         <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::client::uri_mode</span>(<span class="ident">request</span>.<span class="ident">uri</span>())<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">generate_key</span>();
+        <span class="comment">// Convert and verify the `http::Request` and turn it into the request as per RFC.</span>
+        <span class="comment">// Also extract the key from it (it must be present in a correct request).</span>
+        <span class="kw">let</span> (<span class="ident">request</span>, <span class="ident">key</span>) <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">machine</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>, <span class="kw-2">&amp;</span><span class="ident">key</span>)<span class="question-mark">?</span>;
-            <span class="ident">HandshakeMachine::start_write</span>(<span class="ident">stream</span>, <span class="ident">req</span>)
-        };
+        <span class="kw">let</span> <span class="ident">machine</span> <span class="op">=</span> <span class="ident">HandshakeMachine::start_write</span>(<span class="ident">stream</span>, <span class="ident">request</span>);
 
         <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">accept_key</span> <span class="op">=</span> <span class="ident">convert_key</span>(<span class="ident">key</span>.<span class="ident">as_ref</span>()).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">accept_key</span> <span class="op">=</span> <span class="ident">derive_accept_key</span>(<span class="ident">key</span>.<span class="ident">as_ref</span>());
             <span class="ident">ClientHandshake</span> { <span class="ident">verify_data</span>: <span class="ident">VerifyData</span> { <span class="ident">accept_key</span> }, <span class="ident">config</span>, <span class="ident">_marker</span>: <span class="ident">PhantomData</span> }
         };
 
@@ -421,50 +449,81 @@
     }
 }
 
-<span class="doccomment">/// Generate client request.</span>
-<span class="kw">fn</span> <span class="ident">generate_request</span>(<span class="ident">request</span>: <span class="ident">Request</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+<span class="doccomment">/// Verifies and generates a client WebSocket request from the original request and extracts a WebSocket key from it.</span>
+<span class="kw">fn</span> <span class="ident">generate_request</span>(<span class="kw-2">mut</span> <span class="ident">request</span>: <span class="ident">Request</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">String</span>)<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="kw">let</span> <span class="ident">uri</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">uri</span>();
-
-    <span class="kw">let</span> <span class="ident">authority</span> <span class="op">=</span>
-        <span class="ident">uri</span>.<span class="ident">authority</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::Url</span>(<span class="string">&quot;No host name in the URL&quot;</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>.<span class="ident">as_str</span>();
-    <span class="kw">let</span> <span class="ident">host</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">idx</span>) <span class="op">=</span> <span class="ident">authority</span>.<span class="ident">find</span>(<span class="string">&#39;@&#39;</span>) {
-        <span class="comment">// handle possible name:password@</span>
-        <span class="ident">authority</span>.<span class="ident">split_at</span>(<span class="ident">idx</span> <span class="op">+</span> <span class="number">1</span>).<span class="number">1</span>
-    } <span class="kw">else</span> {
-        <span class="ident">authority</span>
-    };
-    <span class="kw">if</span> <span class="ident">authority</span>.<span class="ident">is_empty</span>() {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Url</span>(<span class="string">&quot;URL contains empty host name&quot;</span>.<span class="ident">into</span>()));
-    }
-
     <span class="macro">write!</span>(
         <span class="ident">req</span>,
-        <span class="string">&quot;\
-         GET {path} {version:?}\r\n\
-         Host: {host}\r\n\
-         Connection: Upgrade\r\n\
-         Upgrade: websocket\r\n\
-         Sec-WebSocket-Version: 13\r\n\
-         Sec-WebSocket-Key: {key}\r\n&quot;</span>,
-        <span class="ident">version</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">version</span>(),
-        <span class="ident">host</span> <span class="op">=</span> <span class="ident">host</span>,
-        <span class="ident">path</span> <span class="op">=</span>
-            <span class="ident">uri</span>.<span class="ident">path_and_query</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::Url</span>(<span class="string">&quot;No path/query in URL&quot;</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>.<span class="ident">as_str</span>(),
-        <span class="ident">key</span> <span class="op">=</span> <span class="ident">key</span>
+        <span class="string">&quot;GET {path} {version:?}\r\n&quot;</span>,
+        <span class="ident">path</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">uri</span>().<span class="ident">path_and_query</span>().<span class="ident">ok_or</span>(<span class="ident">Error::Url</span>(<span class="ident">UrlError::NoPathOrQuery</span>))<span class="question-mark">?</span>.<span class="ident">as_str</span>(),
+        <span class="ident">version</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">version</span>()
     )
     .<span class="ident">unwrap</span>();
 
-    <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">request</span>.<span class="ident">headers</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">k</span>.<span class="ident">as_str</span>();
-        <span class="kw">if</span> <span class="ident">k</span> <span class="op">==</span> <span class="string">&quot;sec-websocket-protocol&quot;</span> {
-            <span class="ident">k</span> <span class="op">=</span> <span class="string">&quot;Sec-WebSocket-Protocol&quot;</span>;
-        }
-        <span class="macro">writeln!</span>(<span class="ident">req</span>, <span class="string">&quot;{}: {}\r&quot;</span>, <span class="ident">k</span>, <span class="ident">v</span>.<span class="ident">to_str</span>()<span class="question-mark">?</span>).<span class="ident">unwrap</span>();
+    <span class="comment">// Headers that must be present in a correct request.</span>
+    <span class="kw">const</span> <span class="ident">KEY_HEADERNAME</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;Sec-WebSocket-Key&quot;</span>;
+    <span class="kw">const</span> <span class="ident">WEBSOCKET_HEADERS</span>: [<span class="kw-2">&amp;</span><span class="ident">str</span>; <span class="number">5</span>] <span class="op">=</span>
+        [<span class="string">&quot;Host&quot;</span>, <span class="string">&quot;Connection&quot;</span>, <span class="string">&quot;Upgrade&quot;</span>, <span class="string">&quot;Sec-WebSocket-Version&quot;</span>, <span class="ident">KEY_HEADERNAME</span>];
+
+    <span class="comment">// We must extract a WebSocket key from a properly formed request or fail if it&#39;s not present.</span>
+    <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">request</span>
+        .<span class="ident">headers</span>()
+        .<span class="ident">get</span>(<span class="ident">KEY_HEADERNAME</span>)
+        .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+            <span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::InvalidHeader</span>(
+                <span class="ident">HeaderName::from_bytes</span>(<span class="ident">KEY_HEADERNAME</span>.<span class="ident">as_bytes</span>()).<span class="ident">unwrap</span>(),
+            ))
+        })<span class="question-mark">?</span>
+        .<span class="ident">to_str</span>()<span class="question-mark">?</span>
+        .<span class="ident">to_owned</span>();
+
+    <span class="comment">// We must check that all necessary headers for a valid request are present. Note that we have to</span>
+    <span class="comment">// deal with the fact that some apps seem to have a case-sensitive check for headers which is not</span>
+    <span class="comment">// correct and should not considered the correct behavior, but it seems like some apps ignore it.</span>
+    <span class="comment">// `http` by default writes all headers in lower-case which is fine (and does not violate the RFC)</span>
+    <span class="comment">// but some servers seem to be poorely written and ignore RFC.</span>
+    <span class="comment">//</span>
+    <span class="comment">// See similar problem in `hyper`: https://github.com/hyperium/hyper/issues/1492</span>
+    <span class="kw">let</span> <span class="ident">headers</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">headers_mut</span>();
+    <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">header</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">WEBSOCKET_HEADERS</span> {
+        <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">headers</span>.<span class="ident">remove</span>(<span class="ident">header</span>).<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+            <span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::InvalidHeader</span>(
+                <span class="ident">HeaderName::from_bytes</span>(<span class="ident">header</span>.<span class="ident">as_bytes</span>()).<span class="ident">unwrap</span>(),
+            ))
+        })<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(<span class="ident">req</span>, <span class="string">&quot;{header}: {value}\r\n&quot;</span>, <span class="ident">header</span> <span class="op">=</span> <span class="ident">header</span>, <span class="ident">value</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">to_str</span>()<span class="question-mark">?</span>).<span class="ident">unwrap</span>();
     }
+
+    <span class="comment">// Now we must ensure that the headers that we&#39;ve written once are not anymore present in the map.</span>
+    <span class="comment">// If they do, then the request is invalid (some headers are duplicated there for some reason).</span>
+    <span class="kw">let</span> <span class="ident">insensitive</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span>
+        <span class="ident">WEBSOCKET_HEADERS</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span>.<span class="ident">to_ascii_lowercase</span>()).<span class="ident">collect</span>();
+    <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">headers</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">k</span>.<span class="ident">as_str</span>();
+
+        <span class="comment">// We have already written the necessary headers once (above) and removed them from the map.</span>
+        <span class="comment">// If we encounter them again, then the request is considered invalid and error is returned.</span>
+        <span class="comment">// Note that we can&#39;t use `.contains()`, since `&amp;str` does not coerce to `&amp;String` in Rust.</span>
+        <span class="kw">if</span> <span class="ident">insensitive</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span> <span class="op">==</span> <span class="ident">name</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::InvalidHeader</span>(<span class="ident">k</span>.<span class="ident">clone</span>())));
+        }
+
+        <span class="comment">// Relates to the issue of some servers treating headers in a case-sensitive way, please see:</span>
+        <span class="comment">// https://github.com/snapview/tungstenite-rs/pull/119 (original fix of the problem)</span>
+        <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;sec-websocket-protocol&quot;</span> {
+            <span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;Sec-WebSocket-Protocol&quot;</span>;
+        }
+
+        <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;origin&quot;</span> {
+            <span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;Origin&quot;</span>;
+        }
+
+        <span class="macro">writeln!</span>(<span class="ident">req</span>, <span class="string">&quot;{}: {}\r&quot;</span>, <span class="ident">name</span>, <span class="ident">v</span>.<span class="ident">to_str</span>()<span class="question-mark">?</span>).<span class="ident">unwrap</span>();
+    }
+
     <span class="macro">writeln!</span>(<span class="ident">req</span>, <span class="string">&quot;\r&quot;</span>).<span class="ident">unwrap</span>();
     <span class="macro">trace!</span>(<span class="string">&quot;Request: {:?}&quot;</span>, <span class="ident">String::from_utf8_lossy</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>));
-    <span class="prelude-val">Ok</span>(<span class="ident">req</span>)
+    <span class="prelude-val">Ok</span>((<span class="ident">req</span>, <span class="ident">key</span>))
 }
 
 <span class="doccomment">/// Information for handshake verification.</span>
@@ -494,7 +553,7 @@
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span>.<span class="ident">eq_ignore_ascii_case</span>(<span class="string">&quot;websocket&quot;</span>))
             .<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>)
         {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="string">&quot;No \&quot;Upgrade: websocket\&quot; in server reply&quot;</span>.<span class="ident">into</span>()));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::MissingUpgradeWebSocketHeader</span>));
         }
         <span class="comment">// 3.  If the response lacks a |Connection| header field or the</span>
         <span class="comment">// |Connection| header field doesn&#39;t contain a token that is an</span>
@@ -506,14 +565,14 @@
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span>.<span class="ident">eq_ignore_ascii_case</span>(<span class="string">&quot;Upgrade&quot;</span>))
             .<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>)
         {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="string">&quot;No \&quot;Connection: upgrade\&quot; in server reply&quot;</span>.<span class="ident">into</span>()));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::MissingConnectionUpgradeHeader</span>));
         }
         <span class="comment">// 4.  If the response lacks a |Sec-WebSocket-Accept| header field or</span>
         <span class="comment">// the |Sec-WebSocket-Accept| contains a value other than the</span>
         <span class="comment">// base64-encoded SHA-1 of ... the client MUST _Fail the WebSocket</span>
         <span class="comment">// Connection_. (RFC 6455)</span>
         <span class="kw">if</span> <span class="op">!</span><span class="ident">headers</span>.<span class="ident">get</span>(<span class="string">&quot;Sec-WebSocket-Accept&quot;</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">accept_key</span>).<span class="ident">unwrap_or</span>(<span class="bool-val">false</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="string">&quot;Key mismatch in Sec-WebSocket-Accept&quot;</span>.<span class="ident">into</span>()));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::SecWebSocketAcceptKeyMismatch</span>));
         }
         <span class="comment">// 5.  If the response includes a |Sec-WebSocket-Extensions| header</span>
         <span class="comment">// field and this header field indicates the use of an extension</span>
@@ -547,7 +606,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;b</span>: <span class="lifetime">&#39;h</span><span class="op">&gt;</span> <span class="ident">FromHttparse</span><span class="op">&lt;</span><span class="ident">httparse::Response</span><span class="op">&lt;</span><span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Response</span> {
     <span class="kw">fn</span> <span class="ident">from_httparse</span>(<span class="ident">raw</span>: <span class="ident">httparse::Response</span><span class="op">&lt;</span><span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;b</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">raw</span>.<span class="ident">version</span>.<span class="ident">expect</span>(<span class="string">&quot;Bug: no HTTP version&quot;</span>) <span class="op">&lt;</span> <span class="comment">/*1.*/</span><span class="number">1</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="string">&quot;HTTP version should be 1.1 or higher&quot;</span>.<span class="ident">into</span>()));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::Protocol</span>(<span class="ident">ProtocolError::WrongHttpMethod</span>));
         }
 
         <span class="kw">let</span> <span class="ident">headers</span> <span class="op">=</span> <span class="ident">HeaderMap::from_httparse</span>(<span class="ident">raw</span>.<span class="ident">headers</span>)<span class="question-mark">?</span>;
@@ -564,7 +623,7 @@
 }
 
 <span class="doccomment">/// Generate a random key for the `Sec-WebSocket-Key` header.</span>
-<span class="kw">fn</span> <span class="ident">generate_key</span>() -&gt; <span class="ident">String</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_key</span>() -&gt; <span class="ident">String</span> {
     <span class="comment">// a base64-encoded (see Section 4 of [RFC4648]) value that,</span>
     <span class="comment">// when decoded, is 16 bytes in length (RFC 6455)</span>
     <span class="kw">let</span> <span class="ident">r</span>: [<span class="ident">u8</span>; <span class="number">16</span>] <span class="op">=</span> <span class="ident">rand::random</span>();
@@ -592,54 +651,43 @@
         <span class="macro">assert!</span>(<span class="ident">k2</span>[..<span class="number">22</span>].<span class="ident">find</span>(<span class="string">&#39;=&#39;</span>).<span class="ident">is_none</span>());
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">request_formatting</span>() {
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="string">&quot;ws://localhost/getCaseCount&quot;</span>.<span class="ident">into_client_request</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="string">&quot;A70tsIbeMZUbJHh5BWFw6Q==&quot;</span>;
-        <span class="kw">let</span> <span class="ident">correct</span> <span class="op">=</span> <span class="string">b&quot;\
+    <span class="kw">fn</span> <span class="ident">construct_expected</span>(<span class="ident">host</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+        <span class="macro">format!</span>(
+            <span class="string">&quot;\
             GET /getCaseCount HTTP/1.1\r\n\
-            Host: localhost\r\n\
+            Host: {host}\r\n\
             Connection: Upgrade\r\n\
             Upgrade: websocket\r\n\
             Sec-WebSocket-Version: 13\r\n\
-            Sec-WebSocket-Key: A70tsIbeMZUbJHh5BWFw6Q==\r\n\
-            \r\n&quot;</span>;
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>, <span class="ident">key</span>).<span class="ident">unwrap</span>();
-        <span class="macro">println!</span>(<span class="string">&quot;Request: {}&quot;</span>, <span class="ident">String::from_utf8_lossy</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>));
+            Sec-WebSocket-Key: {key}\r\n\
+            \r\n&quot;</span>,
+            <span class="ident">host</span> <span class="op">=</span> <span class="ident">host</span>,
+            <span class="ident">key</span> <span class="op">=</span> <span class="ident">key</span>
+        )
+        .<span class="ident">into_bytes</span>()
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">request_formatting</span>() {
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="string">&quot;ws://localhost/getCaseCount&quot;</span>.<span class="ident">into_client_request</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> (<span class="ident">request</span>, <span class="ident">key</span>) <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">correct</span> <span class="op">=</span> <span class="ident">construct_expected</span>(<span class="string">&quot;localhost&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">key</span>);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>[..], <span class="kw-2">&amp;</span><span class="ident">correct</span>[..]);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">request_formatting_with_host</span>() {
         <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="string">&quot;wss://localhost:9001/getCaseCount&quot;</span>.<span class="ident">into_client_request</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="string">&quot;A70tsIbeMZUbJHh5BWFw6Q==&quot;</span>;
-        <span class="kw">let</span> <span class="ident">correct</span> <span class="op">=</span> <span class="string">b&quot;\
-            GET /getCaseCount HTTP/1.1\r\n\
-            Host: localhost:9001\r\n\
-            Connection: Upgrade\r\n\
-            Upgrade: websocket\r\n\
-            Sec-WebSocket-Version: 13\r\n\
-            Sec-WebSocket-Key: A70tsIbeMZUbJHh5BWFw6Q==\r\n\
-            \r\n&quot;</span>;
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>, <span class="ident">key</span>).<span class="ident">unwrap</span>();
-        <span class="macro">println!</span>(<span class="string">&quot;Request: {}&quot;</span>, <span class="ident">String::from_utf8_lossy</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>));
+        <span class="kw">let</span> (<span class="ident">request</span>, <span class="ident">key</span>) <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">correct</span> <span class="op">=</span> <span class="ident">construct_expected</span>(<span class="string">&quot;localhost:9001&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">key</span>);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>[..], <span class="kw-2">&amp;</span><span class="ident">correct</span>[..]);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">request_formatting_with_at</span>() {
         <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="string">&quot;wss://user:pass@localhost:9001/getCaseCount&quot;</span>.<span class="ident">into_client_request</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="string">&quot;A70tsIbeMZUbJHh5BWFw6Q==&quot;</span>;
-        <span class="kw">let</span> <span class="ident">correct</span> <span class="op">=</span> <span class="string">b&quot;\
-            GET /getCaseCount HTTP/1.1\r\n\
-            Host: localhost:9001\r\n\
-            Connection: Upgrade\r\n\
-            Upgrade: websocket\r\n\
-            Sec-WebSocket-Version: 13\r\n\
-            Sec-WebSocket-Key: A70tsIbeMZUbJHh5BWFw6Q==\r\n\
-            \r\n&quot;</span>;
-        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>, <span class="ident">key</span>).<span class="ident">unwrap</span>();
-        <span class="macro">println!</span>(<span class="string">&quot;Request: {}&quot;</span>, <span class="ident">String::from_utf8_lossy</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>));
+        <span class="kw">let</span> (<span class="ident">request</span>, <span class="ident">key</span>) <span class="op">=</span> <span class="ident">generate_request</span>(<span class="ident">request</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">correct</span> <span class="op">=</span> <span class="ident">construct_expected</span>(<span class="string">&quot;localhost:9001&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">key</span>);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>[..], <span class="kw-2">&amp;</span><span class="ident">correct</span>[..]);
     }
 
@@ -649,6 +697,12 @@
         <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">resp</span>) <span class="op">=</span> <span class="ident">Response::try_parse</span>(<span class="ident">DATA</span>).<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
         <span class="macro">assert_eq!</span>(<span class="ident">resp</span>.<span class="ident">status</span>(), <span class="ident">http::StatusCode::OK</span>);
         <span class="macro">assert_eq!</span>(<span class="ident">resp</span>.<span class="ident">headers</span>().<span class="ident">get</span>(<span class="string">&quot;Content-Type&quot;</span>).<span class="ident">unwrap</span>(), <span class="kw-2">&amp;</span><span class="string">b&quot;text/html&quot;</span>[..],);
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">invalid_custom_request</span>() {
+        <span class="kw">let</span> <span class="ident">request</span> <span class="op">=</span> <span class="ident">http::Request::builder</span>().<span class="ident">method</span>(<span class="string">&quot;GET&quot;</span>).<span class="ident">body</span>(()).<span class="ident">unwrap</span>();
+        <span class="macro">assert!</span>(<span class="ident">generate_request</span>(<span class="ident">request</span>).<span class="ident">is_err</span>());
     }
 }
 </code></pre></div>

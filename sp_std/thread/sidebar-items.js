@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["panicking","Returns if the current thread is panicking."]]});

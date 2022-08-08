@@ -250,6 +250,23 @@
 <span id="245">245</span>
 <span id="246">246</span>
 <span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">tendermint::merkle::proof::Proof</span> <span class="kw">as</span> <span class="ident">TendermintProof</span>;
 
@@ -359,9 +376,17 @@
         {
             <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">proof</span>.<span class="ident">proof</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">Proof::Exist</span>(<span class="ident">existence_proof</span>)) =&gt; {
-                    <span class="ident">subroot</span> <span class="op">=</span> <span class="ident">calculate_existence_root</span>(<span class="ident">existence_proof</span>)
-                        .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_merkle_proof</span>())<span class="question-mark">?</span>;
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">verify_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">subroot</span>, <span class="ident">key</span>.<span class="ident">as_bytes</span>(), <span class="kw-2">&amp;</span><span class="ident">value</span>) {
+                    <span class="ident">subroot</span> <span class="op">=</span>
+                        <span class="ident">calculate_existence_root</span>::<span class="op">&lt;</span><span class="ident">ics23::HostFunctionsManager</span><span class="op">&gt;</span>(<span class="ident">existence_proof</span>)
+                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_merkle_proof</span>())<span class="question-mark">?</span>;
+
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">verify_membership</span>::<span class="op">&lt;</span><span class="ident">ics23::HostFunctionsManager</span><span class="op">&gt;</span>(
+                        <span class="ident">proof</span>,
+                        <span class="ident">spec</span>,
+                        <span class="kw-2">&amp;</span><span class="ident">subroot</span>,
+                        <span class="ident">key</span>.<span class="ident">as_bytes</span>(),
+                        <span class="kw-2">&amp;</span><span class="ident">value</span>,
+                    ) {
                         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::verification_failure</span>());
                     }
                     <span class="ident">value</span> <span class="op">=</span> <span class="ident">subroot</span>.<span class="ident">clone</span>();
@@ -410,9 +435,16 @@
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">proof</span>.<span class="ident">proof</span> {
             <span class="prelude-val">Some</span>(<span class="ident">Proof::Nonexist</span>(<span class="ident">non_existence_proof</span>)) =&gt; {
                 <span class="kw">let</span> <span class="ident">subroot</span> <span class="op">=</span> <span class="ident">calculate_non_existence_root</span>(<span class="ident">non_existence_proof</span>)<span class="question-mark">?</span>;
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">verify_non_membership</span>(<span class="ident">proof</span>, <span class="ident">spec</span>, <span class="kw-2">&amp;</span><span class="ident">subroot</span>, <span class="ident">key</span>.<span class="ident">as_bytes</span>()) {
+
+                <span class="kw">if</span> <span class="op">!</span><span class="ident">verify_non_membership</span>::<span class="op">&lt;</span><span class="ident">ics23::HostFunctionsManager</span><span class="op">&gt;</span>(
+                    <span class="ident">proof</span>,
+                    <span class="ident">spec</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">subroot</span>,
+                    <span class="ident">key</span>.<span class="ident">as_bytes</span>(),
+                ) {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::verification_failure</span>());
                 }
+
                 <span class="comment">// verify membership proofs starting from index 1 with value = subroot</span>
                 <span class="self">self</span>.<span class="ident">verify_membership</span>(<span class="ident">specs</span>, <span class="ident">root</span>, <span class="ident">keys</span>, <span class="ident">subroot</span>, <span class="number">1</span>)
             }
@@ -424,9 +456,11 @@
 <span class="comment">// TODO move to ics23</span>
 <span class="kw">fn</span> <span class="ident">calculate_non_existence_root</span>(<span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">NonExistenceProof</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">left</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">proof</span>.<span class="ident">left</span> {
-        <span class="ident">calculate_existence_root</span>(<span class="ident">left</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_merkle_proof</span>())
+        <span class="ident">calculate_existence_root</span>::<span class="op">&lt;</span><span class="ident">ics23::HostFunctionsManager</span><span class="op">&gt;</span>(<span class="ident">left</span>)
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_merkle_proof</span>())
     } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">right</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">proof</span>.<span class="ident">right</span> {
-        <span class="ident">calculate_existence_root</span>(<span class="ident">right</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_merkle_proof</span>())
+        <span class="ident">calculate_existence_root</span>::<span class="op">&lt;</span><span class="ident">ics23::HostFunctionsManager</span><span class="op">&gt;</span>(<span class="ident">right</span>)
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_merkle_proof</span>())
     } <span class="kw">else</span> {
         <span class="prelude-val">Err</span>(<span class="ident">Error::invalid_merkle_proof</span>())
     }
