@@ -287,6 +287,14 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::State</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">Counterparty</span>, <span class="ident">Order</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::events::TimeoutOnClosePacket</span>;
@@ -302,6 +310,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler</span>::{<span class="ident">HandlerOutput</span>, <span class="ident">HandlerResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proofs</span>::{<span class="ident">ProofError</span>, <span class="ident">Proofs</span>};
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">process</span>(
     <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
@@ -364,13 +373,20 @@
         <span class="ident">source_channel_end</span>.<span class="ident">version</span>().<span class="ident">clone</span>(),
     );
 
+    <span class="comment">// The message&#39;s proofs have the channel proof as `other_proof`</span>
+    <span class="kw">let</span> <span class="ident">proof_close</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">msg</span>.<span class="ident">proofs</span>.<span class="ident">other_proof</span>() {
+        <span class="prelude-val">Some</span>(<span class="ident">p</span>) =&gt; <span class="ident">p</span>.<span class="ident">clone</span>(),
+        <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::invalid_proof</span>(<span class="ident">ProofError::empty_proof</span>())),
+    };
+    <span class="kw">let</span> <span class="ident">proofs</span> <span class="op">=</span> <span class="ident">Proofs::new</span>(<span class="ident">proof_close</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="ident">msg</span>.<span class="ident">proofs</span>.<span class="ident">height</span>())
+        .<span class="ident">map_err</span>(<span class="ident">Error::invalid_proof</span>)<span class="question-mark">?</span>;
     <span class="ident">verify_channel_proofs</span>(
         <span class="ident">ctx</span>,
         <span class="ident">msg</span>.<span class="ident">proofs</span>.<span class="ident">height</span>(),
         <span class="kw-2">&amp;</span><span class="ident">source_channel_end</span>,
         <span class="kw-2">&amp;</span><span class="ident">connection_end</span>,
         <span class="kw-2">&amp;</span><span class="ident">expected_channel_end</span>,
-        <span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">proofs</span>,
+        <span class="kw-2">&amp;</span><span class="ident">proofs</span>,
     )<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">source_channel_end</span>.<span class="ident">order_matches</span>(<span class="kw-2">&amp;</span><span class="ident">Order::Ordered</span>) {
