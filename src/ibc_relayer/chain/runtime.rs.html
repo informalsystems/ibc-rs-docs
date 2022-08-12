@@ -893,22 +893,6 @@
 <span id="888">888</span>
 <span id="889">889</span>
 <span id="890">890</span>
-<span id="891">891</span>
-<span id="892">892</span>
-<span id="893">893</span>
-<span id="894">894</span>
-<span id="895">895</span>
-<span id="896">896</span>
-<span id="897">897</span>
-<span id="898">898</span>
-<span id="899">899</span>
-<span id="900">900</span>
-<span id="901">901</span>
-<span id="902">902</span>
-<span id="903">903</span>
-<span id="904">904</span>
-<span id="905">905</span>
-<span id="906">906</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 
@@ -953,7 +937,6 @@
         <span class="ident">monitor</span>::{<span class="ident">EventBatch</span>, <span class="ident">EventReceiver</span>, <span class="ident">MonitorCmd</span>, <span class="prelude-ty">Result</span> <span class="kw">as</span> <span class="ident">MonitorResult</span>, <span class="ident">TxMonitorCmd</span>},
     },
     <span class="ident">keyring::KeyEntry</span>,
-    <span class="ident">light_client::LightClient</span>,
 };
 
 <span class="kw">use</span> <span class="kw">super</span>::{
@@ -1055,9 +1038,6 @@
     <span class="doccomment">/// Interface to the event monitor</span>
     <span class="ident">event_monitor_ctrl</span>: <span class="ident">EventMonitorCtrl</span>,
 
-    <span class="doccomment">/// A handle to the light client</span>
-    <span class="ident">light_client</span>: <span class="ident">Endpoint::LightClient</span>,
-
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
     <span class="ident">rt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TokioRuntime</span><span class="op">&gt;</span>, <span class="comment">// Making this future-proof, so we keep the runtime around.</span>
 }
@@ -1074,11 +1054,8 @@
         <span class="comment">// Similar to `from_config`.</span>
         <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">Endpoint::bootstrap</span>(<span class="ident">config</span>, <span class="ident">rt</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
 
-        <span class="comment">// Start the light client</span>
-        <span class="kw">let</span> <span class="ident">light_client</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">init_light_client</span>()<span class="question-mark">?</span>;
-
         <span class="comment">// Instantiate &amp; spawn the runtime</span>
-        <span class="kw">let</span> (<span class="ident">handle</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::init</span>(<span class="ident">chain</span>, <span class="ident">light_client</span>, <span class="ident">rt</span>);
+        <span class="kw">let</span> (<span class="ident">handle</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::init</span>(<span class="ident">chain</span>, <span class="ident">rt</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">handle</span>)
     }
@@ -1086,10 +1063,9 @@
     <span class="doccomment">/// Initializes a runtime for a given chain, and spawns the associated thread</span>
     <span class="kw">fn</span> <span class="ident">init</span><span class="op">&lt;</span><span class="ident">Handle</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
         <span class="ident">chain</span>: <span class="ident">Endpoint</span>,
-        <span class="ident">light_client</span>: <span class="ident">Endpoint::LightClient</span>,
         <span class="ident">rt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TokioRuntime</span><span class="op">&gt;</span>,
     ) -&gt; (<span class="ident">Handle</span>, <span class="ident">thread::JoinHandle</span><span class="op">&lt;</span>()<span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="ident">chain_runtime</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">chain</span>, <span class="ident">light_client</span>, <span class="ident">rt</span>);
+        <span class="kw">let</span> <span class="ident">chain_runtime</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">chain</span>, <span class="ident">rt</span>);
 
         <span class="comment">// Get a handle to the runtime</span>
         <span class="kw">let</span> <span class="ident">handle</span>: <span class="ident">Handle</span> <span class="op">=</span> <span class="ident">chain_runtime</span>.<span class="ident">handle</span>();
@@ -1106,7 +1082,7 @@
     }
 
     <span class="doccomment">/// Basic constructor</span>
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chain</span>: <span class="ident">Endpoint</span>, <span class="ident">light_client</span>: <span class="ident">Endpoint::LightClient</span>, <span class="ident">rt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TokioRuntime</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chain</span>: <span class="ident">Endpoint</span>, <span class="ident">rt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TokioRuntime</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">request_sender</span>, <span class="ident">request_receiver</span>) <span class="op">=</span> <span class="ident">channel::unbounded</span>::<span class="op">&lt;</span><span class="ident">ChainRequest</span><span class="op">&gt;</span>();
 
         <span class="self">Self</span> {
@@ -1116,7 +1092,6 @@
             <span class="ident">request_receiver</span>,
             <span class="ident">event_bus</span>: <span class="ident">EventBus::new</span>(),
             <span class="ident">event_monitor_ctrl</span>: <span class="ident">EventMonitorCtrl::none</span>(),
-            <span class="ident">light_client</span>,
         }
     }
 
@@ -1442,12 +1417,7 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">chain</span>
-            .<span class="ident">build_header</span>(
-                <span class="ident">trusted_height</span>,
-                <span class="ident">target_height</span>,
-                <span class="kw-2">&amp;</span><span class="ident">client_state</span>,
-                <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">light_client</span>,
-            )
+            .<span class="ident">build_header</span>(<span class="ident">trusted_height</span>, <span class="ident">target_height</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">header</span>, <span class="ident">support</span>)<span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">header</span> <span class="op">=</span> <span class="ident">header</span>.<span class="ident">wrap_any</span>();
                 <span class="kw">let</span> <span class="ident">support</span> <span class="op">=</span> <span class="ident">support</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">h</span>.<span class="ident">wrap_any</span>()).<span class="ident">collect</span>();
@@ -1480,11 +1450,11 @@
         <span class="ident">client_state</span>: <span class="ident">AnyClientState</span>,
         <span class="ident">reply_to</span>: <span class="ident">ReplyTo</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">verified</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">light_client</span>.<span class="ident">verify</span>(<span class="ident">trusted</span>, <span class="ident">target</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">verified</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">verify_header</span>(<span class="ident">trusted</span>, <span class="ident">target</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">chain</span>
-            .<span class="ident">build_consensus_state</span>(<span class="ident">verified</span>.<span class="ident">target</span>)
+            .<span class="ident">build_consensus_state</span>(<span class="ident">verified</span>)
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">wrap_any</span>());
 
         <span class="ident">reply_to</span>.<span class="ident">send</span>(<span class="ident">consensus_state</span>).<span class="ident">map_err</span>(<span class="ident">Error::send</span>)
@@ -1497,9 +1467,7 @@
         <span class="ident">client_state</span>: <span class="ident">AnyClientState</span>,
         <span class="ident">reply_to</span>: <span class="ident">ReplyTo</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MisbehaviourEvidence</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">misbehaviour</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">light_client</span>
-            .<span class="ident">check_misbehaviour</span>(<span class="ident">update_event</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>);
+        <span class="kw">let</span> <span class="ident">misbehaviour</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">check_misbehaviour</span>(<span class="kw-2">&amp;</span><span class="ident">update_event</span>, <span class="kw-2">&amp;</span><span class="ident">client_state</span>);
 
         <span class="ident">reply_to</span>.<span class="ident">send</span>(<span class="ident">misbehaviour</span>).<span class="ident">map_err</span>(<span class="ident">Error::send</span>)
     }
