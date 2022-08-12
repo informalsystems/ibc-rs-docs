@@ -260,6 +260,47 @@
 <span id="255">255</span>
 <span id="256">256</span>
 <span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
 <span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
 
@@ -270,8 +311,10 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier::ChainId</span>;
 <span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::events</span>::{<span class="self">self</span>, <span class="ident">channel::RawObject</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::events::channel::RawObject</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::monitor::queries</span>;
+
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">ibc_event_try_from_abci_event</span>, <span class="ident">IbcEventWithHeight</span>};
 
 <span class="doccomment">/// Extract IBC events from Tendermint RPC events</span>
 <span class="doccomment">///</span>
@@ -376,8 +419,8 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_all_events</span>(
     <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     <span class="ident">result</span>: <span class="ident">RpcEvent</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Height</span>, <span class="ident">IbcEvent</span>)<span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vals</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Height</span>, <span class="ident">IbcEvent</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">events_with_height</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
     <span class="kw">let</span> <span class="ident">RpcEvent</span> {
         <span class="ident">data</span>,
         <span class="ident">events</span>,
@@ -393,8 +436,11 @@
             )
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">String::from</span>(<span class="string">&quot;tx.height: invalid header height of 0&quot;</span>))<span class="question-mark">?</span>;
 
-            <span class="ident">vals</span>.<span class="ident">push</span>((<span class="ident">height</span>, <span class="ident">ClientEvents::NewBlock::new</span>(<span class="ident">height</span>).<span class="ident">into</span>()));
-            <span class="ident">vals</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">extract_block_events</span>(<span class="ident">height</span>, <span class="kw-2">&amp;</span><span class="ident">events</span>));
+            <span class="ident">events_with_height</span>.<span class="ident">push</span>(<span class="ident">IbcEventWithHeight::new</span>(
+                <span class="ident">ClientEvents::NewBlock::new</span>(<span class="ident">height</span>).<span class="ident">into</span>(),
+                <span class="ident">height</span>,
+            ));
+            <span class="ident">events_with_height</span>.<span class="ident">append</span>(<span class="kw-2">&amp;mut</span> <span class="ident">extract_block_events</span>(<span class="ident">height</span>, <span class="kw-2">&amp;</span><span class="ident">events</span>));
         }
         <span class="ident">RpcEventData::Tx</span> { <span class="ident">tx_result</span> } =&gt; {
             <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(
@@ -404,26 +450,23 @@
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">String::from</span>(<span class="string">&quot;tx_result.height: invalid header height of 0&quot;</span>))<span class="question-mark">?</span>;
 
             <span class="kw">for</span> <span class="ident">abci_event</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">tx_result</span>.<span class="ident">result</span>.<span class="ident">events</span> {
-                <span class="kw">if</span> <span class="ident">query</span> <span class="op">==</span> <span class="ident">queries::ibc_client</span>().<span class="ident">to_string</span>() {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">client_event</span>) <span class="op">=</span> <span class="ident">events::client::try_from_tx</span>(<span class="ident">abci_event</span>) {
-                        <span class="ident">client_event</span>.<span class="ident">set_height</span>(<span class="ident">height</span>);
-                        <span class="macro">tracing::trace!</span>(<span class="string">&quot;extracted ibc_client event {}&quot;</span>, <span class="ident">client_event</span>);
-                        <span class="ident">vals</span>.<span class="ident">push</span>((<span class="ident">height</span>, <span class="ident">client_event</span>));
-                    }
-                }
-                <span class="kw">if</span> <span class="ident">query</span> <span class="op">==</span> <span class="ident">queries::ibc_connection</span>().<span class="ident">to_string</span>() {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">conn_event</span>) <span class="op">=</span> <span class="ident">events::connection::try_from_tx</span>(<span class="ident">abci_event</span>) {
-                        <span class="ident">conn_event</span>.<span class="ident">set_height</span>(<span class="ident">height</span>);
-                        <span class="macro">tracing::trace!</span>(<span class="string">&quot;extracted ibc_connection event {}&quot;</span>, <span class="ident">conn_event</span>);
-                        <span class="ident">vals</span>.<span class="ident">push</span>((<span class="ident">height</span>, <span class="ident">conn_event</span>));
-                    }
-                }
-                <span class="kw">if</span> <span class="ident">query</span> <span class="op">==</span> <span class="ident">queries::ibc_channel</span>().<span class="ident">to_string</span>() {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">chan_event</span>) <span class="op">=</span> <span class="ident">events::channel::try_from_tx</span>(<span class="ident">abci_event</span>) {
-                        <span class="ident">chan_event</span>.<span class="ident">set_height</span>(<span class="ident">height</span>);
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">ibc_event</span>) <span class="op">=</span> <span class="ident">ibc_event_try_from_abci_event</span>(<span class="ident">abci_event</span>) {
+                    <span class="kw">if</span> <span class="ident">query</span> <span class="op">==</span> <span class="ident">queries::ibc_client</span>().<span class="ident">to_string</span>()
+                        <span class="op">&amp;&amp;</span> <span class="ident">event_is_type_client</span>(<span class="kw-2">&amp;</span><span class="ident">ibc_event</span>)
+                    {
+                        <span class="macro">tracing::trace!</span>(<span class="string">&quot;extracted ibc_client event {}&quot;</span>, <span class="ident">ibc_event</span>);
+                        <span class="ident">events_with_height</span>.<span class="ident">push</span>(<span class="ident">IbcEventWithHeight::new</span>(<span class="ident">ibc_event</span>, <span class="ident">height</span>));
+                    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">query</span> <span class="op">==</span> <span class="ident">queries::ibc_connection</span>().<span class="ident">to_string</span>()
+                        <span class="op">&amp;&amp;</span> <span class="ident">event_is_type_connection</span>(<span class="kw-2">&amp;</span><span class="ident">ibc_event</span>)
+                    {
+                        <span class="macro">tracing::trace!</span>(<span class="string">&quot;extracted ibc_connection event {}&quot;</span>, <span class="ident">ibc_event</span>);
+                        <span class="ident">events_with_height</span>.<span class="ident">push</span>(<span class="ident">IbcEventWithHeight::new</span>(<span class="ident">ibc_event</span>, <span class="ident">height</span>));
+                    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">query</span> <span class="op">==</span> <span class="ident">queries::ibc_channel</span>().<span class="ident">to_string</span>()
+                        <span class="op">&amp;&amp;</span> <span class="ident">event_is_type_channel</span>(<span class="kw-2">&amp;</span><span class="ident">ibc_event</span>)
+                    {
                         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">tracing::trace_span!</span>(<span class="string">&quot;ibc_channel event&quot;</span>).<span class="ident">entered</span>();
-                        <span class="macro">tracing::trace!</span>(<span class="string">&quot;extracted {}&quot;</span>, <span class="ident">chan_event</span>);
-                        <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">chan_event</span>, <span class="ident">IbcEvent::SendPacket</span>(<span class="kw">_</span>)) {
+                        <span class="macro">tracing::trace!</span>(<span class="string">&quot;extracted {}&quot;</span>, <span class="ident">ibc_event</span>);
+                        <span class="kw">if</span> <span class="macro">matches!</span>(<span class="ident">ibc_event</span>, <span class="ident">IbcEvent::SendPacket</span>(<span class="kw">_</span>)) {
                             <span class="comment">// Should be the same as the hash of tx_result.tx?</span>
                             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">hash</span>) <span class="op">=</span>
                                 <span class="ident">events</span>.<span class="ident">get</span>(<span class="string">&quot;tx.hash&quot;</span>).<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">values</span><span class="op">|</span> <span class="ident">values</span>.<span class="ident">get</span>(<span class="number">0</span>))
@@ -431,7 +474,8 @@
                                 <span class="macro">tracing::trace!</span>(<span class="ident">event</span> <span class="op">=</span> <span class="string">&quot;SendPacket&quot;</span>, <span class="string">&quot;tx hash: {}&quot;</span>, <span class="ident">hash</span>);
                             }
                         }
-                        <span class="ident">vals</span>.<span class="ident">push</span>((<span class="ident">height</span>, <span class="ident">chan_event</span>));
+
+                        <span class="ident">events_with_height</span>.<span class="ident">push</span>(<span class="ident">IbcEventWithHeight::new</span>(<span class="ident">ibc_event</span>, <span class="ident">height</span>));
                     }
                 }
             }
@@ -439,13 +483,51 @@
         <span class="kw">_</span> =&gt; {}
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">vals</span>)
+    <span class="prelude-val">Ok</span>(<span class="ident">events_with_height</span>)
+}
+
+<span class="kw">fn</span> <span class="ident">event_is_type_client</span>(<span class="ident">ev</span>: <span class="kw-2">&amp;</span><span class="ident">IbcEvent</span>) -&gt; <span class="ident">bool</span> {
+    <span class="macro">matches!</span>(
+        <span class="ident">ev</span>,
+        <span class="ident">IbcEvent::CreateClient</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::UpdateClient</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::UpgradeClient</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::ClientMisbehaviour</span>(<span class="kw">_</span>)
+    )
+}
+
+<span class="kw">fn</span> <span class="ident">event_is_type_connection</span>(<span class="ident">ev</span>: <span class="kw-2">&amp;</span><span class="ident">IbcEvent</span>) -&gt; <span class="ident">bool</span> {
+    <span class="macro">matches!</span>(
+        <span class="ident">ev</span>,
+        <span class="ident">IbcEvent::OpenInitConnection</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::OpenTryConnection</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::OpenAckConnection</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::OpenConfirmConnection</span>(<span class="kw">_</span>)
+    )
+}
+
+<span class="kw">fn</span> <span class="ident">event_is_type_channel</span>(<span class="ident">ev</span>: <span class="kw-2">&amp;</span><span class="ident">IbcEvent</span>) -&gt; <span class="ident">bool</span> {
+    <span class="macro">matches!</span>(
+        <span class="ident">ev</span>,
+        <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::SendPacket</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::ReceivePacket</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::AcknowledgePacket</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::TimeoutPacket</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IbcEvent::TimeoutOnClosePacket</span>(<span class="kw">_</span>)
+    )
 }
 
 <span class="kw">fn</span> <span class="ident">extract_block_events</span>(
     <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="ident">block_events</span>: <span class="kw-2">&amp;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Height</span>, <span class="ident">IbcEvent</span>)<span class="op">&gt;</span> {
+) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">extract_events</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">RawObject</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="ident">height</span>: <span class="ident">Height</span>,
@@ -467,19 +549,19 @@
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">append_events</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-        <span class="ident">events</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Height</span>, <span class="ident">IbcEvent</span>)<span class="op">&gt;</span>,
+        <span class="ident">events</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>,
         <span class="ident">chan_events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
         <span class="ident">height</span>: <span class="ident">Height</span>,
     ) {
         <span class="ident">events</span>.<span class="ident">append</span>(
             <span class="kw-2">&amp;mut</span> <span class="ident">chan_events</span>
                 .<span class="ident">into_iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">ev</span><span class="op">|</span> (<span class="ident">height</span>, <span class="ident">ev</span>.<span class="ident">into</span>()))
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">ev</span><span class="op">|</span> <span class="ident">IbcEventWithHeight::new</span>(<span class="ident">ev</span>.<span class="ident">into</span>(), <span class="ident">height</span>))
                 .<span class="ident">collect</span>(),
         );
     }
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Height</span>, <span class="ident">IbcEvent</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
     <span class="ident">append_events</span>::<span class="op">&lt;</span><span class="ident">ChannelEvents::OpenInit</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="ident">events</span>,
         <span class="ident">extract_events</span>(<span class="ident">height</span>, <span class="ident">block_events</span>, <span class="string">&quot;channel_open_init&quot;</span>, <span class="string">&quot;channel_id&quot;</span>),

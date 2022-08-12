@@ -1820,7 +1820,6 @@
 <span id="1815">1815</span>
 <span id="1816">1816</span>
 <span id="1817">1817</span>
-<span id="1818">1818</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">bytes</span>::{<span class="ident">Buf</span>, <span class="ident">Bytes</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
@@ -1875,8 +1874,6 @@
 };
 <span class="kw">use</span> <span class="ident">ibc_proto::cosmos::staking::v1beta1::Params</span> <span class="kw">as</span> <span class="ident">StakingParams</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::batch</span>::{
     <span class="ident">send_batched_messages_and_wait_check_tx</span>, <span class="ident">send_batched_messages_and_wait_commit</span>,
 };
@@ -1890,7 +1887,6 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query</span>::{<span class="ident">abci_query</span>, <span class="ident">fetch_version_specs</span>, <span class="ident">packet_query</span>, <span class="ident">QueryResponse</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::account::Account</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::config::TxConfig</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::events::channel</span> <span class="kw">as</span> <span class="ident">channel_events</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::gas</span>::{<span class="ident">default_gas_from_config</span>, <span class="ident">max_gas_from_config</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::endpoint</span>::{<span class="ident">ChainEndpoint</span>, <span class="ident">ChainStatus</span>, <span class="ident">HealthCheck</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
@@ -1901,6 +1897,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::keyring</span>::{<span class="ident">KeyEntry</span>, <span class="ident">KeyRing</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client::tendermint::LightClient</span> <span class="kw">as</span> <span class="ident">TmLightClient</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client</span>::{<span class="ident">LightClient</span>, <span class="ident">Verified</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">account::Balance</span>, <span class="ident">event::IbcEventWithHeight</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">chain::client::ClientSettings</span>, <span class="ident">event::ibc_event_try_from_abci_event</span>};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::requests</span>::{
     <span class="ident">IncludeProof</span>, <span class="ident">QueryBlockRequest</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>,
@@ -2231,7 +2229,7 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">do_send_messages_and_wait_commit</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">tracked_msgs</span>: <span class="ident">TrackedMsgs</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;send_messages_and_wait_commit&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span>
@@ -2424,7 +2422,7 @@
     <span class="kw">fn</span> <span class="ident">send_messages_and_wait_commit</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">tracked_msgs</span>: <span class="ident">TrackedMsgs</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">runtime</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">rt</span>.<span class="ident">clone</span>();
 
         <span class="ident">runtime</span>.<span class="ident">block_on</span>(<span class="self">self</span>.<span class="ident">do_send_messages_and_wait_commit</span>(<span class="ident">tracked_msgs</span>))
@@ -3275,7 +3273,7 @@
     <span class="doccomment">///    Therefore, for packets we perform one tx_search for each sequence.</span>
     <span class="doccomment">///    Alternatively, a single query for all packets could be performed but it would return all</span>
     <span class="doccomment">///    packets ever sent.</span>
-    <span class="kw">fn</span> <span class="ident">query_txs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryTxRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_txs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">request</span>: <span class="ident">QueryTxRequest</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_txs&quot;</span>);
         <span class="macro">crate::telemetry!</span>(<span class="ident">query</span>, <span class="self">self</span>.<span class="ident">id</span>(), <span class="string">&quot;query_txs&quot;</span>);
 
@@ -3476,7 +3474,7 @@
         <span class="kw">return</span> <span class="prelude-val">None</span>;
     }
 
-    <span class="kw">let</span> <span class="ident">ibc_event</span> <span class="op">=</span> <span class="ident">channel_events::try_from_tx</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">ibc_event</span> <span class="op">=</span> <span class="ident">ibc_event_try_from_abci_event</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>;
     <span class="kw">match</span> <span class="ident">ibc_event</span> {
         <span class="ident">IbcEvent::SendPacket</span>(<span class="kw-2">ref</span> <span class="ident">send_ev</span>) <span class="kw">if</span> <span class="ident">matches_packet</span>(<span class="ident">request</span>, <span class="ident">seq</span>, <span class="kw-2">&amp;</span><span class="ident">send_ev</span>.<span class="ident">packet</span>) =&gt; {
             <span class="prelude-val">Some</span>(<span class="ident">ibc_event</span>)

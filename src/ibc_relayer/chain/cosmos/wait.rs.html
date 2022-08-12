@@ -111,6 +111,9 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier::ChainId</span>;
 <span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
@@ -125,6 +128,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::events::from_tx_response_event</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::types::tx</span>::{<span class="ident">TxStatus</span>, <span class="ident">TxSyncResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::IbcEventWithHeight</span>;
 
 <span class="kw">const</span> <span class="ident">WAIT_BACKOFF</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">300</span>);
 
@@ -190,22 +194,24 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">response</span>) <span class="op">=</span> <span class="ident">response</span> {
             <span class="ident">tx_sync_result</span>.<span class="ident">status</span> <span class="op">=</span> <span class="ident">TxStatus::ReceivedResponse</span>;
 
+            <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">u64::from</span>(<span class="ident">response</span>.<span class="ident">height</span>)).<span class="ident">unwrap</span>();
             <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">tx_result</span>.<span class="ident">code</span>.<span class="ident">is_err</span>() {
                 <span class="ident">tx_sync_result</span>.<span class="ident">events</span> <span class="op">=</span> <span class="macro">vec!</span>[
-                    <span class="ident">IbcEvent::ChainError</span>(<span class="macro">format!</span>(
-                        <span class="string">&quot;deliver_tx for {} reports error: code={:?}, log={:?}&quot;</span>,
-                        <span class="ident">response</span>.<span class="ident">hash</span>, <span class="ident">response</span>.<span class="ident">tx_result</span>.<span class="ident">code</span>, <span class="ident">response</span>.<span class="ident">tx_result</span>.<span class="ident">log</span>
-                    ));
+                    <span class="ident">IbcEventWithHeight::new</span>(
+                        <span class="ident">IbcEvent::ChainError</span>(<span class="macro">format!</span>(
+                            <span class="string">&quot;deliver_tx for {} reports error: code={:?}, log={:?}&quot;</span>,
+                            <span class="ident">response</span>.<span class="ident">hash</span>, <span class="ident">response</span>.<span class="ident">tx_result</span>.<span class="ident">code</span>, <span class="ident">response</span>.<span class="ident">tx_result</span>.<span class="ident">log</span>
+                        )),
+                        <span class="ident">height</span>
+                    );
                     <span class="ident">message_count</span>
                 ];
             } <span class="kw">else</span> {
-                <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">u64::from</span>(<span class="ident">response</span>.<span class="ident">height</span>)).<span class="ident">unwrap</span>();
-
                 <span class="ident">tx_sync_result</span>.<span class="ident">events</span> <span class="op">=</span> <span class="ident">response</span>
                     .<span class="ident">tx_result</span>
                     .<span class="ident">events</span>
                     .<span class="ident">iter</span>()
-                    .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="ident">from_tx_response_event</span>(<span class="ident">height</span>, <span class="ident">event</span>).<span class="ident">into_iter</span>())
+                    .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="ident">from_tx_response_event</span>(<span class="ident">height</span>, <span class="ident">event</span>))
                     .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
             }
         }

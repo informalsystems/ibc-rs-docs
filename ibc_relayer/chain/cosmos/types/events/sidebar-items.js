@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["from_tx_response_event",""]],"mod":[["channel",""],["client",""],["connection",""]]});
+initSidebarItems({"fn":[["from_tx_response_event",""]],"mod":[["channel",""]]});

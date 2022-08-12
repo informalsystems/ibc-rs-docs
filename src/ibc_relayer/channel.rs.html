@@ -2251,7 +2251,7 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">step_event</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">IbcEvent</span>, <span class="ident">index</span>: <span class="ident">u64</span>) -&gt; <span class="ident">RetryResult</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">u64</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">step_event</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">IbcEvent</span>, <span class="ident">index</span>: <span class="ident">u64</span>) -&gt; <span class="ident">RetryResult</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">u64</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>) =&gt; <span class="ident">State::Init</span>,
             <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>) =&gt; <span class="ident">State::TryOpen</span>,
@@ -2332,21 +2332,21 @@
         <span class="comment">// Find the relevant event for channel open init</span>
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-                <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>))
-                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
+            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event_with_height</span><span class="op">|</span> {
+                <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>))
+                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
             })
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                 <span class="ident">ChannelError::missing_event</span>(<span class="string">&quot;no chan init event was in the response&quot;</span>.<span class="ident">to_string</span>())
             })<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">result</span> {
+        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenInitChannel</span>(<span class="kw">_</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
-            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
+            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>.<span class="ident">event</span>)),
         }
     }
 
@@ -2518,21 +2518,21 @@
         <span class="comment">// Find the relevant event for channel open try</span>
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-                <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>))
-                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
+            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">events_with_height</span><span class="op">|</span> {
+                <span class="macro">matches!</span>(<span class="ident">events_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>))
+                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">events_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
             })
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                 <span class="ident">ChannelError::missing_event</span>(<span class="string">&quot;no chan try event was in the response&quot;</span>.<span class="ident">to_string</span>())
             })<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">result</span> {
+        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenTryChannel</span>(<span class="kw">_</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
-            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
+            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>.<span class="ident">event</span>)),
         }
     }
 
@@ -2621,21 +2621,21 @@
             <span class="comment">// Find the relevant event for channel open ack</span>
             <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
                 .<span class="ident">into_iter</span>()
-                .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-                    <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>))
-                        <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
+                .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event_with_height</span><span class="op">|</span> {
+                    <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>))
+                        <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
                 })
                 .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                     <span class="ident">ChannelError::missing_event</span>(<span class="string">&quot;no chan ack event was in the response&quot;</span>.<span class="ident">to_string</span>())
                 })<span class="question-mark">?</span>;
 
-            <span class="kw">match</span> <span class="ident">result</span> {
+            <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
                 <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>) =&gt; {
                     <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
-                    <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+                    <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
                 }
-                <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
+                <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
+                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>.<span class="ident">event</span>)),
             }
         }
 
@@ -2726,9 +2726,9 @@
             <span class="comment">// Find the relevant event for channel open confirm</span>
             <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
                 .<span class="ident">into_iter</span>()
-                .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-                    <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>))
-                        <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
+                .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event_with_height</span><span class="op">|</span> {
+                    <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>))
+                        <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
                 })
                 .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                     <span class="ident">ChannelError::missing_event</span>(
@@ -2736,13 +2736,13 @@
                     )
                 })<span class="question-mark">?</span>;
 
-            <span class="kw">match</span> <span class="ident">result</span> {
+            <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
                 <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>) =&gt; {
                     <span class="macro">info!</span>(<span class="string">&quot;🎊  {} =&gt; {:#?}\n&quot;</span>, <span class="ident">channel</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
-                    <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+                    <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
                 }
-                <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
+                <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
+                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>.<span class="ident">event</span>)),
             }
         }
 
@@ -2798,21 +2798,21 @@
         <span class="comment">// Find the relevant event for channel close init</span>
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-                <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw">_</span>))
-                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
+            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event_with_height</span><span class="op">|</span> {
+                <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw">_</span>))
+                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
             })
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                 <span class="ident">ChannelError::missing_event</span>(<span class="string">&quot;no chan init event was in the response&quot;</span>.<span class="ident">to_string</span>())
             })<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">result</span> {
+        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw">_</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;👋 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
-            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
+            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>.<span class="ident">event</span>)),
         }
     }
 
@@ -2895,21 +2895,21 @@
         <span class="comment">// Find the relevant event for channel close confirm</span>
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">events</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> {
-                <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="kw">_</span>))
-                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
+            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">event_with_height</span><span class="op">|</span> {
+                <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="kw">_</span>))
+                    <span class="op">|</span><span class="op">|</span> <span class="macro">matches!</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">IbcEvent::ChainError</span>(<span class="kw">_</span>))
             })
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
                 <span class="ident">ChannelError::missing_event</span>(<span class="string">&quot;no chan confirm event was in the response&quot;</span>.<span class="ident">to_string</span>())
             })<span class="question-mark">?</span>;
 
-        <span class="kw">match</span> <span class="ident">result</span> {
+        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::CloseConfirmChannel</span>(<span class="kw">_</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="string">&quot;👋 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+                <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
-            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>)),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>)),
+            <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelError::invalid_event</span>(<span class="ident">result</span>.<span class="ident">event</span>)),
         }
     }
 

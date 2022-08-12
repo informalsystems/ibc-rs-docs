@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["extract_header_from_tx",""],["try_from_tx",""]]});
