@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin_hashes-0.10.0/src/sha512.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sha512.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin_hashes-0.11.0/src/sha512.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sha512.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../bitcoin_hashes/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -487,6 +487,16 @@
 <span id="482">482</span>
 <span id="483">483</span>
 <span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
 </pre><pre class="rust"><code><span class="comment">// Bitcoin Hashes Library</span>
 <span class="comment">// Written in 2018 by</span>
 <span class="comment">//   Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;</span>
@@ -506,18 +516,18 @@
 <span class="comment">// was written entirely by Andrew Poelstra, who is re-licensing its</span>
 <span class="comment">// contents here as CC0.</span>
 
-<span class="doccomment">//! # SHA512</span>
+<span class="doccomment">//! SHA512 implementation.</span>
+<span class="doccomment">//!</span>
 
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">cmp</span>, <span class="ident">hash</span>, <span class="ident">str</span>};
+<span class="kw">use</span> <span class="ident">core::ops::Index</span>;
+<span class="kw">use</span> <span class="ident">core::slice::SliceIndex</span>;
 
-<span class="kw">use</span> <span class="ident">HashEngine</span> <span class="kw">as</span> <span class="ident">EngineTrait</span>;
-<span class="kw">use</span> <span class="ident">Hash</span> <span class="kw">as</span> <span class="ident">HashTrait</span>;
-<span class="kw">use</span> <span class="ident">Error</span>;
-<span class="kw">use</span> <span class="ident">util</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">HashEngine</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">hex</span>, <span class="ident">util</span>};
 
 <span class="kw">const</span> <span class="ident">BLOCK_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">128</span>;
 
-<span class="doccomment">/// Engine to compute SHA512 hash function</span>
+<span class="doccomment">/// Engine to compute SHA512 hash function.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HashEngine</span> {
     <span class="ident">h</span>: [<span class="ident">u64</span>; <span class="number">8</span>],
@@ -538,7 +548,7 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">EngineTrait</span> <span class="kw">for</span> <span class="ident">HashEngine</span> {
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::HashEngine</span> <span class="kw">for</span> <span class="ident">HashEngine</span> {
     <span class="kw">type</span> <span class="ident">MidState</span> <span class="op">=</span> [<span class="ident">u8</span>; <span class="number">64</span>];
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">fuzzing</span>))]</span>
@@ -566,11 +576,11 @@
     <span class="macro">engine_input_impl!</span>();
 }
 
-<span class="doccomment">/// Output of the SHA256 hash function</span>
+<span class="doccomment">/// Output of the SHA256 hash function.</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;schemars&quot;</span>, <span class="ident">derive</span>(<span class="ident">schemars::JsonSchema</span>))]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Hash</span>(
-    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;schemars&quot;</span>, <span class="ident">schemars</span>(<span class="ident">schema_with</span><span class="op">=</span><span class="string">&quot;util::json_hex_string::len_64&quot;</span>))]</span>
+    <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;schemars&quot;</span>, <span class="ident">schemars</span>(<span class="ident">schema_with</span> <span class="op">=</span> <span class="string">&quot;util::json_hex_string::len_64&quot;</span>))]</span>
     [<span class="ident">u8</span>; <span class="number">64</span>]
 );
 
@@ -617,20 +627,28 @@
 }
 
 <span class="kw">impl</span> <span class="ident">str::FromStr</span> <span class="kw">for</span> <span class="ident">Hash</span> {
-    <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="ident">::hex::Error</span>;
+    <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="ident">hex::Error</span>;
     <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Err</span><span class="op">&gt;</span> {
-        <span class="ident">::hex::FromHex::from_hex</span>(<span class="ident">s</span>)
+        <span class="ident">hex::FromHex::from_hex</span>(<span class="ident">s</span>)
     }
 }
 
 <span class="macro">hex_fmt_impl!</span>(<span class="ident">Debug</span>, <span class="ident">Hash</span>);
 <span class="macro">hex_fmt_impl!</span>(<span class="ident">Display</span>, <span class="ident">Hash</span>);
 <span class="macro">hex_fmt_impl!</span>(<span class="ident">LowerHex</span>, <span class="ident">Hash</span>);
-<span class="macro">index_impl!</span>(<span class="ident">Hash</span>);
 <span class="macro">serde_impl!</span>(<span class="ident">Hash</span>, <span class="number">64</span>);
 <span class="macro">borrow_slice_impl!</span>(<span class="ident">Hash</span>);
 
-<span class="kw">impl</span> <span class="ident">HashTrait</span> <span class="kw">for</span> <span class="ident">Hash</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">I</span>: <span class="ident">SliceIndex</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">Index</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Hash</span> {
+    <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">I::Output</span>;
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">index</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">I</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Output</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[<span class="ident">index</span>]
+    }
+}
+
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::Hash</span> <span class="kw">for</span> <span class="ident">Hash</span> {
     <span class="kw">type</span> <span class="ident">Engine</span> <span class="op">=</span> <span class="ident">HashEngine</span>;
     <span class="kw">type</span> <span class="ident">Inner</span> <span class="op">=</span> [<span class="ident">u8</span>; <span class="number">64</span>];
 
@@ -685,14 +703,18 @@
     <span class="kw">fn</span> <span class="ident">from_inner</span>(<span class="ident">inner</span>: <span class="ident"><span class="self">Self</span>::Inner</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">Hash</span>(<span class="ident">inner</span>)
     }
+
+    <span class="kw">fn</span> <span class="ident">all_zeros</span>() -&gt; <span class="self">Self</span> {
+        <span class="ident">Hash</span>([<span class="number">0x00</span>; <span class="number">64</span>])
+    }
 }
 
 <span class="macro">macro_rules!</span> <span class="ident">Ch</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">y</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">z</span>:<span class="ident">expr</span>) =&gt; (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">z</span> <span class="op">^</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">&amp;</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">y</span> <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">z</span>))) );
 <span class="macro">macro_rules!</span> <span class="ident">Maj</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">y</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">z</span>:<span class="ident">expr</span>) =&gt; ((<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">&amp;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">y</span>) <span class="op">|</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">z</span> <span class="op">&amp;</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">|</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">y</span>))) );
-<span class="macro">macro_rules!</span> <span class="ident">Sigma0</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro">circular_lshift64!</span>(<span class="number">36</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> <span class="macro">circular_lshift64!</span>(<span class="number">30</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> <span class="macro">circular_lshift64!</span>(<span class="number">25</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>)) );
-<span class="macro">macro_rules!</span> <span class="ident">Sigma1</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro">circular_lshift64!</span>(<span class="number">50</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> <span class="macro">circular_lshift64!</span>(<span class="number">46</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> <span class="macro">circular_lshift64!</span>(<span class="number">23</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>)) );
-<span class="macro">macro_rules!</span> <span class="ident">sigma0</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro">circular_lshift64!</span>(<span class="number">63</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> <span class="macro">circular_lshift64!</span>(<span class="number">56</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">7</span>)) );
-<span class="macro">macro_rules!</span> <span class="ident">sigma1</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro">circular_lshift64!</span>(<span class="number">45</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> <span class="macro">circular_lshift64!</span>(<span class="number">3</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>) <span class="op">^</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">6</span>)) );
+<span class="macro">macro_rules!</span> <span class="ident">Sigma0</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">36</span>) <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">30</span>) <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">25</span>)) );
+<span class="macro">macro_rules!</span> <span class="ident">Sigma1</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">50</span>) <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">46</span>) <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">23</span>)) );
+<span class="macro">macro_rules!</span> <span class="ident">sigma0</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">63</span>) <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">56</span>) <span class="op">^</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">7</span>)) );
+<span class="macro">macro_rules!</span> <span class="ident">sigma1</span>( (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">expr</span>) =&gt; (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">45</span>) <span class="op">^</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>.<span class="ident">rotate_left</span>(<span class="number">3</span>) <span class="op">^</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">6</span>)) );
 
 <span class="macro">macro_rules!</span> <span class="ident">round</span>(
     <span class="comment">// first round</span>
@@ -826,20 +848,19 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">sha512</span>;
-    <span class="kw">use</span> <span class="ident">hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
-    <span class="kw">use</span> <span class="ident">Hash</span>;
-    <span class="kw">use</span> <span class="ident">HashEngine</span>;
-
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">Test</span> {
-        <span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
-        <span class="ident">output</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-        <span class="ident">output_str</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
-    }
-
     <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>))]</span>
     <span class="kw">fn</span> <span class="ident">test</span>() {
+        <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">sha512</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
+
+        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
+        <span class="kw">struct</span> <span class="ident">Test</span> {
+            <span class="ident">input</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
+            <span class="ident">output</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+            <span class="ident">output_str</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>,
+        }
+
         <span class="kw">let</span> <span class="ident">tests</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="comment">// Test vectors computed with `sha512sum`</span>
             <span class="ident">Test</span> {
@@ -904,10 +925,11 @@
         }
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;serde&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">sha512_serde</span>() {
         <span class="kw">use</span> <span class="ident">serde_test</span>::{<span class="ident">Configure</span>, <span class="ident">Token</span>, <span class="ident">assert_tokens</span>};
+        <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">sha512</span>, <span class="ident">Hash</span>};
 
         <span class="kw">static</span> <span class="ident">HASH_BYTES</span>: [<span class="ident">u8</span>; <span class="number">64</span>] <span class="op">=</span> [
             <span class="number">0x8b</span>, <span class="number">0x41</span>, <span class="number">0xe1</span>, <span class="number">0xb7</span>, <span class="number">0x8a</span>, <span class="number">0xd1</span>, <span class="number">0x15</span>, <span class="number">0x21</span>,
@@ -932,16 +954,14 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">feature</span><span class="op">=</span><span class="string">&quot;unstable&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable&quot;</span>))]</span>
 <span class="kw">mod</span> <span class="ident">benches</span> {
     <span class="kw">use</span> <span class="ident">test::Bencher</span>;
 
-    <span class="kw">use</span> <span class="ident">sha512</span>;
-    <span class="kw">use</span> <span class="ident">Hash</span>;
-    <span class="kw">use</span> <span class="ident">HashEngine</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Hash</span>, <span class="ident">HashEngine</span>, <span class="ident">sha512</span>};
 
     <span class="attribute">#[<span class="ident">bench</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sha512_10</span>(<span class="ident">bh</span>: <span class="op">&amp;</span> <span class="kw-2">mut</span> <span class="ident">Bencher</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sha512_10</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">sha512::Hash::engine</span>();
         <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> [<span class="number">1u8</span>; <span class="number">10</span>];
         <span class="ident">bh</span>.<span class="ident">iter</span>( <span class="op">|</span><span class="op">|</span> {
@@ -951,7 +971,7 @@
     }
 
     <span class="attribute">#[<span class="ident">bench</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sha512_1k</span>(<span class="ident">bh</span>: <span class="op">&amp;</span> <span class="kw-2">mut</span> <span class="ident">Bencher</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sha512_1k</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">sha512::Hash::engine</span>();
         <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> [<span class="number">1u8</span>; <span class="number">1024</span>];
         <span class="ident">bh</span>.<span class="ident">iter</span>( <span class="op">|</span><span class="op">|</span> {
@@ -961,7 +981,7 @@
     }
 
     <span class="attribute">#[<span class="ident">bench</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sha512_64k</span>(<span class="ident">bh</span>: <span class="op">&amp;</span> <span class="kw-2">mut</span> <span class="ident">Bencher</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sha512_64k</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">engine</span> <span class="op">=</span> <span class="ident">sha512::Hash::engine</span>();
         <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> [<span class="number">1u8</span>; <span class="number">65536</span>];
         <span class="ident">bh</span>.<span class="ident">iter</span>( <span class="op">|</span><span class="op">|</span> {

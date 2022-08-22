@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Hash","Output of the SipHash24 hash function."],["HashEngine","Engine to compute SipHash24 hash function."],["State","Internal state of the [HashEngine]."]]});
+initSidebarItems({"struct":[["Hash","Output of the SipHash24 hash function."],["HashEngine","Engine to compute the SipHash24 hash function."],["State","Internal state of the [`HashEngine`]."]]});

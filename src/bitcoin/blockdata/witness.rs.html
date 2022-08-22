@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.28.1/src/blockdata/witness.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>witness.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.29.1/src/blockdata/witness.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>witness.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../bitcoin/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -397,19 +397,163 @@
 <span id="392">392</span>
 <span id="393">393</span>
 <span id="394">394</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Witness</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+</pre><pre class="rust"><code><span class="comment">// SPDX-License-Identifier: CC0-1.0</span>
+
+<span class="doccomment">//! Witness</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! This module contains the [`Witness`] struct and related methods to operate on it</span>
 <span class="doccomment">//!</span>
 
-<span class="kw">use</span> <span class="ident">consensus::encode</span>::{<span class="ident">Error</span>, <span class="ident">MAX_VEC_SIZE</span>};
-<span class="kw">use</span> <span class="ident">consensus</span>::{<span class="ident">Decodable</span>, <span class="ident">Encodable</span>, <span class="ident">WriteExt</span>};
-<span class="kw">use</span> <span class="ident">io</span>::{<span class="self">self</span>, <span class="ident">Read</span>, <span class="ident">Write</span>};
-<span class="kw">use</span> <span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">VarInt</span>;
+<span class="kw">use</span> <span class="ident">secp256k1::ecdsa</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">serde</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::transaction::EcdsaSighashType</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::encode</span>::{<span class="ident">Error</span>, <span class="ident">MAX_VEC_SIZE</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus</span>::{<span class="ident">Decodable</span>, <span class="ident">Encodable</span>, <span class="ident">WriteExt</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>::{<span class="self">self</span>, <span class="ident">Read</span>, <span class="ident">Write</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::VarInt</span>;
 
 <span class="doccomment">/// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)</span>
 <span class="doccomment">///</span>
@@ -419,7 +563,7 @@
 <span class="doccomment">/// For serialization and deserialization performance it is stored internally as a single `Vec`,</span>
 <span class="doccomment">/// saving some allocations.</span>
 <span class="doccomment">///</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>, <span class="ident">Hash</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Witness</span> {
     <span class="doccomment">/// contains the witness Vec&lt;Vec&lt;u8&gt;&gt; serialization without the initial varint indicating the</span>
     <span class="doccomment">/// number of elements (which is stored in `witness_elements`)</span>
@@ -440,11 +584,14 @@
 }
 
 <span class="doccomment">/// Support structure to allow efficient and convenient iteration over the Witness elements</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="ident">::core::slice::Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">u8</span><span class="op">&gt;</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+    <span class="ident">inner</span>: <span class="ident">core::slice::Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">u8</span><span class="op">&gt;</span>,
+    <span class="ident">remaining</span>: <span class="ident">usize</span>,
+}
 
 <span class="kw">impl</span> <span class="ident">Decodable</span> <span class="kw">for</span> <span class="ident">Witness</span> {
-    <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">witness_elements</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">d</span>)<span class="question-mark">?</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>;
+    <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">witness_elements</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="ident">r</span>)<span class="question-mark">?</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>;
         <span class="kw">if</span> <span class="ident">witness_elements</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">Witness::default</span>())
         } <span class="kw">else</span> {
@@ -459,17 +606,17 @@
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">witness_elements</span> {
                 <span class="ident">second_to_last</span> <span class="op">=</span> <span class="ident">last</span>;
                 <span class="ident">last</span> <span class="op">=</span> <span class="ident">cursor</span>;
-                <span class="kw">let</span> <span class="ident">element_size_varint</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">d</span>)<span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">element_size_varint</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="ident">r</span>)<span class="question-mark">?</span>;
                 <span class="kw">let</span> <span class="ident">element_size_varint_len</span> <span class="op">=</span> <span class="ident">element_size_varint</span>.<span class="ident">len</span>();
                 <span class="kw">let</span> <span class="ident">element_size</span> <span class="op">=</span> <span class="ident">element_size_varint</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>;
                 <span class="kw">let</span> <span class="ident">required_len</span> <span class="op">=</span> <span class="ident">cursor</span>
                     .<span class="ident">checked_add</span>(<span class="ident">element_size</span>)
-                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident"><span class="self">self</span>::Error::OversizedVectorAllocation</span> {
+                    .<span class="ident">ok_or</span>(<span class="ident"><span class="self">self</span>::Error::OversizedVectorAllocation</span> {
                         <span class="ident">requested</span>: <span class="ident">usize::max_value</span>(),
                         <span class="ident">max</span>: <span class="ident">MAX_VEC_SIZE</span>,
                     })<span class="question-mark">?</span>
                     .<span class="ident">checked_add</span>(<span class="ident">element_size_varint_len</span>)
-                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident"><span class="self">self</span>::Error::OversizedVectorAllocation</span> {
+                    .<span class="ident">ok_or</span>(<span class="ident"><span class="self">self</span>::Error::OversizedVectorAllocation</span> {
                         <span class="ident">requested</span>: <span class="ident">usize::max_value</span>(),
                         <span class="ident">max</span>: <span class="ident">MAX_VEC_SIZE</span>,
                     })<span class="question-mark">?</span>;
@@ -483,9 +630,9 @@
 
                 <span class="ident">resize_if_needed</span>(<span class="kw-2">&amp;mut</span> <span class="ident">content</span>, <span class="ident">required_len</span>);
                 <span class="ident">element_size_varint</span>
-                    .<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">element_size_varint_len</span>])<span class="question-mark">?</span>;
+                    .<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;mut</span> <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">element_size_varint_len</span>])<span class="question-mark">?</span>;
                 <span class="ident">cursor</span> <span class="op">+</span><span class="op">=</span> <span class="ident">element_size_varint_len</span>;
-                <span class="ident">d</span>.<span class="ident">read_exact</span>(<span class="kw-2">&amp;mut</span> <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">element_size</span>])<span class="question-mark">?</span>;
+                <span class="ident">r</span>.<span class="ident">read_exact</span>(<span class="kw-2">&amp;mut</span> <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">element_size</span>])<span class="question-mark">?</span>;
                 <span class="ident">cursor</span> <span class="op">+</span><span class="op">=</span> <span class="ident">element_size</span>;
             }
             <span class="ident">content</span>.<span class="ident">truncate</span>(<span class="ident">cursor</span>);
@@ -510,16 +657,15 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">Witness</span> {
-    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">VarInt</span>(<span class="self">self</span>.<span class="ident">witness_elements</span> <span class="kw">as</span> <span class="ident">u64</span>);
-        <span class="ident">len</span>.<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">writer</span>)<span class="question-mark">?</span>;
-        <span class="ident">writer</span>.<span class="ident">emit_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">content</span>[..])<span class="question-mark">?</span>;
+        <span class="ident">len</span>.<span class="ident">consensus_encode</span>(<span class="ident">w</span>)<span class="question-mark">?</span>;
+        <span class="ident">w</span>.<span class="ident">emit_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">content</span>[..])<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">content</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">len</span>.<span class="ident">len</span>())
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Witness</span> {
-
     <span class="doccomment">/// Create a new empty [`Witness`]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
         <span class="ident">Witness::default</span>()
@@ -542,7 +688,7 @@
             <span class="ident">last</span> <span class="op">=</span> <span class="ident">cursor</span>;
             <span class="kw">let</span> <span class="ident">el_len_varint</span> <span class="op">=</span> <span class="ident">VarInt</span>(<span class="ident">el</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>);
             <span class="ident">el_len_varint</span>
-                .<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">el_len_varint</span>.<span class="ident">len</span>()])
+                .<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;mut</span> <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">el_len_varint</span>.<span class="ident">len</span>()])
                 .<span class="ident">expect</span>(<span class="string">&quot;writers on vec don&#39;t errors, space granted by content_size&quot;</span>);
             <span class="ident">cursor</span> <span class="op">+</span><span class="op">=</span> <span class="ident">el_len_varint</span>.<span class="ident">len</span>();
             <span class="ident">content</span>[<span class="ident">cursor</span>..<span class="ident">cursor</span> <span class="op">+</span> <span class="ident">el</span>.<span class="ident">len</span>()].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">el</span>);
@@ -569,7 +715,7 @@
 
     <span class="doccomment">/// Returns a struct implementing [`Iterator`]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Iter</span> {
-        <span class="ident">Iter</span>(<span class="self">self</span>.<span class="ident">content</span>.<span class="ident">iter</span>())
+        <span class="ident">Iter</span> { <span class="ident">inner</span>: <span class="self">self</span>.<span class="ident">content</span>.<span class="ident">iter</span>(), <span class="ident">remaining</span>: <span class="self">self</span>.<span class="ident">witness_elements</span> }
     }
 
     <span class="doccomment">/// Returns the number of elements this witness holds</span>
@@ -605,13 +751,24 @@
             .<span class="ident">resize</span>(<span class="ident">current_content_len</span> <span class="op">+</span> <span class="ident">element_len_varint</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="ident">new_element</span>.<span class="ident">len</span>(), <span class="number">0</span>);
         <span class="kw">let</span> <span class="ident">end_varint</span> <span class="op">=</span> <span class="ident">current_content_len</span> <span class="op">+</span> <span class="ident">element_len_varint</span>.<span class="ident">len</span>();
         <span class="ident">element_len_varint</span>
-            .<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">content</span>[<span class="ident">current_content_len</span>..<span class="ident">end_varint</span>])
+            .<span class="ident">consensus_encode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">content</span>[<span class="ident">current_content_len</span>..<span class="ident">end_varint</span>])
             .<span class="ident">expect</span>(<span class="string">&quot;writers on vec don&#39;t error, space granted through previous resize&quot;</span>);
         <span class="self">self</span>.<span class="ident">content</span>[<span class="ident">end_varint</span>..].<span class="ident">copy_from_slice</span>(<span class="ident">new_element</span>);
     }
 
+    <span class="doccomment">/// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the</span>
+    <span class="doccomment">/// witness, requires an allocation.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">push_bitcoin_signature</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident">ecdsa::SerializedSignature</span>, <span class="ident">hash_type</span>: <span class="ident">EcdsaSighashType</span>) {
+        <span class="comment">// Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sig</span> <span class="op">=</span> [<span class="number">0</span>; <span class="number">73</span>];
+        <span class="ident">sig</span>[..<span class="ident">signature</span>.<span class="ident">len</span>()].<span class="ident">copy_from_slice</span>(<span class="ident">signature</span>);
+        <span class="ident">sig</span>[<span class="ident">signature</span>.<span class="ident">len</span>()] <span class="op">=</span> <span class="ident">hash_type</span> <span class="kw">as</span> <span class="ident">u8</span>;
+        <span class="self">self</span>.<span class="ident">push</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>[..<span class="ident">signature</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>]);
+    }
+
+
     <span class="kw">fn</span> <span class="ident">element_at</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">varint</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">content</span>[<span class="ident">index</span>..]).<span class="ident">ok</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">varint</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">content</span>[<span class="ident">index</span>..]).<span class="ident">ok</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">+</span> <span class="ident">varint</span>.<span class="ident">len</span>();
         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">content</span>[<span class="ident">start</span>..<span class="ident">start</span> <span class="op">+</span> <span class="ident">varint</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>])
     }
@@ -635,34 +792,28 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Witness</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="comment">// from https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new</span>
-        <span class="comment">// The vector will not allocate until elements are pushed onto it.</span>
-        <span class="ident">Witness</span> {
-            <span class="ident">content</span>: <span class="ident">Vec::new</span>(),
-            <span class="ident">witness_elements</span>: <span class="number">0</span>,
-            <span class="ident">last</span>: <span class="number">0</span>,
-            <span class="ident">second_to_last</span>: <span class="number">0</span>,
-        }
-    }
-}
-
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>];
 
     <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">varint</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_slice</span>()).<span class="ident">ok</span>()<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">nth</span>(<span class="ident">varint</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>)<span class="question-mark">?</span>; <span class="comment">// VarInt::len returns at least 1</span>
+        <span class="kw">let</span> <span class="ident">varint</span> <span class="op">=</span> <span class="ident">VarInt::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_slice</span>()).<span class="ident">ok</span>()<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">nth</span>(<span class="ident">varint</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">1</span>)<span class="question-mark">?</span>; <span class="comment">// VarInt::len returns at least 1</span>
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">varint</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.<span class="ident">as_slice</span>()[..<span class="ident">len</span>];
+        <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">as_slice</span>()[..<span class="ident">len</span>];
         <span class="kw">if</span> <span class="ident">len</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="comment">// we don&#39;t need to advance if the element is empty</span>
-            <span class="self">self</span>.<span class="number">0</span>.<span class="ident">nth</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>)<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">nth</span>(<span class="ident">len</span> <span class="op">-</span> <span class="number">1</span>)<span class="question-mark">?</span>;
         }
+        <span class="self">self</span>.<span class="ident">remaining</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
         <span class="prelude-val">Some</span>(<span class="ident">slice</span>)
     }
+
+    <span class="kw">fn</span> <span class="ident">size_hint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>) {
+        (<span class="self">self</span>.<span class="ident">remaining</span>, <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">remaining</span>))
+    }
 }
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">ExactSizeIterator</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {}
 
 <span class="comment">// Serde keep backward compatibility with old Vec&lt;Vec&lt;u8&gt;&gt; format</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
@@ -671,27 +822,88 @@
     <span class="kw">where</span>
         <span class="ident">S</span>: <span class="ident">serde::Serializer</span>,
     {
-        <span class="kw">let</span> <span class="ident">vec</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_vec</span>();
-        <span class="ident">serde::Serialize::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">vec</span>, <span class="ident">serializer</span>)
+        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::ToHex</span>;
+        <span class="kw">use</span> <span class="ident">serde::ser::SerializeSeq</span>;
+
+        <span class="kw">let</span> <span class="ident">human_readable</span> <span class="op">=</span> <span class="ident">serializer</span>.<span class="ident">is_human_readable</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seq</span> <span class="op">=</span> <span class="ident">serializer</span>.<span class="ident">serialize_seq</span>(<span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">witness_elements</span>))<span class="question-mark">?</span>;
+
+        <span class="kw">for</span> <span class="ident">elem</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">iter</span>() {
+            <span class="kw">if</span> <span class="ident">human_readable</span> {
+                <span class="ident">seq</span>.<span class="ident">serialize_element</span>(<span class="kw-2">&amp;</span><span class="ident">elem</span>.<span class="ident">to_hex</span>())<span class="question-mark">?</span>;
+            } <span class="kw">else</span> {
+                <span class="ident">seq</span>.<span class="ident">serialize_element</span>(<span class="kw-2">&amp;</span><span class="ident">elem</span>)<span class="question-mark">?</span>;
+            }
+        }
+        <span class="ident">seq</span>.<span class="ident">end</span>()
     }
 }
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Witness</span> {
     <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">D</span>: <span class="ident">serde::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">vec</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">serde::Deserialize::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Witness::from_vec</span>(<span class="ident">vec</span>))
+        <span class="kw">struct</span> <span class="ident">Visitor</span>;         <span class="comment">// Human-readable visitor.</span>
+        <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">serde::de::Visitor</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Visitor</span>
+        {
+            <span class="kw">type</span> <span class="ident">Value</span> <span class="op">=</span> <span class="ident">Witness</span>;
+
+            <span class="kw">fn</span> <span class="ident">expecting</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">core::fmt::Formatter</span>) -&gt; <span class="ident">core::fmt::Result</span> {
+                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;a sequence of hex arrays&quot;</span>)
+            }
+
+            <span class="kw">fn</span> <span class="ident">visit_seq</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">serde::de::SeqAccess</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">a</span>: <span class="ident">A</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Value</span>, <span class="ident">A::Error</span><span class="op">&gt;</span>
+            {
+                <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::FromHex</span>;
+                <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::Error</span>::<span class="kw-2">*</span>;
+                <span class="kw">use</span> <span class="ident">serde::de</span>::{<span class="self">self</span>, <span class="ident">Unexpected</span>};
+
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">size_hint</span>() {
+                    <span class="prelude-val">Some</span>(<span class="ident">len</span>) =&gt; <span class="ident">Vec::with_capacity</span>(<span class="ident">len</span>),
+                    <span class="prelude-val">None</span> =&gt; <span class="ident">Vec::new</span>(),
+                };
+
+                <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">elem</span>) <span class="op">=</span> <span class="ident">a</span>.<span class="ident">next_element</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()<span class="question-mark">?</span> {
+                    <span class="kw">let</span> <span class="ident">vec</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::from_hex</span>(<span class="kw-2">&amp;</span><span class="ident">elem</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                        <span class="kw">match</span> <span class="ident">e</span> {
+                            <span class="ident">InvalidChar</span>(<span class="ident">b</span>) =&gt; {
+                                <span class="kw">match</span> <span class="ident">core::char::from_u32</span>(<span class="ident">b</span>.<span class="ident">into</span>()) {
+                                    <span class="prelude-val">Some</span>(<span class="ident">c</span>) =&gt; <span class="ident">de::Error::invalid_value</span>(<span class="ident">Unexpected::Char</span>(<span class="ident">c</span>), <span class="kw-2">&amp;</span><span class="string">&quot;a valid hex character&quot;</span>),
+                                    <span class="prelude-val">None</span> =&gt; <span class="ident">de::Error::invalid_value</span>(<span class="ident">Unexpected::Unsigned</span>(<span class="ident">b</span>.<span class="ident">into</span>()), <span class="kw-2">&amp;</span><span class="string">&quot;a valid hex character&quot;</span>)
+                                }
+                            }
+                            <span class="ident">OddLengthString</span>(<span class="ident">len</span>) =&gt; <span class="ident">de::Error::invalid_length</span>(<span class="ident">len</span>, <span class="kw-2">&amp;</span><span class="string">&quot;an even length string&quot;</span>),
+                            <span class="ident">InvalidLength</span>(<span class="ident">expected</span>, <span class="ident">got</span>) =&gt; {
+                                <span class="kw">let</span> <span class="ident">exp</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;expected length: {}&quot;</span>, <span class="ident">expected</span>);
+                                <span class="ident">de::Error::invalid_length</span>(<span class="ident">got</span>, <span class="kw-2">&amp;</span><span class="ident">exp</span>.<span class="ident">as_str</span>())
+                            }
+                        }
+                    })<span class="question-mark">?</span>;
+                    <span class="ident">ret</span>.<span class="ident">push</span>(<span class="ident">vec</span>);
+                }
+                <span class="prelude-val">Ok</span>(<span class="ident">Witness::from_vec</span>(<span class="ident">ret</span>))
+            }
+        }
+
+        <span class="kw">if</span> <span class="ident">deserializer</span>.<span class="ident">is_human_readable</span>() {
+            <span class="ident">deserializer</span>.<span class="ident">deserialize_seq</span>(<span class="ident">Visitor</span>)
+        } <span class="kw">else</span> {
+            <span class="kw">let</span> <span class="ident">vec</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">serde::Deserialize::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(<span class="ident">Witness::from_vec</span>(<span class="ident">vec</span>))
+        }
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="ident">blockdata::witness::Witness</span>;
-    <span class="kw">use</span> <span class="ident">consensus</span>::{<span class="ident">deserialize</span>, <span class="ident">serialize</span>};
-    <span class="kw">use</span> <span class="ident">hashes::hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
-    <span class="kw">use</span> <span class="ident">Transaction</span>;
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus</span>::{<span class="ident">deserialize</span>, <span class="ident">serialize</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Transaction</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::secp256k1::ecdsa</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_push</span>() {
@@ -718,6 +930,35 @@
         <span class="macro">assert_eq!</span>(<span class="ident">witness</span>, <span class="ident">expected</span>);
         <span class="macro">assert_eq!</span>(<span class="ident">witness</span>.<span class="ident">last</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>[<span class="number">2u8</span>, <span class="number">3u8</span>][..]));
         <span class="macro">assert_eq!</span>(<span class="ident">witness</span>.<span class="ident">second_to_last</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>][..]));
+    }
+
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_iter_len</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">witness</span> <span class="op">=</span> <span class="ident">Witness::default</span>();
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">5</span> {
+            <span class="macro">assert_eq!</span>(<span class="ident">witness</span>.<span class="ident">iter</span>().<span class="ident">len</span>(), <span class="ident">i</span>);
+            <span class="ident">witness</span>.<span class="ident">push</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0u8</span>]);
+        }
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">iter</span> <span class="op">=</span> <span class="ident">witness</span>.<span class="ident">iter</span>();
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> (<span class="number">0</span>..<span class="op">=</span><span class="number">5</span>).<span class="ident">rev</span>() {
+            <span class="macro">assert_eq!</span>(<span class="ident">iter</span>.<span class="ident">len</span>(), <span class="ident">i</span>);
+            <span class="ident">iter</span>.<span class="ident">next</span>();
+        }
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_push_ecdsa_sig</span>() {
+        <span class="comment">// The very first signature in block 734,958</span>
+        <span class="kw">let</span> <span class="ident">sig_bytes</span> <span class="op">=</span>
+            <span class="ident">Vec::from_hex</span>(<span class="string">&quot;304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b541&quot;</span>);
+        <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">ecdsa::Signature::from_der</span>(<span class="kw-2">&amp;</span><span class="ident">sig_bytes</span>.<span class="ident">unwrap</span>()).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">witness</span> <span class="op">=</span> <span class="ident">Witness::default</span>();
+        <span class="ident">witness</span>.<span class="ident">push_bitcoin_signature</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">serialize_der</span>(), <span class="ident">EcdsaSighashType::All</span>);
+        <span class="kw">let</span> <span class="ident">expected_witness</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">Vec::from_hex</span>(
+            <span class="string">&quot;304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101&quot;</span>)
+            .<span class="ident">unwrap</span>()];
+        <span class="macro">assert_eq!</span>(<span class="ident">witness</span>.<span class="ident">to_vec</span>(), <span class="ident">expected_witness</span>);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -776,20 +1017,63 @@
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_serde</span>() {
-        <span class="kw">use</span> <span class="ident">serde_json</span>;
+    <span class="kw">fn</span> <span class="ident">test_serde_bincode</span>() {
+        <span class="kw">use</span> <span class="ident">bincode</span>;
 
         <span class="kw">let</span> <span class="ident">old_witness_format</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>], <span class="macro">vec!</span>[<span class="number">2</span>]];
         <span class="kw">let</span> <span class="ident">new_witness_format</span> <span class="op">=</span> <span class="ident">Witness::from_vec</span>(<span class="ident">old_witness_format</span>.<span class="ident">clone</span>());
 
-        <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">old_witness_format</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">new_witness_format</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">old_witness_format</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">new_witness_format</span>).<span class="ident">unwrap</span>();
 
         <span class="macro">assert_eq!</span>(<span class="ident">old</span>, <span class="ident">new</span>);
 
-        <span class="kw">let</span> <span class="ident">back</span> <span class="op">=</span> <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">new</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">back</span>: <span class="ident">Witness</span> <span class="op">=</span> <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">new</span>).<span class="ident">unwrap</span>();
         <span class="macro">assert_eq!</span>(<span class="ident">new_witness_format</span>, <span class="ident">back</span>);
     }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_serde_human</span>() {
+        <span class="kw">use</span> <span class="ident">serde_json</span>;
+
+        <span class="kw">let</span> <span class="ident">witness</span> <span class="op">=</span> <span class="ident">Witness::from_vec</span>(<span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>, <span class="number">123</span>, <span class="number">75</span>], <span class="macro">vec!</span>[<span class="number">2u8</span>, <span class="number">6</span>, <span class="number">3</span>, <span class="number">7</span>, <span class="number">8</span>]]);
+
+        <span class="kw">let</span> <span class="ident">json</span> <span class="op">=</span> <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">witness</span>).<span class="ident">unwrap</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="ident">json</span>, <span class="string">r#&quot;[&quot;007b4b&quot;,&quot;0206030708&quot;]&quot;#</span>);
+
+        <span class="kw">let</span> <span class="ident">back</span>: <span class="ident">Witness</span> <span class="op">=</span> <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">json</span>).<span class="ident">unwrap</span>();
+        <span class="macro">assert_eq!</span>(<span class="ident">witness</span>, <span class="ident">back</span>);
+    }
+}
+
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">bench</span>)]</span>
+<span class="kw">mod</span> <span class="ident">benches</span> {
+    <span class="kw">use</span> <span class="ident">test</span>::{<span class="ident">Bencher</span>, <span class="ident">black_box</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Witness</span>;
+
+    <span class="attribute">#[<span class="ident">bench</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bench_big_witness_to_vec</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
+        <span class="kw">let</span> <span class="ident">raw_witness</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1u8</span>]; <span class="number">5</span>];
+        <span class="kw">let</span> <span class="ident">witness</span> <span class="op">=</span> <span class="ident">Witness::from_vec</span>(<span class="ident">raw_witness</span>);
+
+        <span class="ident">bh</span>.<span class="ident">iter</span>(<span class="op">|</span><span class="op">|</span> {
+            <span class="ident">black_box</span>(<span class="ident">witness</span>.<span class="ident">to_vec</span>());
+        });
+    }
+
+    <span class="attribute">#[<span class="ident">bench</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bench_witness_to_vec</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
+        <span class="kw">let</span> <span class="ident">raw_witness</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1u8</span>]; <span class="number">3</span>];
+        <span class="kw">let</span> <span class="ident">witness</span> <span class="op">=</span> <span class="ident">Witness::from_vec</span>(<span class="ident">raw_witness</span>);
+
+        <span class="ident">bh</span>.<span class="ident">iter</span>(<span class="op">|</span><span class="op">|</span> {
+            <span class="ident">black_box</span>(<span class="ident">witness</span>.<span class="ident">to_vec</span>());
+        });
+    }
+
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="bitcoin" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>

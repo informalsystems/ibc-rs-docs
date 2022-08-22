@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["block","Bitcoin blocks."],["constants","Blockdata constants."],["opcodes","Bitcoin script opcodes."],["script","Bitcoin scripts."],["transaction","Bitcoin transactions."],["witness","Witness"]]});
+initSidebarItems({"mod":[["block","Bitcoin blocks."],["constants","Blockdata constants."],["locktime","Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY."],["opcodes","Bitcoin script opcodes."],["script","Bitcoin scripts."],["transaction","Bitcoin transactions."],["witness","Witness"]]});

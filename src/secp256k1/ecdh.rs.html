@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.22.1/src/ecdh.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ecdh.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.24.0/src/ecdh.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ecdh.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../secp256k1/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -313,8 +313,6 @@
 <span id="308">308</span>
 <span id="309">309</span>
 <span id="310">310</span>
-<span id="311">311</span>
-<span id="312">312</span>
 </pre><pre class="rust"><code><span class="comment">// Bitcoin secp256k1 bindings</span>
 <span class="comment">// Written in 2015 by</span>
 <span class="comment">//   Andrew Poelstra</span>
@@ -332,14 +330,11 @@
 <span class="doccomment">//! Support for shared secret computations.</span>
 <span class="doccomment">//!</span>
 
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">ptr</span>, <span class="ident">str</span>};
-<span class="kw">use</span> <span class="ident">core::borrow::Borrow</span>;
+<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">borrow::Borrow</span>, <span class="ident">ptr</span>, <span class="ident">str</span>};
 
-<span class="kw">use</span> {<span class="ident">Error</span>, <span class="ident">from_hex</span>};
-<span class="kw">use</span> <span class="ident">key</span>::{<span class="ident">SecretKey</span>, <span class="ident">PublicKey</span>};
-<span class="kw">use</span> <span class="ident">ffi</span>::{<span class="self">self</span>, <span class="ident">CPtr</span>};
 <span class="kw">use</span> <span class="ident">secp256k1_sys::types</span>::{<span class="ident">c_int</span>, <span class="ident">c_uchar</span>, <span class="ident">c_void</span>};
-<span class="kw">use</span> <span class="ident">constants</span>;
+
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">constants</span>, <span class="ident">Error</span>, <span class="ident">ffi</span>::{<span class="self">self</span>, <span class="ident">CPtr</span>}, <span class="ident">key</span>::{<span class="ident">PublicKey</span>, <span class="ident">SecretKey</span>}};
 
 <span class="comment">// The logic for displaying shared secrets relies on this (see `secret.rs`).</span>
 <span class="kw">const</span> <span class="ident">SHARED_SECRET_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">constants::SECRET_KEY_SIZE</span>;
@@ -414,7 +409,7 @@
     <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="ident">Error</span>;
     <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SharedSecret</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">SHARED_SECRET_SIZE</span>];
-        <span class="kw">match</span> <span class="ident">from_hex</span>(<span class="ident">s</span>, <span class="kw-2">&amp;mut</span> <span class="ident">res</span>) {
+        <span class="kw">match</span> <span class="ident"><span class="kw">crate</span>::from_hex</span>(<span class="ident">s</span>, <span class="kw-2">&amp;mut</span> <span class="ident">res</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">SHARED_SECRET_SIZE</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SharedSecret::from_bytes</span>(<span class="ident">res</span>)),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidSharedSecret</span>)
         }
@@ -494,9 +489,9 @@
     <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">::serde::Serializer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">is_human_readable</span>() {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">SHARED_SECRET_SIZE</span> <span class="op">*</span> <span class="number">2</span>];
-            <span class="ident">s</span>.<span class="ident">serialize_str</span>(<span class="ident">::to_hex</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;mut</span> <span class="ident">buf</span>).<span class="ident">expect</span>(<span class="string">&quot;fixed-size hex serialization&quot;</span>))
+            <span class="ident">s</span>.<span class="ident">serialize_str</span>(<span class="ident"><span class="kw">crate</span>::to_hex</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;mut</span> <span class="ident">buf</span>).<span class="ident">expect</span>(<span class="string">&quot;fixed-size hex serialization&quot;</span>))
         } <span class="kw">else</span> {
-            <span class="ident">s</span>.<span class="ident">serialize_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">as_ref</span>()[..])
+            <span class="ident">s</span>.<span class="ident">serialize_bytes</span>(<span class="self">self</span>.<span class="ident">as_ref</span>())
         }
     }
 }
@@ -521,12 +516,12 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_imports</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">rand::thread_rng</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::Secp256k1</span>;
-
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;wasm32&quot;</span>)]</span>
     <span class="kw">use</span> <span class="ident">wasm_bindgen_test::wasm_bindgen_test</span> <span class="kw">as</span> <span class="ident">test</span>;
+
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Secp256k1</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SharedSecret</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;rand-std&quot;</span>, <span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
@@ -547,7 +542,7 @@
         <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> [<span class="number">5u8</span>; <span class="number">32</span>];
         <span class="kw">let</span> <span class="ident">y</span> <span class="op">=</span> [<span class="number">7u8</span>; <span class="number">32</span>];
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident"><span class="kw">super</span>::c_callback</span>(<span class="ident">output</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">x</span>.<span class="ident">as_ptr</span>(), <span class="ident">y</span>.<span class="ident">as_ptr</span>(), <span class="ident">ptr::null_mut</span>()) };
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident"><span class="kw">super</span>::c_callback</span>(<span class="ident">output</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">x</span>.<span class="ident">as_ptr</span>(), <span class="ident">y</span>.<span class="ident">as_ptr</span>(), <span class="ident">core::ptr::null_mut</span>()) };
         <span class="macro">assert_eq!</span>(<span class="ident">res</span>, <span class="number">1</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_x</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_y</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
@@ -561,7 +556,8 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">fuzzing</span>))]</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;rand-std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;bitcoin_hashes&quot;</span>))]</span>
     <span class="kw">fn</span> <span class="ident">bitcoin_hashes_and_sys_generate_same_secret</span>() {
-        <span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">sha256</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+        <span class="kw">use</span> <span class="ident">bitcoin_hashes</span>::{<span class="ident">sha256</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ecdh::shared_secret_point</span>;
 
         <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">Secp256k1::signing_only</span>();
         <span class="kw">let</span> (<span class="ident">sk1</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">s</span>.<span class="ident">generate_keypair</span>(<span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
@@ -591,9 +587,7 @@
             <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0</span>, <span class="number">0</span>,
             <span class="number">99</span>, <span class="number">99</span>, <span class="number">99</span>, <span class="number">99</span>, <span class="number">99</span>, <span class="number">99</span>, <span class="number">99</span>, <span class="number">99</span>
         ];
-        <span class="kw">static</span> <span class="ident">STR</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;\
-            01010101010101010001020304050607ffff0000ffff00006363636363636363\
-        &quot;</span>;
+        <span class="kw">static</span> <span class="ident">STR</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;01010101010101010001020304050607ffff0000ffff00006363636363636363&quot;</span>;
 
         <span class="kw">let</span> <span class="ident">secret</span> <span class="op">=</span> <span class="ident">SharedSecret::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">BYTES</span>).<span class="ident">unwrap</span>();
 
@@ -607,13 +601,15 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">bench</span>)]</span>
 <span class="kw">mod</span> <span class="ident">benches</span> {
-    <span class="kw">use</span> <span class="ident">rand::thread_rng</span>;
     <span class="kw">use</span> <span class="ident">test</span>::{<span class="ident">Bencher</span>, <span class="ident">black_box</span>};
 
+    <span class="kw">use</span> <span class="ident">rand::thread_rng</span>;
+
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Secp256k1</span>;
+
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SharedSecret</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::Secp256k1</span>;
 
     <span class="attribute">#[<span class="ident">bench</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bench_ecdh</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.28.1/src/blockdata/block.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>block.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.29.1/src/blockdata/block.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>block.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../bitcoin/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -569,19 +569,30 @@
 <span id="564">564</span>
 <span id="565">565</span>
 <span id="566">566</span>
-</pre><pre class="rust"><code><span class="comment">// Rust Bitcoin Library</span>
-<span class="comment">// Written in 2014 by</span>
-<span class="comment">//     Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;</span>
-<span class="comment">//</span>
-<span class="comment">// To the extent possible under law, the author(s) have dedicated all</span>
-<span class="comment">// copyright and related and neighboring rights to this software to</span>
-<span class="comment">// the public domain worldwide. This software is distributed without</span>
-<span class="comment">// any warranty.</span>
-<span class="comment">//</span>
-<span class="comment">// You should have received a copy of the CC0 Public Domain Dedication</span>
-<span class="comment">// along with this software.</span>
-<span class="comment">// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.</span>
-<span class="comment">//</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+</pre><pre class="rust"><code><span class="comment">// Written in 2014 by Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;</span>
+<span class="comment">// SPDX-License-Identifier: CC0-1.0</span>
 
 <span class="doccomment">//! Bitcoin blocks.</span>
 <span class="doccomment">//!</span>
@@ -591,29 +602,44 @@
 <span class="doccomment">//! these blocks and the blockchain.</span>
 <span class="doccomment">//!</span>
 
-<span class="kw">use</span> <span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">core::fmt</span>;
 
-<span class="kw">use</span> <span class="ident">util</span>;
-<span class="kw">use</span> <span class="ident">util::Error</span>::{<span class="ident">BlockBadTarget</span>, <span class="ident">BlockBadProofOfWork</span>};
-<span class="kw">use</span> <span class="ident">util::hash::bitcoin_merkle_root</span>;
-<span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
-<span class="kw">use</span> <span class="ident">hash_types</span>::{<span class="ident">Wtxid</span>, <span class="ident">BlockHash</span>, <span class="ident">TxMerkleNode</span>, <span class="ident">WitnessMerkleNode</span>, <span class="ident">WitnessCommitment</span>};
-<span class="kw">use</span> <span class="ident">util::uint::Uint256</span>;
-<span class="kw">use</span> <span class="ident">consensus::encode::Encodable</span>;
-<span class="kw">use</span> <span class="ident">network::constants::Network</span>;
-<span class="kw">use</span> <span class="ident">blockdata::transaction::Transaction</span>;
-<span class="kw">use</span> <span class="ident">blockdata::constants</span>::{<span class="ident">max_target</span>, <span class="ident">WITNESS_SCALE_FACTOR</span>};
-<span class="kw">use</span> <span class="ident">blockdata::script</span>;
-<span class="kw">use</span> <span class="ident">VarInt</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::Error</span>::{<span class="ident">BlockBadTarget</span>, <span class="ident">BlockBadProofOfWork</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::hash::bitcoin_merkle_root</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes</span>::{<span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hash_types</span>::{<span class="ident">Wtxid</span>, <span class="ident">BlockHash</span>, <span class="ident">TxMerkleNode</span>, <span class="ident">WitnessMerkleNode</span>, <span class="ident">WitnessCommitment</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::uint::Uint256</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::encode::Encodable</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::network::constants::Network</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::transaction::Transaction</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::constants</span>::{<span class="ident">max_target</span>, <span class="ident">WITNESS_SCALE_FACTOR</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::script</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::VarInt</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::internal_macros::impl_consensus_encoding</span>;
 
-<span class="doccomment">/// A block header, which contains all the block&#39;s information except</span>
-<span class="doccomment">/// the actual transactions</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="doccomment">/// Bitcoin block header.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Contains all the block&#39;s information except the actual transactions, but</span>
+<span class="doccomment">/// including a root of a [merkle tree] commiting to all transactions in the block.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ### Bitcoin Core References</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BlockHeader</span> {
-    <span class="doccomment">/// The protocol version. Should always be 1.</span>
+    <span class="doccomment">/// Originally protocol version, but repurposed for soft-fork signaling.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### Relevant BIPs</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)</span>
+    <span class="doccomment">/// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)</span>
     <span class="kw">pub</span> <span class="ident">version</span>: <span class="ident">i32</span>,
     <span class="doccomment">/// Reference to the previous block in the chain.</span>
     <span class="kw">pub</span> <span class="ident">prev_blockhash</span>: <span class="ident">BlockHash</span>,
@@ -726,10 +752,20 @@
     }
 }
 
-<span class="doccomment">/// A Bitcoin block, which is a collection of transactions with an attached</span>
-<span class="doccomment">/// proof of work.</span>
+<span class="doccomment">/// Bitcoin block.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// A collection of transactions with an attached proof of work.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// See [Bitcoin Wiki: Block][wiki-block] for more information.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [wiki-block]: https://en.bitcoin.it/wiki/Block</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ### Bitcoin Core References</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Block</span> {
     <span class="doccomment">/// The block header</span>
     <span class="kw">pub</span> <span class="ident">header</span>: <span class="ident">BlockHeader</span>,
@@ -812,7 +848,7 @@
         <span class="kw">let</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">txdata</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">t</span>)<span class="op">|</span> {
             <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="number">0</span> {
                 <span class="comment">// Replace the first hash with zeroes.</span>
-                <span class="ident">Wtxid::default</span>().<span class="ident">as_hash</span>()
+                <span class="ident">Wtxid::all_zeros</span>().<span class="ident">as_hash</span>()
             } <span class="kw">else</span> {
                 <span class="ident">t</span>.<span class="ident">wtxid</span>().<span class="ident">as_hash</span>()
             }
@@ -904,6 +940,7 @@
 
 <span class="doccomment">/// An error when looking up a BIP34 block height.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Bip34Error</span> {
     <span class="doccomment">/// The block does not support BIP34 yet.</span>
     <span class="ident">Unsupported</span>,
@@ -926,17 +963,26 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">::std::error::Error</span> <span class="kw">for</span> <span class="ident">Bip34Error</span> {}
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
+<span class="kw">impl</span> <span class="ident">std::error::Error</span> <span class="kw">for</span> <span class="ident">Bip34Error</span> {
+    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
+        <span class="kw">use</span> <span class="ident"><span class="self">self</span>::Bip34Error</span>::<span class="kw-2">*</span>;
+
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">Unsupported</span> <span class="op">|</span> <span class="ident">NotPresent</span> <span class="op">|</span> <span class="ident">UnexpectedPush</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+        }
+    }
+}
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">hashes::hex::FromHex</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::FromHex</span>;
 
-    <span class="kw">use</span> <span class="ident">blockdata::block</span>::{<span class="ident">Block</span>, <span class="ident">BlockHeader</span>};
-    <span class="kw">use</span> <span class="ident">consensus::encode</span>::{<span class="ident">deserialize</span>, <span class="ident">serialize</span>};
-    <span class="kw">use</span> <span class="ident">util::uint::Uint256</span>;
-    <span class="kw">use</span> <span class="ident">util::Error</span>::{<span class="ident">BlockBadTarget</span>, <span class="ident">BlockBadProofOfWork</span>};
-    <span class="kw">use</span> <span class="ident">network::constants::Network</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::block</span>::{<span class="ident">Block</span>, <span class="ident">BlockHeader</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::encode</span>::{<span class="ident">deserialize</span>, <span class="ident">serialize</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::uint::Uint256</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::Error</span>::{<span class="ident">BlockBadTarget</span>, <span class="ident">BlockBadProofOfWork</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::network::constants::Network</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_coinbase_and_bip34</span>() {
@@ -1054,15 +1100,15 @@
         <span class="comment">// test with zero target</span>
         <span class="kw">match</span> <span class="ident">some_header</span>.<span class="ident">validate_pow</span>(<span class="kw-2">&amp;</span><span class="ident">Uint256::default</span>()) {
             <span class="prelude-val">Err</span>(<span class="ident">BlockBadTarget</span>) =&gt; (),
-            <span class="kw">_</span> =&gt; <span class="macro">assert!</span>(<span class="bool-val">false</span>)
+            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected result from validate_pow&quot;</span>),
         }
 
         <span class="comment">// test with modified header</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">invalid_header</span>: <span class="ident">BlockHeader</span> <span class="op">=</span> <span class="ident">some_header</span>.<span class="ident">clone</span>();
-        <span class="ident">invalid_header</span>.<span class="ident">version</span> <span class="op">=</span> <span class="ident">invalid_header</span>.<span class="ident">version</span> <span class="op">+</span> <span class="number">1</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">invalid_header</span>: <span class="ident">BlockHeader</span> <span class="op">=</span> <span class="ident">some_header</span>;
+        <span class="ident">invalid_header</span>.<span class="ident">version</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         <span class="kw">match</span> <span class="ident">invalid_header</span>.<span class="ident">validate_pow</span>(<span class="kw-2">&amp;</span><span class="ident">invalid_header</span>.<span class="ident">target</span>()) {
             <span class="prelude-val">Err</span>(<span class="ident">BlockBadProofOfWork</span>) =&gt; (),
-            <span class="kw">_</span> =&gt; <span class="macro">assert!</span>(<span class="bool-val">false</span>)
+            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected result from validate_pow&quot;</span>),
         }
     }
 
@@ -1076,24 +1122,22 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;unstable&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">bench</span>)]</span>
 <span class="kw">mod</span> <span class="ident">benches</span> {
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Block</span>;
-    <span class="kw">use</span> <span class="ident">EmptyWrite</span>;
-    <span class="kw">use</span> <span class="ident">consensus</span>::{<span class="ident">deserialize</span>, <span class="ident">Encodable</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EmptyWrite</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus</span>::{<span class="ident">deserialize</span>, <span class="ident">Encodable</span>, <span class="ident">Decodable</span>};
     <span class="kw">use</span> <span class="ident">test</span>::{<span class="ident">black_box</span>, <span class="ident">Bencher</span>};
-    <span class="kw">use</span> <span class="ident">network::stream_reader::StreamReader</span>;
 
     <span class="attribute">#[<span class="ident">bench</span>]</span>
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bench_stream_reader</span>(<span class="ident">bh</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Bencher</span>) {
         <span class="kw">let</span> <span class="ident">big_block</span> <span class="op">=</span> <span class="macro">include_bytes!</span>(<span class="string">&quot;../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
         <span class="macro">assert_eq!</span>(<span class="ident">big_block</span>.<span class="ident">len</span>(), <span class="number">1_381_836</span>);
         <span class="kw">let</span> <span class="ident">big_block</span> <span class="op">=</span> <span class="ident">black_box</span>(<span class="ident">big_block</span>);
 
         <span class="ident">bh</span>.<span class="ident">iter</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">StreamReader::new</span>(<span class="kw-2">&amp;</span><span class="ident">big_block</span>[..], <span class="prelude-val">None</span>);
-            <span class="kw">let</span> <span class="ident">block</span>: <span class="ident">Block</span> <span class="op">=</span> <span class="ident">reader</span>.<span class="ident">read_next</span>().<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reader</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">big_block</span>[..];
+            <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">Block::consensus_decode</span>(<span class="kw-2">&amp;mut</span> <span class="ident">reader</span>).<span class="ident">unwrap</span>();
             <span class="ident">black_box</span>(<span class="kw-2">&amp;</span><span class="ident">block</span>);
         });
     }

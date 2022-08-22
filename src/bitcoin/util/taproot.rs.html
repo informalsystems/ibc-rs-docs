@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.28.1/src/util/taproot.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>taproot.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.29.1/src/util/taproot.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>taproot.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../bitcoin/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -1396,39 +1396,67 @@
 <span id="1391">1391</span>
 <span id="1392">1392</span>
 <span id="1393">1393</span>
-</pre><pre class="rust"><code><span class="comment">// Rust Bitcoin Library</span>
-<span class="comment">// Written in 2019 by</span>
-<span class="comment">//     The rust-bitcoin developers.</span>
-<span class="comment">// To the extent possible under law, the author(s) have dedicated all</span>
-<span class="comment">// copyright and related and neighboring rights to this software to</span>
-<span class="comment">// the public domain worldwide. This software is distributed without</span>
-<span class="comment">// any warranty.</span>
-<span class="comment">//</span>
-<span class="comment">// You should have received a copy of the CC0 Public Domain Dedication</span>
-<span class="comment">// along with this software.</span>
-<span class="comment">// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.</span>
-<span class="comment">//</span>
+<span id="1394">1394</span>
+<span id="1395">1395</span>
+<span id="1396">1396</span>
+<span id="1397">1397</span>
+<span id="1398">1398</span>
+<span id="1399">1399</span>
+<span id="1400">1400</span>
+<span id="1401">1401</span>
+<span id="1402">1402</span>
+<span id="1403">1403</span>
+<span id="1404">1404</span>
+<span id="1405">1405</span>
+<span id="1406">1406</span>
+<span id="1407">1407</span>
+<span id="1408">1408</span>
+<span id="1409">1409</span>
+<span id="1410">1410</span>
+<span id="1411">1411</span>
+<span id="1412">1412</span>
+<span id="1413">1413</span>
+<span id="1414">1414</span>
+<span id="1415">1415</span>
+<span id="1416">1416</span>
+<span id="1417">1417</span>
+<span id="1418">1418</span>
+<span id="1419">1419</span>
+<span id="1420">1420</span>
+<span id="1421">1421</span>
+<span id="1422">1422</span>
+<span id="1423">1423</span>
+<span id="1424">1424</span>
+<span id="1425">1425</span>
+<span id="1426">1426</span>
+<span id="1427">1427</span>
+<span id="1428">1428</span>
+<span id="1429">1429</span>
+<span id="1430">1430</span>
+<span id="1431">1431</span>
+<span id="1432">1432</span>
+<span id="1433">1433</span>
+</pre><pre class="rust"><code><span class="comment">// SPDX-License-Identifier: CC0-1.0</span>
 
 <span class="doccomment">//! Bitcoin Taproot.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! This module provides support for taproot tagged hashes.</span>
 <span class="doccomment">//!</span>
 
-<span class="kw">use</span> <span class="ident">prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">io</span>;
-<span class="kw">use</span> <span class="ident">secp256k1</span>::{<span class="self">self</span>, <span class="ident">Secp256k1</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>;
+<span class="kw">use</span> <span class="ident">secp256k1</span>::{<span class="self">self</span>, <span class="ident">Secp256k1</span>, <span class="ident">Scalar</span>};
 
+<span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
 <span class="kw">use</span> <span class="ident">core::fmt</span>;
 <span class="kw">use</span> <span class="ident">core::cmp::Reverse</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">std::error</span>;
 
-<span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">sha256</span>, <span class="ident">sha256t</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
-<span class="kw">use</span> <span class="ident">schnorr</span>::{<span class="ident">TweakedPublicKey</span>, <span class="ident">UntweakedPublicKey</span>, <span class="ident">TapTweak</span>};
-<span class="kw">use</span> <span class="ident">util::key::XOnlyPublicKey</span>;
-<span class="kw">use</span> <span class="ident">Script</span>;
-
-<span class="kw">use</span> <span class="ident">consensus::Encodable</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes</span>::{<span class="ident">sha256</span>, <span class="ident">sha256t_hash_newtype</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::schnorr</span>::{<span class="ident">TweakedPublicKey</span>, <span class="ident">UntweakedPublicKey</span>, <span class="ident">TapTweak</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::key::XOnlyPublicKey</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Script</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::internal_macros::write_err</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::Encodable</span>;
 
 <span class="doccomment">/// The SHA-256 midstate value for the TapLeaf hash.</span>
 <span class="kw">const</span> <span class="ident">MIDSTATE_TAPLEAF</span>: [<span class="ident">u8</span>; <span class="number">32</span>] <span class="op">=</span> [
@@ -1458,30 +1486,6 @@
 ];
 <span class="comment">// f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f</span>
 
-<span class="doccomment">/// Internal macro to speficy the different taproot tagged hashes.</span>
-<span class="macro">macro_rules!</span> <span class="ident">sha256t_hash_newtype</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">newtype</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">tag</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate_len</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">docs</span>:<span class="ident">meta</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">reverse</span>: <span class="ident">expr</span>) =&gt; {
-        <span class="macro">sha256t_hash_newtype!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">newtype</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">tag</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate_len</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">docs</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">reverse</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">newtype</span>));
-    };
-
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">newtype</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">tag</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate_len</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">docs</span>:<span class="ident">meta</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">reverse</span>: <span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">sname</span>:<span class="ident">expr</span>) =&gt; {
-        <span class="attribute">#[<span class="ident">doc</span> <span class="op">=</span> <span class="string">&quot;The tag used for [&quot;</span>]</span>
-        <span class="attribute">#[<span class="ident">doc</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">sname</span>]</span>
-        <span class="attribute">#[<span class="ident">doc</span> <span class="op">=</span> <span class="string">&quot;]&quot;</span>]</span>
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Default</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
-        <span class="kw">pub</span> <span class="kw">struct</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">tag</span>;
-
-        <span class="kw">impl</span> <span class="ident">sha256t::Tag</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">tag</span> {
-            <span class="kw">fn</span> <span class="ident">engine</span>() -&gt; <span class="ident">sha256::HashEngine</span> {
-                <span class="kw">let</span> <span class="ident">midstate</span> <span class="op">=</span> <span class="ident">sha256::Midstate::from_inner</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate</span>);
-                <span class="ident">sha256::HashEngine::from_midstate</span>(<span class="ident">midstate</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">midstate_len</span>)
-            }
-        }
-
-        <span class="macro">hash_newtype!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">newtype</span>, <span class="ident">sha256t::Hash</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">tag</span><span class="op">&gt;</span>, <span class="number">32</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">docs</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">reverse</span>);
-    };
-}
-
 <span class="comment">// Taproot test vectors from BIP-341 state the hashes without any reversing</span>
 <span class="macro">sha256t_hash_newtype!</span>(<span class="ident">TapLeafHash</span>, <span class="ident">TapLeafTag</span>, <span class="ident">MIDSTATE_TAPLEAF</span>, <span class="number">64</span>,
     <span class="ident">doc</span><span class="op">=</span><span class="string">&quot;Taproot-tagged hash for tapscript Merkle tree leafs&quot;</span>, <span class="bool-val">false</span>
@@ -1495,6 +1499,12 @@
 <span class="macro">sha256t_hash_newtype!</span>(<span class="ident">TapSighashHash</span>, <span class="ident">TapSighashTag</span>, <span class="ident">MIDSTATE_TAPSIGHASH</span>, <span class="number">64</span>,
     <span class="ident">doc</span><span class="op">=</span><span class="string">&quot;Taproot-tagged hash for the taproot signature hash&quot;</span>, <span class="bool-val">false</span>
 );
+
+<span class="kw">impl</span> <span class="ident">secp256k1::ThirtyTwoByteHash</span> <span class="kw">for</span> <span class="ident">TapSighashHash</span> {
+        <span class="kw">fn</span> <span class="ident">into_32</span>(<span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">32</span>] {
+            <span class="self">self</span>.<span class="ident">into_inner</span>()
+        }
+}
 
 <span class="kw">impl</span> <span class="ident">TapTweakHash</span> {
     <span class="doccomment">/// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where</span>
@@ -1512,6 +1522,12 @@
             <span class="comment">// nothing to hash</span>
         }
         <span class="ident">TapTweakHash::from_engine</span>(<span class="ident">eng</span>)
+    }
+
+    <span class="doccomment">/// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_scalar</span>(<span class="self">self</span>) -&gt; <span class="ident">Scalar</span> {
+        <span class="comment">// This is statistically extremely unlikely to panic.</span>
+        <span class="ident">Scalar::from_be_bytes</span>(<span class="self">self</span>.<span class="ident">into_inner</span>()).<span class="ident">expect</span>(<span class="string">&quot;hash value greater than curve order&quot;</span>)
     }
 }
 
@@ -1590,6 +1606,7 @@
 <span class="doccomment">/// [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaprootSpendInfo</span> {
     <span class="doccomment">/// The BIP341 internal key.</span>
     <span class="ident">internal_key</span>: <span class="ident">UntweakedPublicKey</span>,
@@ -1620,7 +1637,8 @@
         <span class="ident">I</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span><span class="op">=</span>(<span class="ident">u32</span>, <span class="ident">Script</span>)<span class="op">&gt;</span>,
         <span class="ident">C</span>: <span class="ident">secp256k1::Verification</span>,
     {
-        <span class="ident">TaprootBuilder::with_huffman_tree</span>(<span class="ident">script_weights</span>)<span class="question-mark">?</span>.<span class="ident">finalize</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>)
+        <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">TaprootBuilder::with_huffman_tree</span>(<span class="ident">script_weights</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="ident">builder</span>.<span class="ident">finalize</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>).<span class="ident">expect</span>(<span class="string">&quot;Huffman Tree is always complete&quot;</span>))
     }
 
     <span class="doccomment">/// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for</span>
@@ -1641,10 +1659,10 @@
     ) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">output_key</span>, <span class="ident">parity</span>) <span class="op">=</span> <span class="ident">internal_key</span>.<span class="ident">tap_tweak</span>(<span class="ident">secp</span>, <span class="ident">merkle_root</span>);
         <span class="self">Self</span> {
-            <span class="ident">internal_key</span>: <span class="ident">internal_key</span>,
-            <span class="ident">merkle_root</span>: <span class="ident">merkle_root</span>,
+            <span class="ident">internal_key</span>,
+            <span class="ident">merkle_root</span>,
             <span class="ident">output_key_parity</span>: <span class="ident">parity</span>,
-            <span class="ident">output_key</span>: <span class="ident">output_key</span>,
+            <span class="ident">output_key</span>,
             <span class="ident">script_map</span>: <span class="ident">BTreeMap::new</span>(),
         }
     }
@@ -1738,6 +1756,7 @@
 <span class="comment">// Similar to Taproot Builder in bitcoin core.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaprootBuilder</span> {
     <span class="comment">// The following doc-comment is from bitcoin core, but modified for Rust. It describes the</span>
     <span class="comment">// current state of the builder for a given tree.</span>
@@ -1800,7 +1819,7 @@
     <span class="doccomment">/// If the script weight calculations overflow, a sub-optimal tree may be generated. This should</span>
     <span class="doccomment">/// not happen unless you are dealing with billions of branches with weights close to 2^32.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`TapTree`]: ::util::psbt::TapTree</span>
+    <span class="doccomment">/// [`TapTree`]: crate::util::psbt::TapTree</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_huffman_tree</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(
         <span class="ident">script_weights</span>: <span class="ident">I</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">TaprootBuilderError</span><span class="op">&gt;</span>
@@ -1812,7 +1831,7 @@
             <span class="ident">node_weights</span>.<span class="ident">push</span>((<span class="ident">Reverse</span>(<span class="ident">p</span>), <span class="ident">NodeInfo::new_leaf_with_ver</span>(<span class="ident">leaf</span>, <span class="ident">LeafVersion::TapScript</span>)));
         }
         <span class="kw">if</span> <span class="ident">node_weights</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TaprootBuilderError::IncompleteTree</span>);
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TaprootBuilderError::EmptyTree</span>);
         }
         <span class="kw">while</span> <span class="ident">node_weights</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">1</span> {
             <span class="comment">// Combine the last two elements and insert a new node</span>
@@ -1860,37 +1879,34 @@
     }
 
     <span class="doccomment">/// Checks if the builder has finalized building a tree.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_finalized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_finalizable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">1</span> <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">branch</span>[<span class="number">0</span>].<span class="ident">is_some</span>()
     }
 
     <span class="doccomment">/// Checks if the builder has hidden nodes.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_hidden_nodes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">for</span> <span class="ident">node</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">branch</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">node</span> {
-                <span class="kw">if</span> <span class="ident">node</span>.<span class="ident">has_hidden_nodes</span> {
-                    <span class="kw">return</span> <span class="bool-val">true</span>
-                }
-            }
-        }
-        <span class="bool-val">false</span>
+        <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">iter</span>().<span class="ident">flatten</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">node</span><span class="op">|</span> <span class="ident">node</span>.<span class="ident">has_hidden_nodes</span>)
     }
 
     <span class="doccomment">/// Creates a [`TaprootSpendInfo`] with the given internal key.</span>
     <span class="doccomment">///</span>
-    <span class="comment">// TODO: in a future breaking API change, this no longer needs to return result</span>
+    <span class="doccomment">/// Returns the unmodified builder as Err if the builder is not finalizable.</span>
+    <span class="doccomment">/// See also [`TaprootBuilder::is_finalizable`]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finalize</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">secp256k1::Verification</span><span class="op">&gt;</span>(
         <span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">secp</span>: <span class="kw-2">&amp;</span><span class="ident">Secp256k1</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
         <span class="ident">internal_key</span>: <span class="ident">UntweakedPublicKey</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TaprootSpendInfo</span>, <span class="ident">TaprootBuilderError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">pop</span>() {
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">TaprootSpendInfo::new_key_spend</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>, <span class="prelude-val">None</span>)),
-            <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(<span class="ident">node</span>)) =&gt; {
-                <span class="prelude-val">Ok</span>(<span class="ident">TaprootSpendInfo::from_node_info</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>, <span class="ident">node</span>))
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TaprootSpendInfo</span>, <span class="ident">TaprootBuilder</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">len</span>() {
+            <span class="number">0</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">TaprootSpendInfo::new_key_spend</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>, <span class="prelude-val">None</span>)),
+            <span class="number">1</span> =&gt; {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="prelude-val">Some</span>(<span class="ident">node</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">pop</span>() {
+                    <span class="prelude-val">Ok</span>(<span class="ident">TaprootSpendInfo::from_node_info</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>, <span class="ident">node</span>))
+                } <span class="kw">else</span> {
+                    <span class="macro">unreachable!</span>(<span class="string">&quot;Size checked above. Builder guarantees the last element is Some&quot;</span>)
+                }
             }
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">TaprootBuilderError::IncompleteTree</span>),
-
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>),
         }
     }
 
@@ -1908,7 +1924,7 @@
         <span class="comment">// We cannot insert a leaf at a lower depth while a deeper branch is unfinished. Doing</span>
         <span class="comment">// so would mean the add_leaf/add_hidden invocations do not correspond to a DFS traversal of a</span>
         <span class="comment">// binary tree.</span>
-        <span class="kw">if</span> <span class="ident">depth</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">1</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">len</span>() {
+        <span class="kw">if</span> (<span class="ident">depth</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">branch</span>.<span class="ident">len</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TaprootBuilderError::NodeNotInDfsOrder</span>);
         }
 
@@ -1945,6 +1961,12 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TaprootBuilder</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
+        <span class="ident"><span class="self">Self</span>::new</span>()
+    }
+}
+
 <span class="doccomment">/// Represents the node information in taproot tree.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node</span>
@@ -1955,6 +1977,7 @@
 <span class="doccomment">/// root [`NodeInfo`].</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NodeInfo</span> {
     <span class="doccomment">/// Merkle hash for this node.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">hash</span>: <span class="ident">sha256::Hash</span>,
@@ -1968,7 +1991,7 @@
     <span class="doccomment">/// Creates a new [`NodeInfo`] with omitted/hidden info.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_hidden_node</span>(<span class="ident">hash</span>: <span class="ident">sha256::Hash</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">hash</span>: <span class="ident">hash</span>,
+            <span class="ident">hash</span>,
             <span class="ident">leaves</span>: <span class="macro">vec!</span>[],
             <span class="ident">has_hidden_nodes</span>: <span class="bool-val">true</span>
         }
@@ -2007,6 +2030,7 @@
 <span class="doccomment">/// Store information about taproot leaf node.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ScriptLeaf</span> {
     <span class="doccomment">/// The underlying script.</span>
     <span class="ident">script</span>: <span class="ident">Script</span>,
@@ -2020,8 +2044,8 @@
     <span class="doccomment">/// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.</span>
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">script</span>: <span class="ident">Script</span>, <span class="ident">ver</span>: <span class="ident">LeafVersion</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">script</span>: <span class="ident">script</span>,
-            <span class="ident">ver</span>: <span class="ident">ver</span>,
+            <span class="ident">script</span>,
+            <span class="ident">ver</span>,
             <span class="ident">merkle_branch</span>: <span class="ident">TaprootMerkleBranch</span>(<span class="macro">vec!</span>[]),
         }
     }
@@ -2029,9 +2053,8 @@
     <span class="doccomment">/// Returns the depth of this script leaf in the tap tree.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">depth</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">u8</span> {
-        <span class="comment">// The depth is guaranteed to be &lt; 127 by the TaprootBuilder type.</span>
-        <span class="comment">// TODO: Following MSRV bump implement via `try_into().expect(&quot;&quot;)`.</span>
-        <span class="self">self</span>.<span class="ident">merkle_branch</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u8</span>
+        <span class="comment">// Depth is guarded by TAPROOT_CONTROL_MAX_NODE_COUNT.</span>
+        <span class="ident">u8::try_from</span>(<span class="self">self</span>.<span class="ident">merkle_branch</span>.<span class="number">0</span>.<span class="ident">len</span>()).<span class="ident">expect</span>(<span class="string">&quot;depth is guaranteed to fit in a u8&quot;</span>)
     }
 
     <span class="doccomment">/// Computes a leaf hash for this [`ScriptLeaf`].</span>
@@ -2065,6 +2088,7 @@
 <span class="comment">// `TapLeafHash`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>, <span class="ident">Default</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaprootMerkleBranch</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">sha256::Hash</span><span class="op">&gt;</span>);
 
 <span class="kw">impl</span> <span class="ident">TaprootMerkleBranch</span> {
@@ -2081,14 +2105,26 @@
             <span class="prelude-val">Err</span>(<span class="ident">TaprootError::InvalidMerkleTreeDepth</span>(<span class="ident">sl</span>.<span class="ident">len</span>() <span class="op">/</span> <span class="ident">TAPROOT_CONTROL_NODE_SIZE</span>))
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="ident">inner</span> <span class="op">=</span> <span class="ident">sl</span>
-                <span class="comment">// TODO: Use chunks_exact after MSRV changes to 1.31</span>
-                .<span class="ident">chunks</span>(<span class="ident">TAPROOT_CONTROL_NODE_SIZE</span>)
+                .<span class="ident">chunks_exact</span>(<span class="ident">TAPROOT_CONTROL_NODE_SIZE</span>)
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">chunk</span><span class="op">|</span> {
                     <span class="ident">sha256::Hash::from_slice</span>(<span class="ident">chunk</span>)
-                        .<span class="ident">expect</span>(<span class="string">&quot;chunk exact always returns the correct size&quot;</span>)
+                        .<span class="ident">expect</span>(<span class="string">&quot;chunks_exact always returns the correct size&quot;</span>)
                 })
                 .<span class="ident">collect</span>();
+
             <span class="prelude-val">Ok</span>(<span class="ident">TaprootMerkleBranch</span>(<span class="ident">inner</span>))
+        }
+    }
+
+    <span class="doccomment">/// Creates a merkle proof from list of hashes.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">/// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).</span>
+    <span class="kw">fn</span> <span class="ident">from_collection</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">sha256::Hash</span>]<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">sha256::Hash</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">collection</span>: <span class="ident">T</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">TaprootError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">collection</span>.<span class="ident">as_ref</span>().<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">TAPROOT_CONTROL_MAX_NODE_COUNT</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">TaprootError::InvalidMerkleTreeDepth</span>(<span class="ident">collection</span>.<span class="ident">as_ref</span>().<span class="ident">len</span>()))
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">TaprootMerkleBranch</span>(<span class="ident">collection</span>.<span class="ident">into</span>()))
         }
     }
 
@@ -2106,7 +2142,7 @@
 
     <span class="doccomment">/// Serializes `self` as bytes.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">as_inner</span>()).<span class="ident">flatten</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">x</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">iter</span>().<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">as_inner</span>()).<span class="ident">copied</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>()
     }
 
     <span class="doccomment">/// Appends elements to proof.</span>
@@ -2124,12 +2160,9 @@
     <span class="doccomment">/// # Errors</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).</span>
+    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.29.0&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;use try_from instead&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_inner</span>(<span class="ident">inner</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">sha256::Hash</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">TaprootError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">inner</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">TAPROOT_CONTROL_MAX_NODE_COUNT</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">TaprootError::InvalidMerkleTreeDepth</span>(<span class="ident">inner</span>.<span class="ident">len</span>()))
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">TaprootMerkleBranch</span>(<span class="ident">inner</span>))
-        }
+        <span class="ident"><span class="self">Self</span>::try_from</span>(<span class="ident">inner</span>)
     }
 
     <span class="doccomment">/// Returns the inner list of hashes.</span>
@@ -2138,9 +2171,29 @@
     }
 }
 
+<span class="macro">macro_rules!</span> <span class="ident">impl_try_from</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>:<span class="ident">ty</span>) =&gt; {
+        <span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">TaprootMerkleBranch</span> {
+            <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">TaprootError</span>;
+
+            <span class="doccomment">/// Creates a merkle proof from list of hashes.</span>
+            <span class="doccomment">///</span>
+            <span class="doccomment">/// # Errors</span>
+            <span class="doccomment">/// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).</span>
+            <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">v</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">from</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
+                <span class="ident">TaprootMerkleBranch::from_collection</span>(<span class="ident">v</span>)
+            }
+        }
+    }
+}
+<span class="macro">impl_try_from!</span>(<span class="kw-2">&amp;</span>[<span class="ident">sha256::Hash</span>]);
+<span class="macro">impl_try_from!</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">sha256::Hash</span><span class="op">&gt;</span>);
+<span class="macro">impl_try_from!</span>(<span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">sha256::Hash</span>]<span class="op">&gt;</span>);
+
 <span class="doccomment">/// Control block data structure used in Tapscript satisfaction.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>, <span class="ident">serde</span>(<span class="kw">crate</span> <span class="op">=</span> <span class="string">&quot;actual_serde&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ControlBlock</span> {
     <span class="doccomment">/// The tapleaf version.</span>
     <span class="kw">pub</span> <span class="ident">leaf_version</span>: <span class="ident">LeafVersion</span>,
@@ -2206,7 +2259,7 @@
     <span class="doccomment">/// Serializes the control block.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This would be required when using [`ControlBlock`] as a witness element while spending an</span>
-    <span class="doccomment">/// output via script path. This serialization does not include the [`::VarInt`] prefix that would</span>
+    <span class="doccomment">/// output via script path. This serialization does not include the [`crate::VarInt`] prefix that would</span>
     <span class="doccomment">/// be applied when encoding this element as a witness.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buf</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="self">self</span>.<span class="ident">size</span>());
@@ -2226,7 +2279,7 @@
     ) -&gt; <span class="ident">bool</span> {
         <span class="comment">// compute the script hash</span>
         <span class="comment">// Initially the curr_hash is the leaf hash</span>
-        <span class="kw">let</span> <span class="ident">leaf_hash</span> <span class="op">=</span> <span class="ident">TapLeafHash::from_script</span>(<span class="kw-2">&amp;</span><span class="ident">script</span>, <span class="self">self</span>.<span class="ident">leaf_version</span>);
+        <span class="kw">let</span> <span class="ident">leaf_hash</span> <span class="op">=</span> <span class="ident">TapLeafHash::from_script</span>(<span class="ident">script</span>, <span class="self">self</span>.<span class="ident">leaf_version</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">curr_hash</span> <span class="op">=</span> <span class="ident">TapBranchHash::from_inner</span>(<span class="ident">leaf_hash</span>.<span class="ident">into_inner</span>());
         <span class="comment">// Verify the proof</span>
         <span class="kw">for</span> <span class="ident">elem</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">merkle_branch</span>.<span class="ident">as_inner</span>() {
@@ -2237,12 +2290,12 @@
             );
         }
         <span class="comment">// compute the taptweak</span>
-        <span class="kw">let</span> <span class="ident">tweak</span> <span class="op">=</span> <span class="ident">TapTweakHash::from_key_and_tweak</span>(<span class="self">self</span>.<span class="ident">internal_key</span>, <span class="prelude-val">Some</span>(<span class="ident">curr_hash</span>));
+        <span class="kw">let</span> <span class="ident">tweak</span> <span class="op">=</span> <span class="ident">TapTweakHash::from_key_and_tweak</span>(<span class="self">self</span>.<span class="ident">internal_key</span>, <span class="prelude-val">Some</span>(<span class="ident">curr_hash</span>)).<span class="ident">to_scalar</span>();
         <span class="self">self</span>.<span class="ident">internal_key</span>.<span class="ident">tweak_add_check</span>(
             <span class="ident">secp</span>,
             <span class="kw-2">&amp;</span><span class="ident">output_key</span>,
             <span class="self">self</span>.<span class="ident">output_key_parity</span>,
-            <span class="ident">tweak</span>.<span class="ident">into_inner</span>(),
+            <span class="ident">tweak</span>,
         )
     }
 }
@@ -2352,10 +2405,10 @@
 <span class="doccomment">/// Serializes [`LeafVersion`] as a `u8` using consensus encoding.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)))]</span>
-<span class="kw">impl</span> <span class="ident">::serde::Serialize</span> <span class="kw">for</span> <span class="ident">LeafVersion</span> {
+<span class="kw">impl</span> <span class="ident">serde::Serialize</span> <span class="kw">for</span> <span class="ident">LeafVersion</span> {
     <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">::serde::Serializer</span>,
+        <span class="ident">S</span>: <span class="ident">serde::Serializer</span>,
     {
         <span class="ident">serializer</span>.<span class="ident">serialize_u8</span>(<span class="self">self</span>.<span class="ident">to_consensus</span>())
     }
@@ -2364,13 +2417,13 @@
 <span class="doccomment">/// Deserializes [`LeafVersion`] as a `u8` using consensus encoding.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">::serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">LeafVersion</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">LeafVersion</span> {
     <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="ident">deserializer</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">::serde::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>
+        <span class="ident">D</span>: <span class="ident">serde::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>
     {
         <span class="kw">struct</span> <span class="ident">U8Visitor</span>;
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">::serde::de::Visitor</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">U8Visitor</span> {
+        <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">serde::de::Visitor</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">U8Visitor</span> {
             <span class="kw">type</span> <span class="ident">Value</span> <span class="op">=</span> <span class="ident">LeafVersion</span>;
 
             <span class="kw">fn</span> <span class="ident">expecting</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">formatter</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
@@ -2379,7 +2432,7 @@
 
             <span class="kw">fn</span> <span class="ident">visit_u8</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">value</span>: <span class="ident">u8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Value</span>, <span class="ident">E</span><span class="op">&gt;</span>
                 <span class="kw">where</span>
-                    <span class="ident">E</span>: <span class="ident">::serde::de::Error</span>,
+                    <span class="ident">E</span>: <span class="ident">serde::de::Error</span>,
             {
                 <span class="ident">LeafVersion::from_consensus</span>(<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
                     <span class="ident">E::invalid_value</span>(<span class="ident">::serde::de::Unexpected::Unsigned</span>(<span class="ident">value</span> <span class="kw">as</span> <span class="ident">u64</span>), <span class="kw-2">&amp;</span><span class="string">&quot;consensus-encoded leaf version as u8&quot;</span>)
@@ -2393,6 +2446,7 @@
 
 <span class="doccomment">/// Detailed error type for taproot builder.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TaprootBuilderError</span> {
     <span class="doccomment">/// Merkle tree depth must not be more than 128.</span>
     <span class="ident">InvalidMerkleTreeDepth</span>(<span class="ident">usize</span>),
@@ -2402,8 +2456,6 @@
     <span class="ident">OverCompleteTree</span>,
     <span class="doccomment">/// Invalid taproot internal key.</span>
     <span class="ident">InvalidInternalKey</span>(<span class="ident">secp256k1::Error</span>),
-    <span class="doccomment">/// Called finalize on an incomplete tree.</span>
-    <span class="ident">IncompleteTree</span>,
     <span class="doccomment">/// Called finalize on a empty tree.</span>
     <span class="ident">EmptyTree</span>,
 }
@@ -2411,6 +2463,9 @@
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">TaprootBuilderError</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
+            <span class="ident">TaprootBuilderError::InvalidMerkleTreeDepth</span>(<span class="ident">d</span>) =&gt; {
+                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Merkle Tree depth({}) must be less than {}&quot;</span>, <span class="ident">d</span>, <span class="ident">TAPROOT_CONTROL_MAX_NODE_COUNT</span>)
+            }
             <span class="ident">TaprootBuilderError::NodeNotInDfsOrder</span> =&gt; {
                 <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;add_leaf/add_hidden must be called in DFS walk order&quot;</span>,)
             }
@@ -2419,14 +2474,8 @@
                 <span class="string">&quot;Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0&quot;</span>,
             ),
-            <span class="ident">TaprootBuilderError::InvalidMerkleTreeDepth</span>(<span class="ident">d</span>) =&gt; {
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Merkle Tree depth({}) must be less than {}&quot;</span>, <span class="ident">d</span>, <span class="ident">TAPROOT_CONTROL_MAX_NODE_COUNT</span>)
-            }
-            <span class="ident">TaprootBuilderError::InvalidInternalKey</span>(<span class="ident">e</span>) =&gt; {
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Invalid Internal XOnly key : {}&quot;</span>, <span class="ident">e</span>)
-            }
-            <span class="ident">TaprootBuilderError::IncompleteTree</span> =&gt; {
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Called finalize on an incomplete tree&quot;</span>)
+            <span class="ident">TaprootBuilderError::InvalidInternalKey</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) =&gt; {
+                <span class="macro">write_err!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid internal x-only key&quot;</span>; <span class="ident">e</span>)
             }
             <span class="ident">TaprootBuilderError::EmptyTree</span> =&gt; {
                 <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Called finalize on an empty tree&quot;</span>)
@@ -2437,10 +2486,23 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
-<span class="kw">impl</span> <span class="ident">error::Error</span> <span class="kw">for</span> <span class="ident">TaprootBuilderError</span> {}
+<span class="kw">impl</span> <span class="ident">std::error::Error</span> <span class="kw">for</span> <span class="ident">TaprootBuilderError</span> {
+    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
+        <span class="kw">use</span> <span class="ident"><span class="self">self</span>::TaprootBuilderError</span>::<span class="kw-2">*</span>;
+
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">InvalidInternalKey</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">e</span>),
+            <span class="ident">InvalidMerkleTreeDepth</span>(<span class="kw">_</span>)
+                <span class="op">|</span> <span class="ident">NodeNotInDfsOrder</span>
+                <span class="op">|</span> <span class="ident">OverCompleteTree</span>
+                <span class="op">|</span> <span class="ident">EmptyTree</span> =&gt; <span class="prelude-val">None</span>
+        }
+    }
+}
 
 <span class="doccomment">/// Detailed error type for taproot utilities.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>)]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">TaprootError</span> {
     <span class="doccomment">/// Proof size must be a multiple of 32.</span>
     <span class="ident">InvalidMerkleBranchSize</span>(<span class="ident">usize</span>),
@@ -2481,9 +2543,8 @@
                 <span class="string">&quot;Control Block size({}) must be of the form 33 + 32*m where  0 &lt;= m &lt;= {} &quot;</span>,
                 <span class="ident">sz</span>, <span class="ident">TAPROOT_CONTROL_MAX_NODE_COUNT</span>
             ),
-            <span class="comment">// TODO: add source when in MSRV</span>
-            <span class="ident">TaprootError::InvalidInternalKey</span>(<span class="ident">e</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Invalid Internal XOnly key : {}&quot;</span>, <span class="ident">e</span>),
-            <span class="ident">TaprootError::InvalidParity</span>(<span class="ident">e</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Invalid parity value for internal key: {}&quot;</span>, <span class="ident">e</span>),
+            <span class="ident">TaprootError::InvalidInternalKey</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) =&gt; <span class="macro">write_err!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid internal x-only key&quot;</span>; <span class="ident">e</span>),
+            <span class="ident">TaprootError::InvalidParity</span>(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid parity value for internal key&quot;</span>),
             <span class="ident">TaprootError::EmptyTree</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Taproot Tree must contain at least one script&quot;</span>),
         }
     }
@@ -2491,16 +2552,32 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
-<span class="kw">impl</span> <span class="ident">error::Error</span> <span class="kw">for</span> <span class="ident">TaprootError</span> {}
+<span class="kw">impl</span> <span class="ident">std::error::Error</span> <span class="kw">for</span> <span class="ident">TaprootError</span> {
+    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
+        <span class="kw">use</span> <span class="ident"><span class="self">self</span>::TaprootError</span>::<span class="kw-2">*</span>;
+
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">InvalidInternalKey</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">e</span>),
+            <span class="ident">InvalidMerkleBranchSize</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">InvalidMerkleTreeDepth</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">InvalidTaprootLeafVersion</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">InvalidControlBlockSize</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">InvalidParity</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">EmptyTree</span> =&gt; <span class="prelude-val">None</span>,
+        }
+    }
+}
+
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> {<span class="ident">Address</span>, <span class="ident">Network</span>};
-    <span class="kw">use</span> <span class="ident">schnorr::TapTweak</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Address</span>, <span class="ident">Network</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::schnorr::TapTweak</span>;
 
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">hashes::hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
-    <span class="kw">use</span> <span class="ident">hashes::sha256t::Tag</span>;
-    <span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">sha256</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::sha256t::Tag</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes</span>::{<span class="ident">sha256</span>, <span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
     <span class="kw">use</span> <span class="ident">secp256k1</span>::{<span class="ident">VerifyOnly</span>, <span class="ident">XOnlyPublicKey</span>};
     <span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
     <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">serde_json</span>;
@@ -2651,9 +2728,9 @@
          *   3            55 51
          */</span>
 
-        <span class="kw">for</span> (<span class="ident">script</span>, <span class="ident">length</span>) <span class="kw">in</span> <span class="macro">vec!</span>[(<span class="string">&quot;51&quot;</span>, <span class="number">3</span>), (<span class="string">&quot;52&quot;</span>, <span class="number">2</span>), (<span class="string">&quot;53&quot;</span>, <span class="number">2</span>), (<span class="string">&quot;54&quot;</span>, <span class="number">2</span>), (<span class="string">&quot;55&quot;</span>, <span class="number">3</span>)] {
+        <span class="kw">for</span> (<span class="ident">script</span>, <span class="ident">length</span>) <span class="kw">in</span> [(<span class="string">&quot;51&quot;</span>, <span class="number">3</span>), (<span class="string">&quot;52&quot;</span>, <span class="number">2</span>), (<span class="string">&quot;53&quot;</span>, <span class="number">2</span>), (<span class="string">&quot;54&quot;</span>, <span class="number">2</span>), (<span class="string">&quot;55&quot;</span>, <span class="number">3</span>)].<span class="ident">iter</span>() {
             <span class="macro">assert_eq!</span>(
-                <span class="ident">length</span>,
+                <span class="kw-2">*</span><span class="ident">length</span>,
                 <span class="ident">tree_info</span>
                     .<span class="ident">script_map</span>
                     .<span class="ident">get</span>(<span class="kw-2">&amp;</span>(<span class="ident">Script::from_hex</span>(<span class="ident">script</span>).<span class="ident">unwrap</span>(), <span class="ident">LeafVersion::TapScript</span>))
@@ -2701,6 +2778,9 @@
         <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">add_leaf</span>(<span class="number">2</span>, <span class="ident">b</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">add_leaf</span>(<span class="number">2</span>, <span class="ident">c</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">add_leaf</span>(<span class="number">3</span>, <span class="ident">d</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();
+
+        <span class="comment">// Trying to finalize an incomplete tree returns the Err(builder)</span>
+        <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">finalize</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="ident">internal_key</span>).<span class="ident">unwrap_err</span>();
         <span class="kw">let</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">add_leaf</span>(<span class="number">3</span>, <span class="ident">e</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>();
 
         <span class="kw">let</span> <span class="ident">tree_info</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">finalize</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="ident">internal_key</span>).<span class="ident">unwrap</span>();
@@ -2750,12 +2830,12 @@
             <span class="kw">if</span> <span class="ident">script_tree</span>.<span class="ident">is_null</span>() {
                 <span class="macro">assert!</span>(<span class="ident">arr</span>[<span class="string">&quot;intermediary&quot;</span>][<span class="string">&quot;merkleRoot&quot;</span>].<span class="ident">is_null</span>());
             } <span class="kw">else</span> {
-                <span class="ident">merkle_root</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">TapBranchHash::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">arr</span>[<span class="string">&quot;intermediary&quot;</span>][<span class="string">&quot;merkleRoot&quot;</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>()).<span class="ident">unwrap</span>());
+                <span class="ident">merkle_root</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">TapBranchHash::from_str</span>(<span class="ident">arr</span>[<span class="string">&quot;intermediary&quot;</span>][<span class="string">&quot;merkleRoot&quot;</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>()).<span class="ident">unwrap</span>());
                 <span class="kw">let</span> <span class="ident">leaf_hashes</span> <span class="op">=</span> <span class="ident">arr</span>[<span class="string">&quot;intermediary&quot;</span>][<span class="string">&quot;leafHashes&quot;</span>].<span class="ident">as_array</span>().<span class="ident">unwrap</span>();
                 <span class="kw">let</span> <span class="ident">ctrl_blks</span> <span class="op">=</span> <span class="ident">arr</span>[<span class="string">&quot;expected&quot;</span>][<span class="string">&quot;scriptPathControlBlocks&quot;</span>].<span class="ident">as_array</span>().<span class="ident">unwrap</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">TaprootBuilder::new</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">leaves</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-                <span class="ident">builder</span> <span class="op">=</span> <span class="ident">process_script_trees</span>(<span class="kw-2">&amp;</span><span class="ident">script_tree</span>, <span class="ident">builder</span>, <span class="kw-2">&amp;mut</span> <span class="ident">leaves</span>, <span class="number">0</span>);
+                <span class="ident">builder</span> <span class="op">=</span> <span class="ident">process_script_trees</span>(<span class="ident">script_tree</span>, <span class="ident">builder</span>, <span class="kw-2">&amp;mut</span> <span class="ident">leaves</span>, <span class="number">0</span>);
                 <span class="kw">let</span> <span class="ident">spend_info</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">finalize</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>).<span class="ident">unwrap</span>();
                 <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">script_ver</span>) <span class="kw">in</span> <span class="ident">leaves</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
                     <span class="kw">let</span> <span class="ident">expected_leaf_hash</span> <span class="op">=</span> <span class="ident">leaf_hashes</span>[<span class="ident">i</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>();
@@ -2773,8 +2853,8 @@
             <span class="kw">let</span> <span class="ident">expected_addr</span> <span class="op">=</span> <span class="ident">Address::from_str</span>(<span class="ident">arr</span>[<span class="string">&quot;expected&quot;</span>][<span class="string">&quot;bip350Address&quot;</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>()).<span class="ident">unwrap</span>();
 
             <span class="kw">let</span> <span class="ident">tweak</span> <span class="op">=</span> <span class="ident">TapTweakHash::from_key_and_tweak</span>(<span class="ident">internal_key</span>, <span class="ident">merkle_root</span>);
-            <span class="kw">let</span> (<span class="ident">output_key</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">internal_key</span>.<span class="ident">tap_tweak</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="ident">merkle_root</span>);
-            <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">Address::p2tr</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="ident">internal_key</span>, <span class="ident">merkle_root</span>, <span class="ident">Network::Bitcoin</span>);
+            <span class="kw">let</span> (<span class="ident">output_key</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">internal_key</span>.<span class="ident">tap_tweak</span>(<span class="ident">secp</span>, <span class="ident">merkle_root</span>);
+            <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">Address::p2tr</span>(<span class="ident">secp</span>, <span class="ident">internal_key</span>, <span class="ident">merkle_root</span>, <span class="ident">Network::Bitcoin</span>);
             <span class="kw">let</span> <span class="ident">spk</span> <span class="op">=</span> <span class="ident">addr</span>.<span class="ident">script_pubkey</span>();
 
             <span class="macro">assert_eq!</span>(<span class="ident">expected_output_key</span>, <span class="ident">output_key</span>.<span class="ident">to_inner</span>());

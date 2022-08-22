@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.28.1/src/network/message_network.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>message_network.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.29.1/src/network/message_network.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>message_network.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../bitcoin/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -178,19 +178,33 @@
 <span id="173">173</span>
 <span id="174">174</span>
 <span id="175">175</span>
-</pre><pre class="rust"><code><span class="comment">// Rust Bitcoin Library</span>
-<span class="comment">// Written in 2014 by</span>
-<span class="comment">//     Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;</span>
-<span class="comment">//</span>
-<span class="comment">// To the extent possible under law, the author(s) have dedicated all</span>
-<span class="comment">// copyright and related and neighboring rights to this software to</span>
-<span class="comment">// the public domain worldwide. This software is distributed without</span>
-<span class="comment">// any warranty.</span>
-<span class="comment">//</span>
-<span class="comment">// You should have received a copy of the CC0 Public Domain Dedication</span>
-<span class="comment">// along with this software.</span>
-<span class="comment">// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.</span>
-<span class="comment">//</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+</pre><pre class="rust"><code><span class="comment">// Written in 2014 by Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;</span>
+<span class="comment">// SPDX-License-Identifier: CC0-1.0</span>
 
 <span class="doccomment">//! Bitcoin network-related network messages.</span>
 <span class="doccomment">//!</span>
@@ -198,16 +212,16 @@
 <span class="doccomment">//! capabilities.</span>
 <span class="doccomment">//!</span>
 
-<span class="kw">use</span> <span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
-<span class="kw">use</span> <span class="ident">io</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>;
 
-<span class="kw">use</span> <span class="ident">network::address::Address</span>;
-<span class="kw">use</span> <span class="ident">network::constants</span>::{<span class="self">self</span>, <span class="ident">ServiceFlags</span>};
-<span class="kw">use</span> <span class="ident">consensus</span>::{<span class="ident">Encodable</span>, <span class="ident">Decodable</span>, <span class="ident">ReadExt</span>};
-<span class="kw">use</span> <span class="ident">consensus::encode</span>;
-<span class="kw">use</span> <span class="ident">network::message::CommandString</span>;
-<span class="kw">use</span> <span class="ident">hashes::sha256d</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::network::address::Address</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::network::constants</span>::{<span class="self">self</span>, <span class="ident">ServiceFlags</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus</span>::{<span class="ident">Encodable</span>, <span class="ident">Decodable</span>, <span class="ident">ReadExt</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::encode</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::sha256d</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::internal_macros::impl_consensus_encoding</span>;
 
 <span class="doccomment">/// Some simple messages</span>
 
@@ -287,15 +301,15 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">RejectReason</span> {
-    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">e</span>: <span class="ident">W</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
-        <span class="ident">e</span>.<span class="ident">write_all</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u8</span>])<span class="question-mark">?</span>;
+    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">io::Write</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+        <span class="ident">w</span>.<span class="ident">write_all</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">u8</span>])<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="number">1</span>)
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Decodable</span> <span class="kw">for</span> <span class="ident">RejectReason</span> {
-    <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">io::Read</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">encode::Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">d</span>.<span class="ident">read_u8</span>()<span class="question-mark">?</span> {
+    <span class="kw">fn</span> <span class="ident">consensus_decode</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">io::Read</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="ident">r</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">encode::Error</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">r</span>.<span class="ident">read_u8</span>()<span class="question-mark">?</span> {
             <span class="number">0x01</span> =&gt; <span class="ident">RejectReason::Malformed</span>,
             <span class="number">0x10</span> =&gt; <span class="ident">RejectReason::Invalid</span>,
             <span class="number">0x11</span> =&gt; <span class="ident">RejectReason::Obsolete</span>,
@@ -313,7 +327,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Reject</span> {
     <span class="doccomment">/// message type rejected</span>
-    <span class="kw">pub</span> <span class="ident">message</span>: <span class="ident">CommandString</span>,
+    <span class="kw">pub</span> <span class="ident">message</span>: <span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">str</span><span class="op">&gt;</span>,
     <span class="doccomment">/// reason of rejection as code</span>
     <span class="kw">pub</span> <span class="ident">ccode</span>: <span class="ident">RejectReason</span>,
     <span class="doccomment">/// reason of rejectection</span>
@@ -327,11 +341,14 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::VersionMessage</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Reject</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::RejectReason</span>;
 
-    <span class="kw">use</span> <span class="ident">hashes::hex::FromHex</span>;
-    <span class="kw">use</span> <span class="ident">network::constants::ServiceFlags</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::FromHex</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::sha256d::Hash</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::network::constants::ServiceFlags</span>;
 
-    <span class="kw">use</span> <span class="ident">consensus::encode</span>::{<span class="ident">deserialize</span>, <span class="ident">serialize</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::encode</span>::{<span class="ident">deserialize</span>, <span class="ident">serialize</span>};
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">version_message_test</span>() {
@@ -348,9 +365,42 @@
         <span class="macro">assert_eq!</span>(<span class="ident">real_decode</span>.<span class="ident">nonce</span>, <span class="number">16735069437859780935</span>);
         <span class="macro">assert_eq!</span>(<span class="ident">real_decode</span>.<span class="ident">user_agent</span>, <span class="string">&quot;/Satoshi:0.9.99/&quot;</span>.<span class="ident">to_string</span>());
         <span class="macro">assert_eq!</span>(<span class="ident">real_decode</span>.<span class="ident">start_height</span>, <span class="number">302892</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">real_decode</span>.<span class="ident">relay</span>, <span class="bool-val">true</span>);
+        <span class="macro">assert!</span>(<span class="ident">real_decode</span>.<span class="ident">relay</span>);
 
         <span class="macro">assert_eq!</span>(<span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="ident">real_decode</span>), <span class="ident">from_sat</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">reject_message_test</span>() {
+        <span class="kw">let</span> <span class="ident">reject_tx_conflict</span> <span class="op">=</span> <span class="ident">Vec::from_hex</span>(<span class="string">&quot;027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004&quot;</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">reject_tx_nonfinal</span> <span class="op">=</span> <span class="ident">Vec::from_hex</span>(<span class="string">&quot;02747840096e6f6e2d66696e616c259bbe6c83db8bbdfca7ca303b19413dc245d9f2371b344ede5f8b1339a5460b&quot;</span>).<span class="ident">unwrap</span>();
+
+        <span class="kw">let</span> <span class="ident">decode_result_conflict</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Reject</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">reject_tx_conflict</span>);
+        <span class="kw">let</span> <span class="ident">decode_result_nonfinal</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Reject</span>, <span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">reject_tx_nonfinal</span>);
+
+        <span class="macro">assert!</span>(<span class="ident">decode_result_conflict</span>.<span class="ident">is_ok</span>());
+        <span class="macro">assert!</span>(<span class="ident">decode_result_nonfinal</span>.<span class="ident">is_ok</span>());
+
+        <span class="kw">let</span> <span class="ident">conflict</span> <span class="op">=</span> <span class="ident">decode_result_conflict</span>.<span class="ident">unwrap</span>();
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;tx&quot;</span>, <span class="ident">conflict</span>.<span class="ident">message</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">RejectReason::Duplicate</span>, <span class="ident">conflict</span>.<span class="ident">ccode</span>);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;txn-mempool-conflict&quot;</span>, <span class="ident">conflict</span>.<span class="ident">reason</span>);
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">Hash::from_hex</span>(<span class="string">&quot;0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05&quot;</span>).<span class="ident">unwrap</span>(),
+            <span class="ident">conflict</span>.<span class="ident">hash</span>
+        );
+
+        <span class="kw">let</span> <span class="ident">nonfinal</span> <span class="op">=</span> <span class="ident">decode_result_nonfinal</span>.<span class="ident">unwrap</span>();
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;tx&quot;</span>, <span class="ident">nonfinal</span>.<span class="ident">message</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">RejectReason::NonStandard</span>, <span class="ident">nonfinal</span>.<span class="ident">ccode</span>);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;non-final&quot;</span>, <span class="ident">nonfinal</span>.<span class="ident">reason</span>);
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">Hash::from_hex</span>(<span class="string">&quot;0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25&quot;</span>).<span class="ident">unwrap</span>(),
+            <span class="ident">nonfinal</span>.<span class="ident">hash</span>
+        );
+
+        <span class="macro">assert_eq!</span>(<span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="ident">conflict</span>), <span class="ident">reject_tx_conflict</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">serialize</span>(<span class="kw-2">&amp;</span><span class="ident">nonfinal</span>), <span class="ident">reject_tx_nonfinal</span>);
     }
 }
 </code></pre></div>

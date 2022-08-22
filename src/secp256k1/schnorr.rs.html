@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.22.1/src/schnorr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>schnorr.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.24.0/src/schnorr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>schnorr.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../secp256k1/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -586,46 +586,21 @@
 <span id="581">581</span>
 <span id="582">582</span>
 <span id="583">583</span>
-<span id="584">584</span>
-<span id="585">585</span>
-<span id="586">586</span>
-<span id="587">587</span>
-<span id="588">588</span>
-<span id="589">589</span>
-<span id="590">590</span>
-<span id="591">591</span>
-<span id="592">592</span>
-<span id="593">593</span>
-<span id="594">594</span>
-<span id="595">595</span>
-<span id="596">596</span>
-<span id="597">597</span>
-<span id="598">598</span>
-<span id="599">599</span>
-<span id="600">600</span>
-<span id="601">601</span>
-<span id="602">602</span>
-<span id="603">603</span>
-<span id="604">604</span>
-<span id="605">605</span>
-<span id="606">606</span>
 </pre><pre class="rust"><code><span class="doccomment">//! # schnorrsig</span>
 <span class="doccomment">//! Support for Schnorr signatures.</span>
 <span class="doccomment">//!</span>
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">rand::thread_rng</span>;
+<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">ptr</span>, <span class="ident">str</span>};
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand&quot;</span>))]</span>
 <span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">CryptoRng</span>, <span class="ident">Rng</span>};
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">from_hex</span>, <span class="ident">Error</span>};
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">ptr</span>, <span class="ident">str</span>};
-<span class="kw">use</span> <span class="ident">ffi</span>::{<span class="self">self</span>, <span class="ident">CPtr</span>};
-<span class="kw">use</span> {<span class="ident">constants</span>, <span class="ident">Secp256k1</span>};
-<span class="kw">use</span> {<span class="ident">Message</span>, <span class="ident">Signing</span>, <span class="ident">Verification</span>, <span class="ident">KeyPair</span>, <span class="ident">XOnlyPublicKey</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">constants</span>, <span class="ident">Error</span>, <span class="ident">from_hex</span>, <span class="ident">Message</span>, <span class="ident">Secp256k1</span>, <span class="ident">Signing</span>, <span class="ident">Verification</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key</span>::{<span class="ident">KeyPair</span>, <span class="ident">XOnlyPublicKey</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ffi</span>::{<span class="self">self</span>, <span class="ident">CPtr</span>, <span class="ident">impl_array_newtype</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span>  <span class="op">=</span> <span class="string">&quot;global-context&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">SECP256K1</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::SECP256K1</span>;
 
 <span class="doccomment">/// Represents a Schnorr signature.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Signature</span>([<span class="ident">u8</span>; <span class="ident">constants::SCHNORR_SIGNATURE_SIZE</span>]);
@@ -633,9 +608,8 @@
 <span class="macro">impl_pretty_debug!</span>(<span class="ident">Signature</span>);
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)))]</span>
-<span class="kw">impl</span> <span class="ident">::serde::Serialize</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">::serde::Serializer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span> {
+<span class="kw">impl</span> <span class="ident">serde::Serialize</span> <span class="kw">for</span> <span class="ident">Signature</span> {
+    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">serde::Serializer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">s</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">is_human_readable</span>() {
             <span class="ident">s</span>.<span class="ident">collect_str</span>(<span class="self">self</span>)
         } <span class="kw">else</span> {
@@ -645,9 +619,8 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)))]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">::serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">::serde::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
+    <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">serde::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">d</span>: <span class="ident">D</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">D::Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">d</span>.<span class="ident">is_human_readable</span>() {
             <span class="ident">d</span>.<span class="ident">deserialize_str</span>(<span class="ident"><span class="kw">super</span>::serde_util::FromStrVisitor::new</span>(
                 <span class="string">&quot;a hex string representing 64 byte schnorr signature&quot;</span>
@@ -750,8 +723,7 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>))]</span>
     <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>)))]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sign_schnorr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span><span class="ident">Message</span>, <span class="ident">keypair</span>: <span class="kw-2">&amp;</span><span class="ident">KeyPair</span>) -&gt; <span class="ident">Signature</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">thread_rng</span>();
-        <span class="self">self</span>.<span class="ident">sign_schnorr_with_rng</span>(<span class="ident">msg</span>, <span class="ident">keypair</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>)
+        <span class="self">self</span>.<span class="ident">sign_schnorr_with_rng</span>(<span class="ident">msg</span>, <span class="ident">keypair</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rand::thread_rng</span>())
     }
 
     <span class="doccomment">/// Create a schnorr signature without using any auxiliary random data.</span>
@@ -873,13 +845,13 @@
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand&quot;</span>))]</span>
     <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand&quot;</span>)))]</span>
-    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.21.0&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;Use kp = KeyPair::new() and kp.public_key()&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.21.0&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;Use kp = KeyPair::new() and kp.x_only_public_key().0&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_schnorrsig_keypair</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>,
     ) -&gt; (<span class="ident">KeyPair</span>, <span class="ident">XOnlyPublicKey</span>) {
         <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">KeyPair::new</span>(<span class="self">self</span>, <span class="ident">rng</span>);
-        <span class="kw">let</span> <span class="ident">pubkey</span> <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
+        <span class="kw">let</span> (<span class="ident">pubkey</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
         (<span class="ident">sk</span>, <span class="ident">pubkey</span>)
     }
 }
@@ -887,20 +859,15 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_imports</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">std::iter</span>;
-    <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
+    <span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
 
-    <span class="kw">use</span> <span class="ident">rand::rngs::ThreadRng</span>;
-    <span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="ident">RngCore</span>, <span class="ident">thread_rng</span>};
-    <span class="kw">use</span> <span class="ident">rand_core::impls</span>;
-
-    <span class="kw">use</span> {<span class="ident">constants</span>, <span class="ident">Error::InvalidPublicKey</span>, <span class="ident">from_hex</span>, <span class="ident">Message</span>, <span class="ident">Secp256k1</span>, <span class="ident">SecretKey</span>};
-
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>))]</span>
-    <span class="kw">use</span> <span class="ident">All</span>;
-
+    <span class="kw">use</span> <span class="ident">rand</span>::{<span class="ident">RngCore</span>, <span class="ident">rngs::ThreadRng</span>, <span class="ident">thread_rng</span>};
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;wasm32&quot;</span>)]</span>
     <span class="kw">use</span> <span class="ident">wasm_bindgen_test::wasm_bindgen_test</span> <span class="kw">as</span> <span class="ident">test</span>;
+
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">constants</span>, <span class="ident">from_hex</span>, <span class="ident">Message</span>, <span class="ident">Secp256k1</span>, <span class="ident">SecretKey</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::schnorr</span>::{<span class="ident">KeyPair</span>, <span class="ident">XOnlyPublicKey</span>, <span class="ident">Signature</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Error::InvalidPublicKey</span>;
 
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
@@ -949,13 +916,13 @@
 
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand-std&quot;</span>))]</span>
     <span class="kw">fn</span> <span class="ident">sign_helper</span>(
-        <span class="ident">sign</span>: <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="ident">Secp256k1</span><span class="op">&lt;</span><span class="ident">All</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">Message</span>, <span class="kw-2">&amp;</span><span class="ident">KeyPair</span>, <span class="kw-2">&amp;mut</span> <span class="ident">ThreadRng</span>) -&gt; <span class="ident">Signature</span>,
+        <span class="ident">sign</span>: <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="ident">Secp256k1</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::All</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">Message</span>, <span class="kw-2">&amp;</span><span class="ident">KeyPair</span>, <span class="kw-2">&amp;mut</span> <span class="ident">ThreadRng</span>) -&gt; <span class="ident">Signature</span>,
     ) {
         <span class="kw">let</span> <span class="ident">secp</span> <span class="op">=</span> <span class="ident">Secp256k1::new</span>();
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">thread_rng</span>();
         <span class="kw">let</span> <span class="ident">kp</span> <span class="op">=</span> <span class="ident">KeyPair::new</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">public_key</span>();
+        <span class="kw">let</span> (<span class="ident">pk</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">x_only_public_key</span>();
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">msg</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
 
@@ -1025,7 +992,7 @@
     <span class="kw">fn</span> <span class="ident">test_pubkey_serialize_roundtrip</span>() {
         <span class="kw">let</span> <span class="ident">secp</span> <span class="op">=</span> <span class="ident">Secp256k1::new</span>();
         <span class="kw">let</span> <span class="ident">kp</span> <span class="op">=</span> <span class="ident">KeyPair::new</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;mut</span> <span class="ident">thread_rng</span>());
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">public_key</span>();
+        <span class="kw">let</span> (<span class="ident">pk</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">x_only_public_key</span>();
 
         <span class="kw">let</span> <span class="ident">ser</span> <span class="op">=</span> <span class="ident">pk</span>.<span class="ident">serialize</span>();
         <span class="kw">let</span> <span class="ident">pubkey2</span> <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">ser</span>).<span class="ident">unwrap</span>();
@@ -1040,9 +1007,9 @@
         <span class="kw">let</span> <span class="ident">keypair</span> <span class="op">=</span> <span class="ident">KeyPair::from_seckey_str</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="ident">sk_str</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SecretKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">keypair</span>);
         <span class="macro">assert_eq!</span>(<span class="ident">SecretKey::from_str</span>(<span class="ident">sk_str</span>).<span class="ident">unwrap</span>(), <span class="ident">sk</span>);
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">::key::PublicKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">keypair</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">::key::PublicKey::from_secret_key</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;</span><span class="ident">sk</span>), <span class="ident">pk</span>);
-        <span class="kw">let</span> <span class="ident">xpk</span> <span class="op">=</span> <span class="ident">keypair</span>.<span class="ident">public_key</span>();
+        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::key::PublicKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">keypair</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident"><span class="kw">crate</span>::key::PublicKey::from_secret_key</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;</span><span class="ident">sk</span>), <span class="ident">pk</span>);
+        <span class="kw">let</span> (<span class="ident">xpk</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">keypair</span>.<span class="ident">x_only_public_key</span>();
         <span class="macro">assert_eq!</span>(<span class="ident">XOnlyPublicKey::from</span>(<span class="ident">pk</span>), <span class="ident">xpk</span>);
     }
 
@@ -1089,7 +1056,8 @@
 
             <span class="comment">// In fuzzing mode secret-&gt;public key derivation is different, so</span>
             <span class="comment">// hard-code the expected result.</span>
-            <span class="ident">kp</span>.<span class="ident">public_key</span>()
+            <span class="kw">let</span> (<span class="ident">pk</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">x_only_public_key</span>();
+            <span class="ident">pk</span>
         };
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">fuzzing</span>)]</span>
         <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_slice</span>(<span class="kw-2">&amp;</span>[<span class="number">0x18</span>, <span class="number">0x84</span>, <span class="number">0x57</span>, <span class="number">0x81</span>, <span class="number">0xf6</span>, <span class="number">0x31</span>, <span class="number">0xc4</span>, <span class="number">0x8f</span>, <span class="number">0x1c</span>, <span class="number">0x97</span>, <span class="number">0x09</span>, <span class="number">0xe2</span>, <span class="number">0x30</span>, <span class="number">0x92</span>, <span class="number">0x06</span>, <span class="number">0x7d</span>, <span class="number">0x06</span>, <span class="number">0x83</span>, <span class="number">0x7f</span>, <span class="number">0x30</span>, <span class="number">0xaa</span>, <span class="number">0x0c</span>, <span class="number">0xd0</span>, <span class="number">0x54</span>, <span class="number">0x4a</span>, <span class="number">0xc8</span>, <span class="number">0x87</span>, <span class="number">0xfe</span>, <span class="number">0x91</span>, <span class="number">0xdd</span>, <span class="number">0xd1</span>, <span class="number">0x66</span>]).<span class="ident">expect</span>(<span class="string">&quot;pk&quot;</span>);
@@ -1125,7 +1093,7 @@
         )
         .<span class="ident">is_err</span>());
 
-        <span class="kw">let</span> <span class="ident">long_str</span>: <span class="ident">String</span> <span class="op">=</span> <span class="ident">iter::repeat</span>(<span class="string">&#39;a&#39;</span>).<span class="ident">take</span>(<span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span>).<span class="ident">collect</span>();
+        <span class="kw">let</span> <span class="ident">long_str</span>: <span class="ident">String</span> <span class="op">=</span> <span class="string">&quot;a&quot;</span>.<span class="ident">repeat</span>(<span class="number">1024</span> <span class="op">*</span> <span class="number">1024</span>);
         <span class="macro">assert!</span>(<span class="ident">XOnlyPublicKey::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">long_str</span>).<span class="ident">is_err</span>());
     }
 
@@ -1135,27 +1103,10 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">fuzzing</span>))]</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand&quot;</span>, <span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
     <span class="kw">fn</span> <span class="ident">test_pubkey_serialize</span>() {
-        <span class="kw">struct</span> <span class="ident">DumbRng</span>(<span class="ident">u32</span>);
-        <span class="kw">impl</span> <span class="ident">RngCore</span> <span class="kw">for</span> <span class="ident">DumbRng</span> {
-            <span class="kw">fn</span> <span class="ident">next_u32</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">u32</span> {
-                <span class="self">self</span>.<span class="number">0</span> <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>);
-                <span class="self">self</span>.<span class="number">0</span>
-            }
-            <span class="kw">fn</span> <span class="ident">next_u64</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">u64</span> {
-                <span class="self">self</span>.<span class="ident">next_u32</span>() <span class="kw">as</span> <span class="ident">u64</span>
-            }
-            <span class="kw">fn</span> <span class="ident">try_fill_bytes</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_dest</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-                <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>(<span class="ident">ErrorKind::Unavailable</span>, <span class="string">&quot;not implemented&quot;</span>))
-            }
-
-            <span class="kw">fn</span> <span class="ident">fill_bytes</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">dest</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>]) {
-                <span class="ident">impls::fill_bytes_via_next</span>(<span class="self">self</span>, <span class="ident">dest</span>);
-            }
-        }
-
+        <span class="kw">use</span> <span class="ident">rand::rngs::mock::StepRng</span>;
         <span class="kw">let</span> <span class="ident">secp</span> <span class="op">=</span> <span class="ident">Secp256k1::new</span>();
-        <span class="kw">let</span> <span class="ident">kp</span> <span class="op">=</span> <span class="ident">KeyPair::new</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;mut</span> <span class="ident">DumbRng</span>(<span class="number">0</span>));
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">public_key</span>();
+        <span class="kw">let</span> <span class="ident">kp</span> <span class="op">=</span> <span class="ident">KeyPair::new</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;mut</span> <span class="ident">StepRng::new</span>(<span class="number">1</span>, <span class="number">1</span>));
+        <span class="kw">let</span> (<span class="ident">pk</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">kp</span>.<span class="ident">x_only_public_key</span>();
         <span class="macro">assert_eq!</span>(
             <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">serialize</span>()[..],
             <span class="kw-2">&amp;</span>[
@@ -1185,7 +1136,7 @@
             <span class="number">0x9e</span>, <span class="number">0x4d</span>, <span class="number">0x4e</span>, <span class="number">0xf5</span>, <span class="number">0x67</span>, <span class="number">0x8a</span>, <span class="number">0xd0</span>, <span class="number">0xd9</span>, <span class="number">0xd5</span>, <span class="number">0x32</span>, <span class="number">0xc0</span>, <span class="number">0xdf</span>, <span class="number">0xa9</span>, <span class="number">0x07</span>,
             <span class="number">0xb5</span>, <span class="number">0x68</span>, <span class="number">0x72</span>, <span class="number">0x2d</span>, <span class="number">0x0b</span>, <span class="number">0x01</span>, <span class="number">0x19</span>, <span class="number">0xba</span>,
         ];
-        <span class="kw">static</span> <span class="ident">SIG_STR</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;\
+        <span class="kw">static</span> <span class="ident">SIG_STR</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;\
             14d0bf1a8953506fb460f58be141af767fd112535fb3922ef217308e2c26706f1eeb432b3dba9a01082f9e4d4ef5678ad0d9d532c0dfa907b568722d0b0119ba\
         &quot;</span>;
 
@@ -1193,9 +1144,7 @@
             <span class="number">24</span>, <span class="number">132</span>, <span class="number">87</span>, <span class="number">129</span>, <span class="number">246</span>, <span class="number">49</span>, <span class="number">196</span>, <span class="number">143</span>, <span class="number">28</span>, <span class="number">151</span>, <span class="number">9</span>, <span class="number">226</span>, <span class="number">48</span>, <span class="number">146</span>, <span class="number">6</span>, <span class="number">125</span>, <span class="number">6</span>, <span class="number">131</span>, <span class="number">127</span>,
             <span class="number">48</span>, <span class="number">170</span>, <span class="number">12</span>, <span class="number">208</span>, <span class="number">84</span>, <span class="number">74</span>, <span class="number">200</span>, <span class="number">135</span>, <span class="number">254</span>, <span class="number">145</span>, <span class="number">221</span>, <span class="number">209</span>, <span class="number">102</span>
         ];
-        <span class="kw">static</span> <span class="ident">PK_STR</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;\
-            18845781f631c48f1c9709e23092067d06837f30aa0cd0544ac887fe91ddd166\
-        &quot;</span>;
+        <span class="kw">static</span> <span class="ident">PK_STR</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;18845781f631c48f1c9709e23092067d06837f30aa0cd0544ac887fe91ddd166&quot;</span>;
         <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">PK_BYTES</span>).<span class="ident">unwrap</span>();
 
         <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">compact</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::BorrowedBytes</span>(<span class="kw-2">&amp;</span><span class="ident">SIG_BYTES</span>[..])]);
@@ -1206,9 +1155,14 @@
         <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">readable</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::Str</span>(<span class="ident">SIG_STR</span>)]);
         <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">readable</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::String</span>(<span class="ident">SIG_STR</span>)]);
 
-        <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">compact</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::BorrowedBytes</span>(<span class="kw-2">&amp;</span><span class="ident">PK_BYTES</span>[..])]);
-        <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">compact</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::Bytes</span>(<span class="kw-2">&amp;</span><span class="ident">PK_BYTES</span>[..])]);
-        <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">compact</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::ByteBuf</span>(<span class="kw-2">&amp;</span><span class="ident">PK_BYTES</span>[..])]);
+        <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">compact</span>(), <span class="kw-2">&amp;</span>[
+            <span class="ident">Token::Tuple</span>{ <span class="ident">len</span>: <span class="number">32</span> },
+            <span class="ident">Token::U8</span>(<span class="number">24</span>), <span class="ident">Token::U8</span>(<span class="number">132</span>), <span class="ident">Token::U8</span>(<span class="number">87</span>), <span class="ident">Token::U8</span>(<span class="number">129</span>), <span class="ident">Token::U8</span>(<span class="number">246</span>), <span class="ident">Token::U8</span>(<span class="number">49</span>), <span class="ident">Token::U8</span>(<span class="number">196</span>), <span class="ident">Token::U8</span>(<span class="number">143</span>),
+            <span class="ident">Token::U8</span>(<span class="number">28</span>), <span class="ident">Token::U8</span>(<span class="number">151</span>), <span class="ident">Token::U8</span>(<span class="number">9</span>), <span class="ident">Token::U8</span>(<span class="number">226</span>), <span class="ident">Token::U8</span>(<span class="number">48</span>), <span class="ident">Token::U8</span>(<span class="number">146</span>), <span class="ident">Token::U8</span>(<span class="number">6</span>), <span class="ident">Token::U8</span>(<span class="number">125</span>),
+            <span class="ident">Token::U8</span>(<span class="number">6</span>), <span class="ident">Token::U8</span>(<span class="number">131</span>), <span class="ident">Token::U8</span>(<span class="number">127</span>), <span class="ident">Token::U8</span>(<span class="number">48</span>), <span class="ident">Token::U8</span>(<span class="number">170</span>), <span class="ident">Token::U8</span>(<span class="number">12</span>), <span class="ident">Token::U8</span>(<span class="number">208</span>), <span class="ident">Token::U8</span>(<span class="number">84</span>),
+            <span class="ident">Token::U8</span>(<span class="number">74</span>), <span class="ident">Token::U8</span>(<span class="number">200</span>), <span class="ident">Token::U8</span>(<span class="number">135</span>), <span class="ident">Token::U8</span>(<span class="number">254</span>), <span class="ident">Token::U8</span>(<span class="number">145</span>), <span class="ident">Token::U8</span>(<span class="number">221</span>), <span class="ident">Token::U8</span>(<span class="number">209</span>), <span class="ident">Token::U8</span>(<span class="number">102</span>),
+            <span class="ident">Token::TupleEnd</span>
+        ]);
 
         <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">readable</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::BorrowedStr</span>(<span class="ident">PK_STR</span>)]);
         <span class="ident">assert_tokens</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">readable</span>(), <span class="kw-2">&amp;</span>[<span class="ident">Token::Str</span>(<span class="ident">PK_STR</span>)]);

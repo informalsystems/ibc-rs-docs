@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.28.1/src/util/sighash.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sighash.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.29.1/src/util/sighash.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sighash.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../bitcoin/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -1185,19 +1185,30 @@
 <span id="1180">1180</span>
 <span id="1181">1181</span>
 <span id="1182">1182</span>
-</pre><pre class="rust"><code><span class="comment">// Rust Bitcoin Library</span>
-<span class="comment">// Written in 2021 by</span>
-<span class="comment">//   The rust-bitcoin developers</span>
-<span class="comment">//</span>
-<span class="comment">// To the extent possible under law, the author(s) have dedicated all</span>
-<span class="comment">// copyright and related and neighboring rights to this software to</span>
-<span class="comment">// the public domain worldwide. This software is distributed without</span>
-<span class="comment">// any warranty.</span>
-<span class="comment">//</span>
-<span class="comment">// You should have received a copy of the CC0 Public Domain Dedication</span>
-<span class="comment">// along with this software.</span>
-<span class="comment">// If not, see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;.</span>
-<span class="comment">//</span>
+<span id="1183">1183</span>
+<span id="1184">1184</span>
+<span id="1185">1185</span>
+<span id="1186">1186</span>
+<span id="1187">1187</span>
+<span id="1188">1188</span>
+<span id="1189">1189</span>
+<span id="1190">1190</span>
+<span id="1191">1191</span>
+<span id="1192">1192</span>
+<span id="1193">1193</span>
+<span id="1194">1194</span>
+<span id="1195">1195</span>
+<span id="1196">1196</span>
+<span id="1197">1197</span>
+<span id="1198">1198</span>
+<span id="1199">1199</span>
+<span id="1200">1200</span>
+<span id="1201">1201</span>
+<span id="1202">1202</span>
+<span id="1203">1203</span>
+<span id="1204">1204</span>
+<span id="1205">1205</span>
+</pre><pre class="rust"><code><span class="comment">// SPDX-License-Identifier: CC0-1.0</span>
 
 <span class="doccomment">//! Generalized, efficient, signature hash implementation.</span>
 <span class="doccomment">//!</span>
@@ -1207,52 +1218,62 @@
 <span class="doccomment">//! and legacy (before Bip143).</span>
 <span class="doccomment">//!</span>
 
-<span class="kw">use</span> <span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::transaction::EncodeSigningDataResult</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">blockdata::transaction</span>::{<span class="ident">EcdsaSighashType</span>, <span class="ident">SighashTypeParseError</span>};
-<span class="kw">use</span> <span class="ident">blockdata::witness::Witness</span>;
-<span class="kw">use</span> <span class="ident">consensus</span>::{<span class="ident">encode</span>, <span class="ident">Encodable</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::transaction</span>::{<span class="ident">EcdsaSighashType</span>, <span class="ident">SighashTypeParseError</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::witness::Witness</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus</span>::{<span class="ident">encode</span>, <span class="ident">Encodable</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">str</span>, <span class="ident">fmt</span>};
 <span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
 <span class="kw">use</span> <span class="ident">core::borrow::Borrow</span>;
-<span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">sha256</span>, <span class="ident">sha256d</span>, <span class="ident">Hash</span>};
-<span class="kw">use</span> <span class="ident">io</span>;
-<span class="kw">use</span> <span class="ident">util::taproot</span>::{<span class="ident">TapLeafHash</span>, <span class="ident">TAPROOT_ANNEX_PREFIX</span>, <span class="ident">TapSighashHash</span>};
-<span class="kw">use</span> <span class="ident">Sighash</span>;
-<span class="kw">use</span> {<span class="ident">Script</span>, <span class="ident">Transaction</span>, <span class="ident">TxOut</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes</span>::{<span class="ident">sha256</span>, <span class="ident">sha256d</span>, <span class="ident">Hash</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::io</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::taproot</span>::{<span class="ident">TapLeafHash</span>, <span class="ident">TAPROOT_ANNEX_PREFIX</span>, <span class="ident">TapSighashHash</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Sighash</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Script</span>, <span class="ident">Transaction</span>, <span class="ident">TxOut</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::internal_macros::serde_string_impl</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::taproot::LeafVersion</span>;
+
+<span class="doccomment">/// Used for signature hash for invalid use of SIGHASH_SINGLE.</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">UINT256_ONE</span>: [<span class="ident">u8</span>; <span class="number">32</span>] <span class="op">=</span> [
+    <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
+    <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
+    <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
+    <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>
+];
 
 <span class="doccomment">/// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SighashCache</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Deref</span><span class="op">&lt;</span><span class="ident">Target</span><span class="op">=</span><span class="ident">Transaction</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Access to transaction required for various introspection, moreover type</span>
-    <span class="doccomment">/// `T: Deref&lt;Target=Transaction&gt;` allows to accept borrow and mutable borrow, the</span>
-    <span class="doccomment">/// latter in particular is necessary for [`SighashCache::witness_mut`]</span>
+    <span class="doccomment">/// Access to transaction required for transaction introspection. Moreover, type</span>
+    <span class="doccomment">/// `T: Deref&lt;Target=Transaction&gt;` allows us to use borrowed and mutable borrowed types,</span>
+    <span class="doccomment">/// the latter in particular is necessary for [`SighashCache::witness_mut`].</span>
     <span class="ident">tx</span>: <span class="ident">T</span>,
 
-    <span class="doccomment">/// Common cache for taproot and segwit inputs. It&#39;s an option because it&#39;s not needed for legacy inputs</span>
+    <span class="doccomment">/// Common cache for taproot and segwit inputs, `None` for legacy inputs.</span>
     <span class="ident">common_cache</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CommonCache</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Cache for segwit v0 inputs, it&#39;s the result of another round of sha256 on `common_cache`</span>
+    <span class="doccomment">/// Cache for segwit v0 inputs (the result of another round of sha256 on `common_cache`).</span>
     <span class="ident">segwit_cache</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SegwitCache</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Cache for taproot v1 inputs</span>
+    <span class="doccomment">/// Cache for taproot v1 inputs.</span>
     <span class="ident">taproot_cache</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TaprootCache</span><span class="op">&gt;</span>,
 }
 
-<span class="doccomment">/// Values cached common between segwit and taproot inputs</span>
+<span class="doccomment">/// Common values cached between segwit and taproot inputs.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">struct</span> <span class="ident">CommonCache</span> {
     <span class="ident">prevouts</span>: <span class="ident">sha256::Hash</span>,
     <span class="ident">sequences</span>: <span class="ident">sha256::Hash</span>,
 
-    <span class="doccomment">/// in theory, `outputs` could be `Option` since `NONE` and `SINGLE` doesn&#39;t need it, but since</span>
-    <span class="doccomment">/// `ALL` is the mostly used variant by large, we don&#39;t bother</span>
+    <span class="doccomment">/// In theory `outputs` could be an `Option` since `SIGHASH_NONE` and `SIGHASH_SINGLE` do not</span>
+    <span class="doccomment">/// need it, but since `SIGHASH_ALL` is by far the most used variant we don&#39;t bother.</span>
     <span class="ident">outputs</span>: <span class="ident">sha256::Hash</span>,
 }
 
-<span class="doccomment">/// Values cached for segwit inputs, it&#39;s equal to [`CommonCache`] plus another round of `sha256`</span>
+<span class="doccomment">/// Values cached for segwit inputs, equivalent to [`CommonCache`] plus another round of `sha256`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">struct</span> <span class="ident">SegwitCache</span> {
     <span class="ident">prevouts</span>: <span class="ident">sha256d::Hash</span>,
@@ -1260,29 +1281,29 @@
     <span class="ident">outputs</span>: <span class="ident">sha256d::Hash</span>,
 }
 
-<span class="doccomment">/// Values cached for taproot inputs</span>
+<span class="doccomment">/// Values cached for taproot inputs.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">struct</span> <span class="ident">TaprootCache</span> {
     <span class="ident">amounts</span>: <span class="ident">sha256::Hash</span>,
     <span class="ident">script_pubkeys</span>: <span class="ident">sha256::Hash</span>,
 }
 
-<span class="doccomment">/// Contains outputs of previous transactions.</span>
-<span class="doccomment">/// In the case [`SchnorrSighashType`] variant is `ANYONECANPAY`, [`Prevouts::One`] may be provided</span>
+<span class="doccomment">/// Contains outputs of previous transactions. In the case [`SchnorrSighashType`] variant is</span>
+<span class="doccomment">/// `SIGHASH_ANYONECANPAY`, [`Prevouts::One`] may be used.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Prevouts</span><span class="op">&lt;</span><span class="lifetime">&#39;u</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="lifetime">&#39;u</span> <span class="op">+</span> <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">TxOut</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// `One` variant allows to provide the single Prevout needed. It&#39;s useful for example</span>
-    <span class="doccomment">/// when modifier `ANYONECANPAY` is provided, only prevout of the current input is needed.</span>
+    <span class="doccomment">/// `One` variant allows provision of the single prevout needed. It&#39;s useful, for example, when</span>
+    <span class="doccomment">/// modifier `SIGHASH_ANYONECANPAY` is provided, only prevout of the current input is needed.</span>
     <span class="doccomment">/// The first `usize` argument is the input index this [`TxOut`] is referring to.</span>
     <span class="ident">One</span>(<span class="ident">usize</span>, <span class="ident">T</span>),
-    <span class="doccomment">/// When `ANYONECANPAY` is not provided, or the caller is handy giving all prevouts so the same</span>
-    <span class="doccomment">/// variable can be used for multiple inputs.</span>
+    <span class="doccomment">/// When `SIGHASH_ANYONECANPAY` is not provided, or when the caller is giving all prevouts so</span>
+    <span class="doccomment">/// the same variable can be used for multiple inputs.</span>
     <span class="ident">All</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;u</span> [<span class="ident">T</span>]),
 }
 
 <span class="kw">const</span> <span class="ident">KEY_VERSION_0</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0u8</span>;
 
-<span class="doccomment">/// Information related to the script path spending</span>
+<span class="doccomment">/// Information related to the script path spending.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This can be hashed into a [`TapLeafHash`].</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
@@ -1291,30 +1312,27 @@
     <span class="ident">leaf_version</span>: <span class="ident">LeafVersion</span>,
 }
 
-<span class="doccomment">/// Hashtype of an input&#39;s signature, encoded in the last byte of the signature</span>
-<span class="doccomment">/// Fixed values so they can be casted as integer types for encoding</span>
+<span class="doccomment">/// Hashtype of an input&#39;s signature, encoded in the last byte of the signature.</span>
+<span class="doccomment">/// Fixed values so they can be cast as integer types for encoding.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SchnorrSighashType</span> {
-    <span class="doccomment">/// 0x0: Used when not explicitly specified, defaulting to [`SchnorrSighashType::All`]</span>
+    <span class="doccomment">/// 0x0: Used when not explicitly specified, defaults to [`SchnorrSighashType::All`]</span>
     <span class="ident">Default</span> <span class="op">=</span> <span class="number">0x00</span>,
-    <span class="doccomment">/// 0x1: Sign all outputs</span>
+    <span class="doccomment">/// 0x1: Sign all outputs.</span>
     <span class="ident">All</span> <span class="op">=</span> <span class="number">0x01</span>,
-    <span class="doccomment">/// 0x2: Sign no outputs --- anyone can choose the destination</span>
+    <span class="doccomment">/// 0x2: Sign no outputs --- anyone can choose the destination.</span>
     <span class="prelude-val">None</span> <span class="op">=</span> <span class="number">0x02</span>,
     <span class="doccomment">/// 0x3: Sign the output whose index matches this input&#39;s index. If none exists,</span>
     <span class="doccomment">/// sign the hash `0000000000000000000000000000000000000000000000000000000000000001`.</span>
     <span class="doccomment">/// (This rule is probably an unintentional C++ism, but it&#39;s consensus so we have</span>
     <span class="doccomment">/// to follow it.)</span>
     <span class="ident">Single</span> <span class="op">=</span> <span class="number">0x03</span>,
-    <span class="doccomment">/// 0x81: Sign all outputs but only this input</span>
+    <span class="doccomment">/// 0x81: Sign all outputs but only this input.</span>
     <span class="ident">AllPlusAnyoneCanPay</span> <span class="op">=</span> <span class="number">0x81</span>,
-    <span class="doccomment">/// 0x82: Sign no outputs and only this input</span>
+    <span class="doccomment">/// 0x82: Sign no outputs and only this input.</span>
     <span class="ident">NonePlusAnyoneCanPay</span> <span class="op">=</span> <span class="number">0x82</span>,
-    <span class="doccomment">/// 0x83: Sign one output and only this input (see `Single` for what &quot;one output&quot; means)</span>
+    <span class="doccomment">/// 0x83: Sign one output and only this input (see `Single` for what &quot;one output&quot; means).</span>
     <span class="ident">SinglePlusAnyoneCanPay</span> <span class="op">=</span> <span class="number">0x83</span>,
-
-    <span class="doccomment">/// Reserved for future use, `#[non_exhaustive]` is not available with current MSRV</span>
-    <span class="ident">Reserved</span> <span class="op">=</span> <span class="number">0xFF</span>,
 }
 <span class="macro">serde_string_impl!</span>(<span class="ident">SchnorrSighashType</span>, <span class="string">&quot;a SchnorrSighashType data&quot;</span>);
 
@@ -1328,7 +1346,6 @@
             <span class="ident">SchnorrSighashType::AllPlusAnyoneCanPay</span> =&gt; <span class="string">&quot;SIGHASH_ALL|SIGHASH_ANYONECANPAY&quot;</span>,
             <span class="ident">SchnorrSighashType::NonePlusAnyoneCanPay</span> =&gt; <span class="string">&quot;SIGHASH_NONE|SIGHASH_ANYONECANPAY&quot;</span>,
             <span class="ident">SchnorrSighashType::SinglePlusAnyoneCanPay</span> =&gt; <span class="string">&quot;SIGHASH_SINGLE|SIGHASH_ANYONECANPAY&quot;</span>,
-            <span class="ident">SchnorrSighashType::Reserved</span> =&gt; <span class="string">&quot;SIGHASH_RESERVED&quot;</span>,
         };
         <span class="ident">f</span>.<span class="ident">write_str</span>(<span class="ident">s</span>)
     }
@@ -1346,58 +1363,59 @@
             <span class="string">&quot;SIGHASH_ALL|SIGHASH_ANYONECANPAY&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::AllPlusAnyoneCanPay</span>),
             <span class="string">&quot;SIGHASH_NONE|SIGHASH_ANYONECANPAY&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::NonePlusAnyoneCanPay</span>),
             <span class="string">&quot;SIGHASH_SINGLE|SIGHASH_ANYONECANPAY&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::SinglePlusAnyoneCanPay</span>),
-            <span class="string">&quot;SIGHASH_RESERVED&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::Reserved</span>),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">SighashTypeParseError</span>{ <span class="ident">unrecognized</span>: <span class="ident">s</span>.<span class="ident">to_owned</span>() }),
         }
     }
 }
 
-<span class="doccomment">/// Possible errors in computing the signature message</span>
+<span class="doccomment">/// Possible errors in computing the signature message.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
     <span class="doccomment">/// Could happen only by using `*_encode_signing_*` methods with custom writers, engines writers</span>
-    <span class="doccomment">/// like the ones used in methods `*_signature_hash` don&#39;t error</span>
+    <span class="doccomment">/// like the ones used in methods `*_signature_hash` do not error.</span>
     <span class="ident">Io</span>(<span class="ident">io::ErrorKind</span>),
 
-    <span class="doccomment">/// Requested index is greater or equal than the number of inputs in the transaction</span>
+    <span class="doccomment">/// Requested index is greater or equal than the number of inputs in the transaction.</span>
     <span class="ident">IndexOutOfInputsBounds</span> {
-        <span class="doccomment">/// Requested index</span>
+        <span class="doccomment">/// Requested index.</span>
         <span class="ident">index</span>: <span class="ident">usize</span>,
-        <span class="doccomment">/// Number of transaction inputs</span>
+        <span class="doccomment">/// Number of transaction inputs.</span>
         <span class="ident">inputs_size</span>: <span class="ident">usize</span>,
     },
 
-    <span class="doccomment">/// Using SIGHASH_SINGLE without a &quot;corresponding output&quot; (an output with the same index as the</span>
-    <span class="doccomment">/// input being verified) is a validation failure</span>
+    <span class="doccomment">/// Using `SIGHASH_SINGLE` without a &quot;corresponding output&quot; (an output with the same index as</span>
+    <span class="doccomment">/// the input being verified) is a validation failure.</span>
     <span class="ident">SingleWithoutCorrespondingOutput</span> {
-        <span class="doccomment">/// Requested index</span>
+        <span class="doccomment">/// Requested index.</span>
         <span class="ident">index</span>: <span class="ident">usize</span>,
-        <span class="doccomment">/// Number of transaction outputs</span>
+        <span class="doccomment">/// Number of transaction outputs.</span>
         <span class="ident">outputs_size</span>: <span class="ident">usize</span>,
     },
 
-    <span class="doccomment">/// There are mismatches in the number of prevouts provided compared with the number of</span>
-    <span class="doccomment">/// inputs in the transaction</span>
+    <span class="doccomment">/// There are mismatches in the number of prevouts provided compared to the number of inputs in</span>
+    <span class="doccomment">/// the transaction.</span>
     <span class="ident">PrevoutsSize</span>,
 
     <span class="doccomment">/// Requested a prevout index which is greater than the number of prevouts provided or a</span>
-    <span class="doccomment">/// [`Prevouts::One`] with different index</span>
+    <span class="doccomment">/// [`Prevouts::One`] with different index.</span>
     <span class="ident">PrevoutIndex</span>,
 
-    <span class="doccomment">/// A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`</span>
+    <span class="doccomment">/// A single prevout has been provided but all prevouts are needed unless using</span>
+    <span class="doccomment">/// `SIGHASH_ANYONECANPAY`.</span>
     <span class="ident">PrevoutKind</span>,
 
-    <span class="doccomment">/// Annex must be at least one byte long and the first bytes must be `0x50`</span>
+    <span class="doccomment">/// Annex must be at least one byte long and the first bytes must be `0x50`.</span>
     <span class="ident">WrongAnnex</span>,
 
-    <span class="doccomment">/// Invalid Sighash type</span>
+    <span class="doccomment">/// Invalid Sighash type.</span>
     <span class="ident">InvalidSighashType</span>(<span class="ident">u32</span>),
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Error</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Error::Io</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Writer errored: {:?}&quot;</span>, <span class="ident">e</span>),
+            <span class="ident">Error::Io</span>(<span class="ident">error_kind</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;writer errored: {:?}&quot;</span>, <span class="ident">error_kind</span>),
             <span class="ident">Error::IndexOutOfInputsBounds</span> { <span class="ident">index</span>, <span class="ident">inputs_size</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Requested index ({}) is greater or equal than the number of transaction inputs ({})&quot;</span>, <span class="ident">index</span>, <span class="ident">inputs_size</span>),
             <span class="ident">Error::SingleWithoutCorrespondingOutput</span> { <span class="ident">index</span>, <span class="ident">outputs_size</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;SIGHASH_SINGLE for input ({}) haven&#39;t a corresponding output (#outputs:{})&quot;</span>, <span class="ident">index</span>, <span class="ident">outputs_size</span>),
             <span class="ident">Error::PrevoutsSize</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Number of supplied prevouts differs from the number of inputs in transaction&quot;</span>),
@@ -1410,7 +1428,23 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">::std::error::Error</span> <span class="kw">for</span> <span class="ident">Error</span> {}
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)))]</span>
+<span class="kw">impl</span> <span class="ident">std::error::Error</span> <span class="kw">for</span> <span class="ident">Error</span> {
+    <span class="kw">fn</span> <span class="ident">source</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>(<span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>)<span class="op">&gt;</span> {
+        <span class="kw">use</span> <span class="ident"><span class="self">self</span>::Error</span>::<span class="kw-2">*</span>;
+
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">Io</span>(<span class="kw">_</span>)
+            <span class="op">|</span> <span class="ident">IndexOutOfInputsBounds</span> { .. }
+            <span class="op">|</span> <span class="ident">SingleWithoutCorrespondingOutput</span> { .. }
+            <span class="op">|</span> <span class="ident">PrevoutsSize</span>
+            <span class="op">|</span> <span class="ident">PrevoutIndex</span>
+            <span class="op">|</span> <span class="ident">PrevoutKind</span>
+            <span class="op">|</span> <span class="ident">WrongAnnex</span>
+            <span class="op">|</span> <span class="ident">InvalidSighashType</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+        }
+    }
+}
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;u</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Prevouts</span><span class="op">&lt;</span><span class="lifetime">&#39;u</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">TxOut</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">check_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tx</span>: <span class="kw-2">&amp;</span><span class="ident">Transaction</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
@@ -1447,18 +1481,18 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;s</span><span class="op">&gt;</span> <span class="ident">ScriptPath</span><span class="op">&lt;</span><span class="lifetime">&#39;s</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Create a new ScriptPath structure</span>
+    <span class="doccomment">/// Creates a new `ScriptPath` structure.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">script</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;s</span> <span class="ident">Script</span>, <span class="ident">leaf_version</span>: <span class="ident">LeafVersion</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">ScriptPath</span> {
             <span class="ident">script</span>,
             <span class="ident">leaf_version</span>,
         }
     }
-    <span class="doccomment">/// Create a new ScriptPath structure using default leaf version value</span>
+    <span class="doccomment">/// Creates a new `ScriptPath` structure using default leaf version value.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_defaults</span>(<span class="ident">script</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;s</span> <span class="ident">Script</span>) -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">script</span>, <span class="ident">LeafVersion::TapScript</span>)
     }
-    <span class="doccomment">/// Compute the leaf hash</span>
+    <span class="doccomment">/// Computes the leaf hash for this `ScriptPath`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">leaf_hash</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TapLeafHash</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">enc</span> <span class="op">=</span> <span class="ident">TapLeafHash::engine</span>();
 
@@ -1489,7 +1523,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">SchnorrSighashType</span> {
-    <span class="doccomment">/// Break the sighash flag into the &quot;real&quot; sighash flag and the ANYONECANPAY boolean</span>
+    <span class="doccomment">/// Breaks the sighash flag into the &quot;real&quot; sighash flag and the `SIGHASH_ANYONECANPAY` boolean.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">split_anyonecanpay_flag</span>(<span class="self">self</span>) -&gt; (<span class="ident">SchnorrSighashType</span>, <span class="ident">bool</span>) {
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="ident">SchnorrSighashType::Default</span> =&gt; (<span class="ident">SchnorrSighashType::Default</span>, <span class="bool-val">false</span>),
@@ -1499,31 +1533,38 @@
             <span class="ident">SchnorrSighashType::AllPlusAnyoneCanPay</span> =&gt; (<span class="ident">SchnorrSighashType::All</span>, <span class="bool-val">true</span>),
             <span class="ident">SchnorrSighashType::NonePlusAnyoneCanPay</span> =&gt; (<span class="ident">SchnorrSighashType::None</span>, <span class="bool-val">true</span>),
             <span class="ident">SchnorrSighashType::SinglePlusAnyoneCanPay</span> =&gt; (<span class="ident">SchnorrSighashType::Single</span>, <span class="bool-val">true</span>),
-            <span class="ident">SchnorrSighashType::Reserved</span> =&gt; (<span class="ident">SchnorrSighashType::Reserved</span>, <span class="bool-val">false</span>),
         }
     }
 
-    <span class="doccomment">/// Create a [`SchnorrSighashType`] from raw `u8`</span>
+    <span class="doccomment">/// Creates a [`SchnorrSighashType`] from raw `u8`.</span>
+    <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span> <span class="op">=</span> <span class="string">&quot;0.29.0&quot;</span>, <span class="ident">note</span> <span class="op">=</span> <span class="string">&quot;use from_consensus_u8 instead&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_u8</span>(<span class="ident">hash_ty</span>: <span class="ident">u8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">hash_ty</span> {
-            <span class="number">0x00</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::Default</span>),
-            <span class="number">0x01</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::All</span>),
-            <span class="number">0x02</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::None</span>),
-            <span class="number">0x03</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::Single</span>),
-            <span class="number">0x81</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::AllPlusAnyoneCanPay</span>),
-            <span class="number">0x82</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::NonePlusAnyoneCanPay</span>),
-            <span class="number">0x83</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::SinglePlusAnyoneCanPay</span>),
-            <span class="number">0xFF</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">SchnorrSighashType::Reserved</span>),
-            <span class="ident">x</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidSighashType</span>(<span class="ident">x</span> <span class="kw">as</span> <span class="ident">u32</span>)),
-        }
+        <span class="ident"><span class="self">Self</span>::from_consensus_u8</span>(<span class="ident">hash_ty</span>)
+    }
+
+    <span class="doccomment">/// Constructs a [`SchnorrSighashType`] from a raw `u8`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_consensus_u8</span>(<span class="ident">hash_ty</span>: <span class="ident">u8</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">use</span> <span class="ident">SchnorrSighashType</span>::<span class="kw-2">*</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="ident">hash_ty</span> {
+            <span class="number">0x00</span> =&gt; <span class="ident">Default</span>,
+            <span class="number">0x01</span> =&gt; <span class="ident">All</span>,
+            <span class="number">0x02</span> =&gt; <span class="prelude-val">None</span>,
+            <span class="number">0x03</span> =&gt; <span class="ident">Single</span>,
+            <span class="number">0x81</span> =&gt; <span class="ident">AllPlusAnyoneCanPay</span>,
+            <span class="number">0x82</span> =&gt; <span class="ident">NonePlusAnyoneCanPay</span>,
+            <span class="number">0x83</span> =&gt; <span class="ident">SinglePlusAnyoneCanPay</span>,
+            <span class="ident">x</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidSighashType</span>(<span class="ident">x</span> <span class="kw">as</span> <span class="ident">u32</span>)),
+        })
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Deref</span><span class="op">&lt;</span><span class="ident">Target</span><span class="op">=</span><span class="ident">Transaction</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SighashCache</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Compute the sighash components from an unsigned transaction and auxiliary</span>
-    <span class="doccomment">/// in a lazy manner when required.</span>
-    <span class="doccomment">/// For the generated sighashes to be valid, no fields in the transaction may change except for</span>
-    <span class="doccomment">/// script_sig and witnesses.</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Deref</span><span class="op">&lt;</span><span class="ident">Target</span> <span class="op">=</span> <span class="ident">Transaction</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SighashCache</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Constructs a new `SighashCache` from an unsigned transaction.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The sighash components are computed in a lazy manner when required. For the generated</span>
+    <span class="doccomment">/// sighashes to be valid, no fields in the transaction may change except for script_sig and</span>
+    <span class="doccomment">/// witness.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">tx</span>: <span class="ident">R</span>) -&gt; <span class="self">Self</span> {
         <span class="ident">SighashCache</span> {
             <span class="ident">tx</span>,
@@ -1533,8 +1574,8 @@
         }
     }
 
-    <span class="doccomment">/// Encode the BIP341 signing data for any flag type into a given object implementing a</span>
-    <span class="doccomment">/// io::Write trait.</span>
+    <span class="doccomment">/// Encodes the BIP341 signing data for any flag type into a given object implementing a</span>
+    <span class="doccomment">/// [`io::Write`] trait.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">taproot_encode_signing_data_to</span><span class="op">&lt;</span><span class="ident">Write</span>: <span class="ident">io::Write</span>, <span class="ident">T</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">TxOut</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">Write</span>,
@@ -1609,7 +1650,7 @@
                     .<span class="ident">tx</span>
                     .<span class="ident">input</span>
                     .<span class="ident">get</span>(<span class="ident">input_index</span>)
-                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::IndexOutOfInputsBounds</span> {
+                    .<span class="ident">ok_or</span>(<span class="ident">Error::IndexOutOfInputsBounds</span> {
                         <span class="ident">index</span>: <span class="ident">input_index</span>,
                         <span class="ident">inputs_size</span>: <span class="self">self</span>.<span class="ident">tx</span>.<span class="ident">input</span>.<span class="ident">len</span>(),
                     })<span class="question-mark">?</span>;
@@ -1642,7 +1683,7 @@
             <span class="self">self</span>.<span class="ident">tx</span>
                 .<span class="ident">output</span>
                 .<span class="ident">get</span>(<span class="ident">input_index</span>)
-                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::SingleWithoutCorrespondingOutput</span> {
+                .<span class="ident">ok_or</span>(<span class="ident">Error::SingleWithoutCorrespondingOutput</span> {
                     <span class="ident">index</span>: <span class="ident">input_index</span>,
                     <span class="ident">outputs_size</span>: <span class="self">self</span>.<span class="ident">tx</span>.<span class="ident">output</span>.<span class="ident">len</span>(),
                 })<span class="question-mark">?</span>
@@ -1664,7 +1705,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Compute the BIP341 sighash for any flag type.</span>
+    <span class="doccomment">/// Computes the BIP341 sighash for any flag type.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">taproot_signature_hash</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">TxOut</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">input_index</span>: <span class="ident">usize</span>,
@@ -1685,7 +1726,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">TapSighashHash::from_engine</span>(<span class="ident">enc</span>))
     }
 
-    <span class="doccomment">/// Compute the BIP341 sighash for a key spend</span>
+    <span class="doccomment">/// Computes the BIP341 sighash for a key spend.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">taproot_key_spend_signature_hash</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Borrow</span><span class="op">&lt;</span><span class="ident">TxOut</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">input_index</span>: <span class="ident">usize</span>,
@@ -1704,7 +1745,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">TapSighashHash::from_engine</span>(<span class="ident">enc</span>))
     }
 
-    <span class="doccomment">/// Compute the BIP341 sighash for a script spend</span>
+    <span class="doccomment">/// Computes the BIP341 sighash for a script spend.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Assumes the default `OP_CODESEPARATOR` position of `0xFFFFFFFF`. Custom values can be</span>
     <span class="doccomment">/// provided through the more fine-grained API of [`SighashCache::taproot_encode_signing_data_to`].</span>
@@ -1727,7 +1768,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">TapSighashHash::from_engine</span>(<span class="ident">enc</span>))
     }
 
-    <span class="doccomment">/// Encode the BIP143 signing data for any flag type into a given object implementing a</span>
+    <span class="doccomment">/// Encodes the BIP143 signing data for any flag type into a given object implementing a</span>
     <span class="doccomment">/// [`std::io::Write`] trait.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">segwit_encode_signing_data_to</span><span class="op">&lt;</span><span class="ident">Write</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
@@ -1737,7 +1778,7 @@
         <span class="ident">value</span>: <span class="ident">u64</span>,
         <span class="ident">sighash_type</span>: <span class="ident">EcdsaSighashType</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">zero_hash</span> <span class="op">=</span> <span class="ident">sha256d::Hash::default</span>();
+        <span class="kw">let</span> <span class="ident">zero_hash</span> <span class="op">=</span> <span class="ident">sha256d::Hash::all_zeros</span>();
 
         <span class="kw">let</span> (<span class="ident">sighash</span>, <span class="ident">anyone_can_pay</span>) <span class="op">=</span> <span class="ident">sighash_type</span>.<span class="ident">split_anyonecanpay_flag</span>();
 
@@ -1766,7 +1807,7 @@
                     .<span class="ident">tx</span>
                     .<span class="ident">input</span>
                     .<span class="ident">get</span>(<span class="ident">input_index</span>)
-                    .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Error::IndexOutOfInputsBounds</span> {
+                    .<span class="ident">ok_or</span>(<span class="ident">Error::IndexOutOfInputsBounds</span> {
                         <span class="ident">index</span>: <span class="ident">input_index</span>,
                         <span class="ident">inputs_size</span>: <span class="self">self</span>.<span class="ident">tx</span>.<span class="ident">input</span>.<span class="ident">len</span>(),
                     })<span class="question-mark">?</span>;
@@ -1792,7 +1833,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Compute the BIP143 sighash for any flag type.</span>
+    <span class="doccomment">/// Computes the BIP143 sighash for any flag type.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">segwit_signature_hash</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">input_index</span>: <span class="ident">usize</span>,
@@ -1811,28 +1852,28 @@
         <span class="prelude-val">Ok</span>(<span class="ident">Sighash::from_engine</span>(<span class="ident">enc</span>))
     }
 
-    <span class="doccomment">/// Encode the legacy signing data for any flag type into a given object implementing a</span>
-    <span class="doccomment">/// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`]</span>
+    <span class="doccomment">/// Encodes the legacy signing data for any flag type into a given object implementing a</span>
+    <span class="doccomment">/// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`].</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">legacy_encode_signing_data_to</span><span class="op">&lt;</span><span class="ident">Write</span>: <span class="ident">io::Write</span>, <span class="ident">U</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">Write</span>,
         <span class="ident">input_index</span>: <span class="ident">usize</span>,
         <span class="ident">script_pubkey</span>: <span class="kw-2">&amp;</span><span class="ident">Script</span>,
         <span class="ident">sighash_type</span>: <span class="ident">U</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">EncodeSigningDataResult</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">input_index</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">tx</span>.<span class="ident">input</span>.<span class="ident">len</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::IndexOutOfInputsBounds</span> {
+            <span class="kw">return</span> <span class="ident">EncodeSigningDataResult::WriteResult</span>(<span class="prelude-val">Err</span>(<span class="ident">Error::IndexOutOfInputsBounds</span> {
                 <span class="ident">index</span>: <span class="ident">input_index</span>,
                 <span class="ident">inputs_size</span>: <span class="self">self</span>.<span class="ident">tx</span>.<span class="ident">input</span>.<span class="ident">len</span>(),
-            });
+            }));
         }
+
         <span class="self">self</span>.<span class="ident">tx</span>
             .<span class="ident">encode_signing_data_to</span>(<span class="kw-2">&amp;mut</span> <span class="ident">writer</span>, <span class="ident">input_index</span>, <span class="ident">script_pubkey</span>, <span class="ident">sighash_type</span>.<span class="ident">into</span>())
-            .<span class="ident">expect</span>(<span class="string">&quot;writers don&#39;t error&quot;</span>);
-        <span class="prelude-val">Ok</span>(())
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into</span>())
     }
 
-    <span class="doccomment">/// Computes the legacy sighash for any sighash type.</span>
+    <span class="doccomment">/// Computes the legacy sighash for any `sighash_type`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">legacy_signature_hash</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input_index</span>: <span class="ident">usize</span>,
@@ -1840,8 +1881,12 @@
         <span class="ident">sighash_type</span>: <span class="ident">u32</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Sighash</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">enc</span> <span class="op">=</span> <span class="ident">Sighash::engine</span>();
-        <span class="self">self</span>.<span class="ident">legacy_encode_signing_data_to</span>(<span class="kw-2">&amp;mut</span> <span class="ident">enc</span>, <span class="ident">input_index</span>, <span class="ident">script_pubkey</span>, <span class="ident">sighash_type</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">Sighash::from_engine</span>(<span class="ident">enc</span>))
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">legacy_encode_signing_data_to</span>(<span class="kw-2">&amp;mut</span> <span class="ident">enc</span>, <span class="ident">input_index</span>, <span class="ident">script_pubkey</span>, <span class="ident">sighash_type</span>)
+            .<span class="ident">is_sighash_single_bug</span>()<span class="question-mark">?</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Sighash::from_inner</span>(<span class="ident">UINT256_ONE</span>))
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Sighash::from_engine</span>(<span class="ident">enc</span>))
+        }
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
@@ -1917,16 +1962,16 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">DerefMut</span><span class="op">&lt;</span><span class="ident">Target</span><span class="op">=</span><span class="ident">Transaction</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">SighashCache</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// When the SighashCache is initialized with a mutable reference to a transaction instead of a</span>
-    <span class="doccomment">/// regular reference, this method is available to allow modification to the witnesses.</span>
+    <span class="doccomment">/// When the `SighashCache` is initialized with a mutable reference to a transaction instead of</span>
+    <span class="doccomment">/// a regular reference, this method is available to allow modification to the witnesses.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This allows in-line signing such as</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">/// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};</span>
     <span class="doccomment">/// use bitcoin::util::sighash::SighashCache;</span>
-    <span class="doccomment">/// use bitcoin::Script;</span>
+    <span class="doccomment">/// use bitcoin::{PackedLockTime, Script};</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };</span>
+    <span class="doccomment">/// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };</span>
     <span class="doccomment">/// let input_count = tx_to_sign.input.len();</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// let mut sig_hasher = SighashCache::new(&amp;mut tx_to_sign);</span>
@@ -1948,12 +1993,12 @@
     }
 }
 
-<span class="doccomment">/// The `Annex` struct is a slice wrapper enforcing first byte to be `0x50`.</span>
+<span class="doccomment">/// The `Annex` struct is a slice wrapper enforcing first byte is `0x50`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Annex</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]);
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Annex</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Creates a new `Annex` struct checking the first byte is `0x50`</span>
+    <span class="doccomment">/// Creates a new `Annex` struct checking the first byte is `0x50`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">annex_bytes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">annex_bytes</span>.<span class="ident">first</span>() <span class="op">==</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">TAPROOT_ANNEX_PREFIX</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">Annex</span>(<span class="ident">annex_bytes</span>))
@@ -1962,32 +2007,34 @@
         }
     }
 
-    <span class="doccomment">/// Returns the Annex bytes data (including first byte `0x50`)</span>
+    <span class="doccomment">/// Returns the Annex bytes data (including first byte `0x50`).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="number">0</span>
+        <span class="self">self</span>.<span class="number">0</span>
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="ident">Annex</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">io::Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
-        <span class="ident">encode::consensus_encode_with_size</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">writer</span>)
+    <span class="kw">fn</span> <span class="ident">consensus_encode</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">io::Write</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">w</span>: <span class="kw-2">&amp;mut</span> <span class="ident">W</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">io::Error</span><span class="op">&gt;</span> {
+        <span class="ident">encode::consensus_encode_with_size</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">w</span>)
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">consensus::deserialize</span>;
-    <span class="kw">use</span> <span class="ident">hashes::hex::FromHex</span>;
-    <span class="kw">use</span> <span class="ident">hashes</span>::{<span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
-    <span class="kw">use</span> <span class="ident">util::sighash</span>::{<span class="ident">Annex</span>, <span class="ident">Error</span>, <span class="ident">Prevouts</span>, <span class="ident">ScriptPath</span>, <span class="ident">SighashCache</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::blockdata::locktime::PackedLockTime</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus::deserialize</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::FromHex</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes</span>::{<span class="ident">Hash</span>, <span class="ident">HashEngine</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::sighash</span>::{<span class="ident">Annex</span>, <span class="ident">Error</span>, <span class="ident">Prevouts</span>, <span class="ident">ScriptPath</span>, <span class="ident">SighashCache</span>};
     <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
-    <span class="kw">use</span> <span class="ident">hashes::hex::ToHex</span>;
-    <span class="kw">use</span> <span class="ident">util::taproot</span>::{<span class="ident">TapTweakHash</span>, <span class="ident">TapSighashHash</span>, <span class="ident">TapBranchHash</span>, <span class="ident">TapLeafHash</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hashes::hex::ToHex</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::taproot</span>::{<span class="ident">TapTweakHash</span>, <span class="ident">TapSighashHash</span>, <span class="ident">TapBranchHash</span>, <span class="ident">TapLeafHash</span>};
     <span class="kw">use</span> <span class="ident">secp256k1</span>::{<span class="self">self</span>, <span class="ident">SecretKey</span>, <span class="ident">XOnlyPublicKey</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::internal_macros</span>::{<span class="ident">hex_hash</span>, <span class="ident">hex_script</span>, <span class="ident">hex_decode</span>};
     <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">serde_json</span>;
 
-    <span class="kw">use</span> {<span class="ident">Script</span>, <span class="ident">Transaction</span>, <span class="ident">TxIn</span>, <span class="ident">TxOut</span>};
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Script</span>, <span class="ident">Transaction</span>, <span class="ident">TxIn</span>, <span class="ident">TxOut</span>};
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_tap_sighash_hash</span>() {
@@ -2122,7 +2169,7 @@
     <span class="kw">fn</span> <span class="ident">test_sighash_errors</span>() {
         <span class="kw">let</span> <span class="ident">dumb_tx</span> <span class="op">=</span> <span class="ident">Transaction</span> {
             <span class="ident">version</span>: <span class="number">0</span>,
-            <span class="ident">lock_time</span>: <span class="number">0</span>,
+            <span class="ident">lock_time</span>: <span class="ident">PackedLockTime::ZERO</span>,
             <span class="ident">input</span>: <span class="macro">vec!</span>[<span class="ident">TxIn::default</span>()],
             <span class="ident">output</span>: <span class="macro">vec!</span>[],
         };
@@ -2177,11 +2224,12 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_annex_errors</span>() {
-        <span class="macro">assert_eq!</span>(<span class="ident">Annex::new</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[]), <span class="prelude-val">Err</span>(<span class="ident">Error::WrongAnnex</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">Annex::new</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0x51</span>]), <span class="prelude-val">Err</span>(<span class="ident">Error::WrongAnnex</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">Annex::new</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="number">0x51</span>, <span class="number">0x50</span>]), <span class="prelude-val">Err</span>(<span class="ident">Error::WrongAnnex</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Annex::new</span>(<span class="kw-2">&amp;</span>[]), <span class="prelude-val">Err</span>(<span class="ident">Error::WrongAnnex</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Annex::new</span>(<span class="kw-2">&amp;</span>[<span class="number">0x51</span>]), <span class="prelude-val">Err</span>(<span class="ident">Error::WrongAnnex</span>));
+        <span class="macro">assert_eq!</span>(<span class="ident">Annex::new</span>(<span class="kw-2">&amp;</span>[<span class="number">0x51</span>, <span class="number">0x50</span>]), <span class="prelude-val">Err</span>(<span class="ident">Error::WrongAnnex</span>));
     }
 
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
     <span class="kw">fn</span> <span class="ident">test_taproot_sighash</span>(
         <span class="ident">tx_hex</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
         <span class="ident">prevout_hex</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
@@ -2274,7 +2322,7 @@
             } <span class="kw">else</span> {
                 <span class="prelude-val">Some</span>(<span class="macro">hex_hash!</span>(<span class="ident">TapBranchHash</span>, <span class="ident">inp</span>[<span class="string">&quot;given&quot;</span>][<span class="string">&quot;merkleRoot&quot;</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>()))
             };
-            <span class="kw">let</span> <span class="ident">hash_ty</span> <span class="op">=</span> <span class="ident">SchnorrSighashType::from_u8</span>(<span class="ident">inp</span>[<span class="string">&quot;given&quot;</span>][<span class="string">&quot;hashType&quot;</span>].<span class="ident">as_u64</span>().<span class="ident">unwrap</span>() <span class="kw">as</span> <span class="ident">u8</span>).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">hash_ty</span> <span class="op">=</span> <span class="ident">SchnorrSighashType::from_consensus_u8</span>(<span class="ident">inp</span>[<span class="string">&quot;given&quot;</span>][<span class="string">&quot;hashType&quot;</span>].<span class="ident">as_u64</span>().<span class="ident">unwrap</span>() <span class="kw">as</span> <span class="ident">u8</span>).<span class="ident">unwrap</span>();
 
             <span class="kw">let</span> <span class="ident">expected_internal_pk</span> <span class="op">=</span> <span class="macro">hex_hash!</span>(<span class="ident">XOnlyPublicKey</span>, <span class="ident">inp</span>[<span class="string">&quot;intermediary&quot;</span>][<span class="string">&quot;internalPubkey&quot;</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>());
             <span class="kw">let</span> <span class="ident">expected_tweak</span> <span class="op">=</span> <span class="macro">hex_hash!</span>(<span class="ident">TapTweakHash</span>, <span class="ident">inp</span>[<span class="string">&quot;intermediary&quot;</span>][<span class="string">&quot;tweak&quot;</span>].<span class="ident">as_str</span>().<span class="ident">unwrap</span>());
@@ -2285,16 +2333,15 @@
             <span class="kw">let</span> (<span class="ident">expected_key_spend_sig</span>, <span class="ident">expected_hash_ty</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">sig_str</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">128</span> {
                 (<span class="ident">secp256k1::schnorr::Signature::from_str</span>(<span class="ident">sig_str</span>).<span class="ident">unwrap</span>(), <span class="ident">SchnorrSighashType::Default</span>)
             } <span class="kw">else</span> {
-                <span class="kw">let</span> <span class="ident">hash_ty</span> <span class="op">=</span> <span class="ident">SchnorrSighashType::from_u8</span>(<span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::from_hex</span>(<span class="kw-2">&amp;</span><span class="ident">sig_str</span>[<span class="number">128</span>..]).<span class="ident">unwrap</span>()[<span class="number">0</span>]).<span class="ident">unwrap</span>();
+                <span class="kw">let</span> <span class="ident">hash_ty</span> <span class="op">=</span> <span class="ident">SchnorrSighashType::from_consensus_u8</span>(<span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="ident">::from_hex</span>(<span class="kw-2">&amp;</span><span class="ident">sig_str</span>[<span class="number">128</span>..]).<span class="ident">unwrap</span>()[<span class="number">0</span>]).<span class="ident">unwrap</span>();
                 (<span class="ident">secp256k1::schnorr::Signature::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">sig_str</span>[..<span class="number">128</span>]).<span class="ident">unwrap</span>(), <span class="ident">hash_ty</span>)
             };
 
             <span class="comment">// tests</span>
-            <span class="kw">let</span> <span class="ident">keypair</span> <span class="op">=</span> <span class="ident">secp256k1::KeyPair::from_secret_key</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="ident">internal_priv_key</span>);
-            <span class="kw">let</span> <span class="ident">internal_key</span> <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">keypair</span>);
+            <span class="kw">let</span> <span class="ident">keypair</span> <span class="op">=</span> <span class="ident">secp256k1::KeyPair::from_secret_key</span>(<span class="ident">secp</span>, <span class="kw-2">&amp;</span><span class="ident">internal_priv_key</span>);
+            <span class="kw">let</span> (<span class="ident">internal_key</span>, <span class="ident">_parity</span>) <span class="op">=</span> <span class="ident">XOnlyPublicKey::from_keypair</span>(<span class="kw-2">&amp;</span><span class="ident">keypair</span>);
             <span class="kw">let</span> <span class="ident">tweak</span> <span class="op">=</span> <span class="ident">TapTweakHash::from_key_and_tweak</span>(<span class="ident">internal_key</span>, <span class="ident">merkle_root</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tweaked_keypair</span> <span class="op">=</span> <span class="ident">keypair</span>;
-            <span class="ident">tweaked_keypair</span>.<span class="ident">tweak_add_assign</span>(<span class="kw-2">&amp;</span><span class="ident">secp</span>, <span class="kw-2">&amp;</span><span class="ident">tweak</span>).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">tweaked_keypair</span> <span class="op">=</span> <span class="ident">keypair</span>.<span class="ident">add_xonly_tweak</span>(<span class="ident">secp</span>, <span class="kw-2">&amp;</span><span class="ident">tweak</span>.<span class="ident">to_scalar</span>()).<span class="ident">unwrap</span>();
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sig_msg</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="ident">cache</span>.<span class="ident">taproot_encode_signing_data_to</span>(
                 <span class="kw-2">&amp;mut</span> <span class="ident">sig_msg</span>,
@@ -2312,7 +2359,7 @@
                 <span class="ident">hash_ty</span>
             ).<span class="ident">unwrap</span>();
 
-            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">secp256k1::Message::from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">sighash</span>).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">secp256k1::Message::from</span>(<span class="ident">sighash</span>);
             <span class="kw">let</span> <span class="ident">key_spend_sig</span> <span class="op">=</span> <span class="ident">secp</span>.<span class="ident">sign_schnorr_with_aux_rand</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">tweaked_keypair</span>, <span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="number">32</span>]);
 
             <span class="macro">assert_eq!</span>(<span class="ident">expected_internal_pk</span>, <span class="ident">internal_key</span>);
@@ -2342,7 +2389,6 @@
             (<span class="string">&quot;SIGHASH_ALL|SIGHASH_ANYONECANPAY&quot;</span>, <span class="ident">SchnorrSighashType::AllPlusAnyoneCanPay</span>),
             (<span class="string">&quot;SIGHASH_NONE|SIGHASH_ANYONECANPAY&quot;</span>, <span class="ident">SchnorrSighashType::NonePlusAnyoneCanPay</span>),
             (<span class="string">&quot;SIGHASH_SINGLE|SIGHASH_ANYONECANPAY&quot;</span>, <span class="ident">SchnorrSighashType::SinglePlusAnyoneCanPay</span>),
-            (<span class="string">&quot;SIGHASH_RESERVED&quot;</span>, <span class="ident">SchnorrSighashType::Reserved</span>),
         ];
         <span class="kw">for</span> (<span class="ident">s</span>, <span class="ident">sht</span>) <span class="kw">in</span> <span class="ident">sighashtypes</span> {
             <span class="macro">assert_eq!</span>(<span class="ident">sht</span>.<span class="ident">to_string</span>(), <span class="ident">s</span>);
