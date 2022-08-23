@@ -1820,6 +1820,20 @@
 <span id="1815">1815</span>
 <span id="1816">1816</span>
 <span id="1817">1817</span>
+<span id="1818">1818</span>
+<span id="1819">1819</span>
+<span id="1820">1820</span>
+<span id="1821">1821</span>
+<span id="1822">1822</span>
+<span id="1823">1823</span>
+<span id="1824">1824</span>
+<span id="1825">1825</span>
+<span id="1826">1826</span>
+<span id="1827">1827</span>
+<span id="1828">1828</span>
+<span id="1829">1829</span>
+<span id="1830">1830</span>
+<span id="1831">1831</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">bytes</span>::{<span class="ident">Buf</span>, <span class="ident">Bytes</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
@@ -1876,6 +1890,7 @@
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::batch</span>::{
     <span class="ident">send_batched_messages_and_wait_check_tx</span>, <span class="ident">send_batched_messages_and_wait_commit</span>,
+    <span class="ident">sequential_send_batched_messages_and_wait_commit</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::encode::encode_to_bech32</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::gas</span>::{<span class="ident">calculate_fee</span>, <span class="ident">mul_ceil</span>};
@@ -2242,16 +2257,29 @@
         <span class="kw">let</span> <span class="ident">account</span> <span class="op">=</span>
             <span class="ident">get_or_fetch_account</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">grpc_addr</span>, <span class="kw-2">&amp;</span><span class="ident">key_entry</span>.<span class="ident">account</span>, <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">account</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="ident">send_batched_messages_and_wait_commit</span>(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">tx_config</span>,
-            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">max_msg_num</span>,
-            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">max_tx_size</span>,
-            <span class="kw-2">&amp;</span><span class="ident">key_entry</span>,
-            <span class="ident">account</span>,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">memo_prefix</span>,
-            <span class="ident">proto_msgs</span>,
-        )
-        .<span class="kw">await</span>
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">sequential_batch_tx</span> {
+            <span class="ident">sequential_send_batched_messages_and_wait_commit</span>(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">tx_config</span>,
+                <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">max_msg_num</span>,
+                <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">max_tx_size</span>,
+                <span class="kw-2">&amp;</span><span class="ident">key_entry</span>,
+                <span class="ident">account</span>,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">memo_prefix</span>,
+                <span class="ident">proto_msgs</span>,
+            )
+            .<span class="kw">await</span>
+        } <span class="kw">else</span> {
+            <span class="ident">send_batched_messages_and_wait_commit</span>(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">tx_config</span>,
+                <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">max_msg_num</span>,
+                <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">max_tx_size</span>,
+                <span class="kw-2">&amp;</span><span class="ident">key_entry</span>,
+                <span class="ident">account</span>,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">memo_prefix</span>,
+                <span class="ident">proto_msgs</span>,
+            )
+            .<span class="kw">await</span>
+        }
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">do_send_messages_and_wait_check_tx</span>(
