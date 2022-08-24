@@ -288,7 +288,43 @@
 <span id="283">283</span>
 <span id="284">284</span>
 <span id="285">285</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">Sequence</span>};
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc::core::ics02_client::height::Height</span>;
+<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">Sequence</span>};
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier::ChainId</span>;
 <span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>;
@@ -331,35 +367,67 @@
 
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
 
-            <span class="kw">for</span> <span class="ident">seq</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">sequences</span> {
-                <span class="comment">// query first (and only) Tx that includes the event specified in the query request</span>
-                <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">rpc_client</span>
-                    .<span class="ident">tx_search</span>(
-                        <span class="ident">packet_query</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>, <span class="kw-2">*</span><span class="ident">seq</span>),
-                        <span class="bool-val">false</span>,
-                        <span class="number">1</span>,
-                        <span class="number">1</span>, <span class="comment">// get only the first Tx matching the query</span>
-                        <span class="ident">Order::Ascending</span>,
-                    )
-                    .<span class="kw">await</span>
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="ident">rpc_address</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
-
-                <span class="macro">assert!</span>(
-                    <span class="ident">response</span>.<span class="ident">txs</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>,
-                    <span class="string">&quot;packet_from_tx_search_response: unexpected number of txs&quot;</span>
-                );
-
-                <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">txs</span>.<span class="ident">is_empty</span>() {
-                    <span class="kw">continue</span>;
+            <span class="kw">let</span> <span class="ident">tm_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">request</span>.<span class="ident">height</span> {
+                <span class="ident">QueryHeight::Latest</span> =&gt; <span class="ident">tendermint::block::Height::default</span>(),
+                <span class="ident">QueryHeight::Specific</span>(<span class="ident">h</span>) =&gt; {
+                    <span class="ident">tendermint::block::Height::try_from</span>(<span class="ident">h</span>.<span class="ident">revision_height</span>()).<span class="ident">unwrap</span>()
                 }
+            };
+            <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">u64::from</span>(<span class="ident">tm_height</span>))
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_height_no_source</span>())<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">exact_block_results</span> <span class="op">=</span> <span class="ident">rpc_client</span>
+                .<span class="ident">block_results</span>(<span class="ident">tm_height</span>)
+                .<span class="kw">await</span>
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="ident">rpc_address</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>
+                .<span class="ident">txs_results</span>;
 
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">event</span>) <span class="op">=</span> <span class="ident">packet_from_tx_search_response</span>(
-                    <span class="ident">chain_id</span>,
-                    <span class="kw-2">&amp;</span><span class="ident">request</span>,
-                    <span class="kw-2">*</span><span class="ident">seq</span>,
-                    <span class="ident">response</span>.<span class="ident">txs</span>[<span class="number">0</span>].<span class="ident">clone</span>(),
-                )<span class="question-mark">?</span> {
-                    <span class="ident">result</span>.<span class="ident">push</span>(<span class="ident">event</span>);
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">txs</span>) <span class="op">=</span> <span class="ident">exact_block_results</span> {
+                <span class="kw">for</span> <span class="ident">tx</span> <span class="kw">in</span> <span class="ident">txs</span>.<span class="ident">iter</span>() {
+                    <span class="kw">let</span> <span class="ident">tx_copy</span> <span class="op">=</span> <span class="ident">tx</span>.<span class="ident">clone</span>();
+                    <span class="ident">result</span>.<span class="ident">append</span>(
+                        <span class="kw-2">&amp;mut</span> <span class="ident">tx_copy</span>
+                            .<span class="ident">events</span>
+                            .<span class="ident">into_iter</span>()
+                            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">filter_matching_event</span>(<span class="ident">e</span>, <span class="kw-2">&amp;</span><span class="ident">request</span>, <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">sequences</span>))
+                            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">IbcEventWithHeight::new</span>(<span class="ident">e</span>, <span class="ident">height</span>))
+                            .<span class="ident">collect</span>(),
+                    )
+                }
+            }
+
+            <span class="comment">// Call to /block_results doesn&#39;t get SendPacket events, so an additional tx_search is required.</span>
+            <span class="comment">// Without this check, WriteAcknowledgment will be sent twice.</span>
+            <span class="kw">if</span> <span class="ident">result</span>.<span class="ident">is_empty</span>() {
+                <span class="kw">for</span> <span class="ident">seq</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">request</span>.<span class="ident">sequences</span> {
+                    <span class="comment">// query first (and only) Tx that includes the event specified in the query request</span>
+                    <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">rpc_client</span>
+                        .<span class="ident">tx_search</span>(
+                            <span class="ident">packet_query</span>(<span class="kw-2">&amp;</span><span class="ident">request</span>, <span class="kw-2">*</span><span class="ident">seq</span>),
+                            <span class="bool-val">false</span>,
+                            <span class="number">1</span>,
+                            <span class="number">1</span>, <span class="comment">// get only the first Tx matching the query</span>
+                            <span class="ident">Order::Ascending</span>,
+                        )
+                        .<span class="kw">await</span>
+                        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::rpc</span>(<span class="ident">rpc_address</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
+
+                    <span class="macro">assert!</span>(
+                        <span class="ident">response</span>.<span class="ident">txs</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>,
+                        <span class="string">&quot;packet_from_tx_search_response: unexpected number of txs&quot;</span>
+                    );
+
+                    <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">txs</span>.<span class="ident">is_empty</span>() {
+                        <span class="kw">continue</span>;
+                    }
+
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">event</span>) <span class="op">=</span> <span class="ident">packet_from_tx_search_response</span>(
+                        <span class="ident">chain_id</span>,
+                        <span class="kw-2">&amp;</span><span class="ident">request</span>,
+                        <span class="kw-2">*</span><span class="ident">seq</span>,
+                        <span class="ident">response</span>.<span class="ident">txs</span>[<span class="number">0</span>].<span class="ident">clone</span>(),
+                    )<span class="question-mark">?</span> {
+                        <span class="ident">result</span>.<span class="ident">push</span>(<span class="ident">event</span>);
+                    }
                 }
             }
             <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
@@ -488,25 +556,25 @@
         .<span class="ident">tx_result</span>
         .<span class="ident">events</span>
         .<span class="ident">into_iter</span>()
-        .<span class="ident">find_map</span>(<span class="op">|</span><span class="ident">ev</span><span class="op">|</span> <span class="ident">filter_matching_event</span>(<span class="ident">ev</span>, <span class="ident">request</span>, <span class="ident">seq</span>))
+        .<span class="ident">find_map</span>(<span class="op">|</span><span class="ident">ev</span><span class="op">|</span> <span class="ident">filter_matching_event</span>(<span class="ident">ev</span>, <span class="ident">request</span>, <span class="kw-2">&amp;</span>[<span class="ident">seq</span>]))
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">ibc_event</span><span class="op">|</span> <span class="ident">IbcEventWithHeight::new</span>(<span class="ident">ibc_event</span>, <span class="ident">height</span>)))
 }
 
 <span class="kw">fn</span> <span class="ident">filter_matching_event</span>(
     <span class="ident">event</span>: <span class="ident">Event</span>,
     <span class="ident">request</span>: <span class="kw-2">&amp;</span><span class="ident">QueryPacketEventDataRequest</span>,
-    <span class="ident">seq</span>: <span class="ident">Sequence</span>,
+    <span class="ident">seqs</span>: <span class="kw-2">&amp;</span>[<span class="ident">Sequence</span>],
 ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">matches_packet</span>(
         <span class="ident">request</span>: <span class="kw-2">&amp;</span><span class="ident">QueryPacketEventDataRequest</span>,
-        <span class="ident">seq</span>: <span class="ident">Sequence</span>,
+        <span class="ident">seqs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>,
         <span class="ident">packet</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
     ) -&gt; <span class="ident">bool</span> {
         <span class="ident">packet</span>.<span class="ident">source_port</span> <span class="op">==</span> <span class="ident">request</span>.<span class="ident">source_port_id</span>
             <span class="op">&amp;&amp;</span> <span class="ident">packet</span>.<span class="ident">source_channel</span> <span class="op">==</span> <span class="ident">request</span>.<span class="ident">source_channel_id</span>
             <span class="op">&amp;&amp;</span> <span class="ident">packet</span>.<span class="ident">destination_port</span> <span class="op">==</span> <span class="ident">request</span>.<span class="ident">destination_port_id</span>
             <span class="op">&amp;&amp;</span> <span class="ident">packet</span>.<span class="ident">destination_channel</span> <span class="op">==</span> <span class="ident">request</span>.<span class="ident">destination_channel_id</span>
-            <span class="op">&amp;&amp;</span> <span class="ident">packet</span>.<span class="ident">sequence</span> <span class="op">==</span> <span class="ident">seq</span>
+            <span class="op">&amp;&amp;</span> <span class="ident">seqs</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">packet</span>.<span class="ident">sequence</span>)
     }
 
     <span class="kw">if</span> <span class="ident">event</span>.<span class="ident">type_str</span> <span class="op">!</span><span class="op">=</span> <span class="ident">request</span>.<span class="ident">event_id</span>.<span class="ident">as_str</span>() {
@@ -515,11 +583,13 @@
 
     <span class="kw">let</span> <span class="ident">ibc_event</span> <span class="op">=</span> <span class="ident">ibc_event_try_from_abci_event</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>).<span class="ident">ok</span>()<span class="question-mark">?</span>;
     <span class="kw">match</span> <span class="ident">ibc_event</span> {
-        <span class="ident">IbcEvent::SendPacket</span>(<span class="kw-2">ref</span> <span class="ident">send_ev</span>) <span class="kw">if</span> <span class="ident">matches_packet</span>(<span class="ident">request</span>, <span class="ident">seq</span>, <span class="kw-2">&amp;</span><span class="ident">send_ev</span>.<span class="ident">packet</span>) =&gt; {
+        <span class="ident">IbcEvent::SendPacket</span>(<span class="kw-2">ref</span> <span class="ident">send_ev</span>)
+            <span class="kw">if</span> <span class="ident">matches_packet</span>(<span class="ident">request</span>, <span class="ident">seqs</span>.<span class="ident">to_vec</span>(), <span class="kw-2">&amp;</span><span class="ident">send_ev</span>.<span class="ident">packet</span>) =&gt;
+        {
             <span class="prelude-val">Some</span>(<span class="ident">ibc_event</span>)
         }
         <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="kw-2">ref</span> <span class="ident">ack_ev</span>)
-            <span class="kw">if</span> <span class="ident">matches_packet</span>(<span class="ident">request</span>, <span class="ident">seq</span>, <span class="kw-2">&amp;</span><span class="ident">ack_ev</span>.<span class="ident">packet</span>) =&gt;
+            <span class="kw">if</span> <span class="ident">matches_packet</span>(<span class="ident">request</span>, <span class="ident">seqs</span>.<span class="ident">to_vec</span>(), <span class="kw-2">&amp;</span><span class="ident">ack_ev</span>.<span class="ident">packet</span>) =&gt;
         {
             <span class="prelude-val">Some</span>(<span class="ident">ibc_event</span>)
         }
