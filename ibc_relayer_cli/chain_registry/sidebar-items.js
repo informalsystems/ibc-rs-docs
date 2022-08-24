@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["get_configs","Generates a Vec for a slice of chains names by fetching data from https://github.com/cosmos/chain-registry. Gas settings are set to default values."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Fetchable","`Fetchable` represents the basic expectations for external data or resources that can be fetched."]]});

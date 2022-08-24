@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Tag","Represents an IBC path tag"]],"struct":[["Chain1",""],["Chain2",""],["Channel",""],["ChannelChain1",""],["ChannelChain2",""],["IBCPath",""],["Tags",""]]});
