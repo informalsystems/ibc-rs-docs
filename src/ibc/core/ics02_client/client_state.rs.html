@@ -260,84 +260,43 @@
 <span id="255">255</span>
 <span id="256">256</span>
 <span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
-<span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
-<span id="304">304</span>
-<span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
-<span id="308">308</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::marker</span>::{<span class="ident">Send</span>, <span class="ident">Sync</span>};
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
+<span class="kw">use</span> <span class="ident">dyn_clone::DynClone</span>;
+<span class="kw">use</span> <span class="ident">erased_serde::Serialize</span> <span class="kw">as</span> <span class="ident">ErasedSerialize</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
+<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::commitment::v1::MerkleProof</span>;
+<span class="kw">use</span> <span class="ident">ibc_proto::protobuf::Protobuf</span> <span class="kw">as</span> <span class="ident">ErasedProtobuf</span>;
 
-<span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::client::v1::IdentifiedClientState</span>;
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::clients::ics07_tendermint::client_state</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_type::ClientType</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error::Error</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::trust_threshold::TrustThreshold</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::error::ValidationError</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::client_state::MockClientState</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::ConnectionEnd</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::ChannelEnd</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::commitment</span>::{<span class="ident">AcknowledgementCommitment</span>, <span class="ident">PacketCommitment</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::context::ChannelReader</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::packet::Sequence</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics23_commitment::commitment</span>::{
+    <span class="ident">CommitmentPrefix</span>, <span class="ident">CommitmentProofBytes</span>, <span class="ident">CommitmentRoot</span>,
+};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dynamic_typing::AsAny</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">TENDERMINT_CLIENT_STATE_TYPE_URL</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;/ibc.lightclients.tendermint.v1.ClientState&quot;</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MOCK_CLIENT_STATE_TYPE_URL</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;/ibc.mock.ClientState&quot;</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::consensus_state::ConsensusState</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::context::ClientReader</span>;
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ClientState</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">core::fmt::Debug</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="doccomment">/// Client-specific options for upgrading the client</span>
-    <span class="kw">type</span> <span class="ident">UpgradeOptions</span>;
-
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ClientState</span>:
+    <span class="ident">AsAny</span>
+    <span class="op">+</span> <span class="ident">sealed::ErasedPartialEqClientState</span>
+    <span class="op">+</span> <span class="ident">DynClone</span>
+    <span class="op">+</span> <span class="ident">ErasedSerialize</span>
+    <span class="op">+</span> <span class="ident">ErasedProtobuf</span><span class="op">&lt;</span><span class="ident">Any</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span><span class="op">&gt;</span>
+    <span class="op">+</span> <span class="ident">core::fmt::Debug</span>
+    <span class="op">+</span> <span class="ident">Send</span>
+    <span class="op">+</span> <span class="ident">Sync</span>
+{
     <span class="doccomment">/// Return the chain identifier which this client is serving (i.e., the client is verifying</span>
     <span class="doccomment">/// consensus states from this chain).</span>
     <span class="kw">fn</span> <span class="ident">chain_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ChainId</span>;
@@ -345,7 +304,7 @@
     <span class="doccomment">/// Type of client associated with this state (eg. Tendermint)</span>
     <span class="kw">fn</span> <span class="ident">client_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ClientType</span>;
 
-    <span class="doccomment">/// Latest height of consensus state</span>
+    <span class="doccomment">/// Latest height the client was updated to</span>
     <span class="kw">fn</span> <span class="ident">latest_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Height</span>;
 
     <span class="doccomment">/// Freeze status of the client</span>
@@ -356,267 +315,206 @@
     <span class="doccomment">/// Frozen height of the client</span>
     <span class="kw">fn</span> <span class="ident">frozen_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Check if the state is expired when `elapsed` time has passed since the latest consensus</span>
+    <span class="doccomment">/// state timestamp</span>
+    <span class="kw">fn</span> <span class="ident">expired</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">elapsed</span>: <span class="ident">Duration</span>) -&gt; <span class="ident">bool</span>;
+
     <span class="doccomment">/// Helper function to verify the upgrade client procedure.</span>
     <span class="doccomment">/// Resets all fields except the blockchain-specific ones,</span>
     <span class="doccomment">/// and updates the given fields.</span>
     <span class="kw">fn</span> <span class="ident">upgrade</span>(
-        <span class="self">self</span>,
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">upgrade_height</span>: <span class="ident">Height</span>,
-        <span class="ident">upgrade_options</span>: <span class="ident"><span class="self">Self</span>::UpgradeOptions</span>,
+        <span class="ident">upgrade_options</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">UpgradeOptions</span>,
         <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
-    ) -&gt; <span class="self">Self</span>;
+    );
 
-    <span class="doccomment">/// Wrap into an `AnyClientState`</span>
-    <span class="kw">fn</span> <span class="ident">wrap_any</span>(<span class="self">self</span>) -&gt; <span class="ident">AnyClientState</span>;
+    <span class="doccomment">/// Convert into a boxed trait object</span>
+    <span class="kw">fn</span> <span class="ident">into_box</span>(<span class="self">self</span>) -&gt; <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="self">Self</span>: <span class="ident">Sized</span>,
+    {
+        <span class="ident">Box::new</span>(<span class="self">self</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">initialise</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">consensus_state</span>: <span class="ident">Any</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="kw">fn</span> <span class="ident">check_header_and_update_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ClientReader</span>,
+        <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
+        <span class="ident">header</span>: <span class="ident">Any</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdatedState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="kw">fn</span> <span class="ident">verify_upgrade_and_update_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">consensus_state</span>: <span class="ident">Any</span>,
+        <span class="ident">proof_upgrade_client</span>: <span class="ident">MerkleProof</span>,
+        <span class="ident">proof_upgrade_consensus_state</span>: <span class="ident">MerkleProof</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdatedState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verification functions as specified in:</span>
+    <span class="doccomment">/// &lt;https://github.com/cosmos/ibc/tree/master/spec/core/ics-002-client-semantics&gt;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Verify a `proof` that the consensus state of a given client (at height `consensus_height`)</span>
+    <span class="doccomment">/// matches the input `consensus_state`. The parameter `counterparty_height` represent the</span>
+    <span class="doccomment">/// height of the counterparty chain that this proof assumes (i.e., the height at which this</span>
+    <span class="doccomment">/// proof was computed).</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_client_consensus_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentPrefix</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
+        <span class="ident">consensus_height</span>: <span class="ident">Height</span>,
+        <span class="ident">expected_consensus_state</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify a `proof` that a connection state matches that of the input `connection_end`.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_connection_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentPrefix</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">connection_id</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionId</span>,
+        <span class="ident">expected_connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify a `proof` that a channel state matches that of the input `channel_end`.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_channel_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentPrefix</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">expected_channel_end</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelEnd</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify the client state for this chain that it is stored on the counterparty chain.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_client_full_state</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">prefix</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentPrefix</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
+        <span class="ident">expected_client_state</span>: <span class="ident">Any</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify a `proof` that a packet has been commited.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_packet_data</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
+        <span class="ident">commitment</span>: <span class="ident">PacketCommitment</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify a `proof` that a packet has been commited.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_packet_acknowledgement</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
+        <span class="ident">ack</span>: <span class="ident">AcknowledgementCommitment</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify a `proof` that of the next_seq_received.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_next_sequence_recv</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Verify a `proof` that a packet has not been received.</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::too_many_arguments</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">verify_packet_receipt_absence</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+        <span class="ident">height</span>: <span class="ident">Height</span>,
+        <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
+        <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentProofBytes</span>,
+        <span class="ident">root</span>: <span class="kw-2">&amp;</span><span class="ident">CommitmentRoot</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">sequence</span>: <span class="ident">Sequence</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">tag</span> <span class="op">=</span> <span class="string">&quot;type&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AnyUpgradeOptions</span> {
-    <span class="ident">Tendermint</span>(<span class="ident">client_state::UpgradeOptions</span>),
+<span class="comment">// Implements `Clone` for `Box&lt;dyn ClientState&gt;`</span>
+<span class="macro">dyn_clone::clone_trait_object!</span>(<span class="ident">ClientState</span>);
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-    <span class="ident">Mock</span>(()),
-}
+<span class="comment">// Implements `serde::Serialize` for all types that have ClientState as supertrait</span>
+<span class="macro">erased_serde::serialize_trait_object!</span>(<span class="ident">ClientState</span>);
 
-<span class="kw">impl</span> <span class="ident">AnyUpgradeOptions</span> {
-    <span class="kw">fn</span> <span class="ident">into_tendermint</span>(<span class="self">self</span>) -&gt; <span class="ident">client_state::UpgradeOptions</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Tendermint</span>(<span class="ident">options</span>) =&gt; <span class="ident">options</span>,
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident"><span class="self">Self</span>::Mock</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;cannot downcast AnyUpgradeOptions::Mock to Tendermint::UpgradeOptions&quot;</span>)
-            }
-        }
-    }
-}
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">tag</span> <span class="op">=</span> <span class="string">&quot;type&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AnyClientState</span> {
-    <span class="ident">Tendermint</span>(<span class="ident">client_state::ClientState</span>),
-
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-    <span class="ident">Mock</span>(<span class="ident">MockClientState</span>),
-}
-
-<span class="kw">impl</span> <span class="ident">AnyClientState</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">latest_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Height</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Tendermint</span>(<span class="ident">tm_state</span>) =&gt; <span class="ident">tm_state</span>.<span class="ident">latest_height</span>(),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident"><span class="self">Self</span>::Mock</span>(<span class="ident">mock_state</span>) =&gt; <span class="ident">mock_state</span>.<span class="ident">latest_height</span>(),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">frozen_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Tendermint</span>(<span class="ident">tm_state</span>) =&gt; <span class="ident">tm_state</span>.<span class="ident">frozen_height</span>(),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident"><span class="self">Self</span>::Mock</span>(<span class="ident">mock_state</span>) =&gt; <span class="ident">mock_state</span>.<span class="ident">frozen_height</span>(),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">trust_threshold</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TrustThreshold</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">state</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">state</span>.<span class="ident">trust_level</span>),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">max_clock_drift</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Duration</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">state</span>) =&gt; <span class="ident">state</span>.<span class="ident">max_clock_drift</span>,
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="kw">_</span>) =&gt; <span class="ident">Duration::new</span>(<span class="number">0</span>, <span class="number">0</span>),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">client_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ClientType</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Tendermint</span>(<span class="ident">state</span>) =&gt; <span class="ident">state</span>.<span class="ident">client_type</span>(),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident"><span class="self">Self</span>::Mock</span>(<span class="ident">state</span>) =&gt; <span class="ident">state</span>.<span class="ident">client_type</span>(),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">refresh_period</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">tm_state</span>) =&gt; <span class="ident">tm_state</span>.<span class="ident">refresh_time</span>(),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="ident">mock_state</span>) =&gt; <span class="ident">mock_state</span>.<span class="ident">refresh_time</span>(),
-        }
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">expired</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">elapsed_since_latest</span>: <span class="ident">Duration</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">tm_state</span>) =&gt; <span class="ident">tm_state</span>.<span class="ident">expired</span>(<span class="ident">elapsed_since_latest</span>),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="ident">mock_state</span>) =&gt; <span class="ident">mock_state</span>.<span class="ident">expired</span>(<span class="ident">elapsed_since_latest</span>),
-        }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Protobuf</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AnyClientState</span> {}
-
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AnyClientState</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
-
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">raw</span>: <span class="ident">Any</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">raw</span>.<span class="ident">type_url</span>.<span class="ident">as_str</span>() {
-            <span class="string">&quot;&quot;</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::empty_client_state_response</span>()),
-
-            <span class="ident">TENDERMINT_CLIENT_STATE_TYPE_URL</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">AnyClientState::Tendermint</span>(
-                <span class="ident">client_state::ClientState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">raw</span>.<span class="ident">value</span>)
-                    .<span class="ident">map_err</span>(<span class="ident">Error::decode_raw_client_state</span>)<span class="question-mark">?</span>,
-            )),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">MOCK_CLIENT_STATE_TYPE_URL</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">AnyClientState::Mock</span>(
-                <span class="ident">MockClientState::decode_vec</span>(<span class="kw-2">&amp;</span><span class="ident">raw</span>.<span class="ident">value</span>).<span class="ident">map_err</span>(<span class="ident">Error::decode_raw_client_state</span>)<span class="question-mark">?</span>,
-            )),
-
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::unknown_client_state_type</span>(<span class="ident">raw</span>.<span class="ident">type_url</span>)),
-        }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">AnyClientState</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Any</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">value</span>: <span class="ident">AnyClientState</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">value</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">value</span>) =&gt; <span class="ident">Any</span> {
-                <span class="ident">type_url</span>: <span class="ident">TENDERMINT_CLIENT_STATE_TYPE_URL</span>.<span class="ident">to_string</span>(),
-                <span class="ident">value</span>: <span class="ident">value</span>
-                    .<span class="ident">encode_vec</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;encoding to `Any` from `AnyClientState::Tendermint`&quot;</span>),
-            },
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="ident">value</span>) =&gt; <span class="ident">Any</span> {
-                <span class="ident">type_url</span>: <span class="ident">MOCK_CLIENT_STATE_TYPE_URL</span>.<span class="ident">to_string</span>(),
-                <span class="ident">value</span>: <span class="ident">value</span>
-                    .<span class="ident">encode_vec</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;encoding to `Any` from `AnyClientState::Mock`&quot;</span>),
-            },
-        }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">ClientState</span> <span class="kw">for</span> <span class="ident">AnyClientState</span> {
-    <span class="kw">type</span> <span class="ident">UpgradeOptions</span> <span class="op">=</span> <span class="ident">AnyUpgradeOptions</span>;
-
-    <span class="kw">fn</span> <span class="ident">chain_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ChainId</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">tm_state</span>) =&gt; <span class="ident">tm_state</span>.<span class="ident">chain_id</span>(),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="ident">mock_state</span>) =&gt; <span class="ident">mock_state</span>.<span class="ident">chain_id</span>(),
-        }
-    }
-
-    <span class="kw">fn</span> <span class="ident">client_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ClientType</span> {
-        <span class="self">self</span>.<span class="ident">client_type</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">latest_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Height</span> {
-        <span class="self">self</span>.<span class="ident">latest_height</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">frozen_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">frozen_height</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">upgrade</span>(
-        <span class="self">self</span>,
-        <span class="ident">upgrade_height</span>: <span class="ident">Height</span>,
-        <span class="ident">upgrade_options</span>: <span class="ident"><span class="self">Self</span>::UpgradeOptions</span>,
-        <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
-    ) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">AnyClientState::Tendermint</span>(<span class="ident">tm_state</span>) =&gt; <span class="ident">tm_state</span>
-                .<span class="ident">upgrade</span>(<span class="ident">upgrade_height</span>, <span class="ident">upgrade_options</span>.<span class="ident">into_tendermint</span>(), <span class="ident">chain_id</span>)
-                .<span class="ident">wrap_any</span>(),
-
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;mocks&quot;</span>))]</span>
-            <span class="ident">AnyClientState::Mock</span>(<span class="ident">mock_state</span>) =&gt; {
-                <span class="ident">mock_state</span>.<span class="ident">upgrade</span>(<span class="ident">upgrade_height</span>, (), <span class="ident">chain_id</span>).<span class="ident">wrap_any</span>()
-            }
-        }
-    }
-
-    <span class="kw">fn</span> <span class="ident">wrap_any</span>(<span class="self">self</span>) -&gt; <span class="ident">AnyClientState</span> {
-        <span class="self">self</span>
+<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="kw">dyn</span> <span class="ident">ClientState</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">eq_client_state</span>(<span class="ident">other</span>)
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">tag</span> <span class="op">=</span> <span class="string">&quot;type&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">IdentifiedAnyClientState</span> {
-    <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
-    <span class="kw">pub</span> <span class="ident">client_state</span>: <span class="ident">AnyClientState</span>,
+<span class="comment">// see https://github.com/rust-lang/rust/issues/31740</span>
+<span class="kw">impl</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="op">&amp;&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">eq_client_state</span>(<span class="ident">other</span>.<span class="ident">as_ref</span>())
+    }
 }
 
-<span class="kw">impl</span> <span class="ident">IdentifiedAnyClientState</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">client_id</span>: <span class="ident">ClientId</span>, <span class="ident">client_state</span>: <span class="ident">AnyClientState</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">IdentifiedAnyClientState</span> {
-            <span class="ident">client_id</span>,
-            <span class="ident">client_state</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">downcast_client_state</span><span class="op">&lt;</span><span class="ident">CS</span>: <span class="ident">ClientState</span><span class="op">&gt;</span>(<span class="ident">h</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ClientState</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">CS</span><span class="op">&gt;</span> {
+    <span class="ident">h</span>.<span class="ident">as_any</span>().<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="ident">CS</span><span class="op">&gt;</span>()
+}
+
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">UpgradeOptions</span>: <span class="ident">AsAny</span> {}
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UpdatedState</span> {
+    <span class="kw">pub</span> <span class="ident">client_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">consensus_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">mod</span> <span class="ident">sealed</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ErasedPartialEqClientState</span> {
+        <span class="kw">fn</span> <span class="ident">eq_client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ClientState</span>) -&gt; <span class="ident">bool</span>;
+    }
+
+    <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">CS</span><span class="op">&gt;</span> <span class="ident">ErasedPartialEqClientState</span> <span class="kw">for</span> <span class="ident">CS</span>
+    <span class="kw">where</span>
+        <span class="ident">CS</span>: <span class="ident">ClientState</span> <span class="op">+</span> <span class="ident">PartialEq</span>,
+    {
+        <span class="kw">fn</span> <span class="ident">eq_client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ClientState</span>) -&gt; <span class="ident">bool</span> {
+            <span class="ident">other</span>
+                .<span class="ident">as_any</span>()
+                .<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="ident">CS</span><span class="op">&gt;</span>()
+                .<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="self">self</span> <span class="op">==</span> <span class="ident">h</span>)
         }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Protobuf</span><span class="op">&lt;</span><span class="ident">IdentifiedClientState</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IdentifiedAnyClientState</span> {}
-
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">IdentifiedClientState</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IdentifiedAnyClientState</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
-
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">raw</span>: <span class="ident">IdentifiedClientState</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">IdentifiedAnyClientState</span> {
-            <span class="ident">client_id</span>: <span class="ident">raw</span>.<span class="ident">client_id</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span>: <span class="ident">ValidationError</span><span class="op">|</span> {
-                <span class="ident">Error::invalid_raw_client_id</span>(<span class="ident">raw</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">e</span>)
-            })<span class="question-mark">?</span>,
-            <span class="ident">client_state</span>: <span class="ident">raw</span>
-                .<span class="ident">client_state</span>
-                .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_raw_client_state</span>)<span class="question-mark">?</span>
-                .<span class="ident">try_into</span>()<span class="question-mark">?</span>,
-        })
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">IdentifiedAnyClientState</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">IdentifiedClientState</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">value</span>: <span class="ident">IdentifiedAnyClientState</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">IdentifiedClientState</span> {
-            <span class="ident">client_id</span>: <span class="ident">value</span>.<span class="ident">client_id</span>.<span class="ident">to_string</span>(),
-            <span class="ident">client_state</span>: <span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">client_state</span>.<span class="ident">into</span>()),
-        }
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-
-    <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
-    <span class="kw">use</span> <span class="ident">test_log::test</span>;
-
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::clients::ics07_tendermint::client_state::test_util::get_dummy_tendermint_client_state</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::clients::ics07_tendermint::header::test_util::get_dummy_tendermint_header</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::AnyClientState</span>;
-
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">any_client_state_serialization</span>() {
-        <span class="kw">let</span> <span class="ident">tm_client_state</span> <span class="op">=</span> <span class="ident">get_dummy_tendermint_client_state</span>(<span class="ident">get_dummy_tendermint_header</span>());
-
-        <span class="kw">let</span> <span class="ident">raw</span>: <span class="ident">Any</span> <span class="op">=</span> <span class="ident">tm_client_state</span>.<span class="ident">clone</span>().<span class="ident">into</span>();
-        <span class="kw">let</span> <span class="ident">tm_client_state_back</span> <span class="op">=</span> <span class="ident">AnyClientState::try_from</span>(<span class="ident">raw</span>).<span class="ident">unwrap</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">tm_client_state</span>, <span class="ident">tm_client_state_back</span>);
     }
 }
 </code></pre></div>

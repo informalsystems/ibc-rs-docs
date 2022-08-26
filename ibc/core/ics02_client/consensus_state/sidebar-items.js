@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["downcast_consensus_state",""]],"trait":[["ConsensusState","Abstract of consensus state information used by the validity predicate to verify new commits & state roots."]]});

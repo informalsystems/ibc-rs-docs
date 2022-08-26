@@ -199,28 +199,7 @@
 <span id="194">194</span>
 <span id="195">195</span>
 <span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_consensus::ConsensusState</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::ClientState</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client</span>::{<span class="ident">client_def::AnyClient</span>, <span class="ident">client_def::ClientDef</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::ConnectionEnd</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::ConnectionEnd</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::channel::ChannelEnd</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::context::ChannelReader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics04_channel::error::Error</span>;
@@ -231,8 +210,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Height</span>;
 
 <span class="doccomment">/// Entry point for verifying all proofs bundled in any ICS4 message for channel protocols.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_channel_proofs</span>(
-    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_channel_proofs</span><span class="op">&lt;</span><span class="ident">Ctx</span>: <span class="ident">ChannelReader</span><span class="op">&gt;</span>(
+    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Ctx</span>,
     <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="ident">channel_end</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelEnd</span>,
     <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
@@ -251,13 +230,10 @@
 
     <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_consensus_state</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">proofs</span>.<span class="ident">height</span>())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">client_def</span> <span class="op">=</span> <span class="ident">AnyClient::from_client_type</span>(<span class="ident">client_state</span>.<span class="ident">client_type</span>());
-
     <span class="comment">// Verify the proof for the channel state against the expected channel end.</span>
     <span class="comment">// A counterparty channel id of None in not possible, and is checked by validate_basic in msg.</span>
-    <span class="ident">client_def</span>
+    <span class="ident">client_state</span>
         .<span class="ident">verify_channel_state</span>(
-            <span class="kw-2">&amp;</span><span class="ident">client_state</span>,
             <span class="ident">height</span>,
             <span class="ident">connection_end</span>.<span class="ident">counterparty</span>().<span class="ident">prefix</span>(),
             <span class="ident">proofs</span>.<span class="ident">object_proof</span>(),
@@ -270,8 +246,8 @@
 }
 
 <span class="doccomment">/// Entry point for verifying all proofs bundled in a ICS4 packet recv. message.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_packet_recv_proofs</span>(
-    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_packet_recv_proofs</span><span class="op">&lt;</span><span class="ident">Ctx</span>: <span class="ident">ChannelReader</span><span class="op">&gt;</span>(
+    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Ctx</span>,
     <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="ident">packet</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
     <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
@@ -287,8 +263,6 @@
 
     <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_consensus_state</span>(<span class="ident">client_id</span>, <span class="ident">proofs</span>.<span class="ident">height</span>())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">client_def</span> <span class="op">=</span> <span class="ident">AnyClient::from_client_type</span>(<span class="ident">client_state</span>.<span class="ident">client_type</span>());
-
     <span class="kw">let</span> <span class="ident">commitment</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">packet_commitment</span>(
         <span class="ident">packet</span>.<span class="ident">data</span>.<span class="ident">clone</span>(),
         <span class="ident">packet</span>.<span class="ident">timeout_height</span>,
@@ -296,10 +270,9 @@
     );
 
     <span class="comment">// Verify the proof for the packet against the chain store.</span>
-    <span class="ident">client_def</span>
+    <span class="ident">client_state</span>
         .<span class="ident">verify_packet_data</span>(
             <span class="ident">ctx</span>,
-            <span class="kw-2">&amp;</span><span class="ident">client_state</span>,
             <span class="ident">height</span>,
             <span class="ident">connection_end</span>,
             <span class="ident">proofs</span>.<span class="ident">object_proof</span>(),
@@ -315,8 +288,8 @@
 }
 
 <span class="doccomment">/// Entry point for verifying all proofs bundled in an ICS4 packet ack message.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_packet_acknowledgement_proofs</span>(
-    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_packet_acknowledgement_proofs</span><span class="op">&lt;</span><span class="ident">Ctx</span>: <span class="ident">ChannelReader</span><span class="op">&gt;</span>(
+    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Ctx</span>,
     <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="ident">packet</span>: <span class="kw-2">&amp;</span><span class="ident">Packet</span>,
     <span class="ident">acknowledgement</span>: <span class="ident">Acknowledgement</span>,
@@ -335,13 +308,10 @@
 
     <span class="kw">let</span> <span class="ident">ack_commitment</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">ack_commitment</span>(<span class="ident">acknowledgement</span>);
 
-    <span class="kw">let</span> <span class="ident">client_def</span> <span class="op">=</span> <span class="ident">AnyClient::from_client_type</span>(<span class="ident">client_state</span>.<span class="ident">client_type</span>());
-
     <span class="comment">// Verify the proof for the packet against the chain store.</span>
-    <span class="ident">client_def</span>
+    <span class="ident">client_state</span>
         .<span class="ident">verify_packet_acknowledgement</span>(
             <span class="ident">ctx</span>,
-            <span class="kw-2">&amp;</span><span class="ident">client_state</span>,
             <span class="ident">height</span>,
             <span class="ident">connection_end</span>,
             <span class="ident">proofs</span>.<span class="ident">object_proof</span>(),
@@ -357,8 +327,8 @@
 }
 
 <span class="doccomment">/// Entry point for verifying all timeout proofs.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_next_sequence_recv</span>(
-    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_next_sequence_recv</span><span class="op">&lt;</span><span class="ident">Ctx</span>: <span class="ident">ChannelReader</span><span class="op">&gt;</span>(
+    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Ctx</span>,
     <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
     <span class="ident">packet</span>: <span class="ident">Packet</span>,
@@ -375,13 +345,10 @@
 
     <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_consensus_state</span>(<span class="ident">client_id</span>, <span class="ident">proofs</span>.<span class="ident">height</span>())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">client_def</span> <span class="op">=</span> <span class="ident">AnyClient::from_client_type</span>(<span class="ident">client_state</span>.<span class="ident">client_type</span>());
-
     <span class="comment">// Verify the proof for the packet against the chain store.</span>
-    <span class="ident">client_def</span>
+    <span class="ident">client_state</span>
         .<span class="ident">verify_next_sequence_recv</span>(
             <span class="ident">ctx</span>,
-            <span class="kw-2">&amp;</span><span class="ident">client_state</span>,
             <span class="ident">height</span>,
             <span class="ident">connection_end</span>,
             <span class="ident">proofs</span>.<span class="ident">object_proof</span>(),
@@ -395,8 +362,8 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_packet_receipt_absence</span>(
-    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ChannelReader</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_packet_receipt_absence</span><span class="op">&lt;</span><span class="ident">Ctx</span>: <span class="ident">ChannelReader</span><span class="op">&gt;</span>(
+    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Ctx</span>,
     <span class="ident">height</span>: <span class="ident">Height</span>,
     <span class="ident">connection_end</span>: <span class="kw-2">&amp;</span><span class="ident">ConnectionEnd</span>,
     <span class="ident">packet</span>: <span class="ident">Packet</span>,
@@ -412,13 +379,10 @@
 
     <span class="kw">let</span> <span class="ident">consensus_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_consensus_state</span>(<span class="ident">client_id</span>, <span class="ident">proofs</span>.<span class="ident">height</span>())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">client_def</span> <span class="op">=</span> <span class="ident">AnyClient::from_client_type</span>(<span class="ident">client_state</span>.<span class="ident">client_type</span>());
-
     <span class="comment">// Verify the proof for the packet against the chain store.</span>
-    <span class="ident">client_def</span>
+    <span class="ident">client_state</span>
         .<span class="ident">verify_packet_receipt_absence</span>(
             <span class="ident">ctx</span>,
-            <span class="kw-2">&amp;</span><span class="ident">client_state</span>,
             <span class="ident">height</span>,
             <span class="ident">connection_end</span>,
             <span class="ident">proofs</span>.<span class="ident">object_proof</span>(),

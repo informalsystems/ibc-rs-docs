@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Generator","A trait that allows to generate complex objects from simple companion objects. A companion type should have a simple API, leaving most fields optional."]]});

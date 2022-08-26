@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["MOCK_CLIENT_STATE_TYPE_URL",""],["TENDERMINT_CLIENT_STATE_TYPE_URL",""]],"enum":[["AnyClientState",""],["AnyUpgradeOptions",""]],"struct":[["IdentifiedAnyClientState",""]],"trait":[["ClientState",""]]});
+initSidebarItems({"fn":[["downcast_client_state",""]],"struct":[["UpdatedState",""]],"trait":[["ClientState",""],["UpgradeOptions",""]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgSubmitAnyMisbehaviour","A type of message that submits client misbehaviour proof."]]});

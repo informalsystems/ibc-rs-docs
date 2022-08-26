@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["client_def",""],["client_state",""],["consensus_state",""],["error",""],["header",""],["misbehaviour",""]]});
+initSidebarItems({"mod":[["client_state",""],["consensus_state",""],["error",""],["header",""],["misbehaviour",""]]});

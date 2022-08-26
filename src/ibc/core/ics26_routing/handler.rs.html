@@ -566,21 +566,6 @@
 <span id="561">561</span>
 <span id="562">562</span>
 <span id="563">563</span>
-<span id="564">564</span>
-<span id="565">565</span>
-<span id="566">566</span>
-<span id="567">567</span>
-<span id="568">568</span>
-<span id="569">569</span>
-<span id="570">570</span>
-<span id="571">571</span>
-<span id="572">572</span>
-<span id="573">573</span>
-<span id="574">574</span>
-<span id="575">575</span>
-<span id="576">576</span>
-<span id="577">577</span>
-<span id="578">578</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
@@ -715,13 +700,13 @@
 
     <span class="kw">use</span> <span class="ident">test_log::test</span>;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::transfer::context::test::deliver</span> <span class="kw">as</span> <span class="ident">ics20_deliver</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::transfer::PrefixedCoin</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_consensus::AnyConsensusState</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::AnyClientState</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::applications::transfer</span>::{
+        <span class="ident">context::test::deliver</span> <span class="kw">as</span> <span class="ident">ics20_deliver</span>, <span class="ident">msgs::transfer::test_util::get_dummy_msg_transfer</span>,
+        <span class="ident">msgs::transfer::MsgTransfer</span>, <span class="ident">packet::PacketData</span>, <span class="ident">PrefixedCoin</span>, <span class="ident">MODULE_ID_STR</span>,
+    };
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs</span>::{
-        <span class="ident">create_client::MsgCreateAnyClient</span>, <span class="ident">update_client::MsgUpdateAnyClient</span>,
-        <span class="ident">upgrade_client::MsgUpgradeAnyClient</span>, <span class="ident">ClientMsg</span>,
+        <span class="ident">create_client::MsgCreateClient</span>, <span class="ident">update_client::MsgUpdateClient</span>,
+        <span class="ident">upgrade_client::MsgUpgradeClient</span>, <span class="ident">ClientMsg</span>,
     };
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::msgs</span>::{
         <span class="ident">conn_open_ack</span>::{<span class="ident">test_util::get_dummy_raw_msg_conn_open_ack</span>, <span class="ident">MsgConnectionOpenAck</span>},
@@ -742,20 +727,15 @@
         <span class="ident">ChannelMsg</span>, <span class="ident">PacketMsg</span>,
     };
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics23_commitment::commitment::test_util::get_dummy_merkle_proof</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
-    <span class="kw">use</span> <span class="kw">crate</span>::{
-        <span class="ident">applications::transfer::msgs::transfer::test_util::get_dummy_msg_transfer</span>,
-        <span class="ident">applications::transfer::msgs::transfer::MsgTransfer</span>,
-        <span class="ident">applications::transfer::packet::PacketData</span>, <span class="ident">applications::transfer::MODULE_ID_STR</span>,
-    };
-
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier::ConnectionId</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::context</span>::{<span class="ident">Ics26Context</span>, <span class="ident">ModuleId</span>, <span class="ident">Router</span>, <span class="ident">RouterBuilder</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::error::Error</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::handler::dispatch</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics26_routing::msgs::Ics26Envelope</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler::HandlerOutputBuilder</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::client_state</span>::{<span class="ident">MockClientState</span>, <span class="ident">MockConsensusState</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::client_state::MockClientState</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::consensus_state::MockConsensusState</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::context</span>::{<span class="ident">MockContext</span>, <span class="ident">MockRouterBuilder</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::header::MockHeader</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test_utils</span>::{<span class="ident">get_dummy_account_id</span>, <span class="ident">DummyTransferModule</span>};
@@ -817,11 +797,9 @@
             <span class="ident">ctx</span>.<span class="ident">with_router</span>(<span class="ident">router</span>)
         };
 
-        <span class="kw">let</span> <span class="ident">create_client_msg</span> <span class="op">=</span> <span class="ident">MsgCreateAnyClient::new</span>(
-            <span class="ident">AnyClientState::from</span>(<span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">start_client_height</span>))),
-            <span class="ident">AnyConsensusState::Mock</span>(<span class="ident">MockConsensusState::new</span>(<span class="ident">MockHeader::new</span>(
-                <span class="ident">start_client_height</span>,
-            ))),
+        <span class="kw">let</span> <span class="ident">create_client_msg</span> <span class="op">=</span> <span class="ident">MsgCreateClient::new</span>(
+            <span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">start_client_height</span>)).<span class="ident">into</span>(),
+            <span class="ident">MockConsensusState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">start_client_height</span>)).<span class="ident">into</span>(),
             <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
         )
         .<span class="ident">unwrap</span>();
@@ -934,7 +912,7 @@
             <span class="comment">// Test some ICS2 client functionality.</span>
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Client update successful&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateAnyClient</span> {
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateClient</span> {
                     <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_client_height</span>)
                         .<span class="ident">with_timestamp</span>(<span class="ident">Timestamp::now</span>())
@@ -946,7 +924,7 @@
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Client update fails due to stale header&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateAnyClient</span> {
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateClient</span> {
                     <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_client_height</span>).<span class="ident">into</span>(),
                     <span class="ident">signer</span>: <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
@@ -1021,7 +999,7 @@
             <span class="comment">// msg_recv_packet has the same height as the packet TO height (see get_dummy_raw_msg_recv_packet)</span>
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Client update successful #2&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateAnyClient</span> {
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateClient</span> {
                     <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_client_height_after_send</span>)
                         .<span class="ident">with_timestamp</span>(<span class="ident">Timestamp::now</span>())
@@ -1049,7 +1027,7 @@
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Client update successful&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateAnyClient</span> {
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpdateClient</span>(<span class="ident">MsgUpdateClient</span> {
                     <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_client_height_after_second_send</span>).<span class="ident">into</span>(),
                     <span class="ident">signer</span>: <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
@@ -1093,14 +1071,10 @@
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Client upgrade successful&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpgradeClient</span>(<span class="ident">MsgUpgradeAnyClient::new</span>(
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpgradeClient</span>(<span class="ident">MsgUpgradeClient::new</span>(
                     <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">AnyClientState::Mock</span>(<span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(
-                        <span class="ident">upgrade_client_height</span>,
-                    ))),
-                    <span class="ident">AnyConsensusState::Mock</span>(<span class="ident">MockConsensusState::new</span>(<span class="ident">MockHeader::new</span>(
-                        <span class="ident">upgrade_client_height</span>,
-                    ))),
+                    <span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">upgrade_client_height</span>)).<span class="ident">into</span>(),
+                    <span class="ident">MockConsensusState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">upgrade_client_height</span>)).<span class="ident">into</span>(),
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">default_signer</span>.<span class="ident">clone</span>(),
@@ -1110,14 +1084,10 @@
             },
             <span class="ident">Test</span> {
                 <span class="ident">name</span>: <span class="string">&quot;Client upgrade un-successful&quot;</span>.<span class="ident">to_string</span>(),
-                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpgradeClient</span>(<span class="ident">MsgUpgradeAnyClient::new</span>(
+                <span class="ident">msg</span>: <span class="ident">Ics26Envelope::Ics2Msg</span>(<span class="ident">ClientMsg::UpgradeClient</span>(<span class="ident">MsgUpgradeClient::new</span>(
                     <span class="ident">client_id</span>,
-                    <span class="ident">AnyClientState::Mock</span>(<span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(
-                        <span class="ident">upgrade_client_height_second</span>,
-                    ))),
-                    <span class="ident">AnyConsensusState::Mock</span>(<span class="ident">MockConsensusState::new</span>(<span class="ident">MockHeader::new</span>(
-                        <span class="ident">upgrade_client_height_second</span>,
-                    ))),
+                    <span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">upgrade_client_height_second</span>)).<span class="ident">into</span>(),
+                    <span class="ident">MockConsensusState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">upgrade_client_height_second</span>)).<span class="ident">into</span>(),
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">get_dummy_merkle_proof</span>(),
                     <span class="ident">default_signer</span>,

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Misbehaviour",""]]});
+initSidebarItems({"constant":[["TENDERMINT_MISBEHAVIOR_TYPE_URL",""]],"struct":[["Misbehaviour",""]]});

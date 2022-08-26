@@ -180,22 +180,18 @@
 <span id="175">175</span>
 <span id="176">176</span>
 <span id="177">177</span>
-<span id="178">178</span>
-<span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
 </pre><pre class="rust"><code><span class="doccomment">//! ICS2 (client) context. The two traits `ClientReader` and `ClientKeeper` define the interface</span>
 <span class="doccomment">//! that any host chain must implement to be able to process any `ClientMsg`. See</span>
 <span class="doccomment">//! &quot;ADR 003: IBC protocol implementation&quot; for more details.</span>
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_consensus::AnyConsensusState</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::AnyClientState</span>;
+<span class="kw">use</span> <span class="ident">alloc::boxed::Box</span>;
+
+<span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::ClientState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_type::ClientType</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error</span>::{<span class="ident">Error</span>, <span class="ident">ErrorDetail</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::consensus_state::ConsensusState</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::handler::ClientResult</span>::{<span class="self">self</span>, <span class="ident">Create</span>, <span class="ident">Update</span>, <span class="ident">Upgrade</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier::ClientId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp::Timestamp</span>;
@@ -203,8 +199,14 @@
 
 <span class="doccomment">/// Defines the read-only part of ICS2 (client functions) context.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ClientReader</span> {
+    <span class="doccomment">/// Returns the ClientType for the given identifier `client_id`.</span>
     <span class="kw">fn</span> <span class="ident">client_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ClientType</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Returns the ClientState for the given identifier `client_id`.</span>
+    <span class="kw">fn</span> <span class="ident">client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Tries to decode the given `client_state` into a concrete light client state.</span>
+    <span class="kw">fn</span> <span class="ident">decode_client_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">client_state</span>: <span class="ident">Any</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Retrieve the consensus state for the given client ID at the specified</span>
     <span class="doccomment">/// height.</span>
@@ -214,37 +216,21 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
-
-    <span class="doccomment">/// Similar to `consensus_state`, attempt to retrieve the consensus state,</span>
-    <span class="doccomment">/// but return `None` if no state exists at the given height.</span>
-    <span class="kw">fn</span> <span class="ident">maybe_consensus_state</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
-        <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">consensus_state</span>(<span class="ident">client_id</span>, <span class="ident">height</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">cs</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">cs</span>)),
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">detail</span>() {
-                <span class="ident">ErrorDetail::ConsensusStateNotFound</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>),
-            },
-        }
-    }
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Search for the lowest consensus state higher than `height`.</span>
     <span class="kw">fn</span> <span class="ident">next_consensus_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Search for the highest consensus state lower than `height`.</span>
     <span class="kw">fn</span> <span class="ident">prev_consensus_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">height</span>: <span class="ident">Height</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Returns the current height of the local chain.</span>
     <span class="kw">fn</span> <span class="ident">host_height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Height</span>;
@@ -258,10 +244,10 @@
     }
 
     <span class="doccomment">/// Returns the `ConsensusState` of the host (local) chain at a specific height.</span>
-    <span class="kw">fn</span> <span class="ident">host_consensus_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">host_consensus_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">height</span>: <span class="ident">Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Returns the pending `ConsensusState` of the host (local) chain.</span>
-    <span class="kw">fn</span> <span class="ident">pending_host_consensus_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">pending_host_consensus_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Returns a natural number, counting how many clients have been created thus far.</span>
     <span class="doccomment">/// The value of this counter should increase only via method `ClientKeeper::increase_client_counter`.</span>
@@ -273,12 +259,10 @@
     <span class="kw">fn</span> <span class="ident">store_client_result</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">handler_res</span>: <span class="ident">ClientResult</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">handler_res</span> {
             <span class="ident">Create</span>(<span class="ident">res</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">client_id</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>();
-
-                <span class="self">self</span>.<span class="ident">store_client_type</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">client_type</span>)<span class="question-mark">?</span>;
-                <span class="self">self</span>.<span class="ident">store_client_state</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">client_state</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
+                <span class="self">self</span>.<span class="ident">store_client_type</span>(<span class="ident">res</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">client_type</span>)<span class="question-mark">?</span>;
+                <span class="self">self</span>.<span class="ident">store_client_state</span>(<span class="ident">res</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">res</span>.<span class="ident">client_state</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
                 <span class="self">self</span>.<span class="ident">store_consensus_state</span>(
-                    <span class="ident">client_id</span>,
+                    <span class="ident">res</span>.<span class="ident">client_id</span>.<span class="ident">clone</span>(),
                     <span class="ident">res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(),
                     <span class="ident">res</span>.<span class="ident">consensus_state</span>,
                 )<span class="question-mark">?</span>;
@@ -337,7 +321,7 @@
     <span class="kw">fn</span> <span class="ident">store_client_state</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
-        <span class="ident">client_state</span>: <span class="ident">AnyClientState</span>,
+        <span class="ident">client_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Called upon successful client creation and update</span>
@@ -345,7 +329,7 @@
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
         <span class="ident">height</span>: <span class="ident">Height</span>,
-        <span class="ident">consensus_state</span>: <span class="ident">AnyConsensusState</span>,
+        <span class="ident">consensus_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Called upon client creation.</span>

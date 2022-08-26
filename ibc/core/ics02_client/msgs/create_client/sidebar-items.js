@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgCreateAnyClient","A type of message that triggers the creation of a new on-chain (IBC) client."]]});
+initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgCreateClient","A type of message that triggers the creation of a new on-chain (IBC) client."]]});

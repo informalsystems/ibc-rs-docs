@@ -516,40 +516,18 @@
 <span id="511">511</span>
 <span id="512">512</span>
 <span id="513">513</span>
-<span id="514">514</span>
-<span id="515">515</span>
-<span id="516">516</span>
-<span id="517">517</span>
-<span id="518">518</span>
-<span id="519">519</span>
-<span id="520">520</span>
-<span id="521">521</span>
-<span id="522">522</span>
-<span id="523">523</span>
-<span id="524">524</span>
-<span id="525">525</span>
-<span id="526">526</span>
-<span id="527">527</span>
-<span id="528">528</span>
-<span id="529">529</span>
-<span id="530">530</span>
-<span id="531">531</span>
-<span id="532">532</span>
-<span id="533">533</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Protocol logic specific to processing ICS2 messages of type `MsgUpdateAnyClient`.</span>
 
 <span class="kw">use</span> <span class="ident">tracing::debug</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_consensus::AnyConsensusState</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_def</span>::{<span class="ident">AnyClient</span>, <span class="ident">ClientDef</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">ClientState</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state</span>::{<span class="ident">ClientState</span>, <span class="ident">UpdatedState</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::consensus_state::ConsensusState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::context::ClientReader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::events::Attributes</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::handler::ClientResult</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::header::Header</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::height::Height</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs::update_client::MsgUpdateAnyClient</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs::update_client::MsgUpdateClient</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier::ClientId</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::handler</span>::{<span class="ident">HandlerOutput</span>, <span class="ident">HandlerResult</span>};
@@ -558,32 +536,28 @@
 
 <span class="doccomment">/// The result following the successful processing of a `MsgUpdateAnyClient` message. Preferably</span>
 <span class="doccomment">/// this data type should be used with a qualified name `update_client::Result` to avoid ambiguity.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="prelude-ty">Result</span> {
     <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
-    <span class="kw">pub</span> <span class="ident">client_state</span>: <span class="ident">AnyClientState</span>,
-    <span class="kw">pub</span> <span class="ident">consensus_state</span>: <span class="ident">AnyConsensusState</span>,
+    <span class="kw">pub</span> <span class="ident">client_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ClientState</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">consensus_state</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConsensusState</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">processed_time</span>: <span class="ident">Timestamp</span>,
     <span class="kw">pub</span> <span class="ident">processed_height</span>: <span class="ident">Height</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">process</span>(
-    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">ClientReader</span>,
-    <span class="ident">msg</span>: <span class="ident">MsgUpdateAnyClient</span>,
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">process</span><span class="op">&lt;</span><span class="ident">Ctx</span>: <span class="ident">ClientReader</span><span class="op">&gt;</span>(
+    <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">Ctx</span>,
+    <span class="ident">msg</span>: <span class="ident">MsgUpdateClient</span>,
 ) -&gt; <span class="ident">HandlerResult</span><span class="op">&lt;</span><span class="ident">ClientResult</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">HandlerOutput::builder</span>();
 
-    <span class="kw">let</span> <span class="ident">MsgUpdateAnyClient</span> {
+    <span class="kw">let</span> <span class="ident">MsgUpdateClient</span> {
         <span class="ident">client_id</span>,
         <span class="ident">header</span>,
         <span class="ident">signer</span>: <span class="kw">_</span>,
     } <span class="op">=</span> <span class="ident">msg</span>;
 
     <span class="comment">// Read client type from the host chain store. The client should already exist.</span>
-    <span class="kw">let</span> <span class="ident">client_type</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_type</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>)<span class="question-mark">?</span>;
-
-    <span class="kw">let</span> <span class="ident">client_def</span> <span class="op">=</span> <span class="ident">AnyClient::from_client_type</span>(<span class="ident">client_type</span>);
-
     <span class="comment">// Read client state from the host chain store.</span>
     <span class="kw">let</span> <span class="ident">client_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">client_state</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>)<span class="question-mark">?</span>;
 
@@ -592,15 +566,14 @@
     }
 
     <span class="comment">// Read consensus state from the host chain store.</span>
-    <span class="kw">let</span> <span class="ident">latest_consensus_state</span> <span class="op">=</span> <span class="ident">ctx</span>
-        .<span class="ident">consensus_state</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">client_state</span>.<span class="ident">latest_height</span>())
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="ident">Error::consensus_state_not_found</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">client_state</span>.<span class="ident">latest_height</span>())
-        })<span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">latest_consensus_state</span> <span class="op">=</span>
+        <span class="ident">ClientReader::consensus_state</span>(<span class="ident">ctx</span>, <span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">client_state</span>.<span class="ident">latest_height</span>()).<span class="ident">map_err</span>(
+            <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::consensus_state_not_found</span>(<span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">client_state</span>.<span class="ident">latest_height</span>()),
+        )<span class="question-mark">?</span>;
 
     <span class="macro">debug!</span>(<span class="string">&quot;latest consensus state: {:?}&quot;</span>, <span class="ident">latest_consensus_state</span>);
 
-    <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">host_timestamp</span>();
+    <span class="kw">let</span> <span class="ident">now</span> <span class="op">=</span> <span class="ident">ClientReader::host_timestamp</span>(<span class="ident">ctx</span>);
     <span class="kw">let</span> <span class="ident">duration</span> <span class="op">=</span> <span class="ident">now</span>
         .<span class="ident">duration_since</span>(<span class="kw-2">&amp;</span><span class="ident">latest_consensus_state</span>.<span class="ident">timestamp</span>())
         .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
@@ -610,22 +583,25 @@
     <span class="kw">if</span> <span class="ident">client_state</span>.<span class="ident">expired</span>(<span class="ident">duration</span>) {
         <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::header_not_within_trust_period</span>(
             <span class="ident">latest_consensus_state</span>.<span class="ident">timestamp</span>(),
-            <span class="ident">header</span>.<span class="ident">timestamp</span>(),
+            <span class="ident">now</span>,
         ));
     }
 
     <span class="comment">// Use client_state to validate the new header against the latest consensus_state.</span>
     <span class="comment">// This function will return the new client_state (its latest_height changed) and a</span>
     <span class="comment">// consensus_state obtained from header. These will be later persisted by the keeper.</span>
-    <span class="kw">let</span> (<span class="ident">new_client_state</span>, <span class="ident">new_consensus_state</span>) <span class="op">=</span> <span class="ident">client_def</span>
-        .<span class="ident">check_header_and_update_state</span>(<span class="ident">ctx</span>, <span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">client_state</span>, <span class="ident">header</span>)
+    <span class="kw">let</span> <span class="ident">UpdatedState</span> {
+        <span class="ident">client_state</span>,
+        <span class="ident">consensus_state</span>,
+    } <span class="op">=</span> <span class="ident">client_state</span>
+        .<span class="ident">check_header_and_update_state</span>(<span class="ident">ctx</span>, <span class="ident">client_id</span>.<span class="ident">clone</span>(), <span class="ident">header</span>)
         .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::header_verification_failure</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ClientResult::Update</span>(<span class="prelude-ty">Result</span> {
         <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-        <span class="ident">client_state</span>: <span class="ident">new_client_state</span>,
-        <span class="ident">consensus_state</span>: <span class="ident">new_consensus_state</span>,
-        <span class="ident">processed_time</span>: <span class="ident">ctx</span>.<span class="ident">host_timestamp</span>(),
+        <span class="ident">client_state</span>,
+        <span class="ident">consensus_state</span>,
+        <span class="ident">processed_time</span>: <span class="ident">ClientReader::host_timestamp</span>(<span class="ident">ctx</span>),
         <span class="ident">processed_height</span>: <span class="ident">ctx</span>.<span class="ident">host_height</span>(),
     });
 
@@ -643,14 +619,14 @@
     <span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
     <span class="kw">use</span> <span class="ident">test_log::test</span>;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_consensus::AnyConsensusState</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">ClientState</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::clients::ics07_tendermint::consensus_state::ConsensusState</span> <span class="kw">as</span> <span class="ident">TmConsensusState</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::ClientState</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_type::ClientType</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::consensus_state::downcast_consensus_state</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::error</span>::{<span class="ident">Error</span>, <span class="ident">ErrorDetail</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::handler::dispatch</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::handler::ClientResult::Update</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::header</span>::{<span class="ident">AnyHeader</span>, <span class="ident">Header</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs::update_client::MsgUpdateAnyClient</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs::update_client::MsgUpdateClient</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::msgs::ClientMsg</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::events::IbcEvent</span>;
@@ -658,7 +634,7 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::client_state::MockClientState</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::context::MockContext</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::header::MockHeader</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::host::HostType</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mock::host</span>::{<span class="ident">HostBlock</span>, <span class="ident">HostType</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test_utils::get_dummy_account_id</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::timestamp::Timestamp</span>;
@@ -672,11 +648,10 @@
         <span class="kw">let</span> <span class="ident">timestamp</span> <span class="op">=</span> <span class="ident">Timestamp::now</span>();
 
         <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">MockContext::default</span>().<span class="ident">with_client</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">42</span>).<span class="ident">unwrap</span>());
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">46</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
             <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">46</span>).<span class="ident">unwrap</span>())
-                .<span class="ident">with_timestamp</span>(<span class="ident">timestamp</span>)
-                .<span class="ident">into</span>(),
+            <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">height</span>).<span class="ident">with_timestamp</span>(<span class="ident">timestamp</span>).<span class="ident">into</span>(),
             <span class="ident">signer</span>,
         };
 
@@ -700,9 +675,8 @@
                         <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_id</span>, <span class="ident">client_id</span>);
                         <span class="macro">assert_eq!</span>(
                             <span class="ident">upd_res</span>.<span class="ident">client_state</span>,
-                            <span class="ident">AnyClientState::Mock</span>(<span class="ident">MockClientState::new</span>(
-                                <span class="ident">MockHeader::new</span>(<span class="ident">msg</span>.<span class="ident">header</span>.<span class="ident">height</span>()).<span class="ident">with_timestamp</span>(<span class="ident">timestamp</span>)
-                            ))
+                            <span class="ident">MockClientState::new</span>(<span class="ident">MockHeader::new</span>(<span class="ident">height</span>).<span class="ident">with_timestamp</span>(<span class="ident">timestamp</span>))
+                                .<span class="ident">into_box</span>()
                         )
                     }
                     <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;update handler result has incorrect type&quot;</span>),
@@ -721,7 +695,7 @@
 
         <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">MockContext::default</span>().<span class="ident">with_client</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">42</span>).<span class="ident">unwrap</span>());
 
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
             <span class="ident">client_id</span>: <span class="ident">ClientId::from_str</span>(<span class="string">&quot;nonexistingclient&quot;</span>).<span class="ident">unwrap</span>(),
             <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">Height::new</span>(<span class="number">0</span>, <span class="number">46</span>).<span class="ident">unwrap</span>()).<span class="ident">into</span>(),
             <span class="ident">signer</span>,
@@ -757,7 +731,7 @@
         }
 
         <span class="kw">for</span> <span class="ident">cid</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">client_ids</span> {
-            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
                 <span class="ident">client_id</span>: <span class="ident">cid</span>.<span class="ident">clone</span>(),
                 <span class="ident">header</span>: <span class="ident">MockHeader::new</span>(<span class="ident">update_height</span>).<span class="ident">into</span>(),
                 <span class="ident">signer</span>: <span class="ident">signer</span>.<span class="ident">clone</span>(),
@@ -813,20 +787,13 @@
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">get_dummy_account_id</span>();
 
-        <span class="kw">let</span> <span class="ident">block_ref</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">update_height</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">latest_header</span>: <span class="ident">AnyHeader</span> <span class="op">=</span> <span class="ident">block_ref</span>.<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">update_height</span>).<span class="ident">unwrap</span>().<span class="ident">clone</span>();
+        <span class="ident">block</span>.<span class="ident">set_trusted_height</span>(<span class="ident">client_height</span>);
 
-        <span class="ident">latest_header</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">latest_header</span> {
-            <span class="ident">AnyHeader::Tendermint</span>(<span class="kw-2">mut</span> <span class="ident">theader</span>) =&gt; {
-                <span class="ident">theader</span>.<span class="ident">trusted_height</span> <span class="op">=</span> <span class="ident">client_height</span>;
-                <span class="ident">AnyHeader::Tendermint</span>(<span class="ident">theader</span>)
-            }
-            <span class="ident">AnyHeader::Mock</span>(<span class="ident">m</span>) =&gt; <span class="ident">AnyHeader::Mock</span>(<span class="ident">m</span>),
-        };
-
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+        <span class="kw">let</span> <span class="ident">latest_header_height</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">height</span>();
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
             <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">header</span>: <span class="ident">latest_header</span>,
+            <span class="ident">header</span>: <span class="ident">block</span>.<span class="ident">into</span>(),
             <span class="ident">signer</span>,
         };
 
@@ -849,7 +816,7 @@
                     <span class="ident">Update</span>(<span class="ident">upd_res</span>) =&gt; {
                         <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_id</span>, <span class="ident">client_id</span>);
                         <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">is_frozen</span>());
-                        <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(), <span class="ident">msg</span>.<span class="ident">header</span>.<span class="ident">height</span>(),)
+                        <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(), <span class="ident">latest_header_height</span>,)
                     }
                     <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;update handler result has incorrect type&quot;</span>),
                 }
@@ -888,22 +855,14 @@
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">get_dummy_account_id</span>();
 
-        <span class="kw">let</span> <span class="ident">block_ref</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">update_height</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">latest_header</span>: <span class="ident">AnyHeader</span> <span class="op">=</span> <span class="ident">block_ref</span>.<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">unwrap</span>();
-
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">update_height</span>).<span class="ident">unwrap</span>().<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span> <span class="ident">client_height</span>.<span class="ident">clone</span>().<span class="ident">sub</span>(<span class="number">1</span>).<span class="ident">unwrap</span>();
+        <span class="ident">block</span>.<span class="ident">set_trusted_height</span>(<span class="ident">trusted_height</span>);
 
-        <span class="ident">latest_header</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">latest_header</span> {
-            <span class="ident">AnyHeader::Tendermint</span>(<span class="kw-2">mut</span> <span class="ident">theader</span>) =&gt; {
-                <span class="ident">theader</span>.<span class="ident">trusted_height</span> <span class="op">=</span> <span class="ident">trusted_height</span>;
-                <span class="ident">AnyHeader::Tendermint</span>(<span class="ident">theader</span>)
-            }
-            <span class="ident">AnyHeader::Mock</span>(<span class="ident">m</span>) =&gt; <span class="ident">AnyHeader::Mock</span>(<span class="ident">m</span>),
-        };
-
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+        <span class="kw">let</span> <span class="ident">latest_header_height</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">height</span>();
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
             <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">header</span>: <span class="ident">latest_header</span>,
+            <span class="ident">header</span>: <span class="ident">block</span>.<span class="ident">into</span>(),
             <span class="ident">signer</span>,
         };
 
@@ -926,7 +885,7 @@
                     <span class="ident">Update</span>(<span class="ident">upd_res</span>) =&gt; {
                         <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_id</span>, <span class="ident">client_id</span>);
                         <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">is_frozen</span>());
-                        <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(), <span class="ident">msg</span>.<span class="ident">header</span>.<span class="ident">height</span>(),)
+                        <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(), <span class="ident">latest_header_height</span>,)
                     }
                     <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;update handler result has incorrect type&quot;</span>),
                 }
@@ -966,22 +925,24 @@
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">get_dummy_account_id</span>();
 
-        <span class="kw">let</span> <span class="ident">block_ref</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">client_height</span>);
-        <span class="kw">let</span> <span class="ident">latest_header</span>: <span class="ident">AnyHeader</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">block_ref</span>.<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">unwrap</span>() {
-            <span class="ident">AnyHeader::Tendermint</span>(<span class="kw-2">mut</span> <span class="ident">theader</span>) =&gt; {
+        <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">client_height</span>).<span class="ident">unwrap</span>().<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">block</span> {
+            <span class="ident">HostBlock::SyntheticTendermint</span>(<span class="kw-2">mut</span> <span class="ident">theader</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">cons_state</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">latest_consensus_states</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>, <span class="kw-2">&amp;</span><span class="ident">client_height</span>);
-                <span class="kw">if</span> <span class="kw">let</span> <span class="ident">AnyConsensusState::Tendermint</span>(<span class="ident">tcs</span>) <span class="op">=</span> <span class="ident">cons_state</span> {
-                    <span class="ident">theader</span>.<span class="ident">signed_header</span>.<span class="ident">header</span>.<span class="ident">time</span> <span class="op">=</span> <span class="ident">tcs</span>.<span class="ident">timestamp</span>;
-                    <span class="ident">theader</span>.<span class="ident">trusted_height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">11</span>).<span class="ident">unwrap</span>()
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">tcs</span>) <span class="op">=</span> <span class="ident">downcast_consensus_state</span>::<span class="op">&lt;</span><span class="ident">TmConsensusState</span><span class="op">&gt;</span>(<span class="ident">cons_state</span>.<span class="ident">as_ref</span>())
+                {
+                    <span class="ident">theader</span>.<span class="ident">light_block</span>.<span class="ident">signed_header</span>.<span class="ident">header</span>.<span class="ident">time</span> <span class="op">=</span> <span class="ident">tcs</span>.<span class="ident">timestamp</span>;
+                    <span class="ident">theader</span>.<span class="ident">trusted_height</span> <span class="op">=</span> <span class="ident">Height::new</span>(<span class="number">1</span>, <span class="number">11</span>).<span class="ident">unwrap</span>();
                 }
-                <span class="ident">AnyHeader::Tendermint</span>(<span class="ident">theader</span>)
+                <span class="ident">HostBlock::SyntheticTendermint</span>(<span class="ident">theader</span>)
             }
-            <span class="ident">AnyHeader::Mock</span>(<span class="ident">header</span>) =&gt; <span class="ident">AnyHeader::Mock</span>(<span class="ident">header</span>),
+            <span class="kw">_</span> =&gt; <span class="ident">block</span>,
         };
 
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+        <span class="kw">let</span> <span class="ident">latest_header_height</span> <span class="op">=</span> <span class="ident">block</span>.<span class="ident">height</span>();
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
             <span class="ident">client_id</span>: <span class="ident">client_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">header</span>: <span class="ident">latest_header</span>,
+            <span class="ident">header</span>: <span class="ident">block</span>.<span class="ident">into</span>(),
             <span class="ident">signer</span>,
         };
 
@@ -1005,7 +966,7 @@
                         <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_id</span>, <span class="ident">client_id</span>);
                         <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">is_frozen</span>());
                         <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>, <span class="ident">ctx</span>.<span class="ident">latest_client_states</span>(<span class="kw-2">&amp;</span><span class="ident">client_id</span>));
-                        <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(), <span class="ident">msg</span>.<span class="ident">header</span>.<span class="ident">height</span>(),)
+                        <span class="macro">assert_eq!</span>(<span class="ident">upd_res</span>.<span class="ident">client_state</span>.<span class="ident">latest_height</span>(), <span class="ident">latest_header_height</span>,)
                     }
                     <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;update handler result has incorrect type&quot;</span>),
                 }
@@ -1047,12 +1008,11 @@
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">get_dummy_account_id</span>();
 
-        <span class="kw">let</span> <span class="ident">block_ref</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">client_update_height</span>);
-        <span class="kw">let</span> <span class="ident">latest_header</span>: <span class="ident">AnyHeader</span> <span class="op">=</span> <span class="ident">block_ref</span>.<span class="ident">cloned</span>().<span class="ident">map</span>(<span class="ident">Into::into</span>).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">block_ref</span> <span class="op">=</span> <span class="ident">ctx_b</span>.<span class="ident">host_block</span>(<span class="ident">client_update_height</span>).<span class="ident">unwrap</span>();
 
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateAnyClient</span> {
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">MsgUpdateClient</span> {
             <span class="ident">client_id</span>,
-            <span class="ident">header</span>: <span class="ident">latest_header</span>,
+            <span class="ident">header</span>: <span class="ident">block_ref</span>.<span class="ident">clone</span>().<span class="ident">into</span>(),
             <span class="ident">signer</span>,
         };
 

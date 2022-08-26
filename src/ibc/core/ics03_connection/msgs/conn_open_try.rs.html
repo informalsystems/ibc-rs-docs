@@ -362,24 +362,18 @@
 <span id="357">357</span>
 <span id="358">358</span>
 <span id="359">359</span>
-<span id="360">360</span>
-<span id="361">361</span>
-<span id="362">362</span>
-<span id="363">363</span>
-<span id="364">364</span>
-<span id="365">365</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
+
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
     <span class="ident">str::FromStr</span>,
     <span class="ident">time::Duration</span>,
 };
 
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
-
+<span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry</span> <span class="kw">as</span> <span class="ident">RawMsgConnectionOpenTry</span>;
+<span class="kw">use</span> <span class="ident">ibc_proto::protobuf::Protobuf</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_state::AnyClientState</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::connection::Counterparty</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics03_connection::version::Version</span>;
@@ -399,7 +393,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MsgConnectionOpenTry</span> {
     <span class="kw">pub</span> <span class="ident">previous_connection_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConnectionId</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
-    <span class="kw">pub</span> <span class="ident">client_state</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AnyClientState</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">client_state</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">counterparty</span>: <span class="ident">Counterparty</span>,
     <span class="kw">pub</span> <span class="ident">counterparty_versions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Version</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">proofs</span>: <span class="ident">Proofs</span>,
@@ -474,11 +468,7 @@
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">previous_connection_id</span>,
             <span class="ident">client_id</span>: <span class="ident">msg</span>.<span class="ident">client_id</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(<span class="ident">Error::invalid_identifier</span>)<span class="question-mark">?</span>,
-            <span class="ident">client_state</span>: <span class="ident">msg</span>
-                .<span class="ident">client_state</span>
-                .<span class="ident">map</span>(<span class="ident">AnyClientState::try_from</span>)
-                .<span class="ident">transpose</span>()
-                .<span class="ident">map_err</span>(<span class="ident">Error::ics02_client</span>)<span class="question-mark">?</span>,
+            <span class="ident">client_state</span>: <span class="ident">msg</span>.<span class="ident">client_state</span>,
             <span class="ident">counterparty</span>: <span class="ident">msg</span>
                 .<span class="ident">counterparty</span>
                 .<span class="ident">ok_or_else</span>(<span class="ident">Error::missing_counterparty</span>)<span class="question-mark">?</span>
@@ -505,9 +495,7 @@
             <span class="ident">previous_connection_id</span>: <span class="ident">ics_msg</span>
                 .<span class="ident">previous_connection_id</span>
                 .<span class="ident">map_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>(), <span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">as_str</span>().<span class="ident">to_string</span>()),
-            <span class="ident">client_state</span>: <span class="ident">ics_msg</span>
-                .<span class="ident">client_state</span>
-                .<span class="ident">map_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">None</span>, <span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">v</span>.<span class="ident">into</span>())),
+            <span class="ident">client_state</span>: <span class="ident">ics_msg</span>.<span class="ident">client_state</span>,
             <span class="ident">counterparty</span>: <span class="prelude-val">Some</span>(<span class="ident">ics_msg</span>.<span class="ident">counterparty</span>.<span class="ident">into</span>()),
             <span class="ident">delay_period</span>: <span class="ident">ics_msg</span>.<span class="ident">delay_period</span>.<span class="ident">as_nanos</span>() <span class="kw">as</span> <span class="ident">u64</span>,
             <span class="ident">counterparty_versions</span>: <span class="ident">ics_msg</span>

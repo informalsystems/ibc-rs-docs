@@ -279,22 +279,11 @@
 <span id="274">274</span>
 <span id="275">275</span>
 <span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
 
 <span class="kw">use</span> <span class="ident">flex_error</span>::{<span class="ident">define_error</span>, <span class="ident">TraceError</span>};
-<span class="kw">use</span> <span class="ident">tendermint::Error</span> <span class="kw">as</span> <span class="ident">TendermintError</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::Error</span> <span class="kw">as</span> <span class="ident">TendermintProtoError</span>;
+<span class="kw">use</span> <span class="ident">ibc_proto::protobuf::Error</span> <span class="kw">as</span> <span class="ident">TendermintProtoError</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::clients::ics07_tendermint::error::Error</span> <span class="kw">as</span> <span class="ident">Ics07Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::client_type::ClientType</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics02_client::height::HeightError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::ics23_commitment::error::Error</span> <span class="kw">as</span> <span class="ident">Ics23Error</span>;
@@ -351,7 +340,6 @@
 
         <span class="ident">FailedTrustThresholdConversion</span>
             { <span class="ident">numerator</span>: <span class="ident">u64</span>, <span class="ident">denominator</span>: <span class="ident">u64</span> }
-            [ <span class="ident">TendermintError</span> ]
             <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;failed to build Tendermint domain type trust threshold from fraction: {}/{}&quot;</span>, <span class="ident">e</span>.<span class="ident">numerator</span>, <span class="ident">e</span>.<span class="ident">denominator</span>) },
 
         <span class="ident">UnknownClientStateType</span>
@@ -469,10 +457,6 @@
             [ <span class="ident">Ics23Error</span> ]
             <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;invalid commitment proof bytes&quot;</span> },
 
-        <span class="ident">Tendermint</span>
-            [ <span class="ident">Ics07Error</span> ]
-            <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;tendermint error&quot;</span> },
-
         <span class="ident">InvalidPacketTimestamp</span>
             [ <span class="ident"><span class="kw">crate</span>::timestamp::ParseTimestampError</span> ]
             <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;invalid packet timeout timestamp value&quot;</span> },
@@ -538,10 +522,6 @@
                 <span class="macro">format_args!</span>(<span class="string">&quot;header not withing trusting period: expires_at={0} now={1}&quot;</span>, <span class="ident">e</span>.<span class="ident">latest_time</span>, <span class="ident">e</span>.<span class="ident">update_time</span>)
             },
 
-        <span class="ident">TendermintHandlerError</span>
-            [ <span class="ident">Ics07Error</span> ]
-            <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;Tendermint-specific handler error&quot;</span>) },
-
         <span class="ident">MissingLocalConsensusState</span>
             { <span class="ident">height</span>: <span class="ident">Height</span> }
             <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;the local consensus state could not be retrieved for height {}&quot;</span>, <span class="ident">e</span>.<span class="ident">height</span>) },
@@ -565,12 +545,14 @@
         <span class="ident">Signer</span>
             [ <span class="ident">SignerError</span> ]
             <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;failed to parse signer&quot;</span> },
-    }
-}
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Ics07Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Error</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">Ics07Error</span>) -&gt; <span class="ident">Error</span> {
-        <span class="ident">Error::tendermint_handler_error</span>(<span class="ident">e</span>)
+        <span class="ident">Ics23Verification</span>
+            [ <span class="ident">Ics23Error</span> ]
+            <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;ics23 verification failure&quot;</span> },
+
+        <span class="ident">ClientSpecific</span>
+            { <span class="ident">description</span>: <span class="ident">String</span> }
+            <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format_args!</span>(<span class="string">&quot;client specific error: {0}&quot;</span>, <span class="ident">e</span>.<span class="ident">description</span>) },
     }
 }
 </code></pre></div>

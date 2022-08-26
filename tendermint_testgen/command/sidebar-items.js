@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Command","A thin wrapper around process::Command to facilitate running external commands."],["CommandRun","The result of a command execution if the child process managed to execute"]]});

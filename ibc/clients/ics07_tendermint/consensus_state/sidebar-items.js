@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ConsensusState",""]]});
+initSidebarItems({"constant":[["TENDERMINT_CONSENSUS_STATE_TYPE_URL",""]],"struct":[["ConsensusState",""]]});
