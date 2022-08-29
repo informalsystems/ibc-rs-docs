@@ -1912,6 +1912,36 @@
 <span id="1907">1907</span>
 <span id="1908">1908</span>
 <span id="1909">1909</span>
+<span id="1910">1910</span>
+<span id="1911">1911</span>
+<span id="1912">1912</span>
+<span id="1913">1913</span>
+<span id="1914">1914</span>
+<span id="1915">1915</span>
+<span id="1916">1916</span>
+<span id="1917">1917</span>
+<span id="1918">1918</span>
+<span id="1919">1919</span>
+<span id="1920">1920</span>
+<span id="1921">1921</span>
+<span id="1922">1922</span>
+<span id="1923">1923</span>
+<span id="1924">1924</span>
+<span id="1925">1925</span>
+<span id="1926">1926</span>
+<span id="1927">1927</span>
+<span id="1928">1928</span>
+<span id="1929">1929</span>
+<span id="1930">1930</span>
+<span id="1931">1931</span>
+<span id="1932">1932</span>
+<span id="1933">1933</span>
+<span id="1934">1934</span>
+<span id="1935">1935</span>
+<span id="1936">1936</span>
+<span id="1937">1937</span>
+<span id="1938">1938</span>
+<span id="1939">1939</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,</span>
@@ -1938,7 +1968,7 @@
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::trust_threshold::TrustThreshold</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>};
 <span class="kw">use</span> <span class="ident">ibc::downcast</span>;
-<span class="kw">use</span> <span class="ident">ibc::events</span>::{<span class="ident">IbcEvent</span>, <span class="ident">WithBlockDataType</span>};
+<span class="kw">use</span> <span class="ident">ibc::events</span>::{<span class="ident">IbcEvent</span>, <span class="ident">IbcEventType</span>, <span class="ident">WithBlockDataType</span>};
 <span class="kw">use</span> <span class="ident">ibc::timestamp</span>::{<span class="ident">Timestamp</span>, <span class="ident">TimestampOverflowError</span>};
 <span class="kw">use</span> <span class="ident">ibc::tx_msg::Msg</span>;
 <span class="kw">use</span> <span class="ident">ibc::Height</span>;
@@ -2694,6 +2724,36 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">refresh</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">check_no_errors</span>(
+            <span class="ident">ibc_events</span>: <span class="kw-2">&amp;</span>[<span class="ident">IbcEvent</span>],
+            <span class="ident">dst_chain_id</span>: <span class="ident">ChainId</span>,
+        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
+            <span class="comment">// The assumption is that only one IbcEventType::ChainError will be</span>
+            <span class="comment">// in the resulting Vec&lt;IbcEvent&gt; if an error occurred.</span>
+            <span class="kw">let</span> <span class="ident">chain_error</span> <span class="op">=</span> <span class="ident">ibc_events</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">find</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">event_type</span>() <span class="op">==</span> <span class="ident">IbcEventType::ChainError</span>);
+
+            <span class="kw">match</span> <span class="ident">chain_error</span> {
+                <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(()),
+                <span class="prelude-val">Some</span>(<span class="ident">ev</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ForeignClientError::chain_error_event</span>(
+                    <span class="ident">dst_chain_id</span>,
+                    <span class="ident">ev</span>.<span class="ident">to_owned</span>(),
+                )),
+            }
+        }
+
+        <span class="comment">// If elapsed &lt; refresh_window for the client, `try_refresh()` will</span>
+        <span class="comment">// be successful with an empty vector.</span>
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">events</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">try_refresh</span>()<span class="question-mark">?</span> {
+            <span class="ident">check_no_errors</span>(<span class="kw-2">&amp;</span><span class="ident">events</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>())<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">events</span>))
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">try_refresh</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">ForeignClientError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> (<span class="ident">client_state</span>, <span class="ident">elapsed</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">validated_client_state</span>()<span class="question-mark">?</span>;
 
         <span class="comment">// The refresh_window is the maximum duration</span>
