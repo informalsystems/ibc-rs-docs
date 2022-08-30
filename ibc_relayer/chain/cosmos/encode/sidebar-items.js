@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["encode_to_bech32",""],["sign_and_encode_tx",""],["sign_tx",""]]});
+initSidebarItems({"fn":[["encode_to_bech32",""],["encoded_tx_metrics",""],["sign_and_encode_tx",""],["sign_tx",""]],"struct":[["EncodedTxMetrics","Length information for an encoded transaction."]]});
