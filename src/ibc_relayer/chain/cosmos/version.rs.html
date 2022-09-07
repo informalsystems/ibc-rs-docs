@@ -215,9 +215,29 @@
 <span id="210">210</span>
 <span id="211">211</span>
 <span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Utilities for extracting and parsing versioning information</span>
 <span class="doccomment">//! of Cosmos-SDK networks. The extracted version specification</span>
 <span class="doccomment">//! is captured in a domain-type semver format in [`Specs`].</span>
+
+<span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
 
 <span class="kw">use</span> <span class="ident">flex_error::define_error</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
@@ -249,9 +269,25 @@
 <span class="doccomment">/// the IBC-go module version (if existing).</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Specs</span> {
-    <span class="kw">pub</span> <span class="ident">sdk_version</span>: <span class="ident">semver::Version</span>,
-    <span class="kw">pub</span> <span class="ident">ibc_go_version</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">semver::Version</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">tendermint_version</span>: <span class="ident">semver::Version</span>,
+    <span class="kw">pub</span> <span class="ident">cosmos_sdk</span>: <span class="ident">semver::Version</span>,
+    <span class="kw">pub</span> <span class="ident">ibc_go</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">semver::Version</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">tendermint</span>: <span class="ident">semver::Version</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Specs</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">FmtError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">ibc_go</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">ibc_go</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">to_string</span>())
+            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;UNKNOWN&quot;</span>.<span class="ident">to_string</span>());
+
+        <span class="macro">write!</span>(
+            <span class="ident">f</span>,
+            <span class="string">&quot;Cosmos SDK {}, IBC-Go {}, Tendermint {}&quot;</span>,
+            <span class="self">self</span>.<span class="ident">cosmos_sdk</span>, <span class="ident">ibc_go</span>, <span class="self">self</span>.<span class="ident">tendermint</span>
+        )
+    }
 }
 
 <span class="macro">define_error!</span> {
@@ -302,9 +338,9 @@
         );
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">sdk_version</span>,
-            <span class="ident">ibc_go_version</span>,
-            <span class="ident">tendermint_version</span>,
+            <span class="ident">cosmos_sdk</span>: <span class="ident">sdk_version</span>,
+            <span class="ident">ibc_go</span>: <span class="ident">ibc_go_version</span>,
+            <span class="ident">tendermint</span>: <span class="ident">tendermint_version</span>,
         })
     }
 }
@@ -412,8 +448,8 @@
     <span class="ident">git_commit</span>: <span class="ident">String</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">core::fmt::Display</span> <span class="kw">for</span> <span class="ident">AppInfo</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">core::fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">core::fmt::Result</span> {
+<span class="kw">impl</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">AppInfo</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">FmtError</span><span class="op">&gt;</span> {
         <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}:{}-{}&quot;</span>, <span class="self">self</span>.<span class="ident">app_name</span>, <span class="self">self</span>.<span class="ident">version</span>, <span class="self">self</span>.<span class="ident">git_commit</span>)
     }
 }

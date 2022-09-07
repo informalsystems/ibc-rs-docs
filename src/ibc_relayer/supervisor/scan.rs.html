@@ -926,11 +926,16 @@
 <span id="921">921</span>
 <span id="922">922</span>
 <span id="923">923</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>;
+<span id="924">924</span>
+<span id="925">925</span>
+<span id="926">926</span>
+<span id="927">927</span>
+<span id="928">928</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
 <span class="kw">use</span> <span class="ident">std::collections::BTreeMap</span>;
 
 <span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">info_span</span>, <span class="ident">warn</span>};
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">error_span</span>, <span class="ident">info</span>, <span class="ident">warn</span>};
 
 <span class="kw">use</span> <span class="ident">ibc::core</span>::{
     <span class="ident">ics02_client::client_state::ClientState</span>,
@@ -954,6 +959,7 @@
     },
     <span class="ident">client_state::IdentifiedAnyClientState</span>,
     <span class="ident">config</span>::{<span class="ident">filter::ChannelFilters</span>, <span class="ident">ChainConfig</span>, <span class="ident">Config</span>, <span class="ident">PacketFilter</span>},
+    <span class="ident">path::PathIdentifiers</span>,
     <span class="ident">registry::Registry</span>,
     <span class="ident">supervisor::client_state_filter</span>::{<span class="ident">FilterPolicy</span>, <span class="ident">Permission</span>},
 };
@@ -1021,8 +1027,8 @@
     <span class="kw">pub</span> <span class="ident">chains</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChainScan</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ChainsScan</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
+<span class="kw">impl</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">ChainsScan</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">FmtError</span><span class="op">&gt;</span> {
         <span class="kw">for</span> <span class="ident">scan</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">chains</span>.<span class="ident">iter</span>().<span class="ident">flatten</span>() {
             <span class="macro">writeln!</span>(<span class="ident">f</span>, <span class="string">&quot;# Chain: {}&quot;</span>, <span class="ident">scan</span>.<span class="ident">chain_id</span>)<span class="question-mark">?</span>;
 
@@ -1157,11 +1163,14 @@
         <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
         <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">counterparty</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">counterparty</span><span class="op">|</span> {
-            <span class="ident">unreceived_packets</span>(<span class="ident">counterparty_chain</span>, <span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">into</span>())
-                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">seq</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">seq</span>)
-                .<span class="ident">unwrap_or_default</span>()
-        })
+        <span class="self">self</span>.<span class="ident">counterparty</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">PathIdentifiers::from_channel_end</span>(<span class="ident">c</span>.<span class="ident">clone</span>()))
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">ids</span><span class="op">|</span> {
+                <span class="ident">unreceived_packets</span>(<span class="ident">counterparty_chain</span>, <span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">ids</span>)
+                    .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">seq</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">seq</span>)
+                    .<span class="ident">unwrap_or_default</span>()
+            })
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unreceived_acknowledgements_on_counterparty</span>(
@@ -1169,11 +1178,14 @@
         <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
         <span class="ident">counterparty_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
     ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">counterparty</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">counterparty</span><span class="op">|</span> {
-            <span class="ident">unreceived_acknowledgements</span>(<span class="ident">counterparty_chain</span>, <span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">counterparty</span>.<span class="ident">into</span>())
-                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">sns</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">sns</span>)
-                .<span class="ident">unwrap_or_default</span>()
-        })
+        <span class="self">self</span>.<span class="ident">counterparty</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">PathIdentifiers::from_channel_end</span>(<span class="ident">c</span>.<span class="ident">clone</span>()))
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">ids</span><span class="op">|</span> {
+                <span class="ident">unreceived_acknowledgements</span>(<span class="ident">counterparty_chain</span>, <span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">ids</span>)
+                    .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">sns</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">sns</span>)
+                    .<span class="ident">unwrap_or_default</span>()
+            })
     }
 }
 
@@ -1218,7 +1230,7 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">scan_chain</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">chain_config</span>: <span class="kw-2">&amp;</span><span class="ident">ChainConfig</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ChainScan</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">info_span!</span>(<span class="string">&quot;scan.chain&quot;</span>, <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain_config</span>.<span class="ident">id</span>);
+        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">error_span!</span>(<span class="string">&quot;scan.chain&quot;</span>, <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain_config</span>.<span class="ident">id</span>);
         <span class="kw">let</span> <span class="ident">_guard</span> <span class="op">=</span> <span class="ident">span</span>.<span class="ident">enter</span>();
 
         <span class="macro">info!</span>(<span class="string">&quot;scanning chain...&quot;</span>);
@@ -1347,7 +1359,7 @@
         <span class="ident">chain</span>: <span class="kw-2">&amp;</span><span class="ident">Chain</span>,
         <span class="ident">client</span>: <span class="ident">IdentifiedAnyClientState</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ClientScan</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">info_span!</span>(<span class="string">&quot;scan.client&quot;</span>, <span class="ident">client</span> <span class="op">=</span> <span class="op">%</span><span class="ident">client</span>.<span class="ident">client_id</span>);
+        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">error_span!</span>(<span class="string">&quot;scan.client&quot;</span>, <span class="ident">client</span> <span class="op">=</span> <span class="op">%</span><span class="ident">client</span>.<span class="ident">client_id</span>);
         <span class="kw">let</span> <span class="ident">_guard</span> <span class="op">=</span> <span class="ident">span</span>.<span class="ident">enter</span>();
 
         <span class="macro">info!</span>(<span class="string">&quot;scanning client...&quot;</span>);
@@ -1396,13 +1408,13 @@
         <span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedAnyClientState</span>,
         <span class="ident">connection</span>: <span class="ident">IdentifiedConnectionEnd</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConnectionScan</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">info_span!</span>(<span class="string">&quot;scan.connection&quot;</span>, <span class="ident">connection</span> <span class="op">=</span> <span class="op">%</span><span class="ident">connection</span>.<span class="ident">connection_id</span>);
+        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">error_span!</span>(<span class="string">&quot;scan.connection&quot;</span>, <span class="ident">connection</span> <span class="op">=</span> <span class="op">%</span><span class="ident">connection</span>.<span class="ident">connection_id</span>);
         <span class="kw">let</span> <span class="ident">_guard</span> <span class="op">=</span> <span class="ident">span</span>.<span class="ident">enter</span>();
 
         <span class="macro">info!</span>(<span class="string">&quot;scanning connection...&quot;</span>);
 
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">connection_allowed</span>(<span class="ident">chain</span>, <span class="ident">client</span>, <span class="kw-2">&amp;</span><span class="ident">connection</span>) {
-            <span class="macro">warn!</span>(<span class="string">&quot;skipping connection, reason: connection is not allowed&quot;</span>,);
+            <span class="macro">warn!</span>(<span class="string">&quot;skipping connection, reason: connection is not allowed&quot;</span>);
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
@@ -1580,7 +1592,7 @@
     <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
     <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ScannedChannel</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">info_span!</span>(<span class="string">&quot;scan.channel&quot;</span>, <span class="ident">port</span> <span class="op">=</span> <span class="op">%</span><span class="ident">port_id</span>, <span class="ident">channel</span> <span class="op">=</span> <span class="op">%</span><span class="ident">channel_id</span>);
+    <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="macro">error_span!</span>(<span class="string">&quot;scan.channel&quot;</span>, <span class="ident">port</span> <span class="op">=</span> <span class="op">%</span><span class="ident">port_id</span>, <span class="ident">channel</span> <span class="op">=</span> <span class="op">%</span><span class="ident">channel_id</span>);
     <span class="kw">let</span> <span class="ident">_guard</span> <span class="op">=</span> <span class="ident">span</span>.<span class="ident">enter</span>();
 
     <span class="macro">info!</span>(<span class="string">&quot;querying channel...&quot;</span>);
@@ -1739,12 +1751,10 @@
 
     <span class="kw">let</span> <span class="ident">connections</span> <span class="op">=</span> <span class="ident">ids</span>
         .<span class="ident">into_iter</span>()
-        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">query_connection</span>(<span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">id</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">connection</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">connection</span>),
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-                <span class="macro">error!</span>(<span class="string">&quot;failed to query connection: {}&quot;</span>, <span class="ident">e</span>);
-                <span class="prelude-val">None</span>
-            }
+        .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> {
+            <span class="ident">query_connection</span>(<span class="ident">chain</span>, <span class="kw-2">&amp;</span><span class="ident">id</span>)
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">error!</span>(<span class="string">&quot;failed to query connection: {}&quot;</span>, <span class="ident">e</span>))
+                .<span class="ident">ok</span>()
         })
         .<span class="ident">collect_vec</span>();
 

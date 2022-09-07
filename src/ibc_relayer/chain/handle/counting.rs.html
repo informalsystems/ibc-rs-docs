@@ -470,14 +470,30 @@
 <span id="465">465</span>
 <span id="466">466</span>
 <span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">crossbeam_channel</span> <span class="kw">as</span> <span class="ident">channel</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
+<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">RwLock</span>, <span class="ident">RwLockReadGuard</span>};
+
+<span class="kw">use</span> <span class="ident">crossbeam_channel</span> <span class="kw">as</span> <span class="ident">channel</span>;
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">Span</span>};
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::endpoint</span>::{<span class="ident">ChainStatus</span>, <span class="ident">HealthCheck</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainRequest</span>, <span class="ident">Subscription</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">IdentifiedAnyClientState</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::ChainConfig</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::ConnectionMsgType</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus_state</span>::{<span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::denom::DenomTrace</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::IbcEventWithHeight</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::keyring::KeyEntry</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client::AnyHeader</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::lock::LockExt</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics02_client::events::UpdateClient</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics03_connection::connection::IdentifiedConnectionEnd</span>;
 <span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::channel::IdentifiedChannelEnd</span>;
@@ -494,38 +510,6 @@
     <span class="ident">signer::Signer</span>,
     <span class="ident">Height</span>,
 };
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
-<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
-<span class="kw">use</span> <span class="ident">std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">RwLock</span>, <span class="ident">RwLockReadGuard</span>};
-<span class="kw">use</span> <span class="ident">tracing::debug</span>;
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::endpoint</span>::{<span class="ident">ChainStatus</span>, <span class="ident">HealthCheck</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainRequest</span>, <span class="ident">Subscription</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{
-    <span class="ident">IncludeProof</span>, <span class="ident">QueryBlockRequest</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>,
-    <span class="ident">QueryChannelsRequest</span>, <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
-    <span class="ident">QueryClientStatesRequest</span>, <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>,
-    <span class="ident">QueryConnectionsRequest</span>, <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>,
-    <span class="ident">QueryHostConsensusStateRequest</span>, <span class="ident">QueryNextSequenceReceiveRequest</span>,
-    <span class="ident">QueryPacketAcknowledgementRequest</span>, <span class="ident">QueryPacketAcknowledgementsRequest</span>,
-    <span class="ident">QueryPacketCommitmentRequest</span>, <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>,
-    <span class="ident">QueryTxRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
-    <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
-};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">IdentifiedAnyClientState</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::ChainConfig</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::ConnectionMsgType</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::consensus_state</span>::{<span class="ident">AnyConsensusState</span>, <span class="ident">AnyConsensusStateWithHeight</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::denom::DenomTrace</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::IbcEventWithHeight</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::keyring::KeyEntry</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client::AnyHeader</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::lock::LockExt</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CountingChainHandle</span><span class="op">&lt;</span><span class="ident">Handle</span><span class="op">&gt;</span> {
@@ -559,17 +543,18 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Handle</span>: <span class="ident">Serialize</span><span class="op">&gt;</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">CountingChainHandle</span><span class="op">&lt;</span><span class="ident">Handle</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">Serializer</span>,
-    {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">serialize</span>(<span class="ident">serializer</span>)
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Handle</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">CountingChainHandle</span><span class="op">&lt;</span><span class="ident">Handle</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">FmtError</span><span class="op">&gt;</span> {
+        <span class="macro">write!</span>(
+            <span class="ident">f</span>,
+            <span class="string">&quot;CountingChainHandle {{ chain_id: {} }}&quot;</span>,
+            <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">id</span>()
+        )
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Handle</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">ChainHandle</span> <span class="kw">for</span> <span class="ident">CountingChainHandle</span><span class="op">&lt;</span><span class="ident">Handle</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chain_id</span>: <span class="ident">ChainId</span>, <span class="ident">sender</span>: <span class="ident">channel::Sender</span><span class="op">&lt;</span><span class="ident">ChainRequest</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chain_id</span>: <span class="ident">ChainId</span>, <span class="ident">sender</span>: <span class="ident">channel::Sender</span><span class="op">&lt;</span>(<span class="ident">Span</span>, <span class="ident">ChainRequest</span>)<span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">Handle::new</span>(<span class="ident">chain_id</span>, <span class="ident">sender</span>))
     }
 
@@ -948,6 +933,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">request</span>: <span class="ident">QueryHostConsensusStateRequest</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">AnyConsensusState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inc_metric</span>(<span class="string">&quot;query_host_consensus_state&quot;</span>);
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">query_host_consensus_state</span>(<span class="ident">request</span>)
     }
 }

@@ -1377,7 +1377,19 @@
 <span id="1372">1372</span>
 <span id="1373">1373</span>
 <span id="1374">1374</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+<span id="1375">1375</span>
+<span id="1376">1376</span>
+<span id="1377">1377</span>
+<span id="1378">1378</span>
+<span id="1379">1379</span>
+<span id="1380">1380</span>
+<span id="1381">1381</span>
+<span id="1382">1382</span>
+<span id="1383">1383</span>
+<span id="1384">1384</span>
+<span id="1385">1385</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
+<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
@@ -1405,6 +1417,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackedMsgs</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::foreign_client</span>::{<span class="ident">ForeignClient</span>, <span class="ident">HasExpiredOrFrozenError</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::object::Connection</span> <span class="kw">as</span> <span class="ident">WorkerConnectionObject</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::pretty</span>::{<span class="ident">PrettyDuration</span>, <span class="ident">PrettyOption</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::retry</span>::{<span class="ident">retry_count</span>, <span class="ident">retry_with_index</span>, <span class="ident">RetryResult</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::task::Next</span>;
 
@@ -1462,11 +1475,30 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span>(<span class="ident">serialize</span> <span class="op">=</span> <span class="string">&quot;(): Serialize&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> {
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">skip</span>)]</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">chain</span>: <span class="ident">Chain</span>,
     <span class="ident">client_id</span>: <span class="ident">ClientId</span>,
     <span class="ident">connection_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConnectionId</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">FmtError</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">connection_id</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">connection_id</span>) =&gt; <span class="macro">write!</span>(
+                <span class="ident">f</span>,
+                <span class="string">&quot;ConnectionSide {{ chain: {}, client_id: {}, connection_id: {} }}&quot;</span>,
+                <span class="self">self</span>.<span class="ident">chain</span>, <span class="self">self</span>.<span class="ident">client_id</span>, <span class="ident">connection_id</span>
+            ),
+            <span class="prelude-val">None</span> =&gt; <span class="macro">write!</span>(
+                <span class="ident">f</span>,
+                <span class="string">&quot;ConnectionSide {{ chain: {}, client_id: {}, connection_id: None }}&quot;</span>,
+                <span class="self">self</span>.<span class="ident">chain</span>, <span class="self">self</span>.<span class="ident">client_id</span>
+            ),
+        }
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span> {
@@ -1494,31 +1526,24 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">Serialize</span> <span class="kw">for</span> <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">S::Ok</span>, <span class="ident">S::Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">S</span>: <span class="ident">serde::Serializer</span>,
-    {
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Serialize</span>)]</span>
-        <span class="kw">struct</span> <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-            <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">ClientId</span>,
-            <span class="ident">connection_id</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConnectionId</span><span class="op">&gt;</span>,
-        }
-
-        <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">ConnectionSide</span> {
-            <span class="ident">client_id</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">client_id</span>,
-            <span class="ident">connection_id</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">connection_id</span>,
-        };
-
-        <span class="ident">value</span>.<span class="ident">serialize</span>(<span class="ident">serializer</span>)
-    }
-}
-
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>)]</span>
+<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span>(<span class="ident">serialize</span> <span class="op">=</span> <span class="string">&quot;(): Serialize&quot;</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">delay_period</span>: <span class="ident">Duration</span>,
     <span class="kw">pub</span> <span class="ident">a_side</span>: <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="ident">ChainA</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">b_side</span>: <span class="ident">ConnectionSide</span><span class="op">&lt;</span><span class="ident">ChainB</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">FmtError</span><span class="op">&gt;</span> {
+        <span class="macro">write!</span>(
+            <span class="ident">f</span>,
+            <span class="string">&quot;Connection {{ delay_period: {}, a_side: {}, b_side: {} }}&quot;</span>,
+            <span class="ident">PrettyDuration</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">delay_period</span>),
+            <span class="self">self</span>.<span class="ident">a_side</span>,
+            <span class="self">self</span>.<span class="ident">b_side</span>
+        )
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span> {
@@ -1891,13 +1916,13 @@
 
         <span class="kw">if</span> <span class="ident">a_counterparty_id</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">a_counterparty_id</span> <span class="op">!</span><span class="op">=</span> <span class="ident">relayer_b_id</span>.<span class="ident">as_ref</span>() {
             <span class="macro">warn!</span>(
-                <span class="string">&quot;updating the expected {:?} of side_b({}) since it is different than the \
-                counterparty of {:?}: {:?}, on {}. This is typically caused by crossing handshake \
+                <span class="string">&quot;updating the expected {} of side_b({}) since it is different than the \
+                counterparty of {}: {}, on {}. This is typically caused by crossing handshake \
                 messages in the presence of multiple relayers.&quot;</span>,
-                <span class="ident">relayer_b_id</span>,
+                <span class="ident">PrettyOption</span>(<span class="kw-2">&amp;</span><span class="ident">relayer_b_id</span>),
                 <span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(),
-                <span class="ident">relayer_a_id</span>,
-                <span class="ident">a_counterparty_id</span>,
+                <span class="ident">PrettyOption</span>(<span class="kw-2">&amp;</span><span class="ident">relayer_a_id</span>),
+                <span class="ident">PrettyOption</span>(<span class="kw-2">&amp;</span><span class="ident">a_counterparty_id</span>),
                 <span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(),
             );
             <span class="self">self</span>.<span class="ident">b_side</span>.<span class="ident">connection_id</span> <span class="op">=</span> <span class="ident">a_counterparty_id</span>.<span class="ident">cloned</span>();
@@ -1910,13 +1935,13 @@
         <span class="kw">if</span> <span class="ident">b_counterparty_id</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">b_counterparty_id</span> <span class="op">!</span><span class="op">=</span> <span class="ident">relayer_a_id</span> {
             <span class="kw">if</span> <span class="ident">updated_relayer_b_id</span> <span class="op">==</span> <span class="ident">relayer_b_id</span>.<span class="ident">as_ref</span>() {
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;updating the expected {:?} of side_a({}) since it is different than the \
-                counterparty of {:?}: {:?}, on {}. This is typically caused by crossing handshake \
-                messages in the presence of multiple relayers.&quot;</span>,
-                    <span class="ident">relayer_a_id</span>,
+                    <span class="string">&quot;updating the expected {} of side_a({}) since it is different than the \
+                    counterparty of {}: {}, on {}. This is typically caused by crossing handshake \
+                    messages in the presence of multiple relayers.&quot;</span>,
+                    <span class="ident">PrettyOption</span>(<span class="kw-2">&amp;</span><span class="ident">relayer_a_id</span>),
                     <span class="self">self</span>.<span class="ident">a_chain</span>().<span class="ident">id</span>(),
-                    <span class="ident">updated_relayer_b_id</span>,
-                    <span class="ident">b_counterparty_id</span>,
+                    <span class="ident">PrettyOption</span>(<span class="kw-2">&amp;</span><span class="ident">updated_relayer_b_id</span>),
+                    <span class="ident">PrettyOption</span>(<span class="kw-2">&amp;</span><span class="ident">b_counterparty_id</span>),
                     <span class="self">self</span>.<span class="ident">b_chain</span>().<span class="ident">id</span>(),
                 );
                 <span class="self">self</span>.<span class="ident">a_side</span>.<span class="ident">connection_id</span> <span class="op">=</span> <span class="ident">b_counterparty_id</span>.<span class="ident">cloned</span>();
@@ -1946,7 +1971,7 @@
             <span class="comment">// send the Init message to chain a (source)</span>
             (<span class="ident">State::Uninitialized</span>, <span class="ident">State::Uninitialized</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_conn_init_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenInit {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenInit {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
                 <span class="kw">let</span> <span class="ident">connection_id</span> <span class="op">=</span> <span class="ident">extract_connection_id</span>(<span class="kw-2">&amp;</span><span class="ident">event</span>)<span class="question-mark">?</span>;
@@ -1956,7 +1981,7 @@
             <span class="comment">// send the Try message to chain a (source)</span>
             (<span class="ident">State::Uninitialized</span>, <span class="ident">State::Init</span>) <span class="op">|</span> (<span class="ident">State::Init</span>, <span class="ident">State::Init</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_conn_try_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenTry {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenTry {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
 
@@ -1967,7 +1992,7 @@
             <span class="comment">// send the Try message to chain b (destination)</span>
             (<span class="ident">State::Init</span>, <span class="ident">State::Uninitialized</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">build_conn_try_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenTry {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenTry {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
 
@@ -1978,7 +2003,7 @@
             <span class="comment">// send the Ack message to chain a (source)</span>
             (<span class="ident">State::Init</span>, <span class="ident">State::TryOpen</span>) <span class="op">|</span> (<span class="ident">State::TryOpen</span>, <span class="ident">State::TryOpen</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_conn_ack_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenAck {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenAck {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
             }
@@ -1986,7 +2011,7 @@
             <span class="comment">// send the Ack message to chain b (destination)</span>
             (<span class="ident">State::TryOpen</span>, <span class="ident">State::Init</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">build_conn_ack_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenAck {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenAck {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
             }
@@ -1994,7 +2019,7 @@
             <span class="comment">// send the Confirm message to chain b (destination)</span>
             (<span class="ident">State::Open</span>, <span class="ident">State::TryOpen</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">build_conn_confirm_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenConfirm {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenConfirm {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">b_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
             }
@@ -2002,13 +2027,13 @@
             <span class="comment">// send the Confirm message to chain a (source)</span>
             (<span class="ident">State::TryOpen</span>, <span class="ident">State::Open</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">flipped</span>().<span class="ident">build_conn_confirm_and_send</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenConfirm {:?}: {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenConfirm {}: {}&quot;</span>, <span class="self">self</span>.<span class="ident">a_side</span>, <span class="ident">e</span>);
                     <span class="ident">e</span>
                 })<span class="question-mark">?</span>;
             }
 
             (<span class="ident">State::Open</span>, <span class="ident">State::Open</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;connection handshake already finished for {:#?}\n&quot;</span>, <span class="self">self</span>);
+                <span class="macro">info!</span>(<span class="string">&quot;connection handshake already finished for {}&quot;</span>, <span class="self">self</span>);
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(());
             }
 
@@ -2113,15 +2138,12 @@
                     );
                     <span class="ident">RetryResult::Err</span>(<span class="ident">index</span>)
                 } <span class="kw">else</span> {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed {:?} with error {}&quot;</span>, <span class="ident">state</span>, <span class="ident">e</span>);
+                    <span class="macro">error!</span>(<span class="string">&quot;failed {} with error {}&quot;</span>, <span class="ident">state</span>, <span class="ident">e</span>);
                     <span class="ident">RetryResult::Retry</span>(<span class="ident">index</span>)
                 }
             }
             <span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>(<span class="ident">ev</span>), <span class="ident">handshake_completed</span>)) =&gt; {
-                <span class="macro">info!</span>(
-                    <span class="string">&quot;connection handshake step completed with events: {:#?}\n&quot;</span>,
-                    <span class="ident">ev</span>
-                );
+                <span class="macro">info!</span>(<span class="string">&quot;connection handshake step completed with events: {}&quot;</span>, <span class="ident">ev</span>);
                 <span class="ident">RetryResult::Ok</span>(<span class="ident">handshake_completed</span>)
             }
             <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="ident">handshake_completed</span>)) =&gt; <span class="ident">RetryResult::Ok</span>(<span class="ident">handshake_completed</span>),
@@ -2288,7 +2310,7 @@
         <span class="comment">// TODO - make chainError an actual error</span>
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenInitConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
                 <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
@@ -2460,7 +2482,7 @@
 
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenTryConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
                 <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
@@ -2575,7 +2597,7 @@
 
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenAckConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
                 <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),
@@ -2663,7 +2685,7 @@
 
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">result</span>.<span class="ident">event</span> {
             <span class="ident">IbcEvent::OpenConfirmConnection</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {:#?}\n&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
+                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.<span class="ident">dst_chain</span>().<span class="ident">id</span>(), <span class="ident">result</span>);
                 <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">event</span>)
             }
             <span class="ident">IbcEvent::ChainError</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConnectionError::tx_response</span>(<span class="ident">e</span>.<span class="ident">clone</span>())),

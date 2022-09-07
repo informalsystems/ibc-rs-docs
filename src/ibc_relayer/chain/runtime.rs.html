@@ -880,12 +880,20 @@
 <span id="875">875</span>
 <span id="876">876</span>
 <span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 
 <span class="kw">use</span> <span class="ident">crossbeam_channel</span> <span class="kw">as</span> <span class="ident">channel</span>;
 <span class="kw">use</span> <span class="ident">tokio::runtime::Runtime</span> <span class="kw">as</span> <span class="ident">TokioRuntime</span>;
-<span class="kw">use</span> <span class="ident">tracing::error</span>;
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">Span</span>};
 
 <span class="kw">use</span> <span class="ident">ibc</span>::{
     <span class="ident">core</span>::{
@@ -1012,11 +1020,11 @@
 
     <span class="doccomment">/// The sender side of a channel to this runtime. Any `ChainHandle` can use this to send</span>
     <span class="doccomment">/// chain requests to this runtime</span>
-    <span class="ident">request_sender</span>: <span class="ident">channel::Sender</span><span class="op">&lt;</span><span class="ident">ChainRequest</span><span class="op">&gt;</span>,
+    <span class="ident">request_sender</span>: <span class="ident">channel::Sender</span><span class="op">&lt;</span>(<span class="ident">Span</span>, <span class="ident">ChainRequest</span>)<span class="op">&gt;</span>,
 
     <span class="doccomment">/// The receiving side of a channel to this runtime. The runtime consumes chain requests coming</span>
     <span class="doccomment">/// in through this channel.</span>
-    <span class="ident">request_receiver</span>: <span class="ident">channel::Receiver</span><span class="op">&lt;</span><span class="ident">ChainRequest</span><span class="op">&gt;</span>,
+    <span class="ident">request_receiver</span>: <span class="ident">channel::Receiver</span><span class="op">&lt;</span>(<span class="ident">Span</span>, <span class="ident">ChainRequest</span>)<span class="op">&gt;</span>,
 
     <span class="doccomment">/// An event bus, for broadcasting events that this runtime receives (via `event_receiver`) to subscribers</span>
     <span class="ident">event_bus</span>: <span class="ident">EventBus</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MonitorResult</span><span class="op">&lt;</span><span class="ident">EventBatch</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
@@ -1069,7 +1077,7 @@
 
     <span class="doccomment">/// Basic constructor</span>
     <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">chain</span>: <span class="ident">Endpoint</span>, <span class="ident">rt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">TokioRuntime</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> (<span class="ident">request_sender</span>, <span class="ident">request_receiver</span>) <span class="op">=</span> <span class="ident">channel::unbounded</span>::<span class="op">&lt;</span><span class="ident">ChainRequest</span><span class="op">&gt;</span>();
+        <span class="kw">let</span> (<span class="ident">request_sender</span>, <span class="ident">request_receiver</span>) <span class="op">=</span> <span class="ident">channel::unbounded</span>();
 
         <span class="self">Self</span> {
             <span class="ident">rt</span>,
@@ -1104,8 +1112,18 @@
                     }
                 },
                 <span class="ident">recv</span>(<span class="self">self</span>.<span class="ident">request_receiver</span>) -&gt; <span class="ident">event</span> =&gt; {
+                    <span class="kw">let</span> (<span class="ident">span</span>, <span class="ident">event</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">event</span> {
+                        <span class="prelude-val">Ok</span>((<span class="ident">span</span>, <span class="ident">event</span>)) =&gt; (<span class="ident">span</span>, <span class="ident">event</span>),
+                        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+                            <span class="macro">error!</span>(<span class="string">&quot;received error via chain request channel: {}&quot;</span>, <span class="ident">e</span>);
+                            <span class="kw">continue</span>;
+                        }
+                    };
+
+                    <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="ident">span</span>.<span class="ident">entered</span>();
+
                     <span class="kw">match</span> <span class="ident">event</span> {
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::Shutdown</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::Shutdown</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">event_monitor_ctrl</span>.<span class="ident">shutdown</span>()<span class="question-mark">?</span>;
 
                             <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">shutdown</span>();
@@ -1115,187 +1133,185 @@
                             <span class="kw">break</span>;
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::HealthCheck</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::HealthCheck</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">health_check</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::Subscribe</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::Subscribe</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">subscribe</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::SendMessagesAndWaitCommit</span> { <span class="ident">tracked_msgs</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::SendMessagesAndWaitCommit</span> { <span class="ident">tracked_msgs</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">send_messages_and_wait_commit</span>(<span class="ident">tracked_msgs</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::SendMessagesAndWaitCheckTx</span> { <span class="ident">tracked_msgs</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::SendMessagesAndWaitCheckTx</span> { <span class="ident">tracked_msgs</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">send_messages_and_wait_check_tx</span>(<span class="ident">tracked_msgs</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::Signer</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::Signer</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">get_signer</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::Config</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::Config</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">get_config</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::GetKey</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::GetKey</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">get_key</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::AddKey</span> { <span class="ident">key_name</span>, <span class="ident">key</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::AddKey</span> { <span class="ident">key_name</span>, <span class="ident">key</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">add_key</span>(<span class="ident">key_name</span>, <span class="ident">key</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::IbcVersion</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::IbcVersion</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">ibc_version</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildHeader</span> { <span class="ident">trusted_height</span>, <span class="ident">target_height</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildHeader</span> { <span class="ident">trusted_height</span>, <span class="ident">target_height</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">build_header</span>(<span class="ident">trusted_height</span>, <span class="ident">target_height</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildClientState</span> { <span class="ident">height</span>, <span class="ident">settings</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildClientState</span> { <span class="ident">height</span>, <span class="ident">settings</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">build_client_state</span>(<span class="ident">height</span>, <span class="ident">settings</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildConsensusState</span> { <span class="ident">trusted</span>, <span class="ident">target</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildConsensusState</span> { <span class="ident">trusted</span>, <span class="ident">target</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">build_consensus_state</span>(<span class="ident">trusted</span>, <span class="ident">target</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                       <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildMisbehaviour</span> { <span class="ident">client_state</span>, <span class="ident">update_event</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildMisbehaviour</span> { <span class="ident">client_state</span>, <span class="ident">update_event</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">check_misbehaviour</span>(<span class="ident">update_event</span>, <span class="ident">client_state</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildConnectionProofsAndClientState</span> { <span class="ident">message_type</span>, <span class="ident">connection_id</span>, <span class="ident">client_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildConnectionProofsAndClientState</span> { <span class="ident">message_type</span>, <span class="ident">connection_id</span>, <span class="ident">client_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">build_connection_proofs_and_client_state</span>(<span class="ident">message_type</span>, <span class="ident">connection_id</span>, <span class="ident">client_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildChannelProofs</span> { <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildChannelProofs</span> { <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">build_channel_proofs</span>(<span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">height</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryBalance</span> { <span class="ident">key_name</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryBalance</span> { <span class="ident">key_name</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_balance</span>(<span class="ident">key_name</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryDenomTrace</span> { <span class="ident">hash</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryDenomTrace</span> { <span class="ident">hash</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_denom_trace</span>(<span class="ident">hash</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryApplicationStatus</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryApplicationStatus</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_application_status</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryClients</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryClients</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_clients</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryClientConnections</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryClientConnections</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_client_connections</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryClientState</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryClientState</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_client_state</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryConsensusStates</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryConsensusStates</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_consensus_states</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryConsensusState</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryConsensusState</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_consensus_state</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryUpgradedClientState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryUpgradedClientState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_upgraded_client_state</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                       <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryUpgradedConsensusState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryUpgradedConsensusState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_upgraded_consensus_state</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryCommitmentPrefix</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryCommitmentPrefix</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_commitment_prefix</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryCompatibleVersions</span> { <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryCompatibleVersions</span> { <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_compatible_versions</span>(<span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryConnection</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryConnection</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_connection</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryConnections</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryConnections</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_connections</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryConnectionChannels</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryConnectionChannels</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_connection_channels</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryChannels</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryChannels</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_channels</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryChannel</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryChannel</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_channel</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryChannelClientState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryChannelClientState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_channel_client_state</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::BuildPacketProofs</span> { <span class="ident">packet_type</span>, <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">sequence</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::BuildPacketProofs</span> { <span class="ident">packet_type</span>, <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">sequence</span>, <span class="ident">height</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">build_packet_proofs</span>(<span class="ident">packet_type</span>, <span class="ident">port_id</span>, <span class="ident">channel_id</span>, <span class="ident">sequence</span>, <span class="ident">height</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketCommitment</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketCommitment</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_packet_commitment</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketCommitments</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketCommitments</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_packet_commitments</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketReceipt</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketReceipt</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_packet_receipt</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryUnreceivedPackets</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryUnreceivedPackets</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_unreceived_packets</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketAcknowledgement</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketAcknowledgement</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_packet_acknowledgement</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketAcknowledgements</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketAcknowledgements</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_packet_acknowledgements</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryUnreceivedAcknowledgement</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryUnreceivedAcknowledgement</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_unreceived_acknowledgement</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryNextSequenceReceive</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryNextSequenceReceive</span> { <span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_next_sequence_receive</span>(<span class="ident">request</span>, <span class="ident">include_proof</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketEventDataFromTxs</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketEventDataFromTxs</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_txs</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryPacketEventDataFromBlocks</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryPacketEventDataFromBlocks</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_blocks</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="prelude-val">Ok</span>(<span class="ident">ChainRequest::QueryHostConsensusState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> }) =&gt; {
+                        <span class="ident">ChainRequest::QueryHostConsensusState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
                             <span class="self">self</span>.<span class="ident">query_host_consensus_state</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
-
-                        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;received error via chain request channel: {}&quot;</span>, <span class="ident">e</span>),
                     }
                 },
             }

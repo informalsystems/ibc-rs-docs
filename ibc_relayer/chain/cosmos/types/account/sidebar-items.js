@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Account","Wrapper for account number and sequence number."],["AccountNumber","Newtype for account numbers"],["AccountSequence","Newtype for account sequence numbers"]]});
+initSidebarItems({"struct":[["Account","Wrapper for account number and sequence number."],["AccountAddress","Newtype for account address"],["AccountNumber","Newtype for account numbers"],["AccountSequence","Newtype for account sequence numbers"]]});

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["block_on","Spawns a new tokio runtime and use it to block on the given future."]],"mod":[["diff",""],["iter",""],["lock",""],["queue",""],["retry",""],["stream",""],["task",""]]});
+initSidebarItems({"fn":[["block_on","Spawns a new tokio runtime and use it to block on the given future."]],"mod":[["diff",""],["iter",""],["lock",""],["pretty",""],["queue",""],["retry",""],["stream",""],["task",""]]});

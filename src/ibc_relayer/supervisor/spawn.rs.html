@@ -327,6 +327,16 @@
 <span id="322">322</span>
 <span id="323">323</span>
 <span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">info</span>};
 
 <span class="kw">use</span> <span class="ident">ibc::core</span>::{
@@ -371,6 +381,8 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_workers</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">scan</span>: <span class="ident">ChainsScan</span>) {
+        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">tracing::error_span!</span>(<span class="string">&quot;spawn&quot;</span>).<span class="ident">entered</span>();
+
         <span class="kw">for</span> <span class="ident">chain_scan</span> <span class="kw">in</span> <span class="ident">scan</span>.<span class="ident">chains</span> {
             <span class="kw">match</span> <span class="ident">chain_scan</span> {
                 <span class="prelude-val">Ok</span>(<span class="ident">chain_scan</span>) =&gt; <span class="self">self</span>.<span class="ident">spawn_workers_for_chain</span>(<span class="ident">chain_scan</span>),
@@ -380,12 +392,13 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_workers_for_chain</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">scan</span>: <span class="ident">ChainScan</span>) {
+        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">tracing::error_span!</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">scan</span>.<span class="ident">chain_id</span>).<span class="ident">entered</span>();
+
         <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">registry</span>.<span class="ident">get_or_spawn</span>(<span class="kw-2">&amp;</span><span class="ident">scan</span>.<span class="ident">chain_id</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">chain_handle</span>) =&gt; <span class="ident">chain_handle</span>,
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">scan</span>.<span class="ident">chain_id</span>,
-                    <span class="string">&quot;skipping workers , reason: failed to spawn chain runtime with error: {}&quot;</span>,
+                    <span class="string">&quot;skipping workers, reason: failed to spawn chain runtime with error: {}&quot;</span>,
                     <span class="ident">e</span>
                 );
 
@@ -416,6 +429,8 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_workers_for_client</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">chain</span>: <span class="ident">Chain</span>, <span class="ident">client_scan</span>: <span class="ident">ClientScan</span>) {
+        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">tracing::error_span!</span>(<span class="string">&quot;client&quot;</span>, <span class="ident">client</span> <span class="op">=</span> <span class="op">%</span><span class="ident">client_scan</span>.<span class="ident">id</span>()).<span class="ident">entered</span>();
+
         <span class="kw">for</span> (<span class="kw">_</span>, <span class="ident">connection_scan</span>) <span class="kw">in</span> <span class="ident">client_scan</span>.<span class="ident">connections</span> {
             <span class="self">self</span>.<span class="ident">spawn_workers_for_connection</span>(<span class="ident">chain</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="ident">client_scan</span>.<span class="ident">client</span>, <span class="ident">connection_scan</span>);
         }
@@ -427,6 +442,9 @@
         <span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedAnyClientState</span>,
         <span class="ident">connection_scan</span>: <span class="ident">ConnectionScan</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span>
+            <span class="macro">tracing::error_span!</span>(<span class="string">&quot;connection&quot;</span>, <span class="ident">connection</span> <span class="op">=</span> <span class="op">%</span><span class="ident">connection_scan</span>.<span class="ident">id</span>()).<span class="ident">entered</span>();
+
         <span class="kw">let</span> <span class="ident">connection_id</span> <span class="op">=</span> <span class="ident">connection_scan</span>.<span class="ident">id</span>().<span class="ident">clone</span>();
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">spawn_connection_workers</span>(
@@ -494,7 +512,7 @@
             <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain</span>.<span class="ident">id</span>(),
             <span class="ident">connection</span> <span class="op">=</span> <span class="op">%</span><span class="ident">connection</span>.<span class="ident">connection_id</span>,
             <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">counterparty_chain</span>.<span class="ident">id</span>(),
-            <span class="string">&quot;connection is {:?}, state on destination chain is {:?}&quot;</span>,
+            <span class="string">&quot;connection is {}, state on destination chain is {}&quot;</span>,
             <span class="ident">conn_state_src</span>,
             <span class="ident">conn_state_dst</span>
         );
@@ -541,6 +559,8 @@
         <span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">IdentifiedAnyClientState</span>,
         <span class="ident">channel_scan</span>: <span class="ident">ChannelScan</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">tracing::error_span!</span>(<span class="string">&quot;channel&quot;</span>, <span class="ident">channel</span> <span class="op">=</span> <span class="op">%</span><span class="ident">channel_scan</span>.<span class="ident">id</span>()).<span class="ident">entered</span>();
+
         <span class="kw">let</span> <span class="ident">mode</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">mode</span>;
 
         <span class="kw">let</span> <span class="ident">counterparty_chain</span> <span class="op">=</span> <span class="self">self</span>
