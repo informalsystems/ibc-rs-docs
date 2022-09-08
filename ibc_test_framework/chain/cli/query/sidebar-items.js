@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["query_balance",""],["query_recipient_transactions","Query for the transactions related to a wallet on `Chain` receiving token transfer from others."]]});
