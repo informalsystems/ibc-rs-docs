@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Amount","A type for representing token transfer amounts."]]});

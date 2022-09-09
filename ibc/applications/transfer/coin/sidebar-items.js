@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Coin","Coin defines a token with a denomination and an amount."]],"type":[["BaseCoin","A `Coin` type with an unprefixed denomination."],["PrefixedCoin","A `Coin` type with fully qualified `PrefixedDenom`."],["RawCoin",""]]});
