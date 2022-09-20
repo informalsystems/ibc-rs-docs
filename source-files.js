@@ -147,7 +147,6 @@ sourcesIndex["libc"] = {"name":"","dirs":[{"name":"unix","dirs":[{"name":"linux_
 sourcesIndex["lock_api"] = {"name":"","files":["lib.rs","mutex.rs","remutex.rs","rwlock.rs"]};
 sourcesIndex["log"] = {"name":"","files":["lib.rs","macros.rs"]};
 sourcesIndex["matchers"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["matches"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["matchit"] = {"name":"","files":["error.rs","lib.rs","params.rs","router.rs","tree.rs"]};
 sourcesIndex["memchr"] = {"name":"","dirs":[{"name":"memchr","dirs":[{"name":"x86","files":["avx.rs","mod.rs","sse2.rs"]}],"files":["fallback.rs","iter.rs","mod.rs","naive.rs"]},{"name":"memmem","dirs":[{"name":"prefilter","dirs":[{"name":"x86","files":["avx.rs","mod.rs","sse.rs"]}],"files":["fallback.rs","genericsimd.rs","mod.rs"]},{"name":"x86","files":["avx.rs","mod.rs","sse.rs"]}],"files":["byte_frequencies.rs","genericsimd.rs","mod.rs","rabinkarp.rs","rarebytes.rs","twoway.rs","util.rs","vector.rs"]}],"files":["cow.rs","lib.rs"]};
 sourcesIndex["memoffset"] = {"name":"","files":["lib.rs","offset_of.rs","raw_field.rs","span_of.rs"]};
