@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["FnWrapper",""],["Pipeline","A sequence of `PipelineFn`s which are run on tokens to prepare them for searching."]],"trait":[["PipelineFn",""]]});
