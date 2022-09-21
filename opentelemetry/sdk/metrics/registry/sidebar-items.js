@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["unique_instrument_meter_core","Create a new `UniqueInstrumentMeterCore` from a `InstrumentProvider`."]],"struct":[["UniqueInstrumentMeterCore","Implements the [`MeterCore`] interface, adding uniqueness checking for instrument descriptors."]],"trait":[["AnyMeterCore","An extension trait that allows meters to be downcast"]]});

@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["opentelemetry_sdk"] = [{"text":"impl <a class=\"trait\" href=\"opentelemetry_api/trace/tracer_provider/trait.TracerProvider.html\" title=\"trait opentelemetry_api::trace::tracer_provider::TracerProvider\">TracerProvider</a> for <a class=\"struct\" href=\"opentelemetry_sdk/trace/struct.TracerProvider.html\" title=\"struct opentelemetry_sdk::trace::TracerProvider\">TracerProvider</a>","synthetic":false,"types":["opentelemetry_sdk::trace::provider::TracerProvider"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

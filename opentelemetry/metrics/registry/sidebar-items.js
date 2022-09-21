@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["meter_provider","Create a new `RegistryMeterProvider` from a `MeterCore`."]],"struct":[["RegistryMeterProvider","A standard `MeterProvider` for wrapping a `MeterCore`."]]});

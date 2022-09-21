@@ -884,14 +884,78 @@
 <span id="879">879</span>
 <span id="880">880</span>
 <span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+<span id="903">903</span>
+<span id="904">904</span>
+<span id="905">905</span>
+<span id="906">906</span>
+<span id="907">907</span>
+<span id="908">908</span>
+<span id="909">909</span>
+<span id="910">910</span>
+<span id="911">911</span>
+<span id="912">912</span>
+<span id="913">913</span>
+<span id="914">914</span>
+<span id="915">915</span>
+<span id="916">916</span>
+<span id="917">917</span>
+<span id="918">918</span>
+<span id="919">919</span>
+<span id="920">920</span>
+<span id="921">921</span>
+<span id="922">922</span>
+<span id="923">923</span>
+<span id="924">924</span>
+<span id="925">925</span>
+<span id="926">926</span>
+<span id="927">927</span>
+<span id="928">928</span>
+<span id="929">929</span>
+<span id="930">930</span>
+<span id="931">931</span>
+<span id="932">932</span>
+<span id="933">933</span>
+<span id="934">934</span>
+<span id="935">935</span>
+<span id="936">936</span>
+<span id="937">937</span>
+<span id="938">938</span>
+<span id="939">939</span>
+<span id="940">940</span>
+<span id="941">941</span>
+<span id="942">942</span>
+<span id="943">943</span>
+<span id="944">944</span>
+<span id="945">945</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
 
 <span class="kw">use</span> <span class="ident">dashmap::DashMap</span>;
 <span class="kw">use</span> <span class="ident">opentelemetry</span>::{
     <span class="ident">global</span>,
-    <span class="ident">metrics</span>::{<span class="ident">Counter</span>, <span class="ident">UpDownCounter</span>, <span class="ident">ValueRecorder</span>},
-    <span class="ident">KeyValue</span>,
+    <span class="ident">metrics</span>::{<span class="ident">Counter</span>, <span class="ident">ObservableGauge</span>, <span class="ident">UpDownCounter</span>},
+    <span class="ident">Context</span>, <span class="ident">KeyValue</span>,
 };
 <span class="kw">use</span> <span class="ident">opentelemetry_prometheus::PrometheusExporter</span>;
 <span class="kw">use</span> <span class="ident">prometheus::proto::MetricFamily</span>;
@@ -998,17 +1062,17 @@
     <span class="ident">total_messages_submitted</span>: <span class="ident">Counter</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// The balance of each wallet Hermes uses per chain</span>
-    <span class="ident">wallet_balance</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>,
+    <span class="ident">wallet_balance</span>: <span class="ident">ObservableGauge</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Indicates the latency for all transactions submitted to a specific chain,</span>
     <span class="doccomment">/// i.e. the difference between the moment when Hermes received a batch of events</span>
     <span class="doccomment">/// until the corresponding transaction(s) were submitted. Milliseconds.</span>
-    <span class="ident">tx_latency_submitted</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="ident">tx_latency_submitted</span>: <span class="ident">ObservableGauge</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Indicates the latency for all transactions submitted to a specific chain,</span>
     <span class="doccomment">/// i.e. the difference between the moment when Hermes received a batch of events</span>
     <span class="doccomment">/// until the corresponding transaction(s) were confirmed. Milliseconds.</span>
-    <span class="ident">tx_latency_confirmed</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="ident">tx_latency_confirmed</span>: <span class="ident">ObservableGauge</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Records the time at which we started processing an event batch.</span>
     <span class="doccomment">/// Used for computing the `tx_latency` metric.</span>
@@ -1033,14 +1097,14 @@
     <span class="doccomment">/// the sequence number of the oldest SendPacket event for which no</span>
     <span class="doccomment">/// WriteAcknowledgement or Timeout events have been received. The value is 0 if all the</span>
     <span class="doccomment">/// SendPacket events were relayed.</span>
-    <span class="ident">backlog_oldest_sequence</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="ident">backlog_oldest_sequence</span>: <span class="ident">ObservableGauge</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Record the timestamp related to `backlog_oldest_sequence`.</span>
     <span class="doccomment">/// The timestamp is the time passed since since the unix epoch in seconds.</span>
-    <span class="ident">backlog_oldest_timestamp</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="ident">backlog_oldest_timestamp</span>: <span class="ident">ObservableGauge</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Records the length of the backlog, i.e., how many packets are pending.</span>
-    <span class="ident">backlog_size</span>: <span class="ident">ValueRecorder</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="ident">backlog_size</span>: <span class="ident">ObservableGauge</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Stores the backlogs for all the paths the relayer is active on.</span>
     <span class="doccomment">/// This is a map of multiple inner backlogs, one inner backlog per path.</span>
@@ -1063,11 +1127,13 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init_per_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>())];
 
-        <span class="self">self</span>.<span class="ident">ws_reconnect</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">ws_events</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">total_messages_submitted</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">ws_reconnect</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">ws_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">total_messages_submitted</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
 
         <span class="self">self</span>.<span class="ident">init_queries</span>(<span class="ident">chain_id</span>);
     }
@@ -1078,15 +1144,17 @@
         <span class="ident">src_channel</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
         <span class="ident">src_port</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_channel&quot;</span>, <span class="ident">src_channel</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_port&quot;</span>, <span class="ident">src_port</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">receive_packets_confirmed</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">acknowledgment_packets_confirmed</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">timeout_packets_confirmed</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">receive_packets_confirmed</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">acknowledgment_packets_confirmed</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">timeout_packets_confirmed</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init_per_path</span>(
@@ -1097,6 +1165,8 @@
         <span class="ident">port</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">clear_packets</span>: <span class="ident">bool</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;counterparty&quot;</span>, <span class="ident">counterparty</span>.<span class="ident">to_string</span>()),
@@ -1104,18 +1174,18 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">send_packet_events</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">acknowledgement_events</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">timeout_events</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">send_packet_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">acknowledgement_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">timeout_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
 
         <span class="kw">if</span> <span class="ident">clear_packets</span> {
-            <span class="self">self</span>.<span class="ident">cleared_send_packet_events</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-            <span class="self">self</span>.<span class="ident">cleared_acknowledgment_events</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">cleared_send_packet_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">cleared_acknowledgment_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
         }
 
-        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init_per_client</span>(
@@ -1125,27 +1195,31 @@
         <span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">misbehaviour</span>: <span class="ident">bool</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;dst_chain&quot;</span>, <span class="ident">dst_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;client&quot;</span>, <span class="ident">client</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">client_updates_submitted</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">client_updates_submitted</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
 
         <span class="kw">if</span> <span class="ident">misbehaviour</span> {
-            <span class="self">self</span>.<span class="ident">client_misbehaviours_submitted</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">client_misbehaviours_submitted</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
         }
     }
 
     <span class="kw">fn</span> <span class="ident">init_queries</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">for</span> <span class="ident">query_type</span> <span class="kw">in</span> <span class="ident">QUERY_TYPES</span> {
             <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;query_type&quot;</span>, <span class="ident">query_type</span>),
             ];
 
-            <span class="self">self</span>.<span class="ident">queries</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">queries</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
         }
 
         <span class="kw">for</span> <span class="ident">query_type</span> <span class="kw">in</span> <span class="ident">QUERY_TYPES_CACHE</span> {
@@ -1154,14 +1228,15 @@
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;query_type&quot;</span>, <span class="ident">query_type</span>),
             ];
 
-            <span class="self">self</span>.<span class="ident">queries_cache_hits</span>.<span class="ident">add</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">queries_cache_hits</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
         }
     }
 
     <span class="doccomment">/// Update the number of workers per object</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">worker</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">worker_type</span>: <span class="ident">WorkerType</span>, <span class="ident">count</span>: <span class="ident">i64</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;type&quot;</span>, <span class="ident">worker_type</span>.<span class="ident">to_string</span>())];
-        <span class="self">self</span>.<span class="ident">workers</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">workers</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Update the number of client updates per client</span>
@@ -1172,13 +1247,15 @@
         <span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">count</span>: <span class="ident">u64</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;dst_chain&quot;</span>, <span class="ident">dst_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;client&quot;</span>, <span class="ident">client</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">client_updates_submitted</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">client_updates_submitted</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Number of client misbehaviours per client</span>
@@ -1189,13 +1266,15 @@
         <span class="ident">client</span>: <span class="kw-2">&amp;</span><span class="ident">ClientId</span>,
         <span class="ident">count</span>: <span class="ident">u64</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;dst_chain&quot;</span>, <span class="ident">dst_chain</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;client&quot;</span>, <span class="ident">client</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">client_misbehaviours_submitted</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">client_misbehaviours_submitted</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Number of receive packets relayed, per channel</span>
@@ -1206,6 +1285,8 @@
         <span class="ident">src_port</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">count</span>: <span class="ident">u64</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">if</span> <span class="ident">count</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
@@ -1213,7 +1294,7 @@
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_port&quot;</span>, <span class="ident">src_port</span>.<span class="ident">to_string</span>()),
             ];
 
-            <span class="self">self</span>.<span class="ident">receive_packets_confirmed</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">receive_packets_confirmed</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
         }
     }
 
@@ -1225,6 +1306,8 @@
         <span class="ident">src_port</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">count</span>: <span class="ident">u64</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">if</span> <span class="ident">count</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
@@ -1232,7 +1315,8 @@
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_port&quot;</span>, <span class="ident">src_port</span>.<span class="ident">to_string</span>()),
             ];
 
-            <span class="self">self</span>.<span class="ident">acknowledgment_packets_confirmed</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">acknowledgment_packets_confirmed</span>
+                .<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
         }
     }
 
@@ -1244,6 +1328,8 @@
         <span class="ident">src_port</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">count</span>: <span class="ident">u64</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">if</span> <span class="ident">count</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_chain&quot;</span>, <span class="ident">src_chain</span>.<span class="ident">to_string</span>()),
@@ -1251,61 +1337,73 @@
                 <span class="ident">KeyValue::new</span>(<span class="string">&quot;src_port&quot;</span>, <span class="ident">src_port</span>.<span class="ident">to_string</span>()),
             ];
 
-            <span class="self">self</span>.<span class="ident">timeout_packets_confirmed</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+            <span class="self">self</span>.<span class="ident">timeout_packets_confirmed</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
         }
     }
 
     <span class="doccomment">/// Number of queries emitted by the relayer, per chain and query type</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">query</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>, <span class="ident">query_type</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;query_type&quot;</span>, <span class="ident">query_type</span>),
         ];
 
-        <span class="self">self</span>.<span class="ident">queries</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">queries</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Number of cache hits for queries emitted by the relayer, per chain and query type</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">queries_cache_hits</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>, <span class="ident">query_type</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;query_type&quot;</span>, <span class="ident">query_type</span>),
         ];
 
-        <span class="self">self</span>.<span class="ident">queries_cache_hits</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">queries_cache_hits</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Number of time the relayer had to reconnect to the WebSocket endpoint, per chain</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ws_reconnect</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>())];
 
-        <span class="self">self</span>.<span class="ident">ws_reconnect</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">ws_reconnect</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// How many IBC events did Hermes receive via the WebSocket subscription, per chain</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ws_events</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>, <span class="ident">count</span>: <span class="ident">u64</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>())];
 
-        <span class="self">self</span>.<span class="ident">ws_events</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">ws_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// How many messages Hermes submitted to the chain</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">total_messages_submitted</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>, <span class="ident">count</span>: <span class="ident">u64</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>())];
 
-        <span class="self">self</span>.<span class="ident">total_messages_submitted</span>.<span class="ident">add</span>(<span class="ident">count</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">total_messages_submitted</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">count</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// The balance in each wallet that Hermes is using, per account, denom and chain.</span>
     <span class="doccomment">/// The amount given is of unit: 10^6 * `denom`</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wallet_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>, <span class="ident">account</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">amount</span>: <span class="ident">f64</span>, <span class="ident">denom</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;account&quot;</span>, <span class="ident">account</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;denom&quot;</span>, <span class="ident">denom</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">wallet_balance</span>.<span class="ident">record</span>(<span class="ident">amount</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">wallet_balance</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">amount</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">received_event_batch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tracking_id</span>: <span class="kw">impl</span> <span class="ident">ToString</span>) {
@@ -1322,6 +1420,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">tracking_id</span> <span class="op">=</span> <span class="ident">tracking_id</span>.<span class="ident">to_string</span>();
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">start</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">in_flight_events</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">tracking_id</span>) {
@@ -1336,7 +1436,7 @@
             ];
 
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">tx_count</span> {
-                <span class="self">self</span>.<span class="ident">tx_latency_submitted</span>.<span class="ident">record</span>(<span class="ident">latency</span>, <span class="ident">labels</span>);
+                <span class="self">self</span>.<span class="ident">tx_latency_submitted</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">latency</span>, <span class="ident">labels</span>);
             }
         }
     }
@@ -1350,6 +1450,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">tracking_id</span> <span class="op">=</span> <span class="ident">tracking_id</span>.<span class="ident">to_string</span>();
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">start</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">in_flight_events</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">tracking_id</span>) {
@@ -1364,7 +1466,7 @@
             ];
 
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">tx_count</span> {
-                <span class="self">self</span>.<span class="ident">tx_latency_confirmed</span>.<span class="ident">record</span>(<span class="ident">latency</span>, <span class="ident">labels</span>);
+                <span class="self">self</span>.<span class="ident">tx_latency_confirmed</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">latency</span>, <span class="ident">labels</span>);
             }
         }
     }
@@ -1378,6 +1480,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;counterparty&quot;</span>, <span class="ident">counterparty_chain_id</span>.<span class="ident">to_string</span>()),
@@ -1385,7 +1489,7 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">send_packet_events</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">send_packet_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">acknowledgement_events</span>(
@@ -1397,6 +1501,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;counterparty&quot;</span>, <span class="ident">counterparty_chain_id</span>.<span class="ident">to_string</span>()),
@@ -1404,7 +1510,7 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">acknowledgement_events</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">acknowledgement_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">timeout_events</span>(
@@ -1414,6 +1520,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;counterparty&quot;</span>, <span class="ident">counterparty_chain_id</span>.<span class="ident">to_string</span>()),
@@ -1421,7 +1529,7 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">timeout_events</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">timeout_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cleared_send_packet_events</span>(
@@ -1433,6 +1541,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span>: <span class="kw-2">&amp;</span>[<span class="ident">KeyValue</span>; <span class="number">4</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;counterparty&quot;</span>, <span class="ident">counterparty_chain_id</span>.<span class="ident">to_string</span>()),
@@ -1440,7 +1550,7 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">cleared_send_packet_events</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">cleared_send_packet_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cleared_acknowledgment_events</span>(
@@ -1452,6 +1562,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="kw">let</span> <span class="ident">labels</span>: <span class="kw-2">&amp;</span>[<span class="ident">KeyValue</span>; <span class="number">4</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;chain&quot;</span>, <span class="ident">chain_id</span>.<span class="ident">to_string</span>()),
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;counterparty&quot;</span>, <span class="ident">counterparty_chain_id</span>.<span class="ident">to_string</span>()),
@@ -1459,7 +1571,7 @@
             <span class="ident">KeyValue::new</span>(<span class="string">&quot;port&quot;</span>, <span class="ident">port_id</span>.<span class="ident">to_string</span>()),
         ];
 
-        <span class="self">self</span>.<span class="ident">cleared_acknowledgment_events</span>.<span class="ident">add</span>(<span class="number">1</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">cleared_acknowledgment_events</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">1</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Inserts in the backlog a new event for the given sequence number.</span>
@@ -1472,6 +1584,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="comment">// Unique identifier for a chain/channel/port.</span>
         <span class="kw">let</span> <span class="ident">path_uid</span>: <span class="ident">PathIdentifier</span> <span class="op">=</span> <span class="ident">PathIdentifier::new</span>(
             <span class="ident">chain_id</span>.<span class="ident">to_string</span>(),
@@ -1534,9 +1648,10 @@
         };
 
         <span class="comment">// Update metrics to reflect the new state of the backlog</span>
-        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">oldest_sn</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">record</span>(<span class="ident">oldest_ts</span>, <span class="ident">labels</span>);
-        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="ident">total</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">oldest_sn</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>
+            .<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">oldest_ts</span>, <span class="ident">labels</span>);
+        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">total</span>, <span class="ident">labels</span>);
     }
 
     <span class="doccomment">/// Evicts from the backlog the event for the given sequence number.</span>
@@ -1551,6 +1666,8 @@
         <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
         <span class="ident">counterparty_chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
     ) {
+        <span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
+
         <span class="comment">// Unique identifier for a chain/channel/port path.</span>
         <span class="kw">let</span> <span class="ident">path_uid</span>: <span class="ident">PathIdentifier</span> <span class="op">=</span> <span class="ident">PathIdentifier::new</span>(
             <span class="ident">chain_id</span>.<span class="ident">to_string</span>(),
@@ -1572,19 +1689,20 @@
                     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">min_key</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">v</span>.<span class="ident">key</span>()).<span class="ident">min</span>() {
                         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">oldest</span>) <span class="op">=</span> <span class="ident">path_backlog</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">min_key</span>) {
                             <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>
-                                .<span class="ident">record</span>(<span class="kw-2">*</span><span class="ident">oldest</span>.<span class="ident">value</span>(), <span class="ident">labels</span>);
+                                .<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="kw-2">*</span><span class="ident">oldest</span>.<span class="ident">value</span>(), <span class="ident">labels</span>);
                         } <span class="kw">else</span> {
-                            <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">record</span>(<span class="number">0</span>, <span class="ident">labels</span>);
+                            <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">0</span>, <span class="ident">labels</span>);
                         }
-                        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">record</span>(<span class="ident">min_key</span>, <span class="ident">labels</span>);
-                        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="ident">path_backlog</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">min_key</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_size</span>
+                            .<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">path_backlog</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">labels</span>);
                     } <span class="kw">else</span> {
                         <span class="comment">// No mimimum found, update the metrics to reflect an empty backlog</span>
                         <span class="self">self</span>.<span class="ident">backlog_oldest_sequence</span>
-                            .<span class="ident">record</span>(<span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
+                            .<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
                         <span class="self">self</span>.<span class="ident">backlog_oldest_timestamp</span>
-                            .<span class="ident">record</span>(<span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
-                        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">record</span>(<span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
+                            .<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
+                        <span class="self">self</span>.<span class="ident">backlog_size</span>.<span class="ident">observe</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="ident">EMPTY_BACKLOG_SYMBOL</span>, <span class="ident">labels</span>);
                     }
                 }
                 <span class="comment">// No change performed to the backlog, no need to update the metrics.</span>
@@ -1596,9 +1714,11 @@
 
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
-<span class="kw">use</span> <span class="ident">opentelemetry::metrics</span>::{<span class="ident">Descriptor</span>, <span class="ident">Unit</span>};
-<span class="kw">use</span> <span class="ident">opentelemetry::sdk::export::metrics</span>::{<span class="ident">Aggregator</span>, <span class="ident">AggregatorSelector</span>};
+<span class="kw">use</span> <span class="ident">opentelemetry::metrics::Unit</span>;
+<span class="kw">use</span> <span class="ident">opentelemetry::sdk::export::metrics::AggregatorSelector</span>;
+<span class="kw">use</span> <span class="ident">opentelemetry::sdk::metrics::aggregators::Aggregator</span>;
 <span class="kw">use</span> <span class="ident">opentelemetry::sdk::metrics::aggregators</span>::{<span class="ident">histogram</span>, <span class="ident">last_value</span>, <span class="ident">sum</span>};
+<span class="kw">use</span> <span class="ident">opentelemetry::sdk::metrics::sdk_api::Descriptor</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">struct</span> <span class="ident">CustomAggregatorSelector</span>;
@@ -1613,14 +1733,12 @@
             <span class="comment">// Prometheus&#39; supports only collector for histogram, sum, and last value aggregators.</span>
             <span class="comment">// https://docs.rs/opentelemetry-prometheus/0.11.0/src/opentelemetry_prometheus/lib.rs.html#411-418</span>
             <span class="comment">// TODO: Once quantile sketches are supported, replace histograms with that.</span>
-            <span class="string">&quot;tx_latency_submitted&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">histogram</span>(
-                <span class="ident">descriptor</span>,
-                <span class="kw-2">&amp;</span>[<span class="number">200.0</span>, <span class="number">500.0</span>, <span class="number">1000.0</span>, <span class="number">2000.0</span>, <span class="number">5000.0</span>, <span class="number">10000.0</span>],
-            ))),
-            <span class="string">&quot;tx_latency_confirmed&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">histogram</span>(
-                <span class="ident">descriptor</span>,
-                <span class="kw-2">&amp;</span>[<span class="number">1000.0</span>, <span class="number">5000.0</span>, <span class="number">9000.0</span>, <span class="number">13000.0</span>, <span class="number">17000.0</span>, <span class="number">20000.0</span>],
-            ))),
+            <span class="string">&quot;tx_latency_submitted&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">histogram</span>(<span class="kw-2">&amp;</span>[
+                <span class="number">200.0</span>, <span class="number">500.0</span>, <span class="number">1000.0</span>, <span class="number">2000.0</span>, <span class="number">5000.0</span>, <span class="number">10000.0</span>,
+            ]))),
+            <span class="string">&quot;tx_latency_confirmed&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">histogram</span>(<span class="kw-2">&amp;</span>[
+                <span class="number">1000.0</span>, <span class="number">5000.0</span>, <span class="number">9000.0</span>, <span class="number">13000.0</span>, <span class="number">17000.0</span>, <span class="number">20000.0</span>,
+            ]))),
             <span class="kw">_</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Arc::new</span>(<span class="ident">sum</span>())),
         }
     }
@@ -1628,9 +1746,19 @@
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">TelemetryState</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">exporter</span> <span class="op">=</span> <span class="ident">opentelemetry_prometheus::ExporterBuilder::default</span>()
-            .<span class="ident">with_aggregator_selector</span>(<span class="ident">CustomAggregatorSelector</span>)
-            .<span class="ident">init</span>();
+        <span class="kw">use</span> <span class="ident">opentelemetry::sdk::export::metrics::aggregation</span>;
+        <span class="kw">use</span> <span class="ident">opentelemetry::sdk::metrics</span>::{<span class="ident">controllers</span>, <span class="ident">processors</span>};
+
+        <span class="kw">let</span> <span class="ident">controller</span> <span class="op">=</span> <span class="ident">controllers::basic</span>(
+            <span class="ident">processors::factory</span>(
+                <span class="ident">CustomAggregatorSelector</span>,
+                <span class="ident">aggregation::cumulative_temporality_selector</span>(),
+            )
+            .<span class="ident">with_memory</span>(<span class="bool-val">true</span>),
+        )
+        .<span class="ident">build</span>();
+
+        <span class="kw">let</span> <span class="ident">exporter</span> <span class="op">=</span> <span class="ident">opentelemetry_prometheus::ExporterBuilder::new</span>(<span class="ident">controller</span>).<span class="ident">init</span>();
 
         <span class="kw">let</span> <span class="ident">meter</span> <span class="op">=</span> <span class="ident">global::meter</span>(<span class="string">&quot;hermes&quot;</span>);
 
@@ -1695,7 +1823,7 @@
                 .<span class="ident">init</span>(),
 
             <span class="ident">wallet_balance</span>: <span class="ident">meter</span>
-                .<span class="ident">f64_value_recorder</span>(<span class="string">&quot;wallet_balance&quot;</span>)
+                .<span class="ident">f64_observable_gauge</span>(<span class="string">&quot;wallet_balance&quot;</span>)
                 .<span class="ident">with_description</span>(<span class="string">&quot;The balance of each wallet Hermes uses per chain. Please note that when converting the balance to f64 a loss in precision might be introduced in the displayed value&quot;</span>)
                 .<span class="ident">init</span>(),
 
@@ -1725,7 +1853,7 @@
                 .<span class="ident">init</span>(),
 
             <span class="ident">tx_latency_submitted</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;tx_latency_submitted&quot;</span>)
+                .<span class="ident">u64_observable_gauge</span>(<span class="string">&quot;tx_latency_submitted&quot;</span>)
                 .<span class="ident">with_unit</span>(<span class="ident">Unit::new</span>(<span class="string">&quot;milliseconds&quot;</span>))
                 .<span class="ident">with_description</span>(<span class="string">&quot;The latency for all transactions submitted to a specific chain, \
                     i.e. the difference between the moment when Hermes received a batch of events \
@@ -1733,7 +1861,7 @@
                 .<span class="ident">init</span>(),
 
             <span class="ident">tx_latency_confirmed</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;tx_latency_confirmed&quot;</span>)
+                .<span class="ident">u64_observable_gauge</span>(<span class="string">&quot;tx_latency_confirmed&quot;</span>)
                 .<span class="ident">with_unit</span>(<span class="ident">Unit::new</span>(<span class="string">&quot;milliseconds&quot;</span>))
                 .<span class="ident">with_description</span>(<span class="string">&quot;The latency for all transactions submitted &amp; confirmed to a specific chain, \
                     i.e. the difference between the moment when Hermes received a batch of events \
@@ -1748,18 +1876,18 @@
             <span class="ident">backlogs</span>: <span class="ident">DashMap::new</span>(),
 
             <span class="ident">backlog_oldest_sequence</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;backlog_oldest_sequence&quot;</span>)
+                .<span class="ident">u64_observable_gauge</span>(<span class="string">&quot;backlog_oldest_sequence&quot;</span>)
                 .<span class="ident">with_description</span>(<span class="string">&quot;Sequence number of the oldest SendPacket event in the backlog&quot;</span>)
                 .<span class="ident">init</span>(),
 
             <span class="ident">backlog_oldest_timestamp</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;backlog_oldest_timestamp&quot;</span>)
+                .<span class="ident">u64_observable_gauge</span>(<span class="string">&quot;backlog_oldest_timestamp&quot;</span>)
                 .<span class="ident">with_unit</span>(<span class="ident">Unit::new</span>(<span class="string">&quot;seconds&quot;</span>))
                 .<span class="ident">with_description</span>(<span class="string">&quot;Local timestamp for the oldest SendPacket event in the backlog&quot;</span>)
                 .<span class="ident">init</span>(),
 
             <span class="ident">backlog_size</span>: <span class="ident">meter</span>
-                .<span class="ident">u64_value_recorder</span>(<span class="string">&quot;backlog_size&quot;</span>)
+                .<span class="ident">u64_observable_gauge</span>(<span class="string">&quot;backlog_size&quot;</span>)
                 .<span class="ident">with_description</span>(<span class="string">&quot;Total number of SendPacket events in the backlog&quot;</span>)
                 .<span class="ident">init</span>(),
         }

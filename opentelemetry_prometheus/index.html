@@ -4,19 +4,29 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../opentelemetry_prometheus/index.html"><div class="logo-container">
                     <img src="https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg" alt="logo"></div>
-        </a><h2 class="location"><a href="#">Crate opentelemetry_prometheus</a></h2><div class="sidebar-elems"><div class="block"><ul><li class="version">Version 0.10.0</li><li><a id="all-types" href="all.html">All Items</a></li></div></ul><section><div class="block"><ul><li><a href="#structs">Structs</a></li><li><a href="#functions">Functions</a></li></ul></div></section><div id="sidebar-vars" data-name="opentelemetry_prometheus" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../opentelemetry_prometheus/index.html">
+        </a><h2 class="location"><a href="#">Crate opentelemetry_prometheus</a></h2><div class="sidebar-elems"><div class="block"><ul><li class="version">Version 0.11.0</li><li><a id="all-types" href="all.html">All Items</a></li></div></ul><section><div class="block"><ul><li><a href="#structs">Structs</a></li><li><a href="#functions">Functions</a></li></ul></div></section><div id="sidebar-vars" data-name="opentelemetry_prometheus" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../opentelemetry_prometheus/index.html">
                         <img src="https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">opentelemetry_prometheus</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../src/opentelemetry_prometheus/lib.rs.html#1-611">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="opentelemetry-prometheus-exporter"><a href="#opentelemetry-prometheus-exporter">OpenTelemetry Prometheus Exporter</a></h2><h4 id="prometheus-exporter-example"><a href="#prometheus-exporter-example">Prometheus Exporter Example</a></h4>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">opentelemetry</span>::{<span class="ident">global</span>, <span class="ident">KeyValue</span>, <span class="ident">sdk::Resource</span>};
+    <h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">opentelemetry_prometheus</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../src/opentelemetry_prometheus/lib.rs.html#1-412">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="opentelemetry-prometheus-exporter"><a href="#opentelemetry-prometheus-exporter">OpenTelemetry Prometheus Exporter</a></h2><h4 id="prometheus-exporter-example"><a href="#prometheus-exporter-example">Prometheus Exporter Example</a></h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">opentelemetry</span>::{<span class="ident">global</span>, <span class="ident">Context</span>, <span class="ident">KeyValue</span>, <span class="ident">sdk::Resource</span>};
+<span class="kw">use</span> <span class="ident">opentelemetry::sdk::export::metrics::aggregation</span>;
+<span class="kw">use</span> <span class="ident">opentelemetry::sdk::metrics</span>::{<span class="ident">controllers</span>, <span class="ident">processors</span>, <span class="ident">selectors</span>};
 <span class="kw">use</span> <span class="ident">opentelemetry_prometheus::PrometheusExporter</span>;
 <span class="kw">use</span> <span class="ident">prometheus</span>::{<span class="ident">TextEncoder</span>, <span class="ident">Encoder</span>};
 
 <span class="kw">fn</span> <span class="ident">init_meter</span>() -&gt; <span class="ident">PrometheusExporter</span> {
-    <span class="ident">opentelemetry_prometheus::exporter</span>()
-        .<span class="ident">with_resource</span>(<span class="ident">Resource::new</span>(<span class="macro">vec!</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;R&quot;</span>, <span class="string">&quot;V&quot;</span>)]))
-        .<span class="ident">init</span>()
+    <span class="kw">let</span> <span class="ident">controller</span> <span class="op">=</span> <span class="ident">controllers::basic</span>(
+        <span class="ident">processors::factory</span>(
+            <span class="ident">selectors::simple::histogram</span>([<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">5.0</span>, <span class="number">10.0</span>, <span class="number">20.0</span>, <span class="number">50.0</span>]),
+            <span class="ident">aggregation::cumulative_temporality_selector</span>(),
+        )
+        .<span class="ident">with_memory</span>(<span class="bool-val">true</span>),
+    )
+    .<span class="ident">build</span>();
+
+    <span class="ident">opentelemetry_prometheus::exporter</span>(<span class="ident">controller</span>).<span class="ident">init</span>()
 }
 
+<span class="kw">let</span> <span class="ident">cx</span> <span class="op">=</span> <span class="ident">Context::current</span>();
 <span class="kw">let</span> <span class="ident">exporter</span> <span class="op">=</span> <span class="ident">init_meter</span>();
 <span class="kw">let</span> <span class="ident">meter</span> <span class="op">=</span> <span class="ident">global::meter</span>(<span class="string">&quot;my-app&quot;</span>);
 
@@ -26,12 +36,12 @@
     .<span class="ident">with_description</span>(<span class="string">&quot;Counts things&quot;</span>)
     .<span class="ident">init</span>();
 <span class="kw">let</span> <span class="ident">recorder</span> <span class="op">=</span> <span class="ident">meter</span>
-    .<span class="ident">i64_value_recorder</span>(<span class="string">&quot;a.value_recorder&quot;</span>)
+    .<span class="ident">i64_histogram</span>(<span class="string">&quot;a.histogram&quot;</span>)
     .<span class="ident">with_description</span>(<span class="string">&quot;Records values&quot;</span>)
     .<span class="ident">init</span>();
 
-<span class="ident">counter</span>.<span class="ident">add</span>(<span class="number">100</span>, <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;key&quot;</span>, <span class="string">&quot;value&quot;</span>)]);
-<span class="ident">recorder</span>.<span class="ident">record</span>(<span class="number">100</span>, <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;key&quot;</span>, <span class="string">&quot;value&quot;</span>)]);
+<span class="ident">counter</span>.<span class="ident">add</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;key&quot;</span>, <span class="string">&quot;value&quot;</span>)]);
+<span class="ident">recorder</span>.<span class="ident">record</span>(<span class="kw-2">&amp;</span><span class="ident">cx</span>, <span class="number">100</span>, <span class="kw-2">&amp;</span>[<span class="ident">KeyValue::new</span>(<span class="string">&quot;key&quot;</span>, <span class="string">&quot;value&quot;</span>)]);
 
 <span class="comment">// Encode data as text or protobuf</span>
 <span class="kw">let</span> <span class="ident">encoder</span> <span class="op">=</span> <span class="ident">TextEncoder::new</span>();
@@ -44,14 +54,14 @@
 <span class="comment">// # HELP a_counter Counts things</span>
 <span class="comment">// # TYPE a_counter counter</span>
 <span class="comment">// a_counter{R=&quot;V&quot;,key=&quot;value&quot;} 100</span>
-<span class="comment">// # HELP a_value_recorder Records values</span>
-<span class="comment">// # TYPE a_value_recorder histogram</span>
-<span class="comment">// a_value_recorder_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;0.5&quot;} 0</span>
-<span class="comment">// a_value_recorder_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;0.9&quot;} 0</span>
-<span class="comment">// a_value_recorder_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;0.99&quot;} 0</span>
-<span class="comment">// a_value_recorder_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;+Inf&quot;} 1</span>
-<span class="comment">// a_value_recorder_sum{R=&quot;V&quot;,key=&quot;value&quot;} 100</span>
-<span class="comment">// a_value_recorder_count{R=&quot;V&quot;,key=&quot;value&quot;} 1</span></code></pre></div>
+<span class="comment">// # HELP a_histogram Records values</span>
+<span class="comment">// # TYPE a_histogram histogram</span>
+<span class="comment">// a_histogram_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;0.5&quot;} 0</span>
+<span class="comment">// a_histogram_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;0.9&quot;} 0</span>
+<span class="comment">// a_histogram_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;0.99&quot;} 0</span>
+<span class="comment">// a_histogram_bucket{R=&quot;V&quot;,key=&quot;value&quot;,le=&quot;+Inf&quot;} 1</span>
+<span class="comment">// a_histogram_sum{R=&quot;V&quot;,key=&quot;value&quot;} 100</span>
+<span class="comment">// a_histogram_count{R=&quot;V&quot;,key=&quot;value&quot;} 1</span></code></pre></div>
 </div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2>
 <div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.ExporterBuilder.html" title="opentelemetry_prometheus::ExporterBuilder struct">ExporterBuilder</a></div><div class="item-right docblock-short"><p>Configuration for the prometheus exporter.</p>
 </div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.PrometheusExporter.html" title="opentelemetry_prometheus::PrometheusExporter struct">PrometheusExporter</a></div><div class="item-right docblock-short"><p>An implementation of <code>metrics::Exporter</code> that sends metrics to Prometheus.</p>
