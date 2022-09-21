@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PrettyDuration",""],["PrettyOption",""],["PrettySignedHeader",""],["PrettyValidatorSet",""],["PrettyVec",""]]});
+initSidebarItems({"struct":[["PrettyDuration",""],["PrettyOption",""],["PrettySignedHeader",""],["PrettySlice",""],["PrettyValidatorSet",""]]});
