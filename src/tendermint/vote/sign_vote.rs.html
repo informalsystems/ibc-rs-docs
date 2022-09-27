@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.23.9/src/vote/sign_vote.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sign_vote.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.25.0/src/vote/sign_vote.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sign_vote.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tendermint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/informalsystems/tendermint-rs/master/img/logo-tendermint-rs_3961x4001.png" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -445,20 +445,21 @@
 <span id="438">438</span>
 <span id="439">439</span>
 <span id="440">440</span>
-<span id="441">441</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Vote</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
+
 <span class="kw">use</span> <span class="ident">bytes::BufMut</span>;
-<span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
-<span class="kw">use</span> <span class="ident">tendermint_proto::privval::SignedVoteResponse</span> <span class="kw">as</span> <span class="ident">RawSignedVoteResponse</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::privval</span>::{<span class="ident">RemoteSignerError</span>, <span class="ident">SignVoteRequest</span> <span class="kw">as</span> <span class="ident">RawSignVoteRequest</span>};
-<span class="kw">use</span> <span class="ident">tendermint_proto::Error</span> <span class="kw">as</span> <span class="ident">ProtobufError</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
+<span class="kw">use</span> <span class="ident">tendermint_proto</span>::{
+    <span class="ident">privval</span>::{
+        <span class="ident">RemoteSignerError</span>, <span class="ident">SignVoteRequest</span> <span class="kw">as</span> <span class="ident">RawSignVoteRequest</span>,
+        <span class="ident">SignedVoteResponse</span> <span class="kw">as</span> <span class="ident">RawSignedVoteResponse</span>,
+    },
+    <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">ProtobufError</span>, <span class="ident">Protobuf</span>,
+};
+
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">chain</span>, <span class="ident">error::Error</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">Vote</span>};
 
 <span class="doccomment">/// SignVoteRequest is a request to sign a vote</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SignVoteRequest</span> {
     <span class="doccomment">/// Vote</span>
     <span class="kw">pub</span> <span class="ident">vote</span>: <span class="ident">Vote</span>,
@@ -538,24 +539,25 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Id</span> <span class="kw">as</span> <span class="ident">AccountId</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::block::parts::Header</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::block::Height</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::block::Id</span> <span class="kw">as</span> <span class="ident">BlockId</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::block::Round</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::Id</span> <span class="kw">as</span> <span class="ident">ChainId</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hash::Algorithm</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::signature</span>::{<span class="ident">Ed25519Signature</span>, <span class="ident">Signature</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::vote</span>::{<span class="ident">CanonicalVote</span>, <span class="ident">ValidatorIndex</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::vote</span>::{<span class="ident">SignVoteRequest</span>, <span class="ident">Type</span>};
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Hash</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Vote</span>;
-    <span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
-    <span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
+    <span class="kw">use</span> <span class="ident">core</span>::{
+        <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
+        <span class="ident">str::FromStr</span>,
+    };
     <span class="kw">use</span> <span class="ident">std::println</span>;
+
     <span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
     <span class="kw">use</span> <span class="ident">time::macros::datetime</span>;
+
+    <span class="kw">use</span> <span class="kw">crate</span>::{
+        <span class="ident">account::Id</span> <span class="kw">as</span> <span class="ident">AccountId</span>,
+        <span class="ident">block</span>::{<span class="ident">parts::Header</span>, <span class="ident">Height</span>, <span class="ident">Id</span> <span class="kw">as</span> <span class="ident">BlockId</span>, <span class="ident">Round</span>},
+        <span class="ident">chain::Id</span> <span class="kw">as</span> <span class="ident">ChainId</span>,
+        <span class="ident">hash::Algorithm</span>,
+        <span class="ident">prelude</span>::<span class="kw-2">*</span>,
+        <span class="ident">signature</span>::{<span class="ident">Ed25519Signature</span>, <span class="ident">Signature</span>},
+        <span class="ident">vote</span>::{<span class="ident">CanonicalVote</span>, <span class="ident">SignVoteRequest</span>, <span class="ident">Type</span>, <span class="ident">ValidatorIndex</span>},
+        <span class="ident">Hash</span>, <span class="ident">Vote</span>,
+    };
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_vote_serialization</span>() {
@@ -601,34 +603,32 @@
         <span class="kw">let</span> <span class="ident">got2</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">to_signable_vec</span>().<span class="ident">unwrap</span>();
 
         <span class="comment">// the following vector is generated via:</span>
-        <span class="comment">/*
-           import (
-               &quot;fmt&quot;
-               prototypes &quot;github.com/tendermint/tendermint/proto/tendermint/types&quot;
-               &quot;github.com/tendermint/tendermint/types&quot;
-               &quot;strings&quot;
-               &quot;time&quot;
-           )
-           func voteSerialize() {
-               stamp, _ := time.Parse(time.RFC3339Nano, &quot;2017-12-25T03:00:01.234Z&quot;)
-               vote := &amp;types.Vote{
-                   Type:      prototypes.PrevoteType, // pre-vote
-                   Height:    12345,
-                   Round:     2,
-                   Timestamp: stamp,
-                   BlockID: types.BlockID{
-                       Hash: []byte(&quot;DEADBEEFDEADBEEFBAFBAFBAFBAFBAFA&quot;),
-                       PartSetHeader: types.PartSetHeader{
-                           Total: 1000000,
-                           Hash:  []byte(&quot;0022446688AACCEE1133557799BBDDFF&quot;),
-                       },
-                   },
-                   ValidatorAddress: []byte{0xa3, 0xb2, 0xcc, 0xdd, 0x71, 0x86, 0xf1, 0x68, 0x5f, 0x21,
-                       0xf2, 0x48, 0x2a, 0xf4, 0xfb, 0x34, 0x46, 0xa8, 0x4b, 0x35}, ValidatorIndex: 56789}
-               signBytes := types.VoteSignBytes(&quot;test_chain_id&quot;, vote.ToProto())
-               fmt.Println(strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, signBytes), &quot; &quot;), &quot;, &quot;))
-           }
-        */</span>
+        <span class="comment">// import (</span>
+        <span class="comment">// &quot;fmt&quot;</span>
+        <span class="comment">// prototypes &quot;github.com/tendermint/tendermint/proto/tendermint/types&quot;</span>
+        <span class="comment">// &quot;github.com/tendermint/tendermint/types&quot;</span>
+        <span class="comment">// &quot;strings&quot;</span>
+        <span class="comment">// &quot;time&quot;</span>
+        <span class="comment">// )</span>
+        <span class="comment">// func voteSerialize() {</span>
+        <span class="comment">// stamp, _ := time.Parse(time.RFC3339Nano, &quot;2017-12-25T03:00:01.234Z&quot;)</span>
+        <span class="comment">// vote := &amp;types.Vote{</span>
+        <span class="comment">// Type:      prototypes.PrevoteType, // pre-vote</span>
+        <span class="comment">// Height:    12345,</span>
+        <span class="comment">// Round:     2,</span>
+        <span class="comment">// Timestamp: stamp,</span>
+        <span class="comment">// BlockID: types.BlockID{</span>
+        <span class="comment">// Hash: []byte(&quot;DEADBEEFDEADBEEFBAFBAFBAFBAFBAFA&quot;),</span>
+        <span class="comment">// PartSetHeader: types.PartSetHeader{</span>
+        <span class="comment">// Total: 1000000,</span>
+        <span class="comment">// Hash:  []byte(&quot;0022446688AACCEE1133557799BBDDFF&quot;),</span>
+        <span class="comment">// },</span>
+        <span class="comment">// },</span>
+        <span class="comment">// ValidatorAddress: []byte{0xa3, 0xb2, 0xcc, 0xdd, 0x71, 0x86, 0xf1, 0x68, 0x5f, 0x21,</span>
+        <span class="comment">// 0xf2, 0x48, 0x2a, 0xf4, 0xfb, 0x34, 0x46, 0xa8, 0x4b, 0x35}, ValidatorIndex: 56789}</span>
+        <span class="comment">// signBytes := types.VoteSignBytes(&quot;test_chain_id&quot;, vote.ToProto())</span>
+        <span class="comment">// fmt.Println(strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, signBytes), &quot; &quot;), &quot;, &quot;))</span>
+        <span class="comment">// }</span>
 
         <span class="kw">let</span> <span class="ident">want</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="number">124</span>, <span class="number">8</span>, <span class="number">1</span>, <span class="number">17</span>, <span class="number">57</span>, <span class="number">48</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">25</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">34</span>, <span class="number">74</span>, <span class="number">10</span>, <span class="number">32</span>,
@@ -682,34 +682,32 @@
         <span class="kw">let</span> <span class="ident">got</span> <span class="op">=</span> <span class="ident">request</span>.<span class="ident">to_signable_vec</span>().<span class="ident">unwrap</span>();
 
         <span class="comment">// the following vector is generated via:</span>
-        <span class="comment">/*
-           import (
-               &quot;fmt&quot;
-               prototypes &quot;github.com/tendermint/tendermint/proto/tendermint/types&quot;
-               &quot;github.com/tendermint/tendermint/types&quot;
-               &quot;strings&quot;
-               &quot;time&quot;
-           )
-           func voteSerialize() {
-               stamp, _ := time.Parse(time.RFC3339Nano, &quot;2017-12-25T03:00:01.234Z&quot;)
-               vote := &amp;types.Vote{
-                   Type:      prototypes.PrevoteType, // pre-vote
-                   Height:    12345,
-                   Round:     2,
-                   Timestamp: stamp,
-                   BlockID: types.BlockID{
-                       Hash: []byte(&quot;&quot;),
-                       PartSetHeader: types.PartSetHeader{
-                           Total: 1000000,
-                           Hash:  []byte(&quot;0022446688AACCEE1133557799BBDDFF&quot;),
-                       },
-                   },
-                   ValidatorAddress: []byte{0xa3, 0xb2, 0xcc, 0xdd, 0x71, 0x86, 0xf1, 0x68, 0x5f, 0x21,
-                       0xf2, 0x48, 0x2a, 0xf4, 0xfb, 0x34, 0x46, 0xa8, 0x4b, 0x35}, ValidatorIndex: 56789}
-               signBytes := types.VoteSignBytes(&quot;test_chain_id&quot;, vote.ToProto())
-               fmt.Println(strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, signBytes), &quot; &quot;), &quot;, &quot;))
-           }
-        */</span>
+        <span class="comment">// import (</span>
+        <span class="comment">// &quot;fmt&quot;</span>
+        <span class="comment">// prototypes &quot;github.com/tendermint/tendermint/proto/tendermint/types&quot;</span>
+        <span class="comment">// &quot;github.com/tendermint/tendermint/types&quot;</span>
+        <span class="comment">// &quot;strings&quot;</span>
+        <span class="comment">// &quot;time&quot;</span>
+        <span class="comment">// )</span>
+        <span class="comment">// func voteSerialize() {</span>
+        <span class="comment">// stamp, _ := time.Parse(time.RFC3339Nano, &quot;2017-12-25T03:00:01.234Z&quot;)</span>
+        <span class="comment">// vote := &amp;types.Vote{</span>
+        <span class="comment">// Type:      prototypes.PrevoteType, // pre-vote</span>
+        <span class="comment">// Height:    12345,</span>
+        <span class="comment">// Round:     2,</span>
+        <span class="comment">// Timestamp: stamp,</span>
+        <span class="comment">// BlockID: types.BlockID{</span>
+        <span class="comment">// Hash: []byte(&quot;&quot;),</span>
+        <span class="comment">// PartSetHeader: types.PartSetHeader{</span>
+        <span class="comment">// Total: 1000000,</span>
+        <span class="comment">// Hash:  []byte(&quot;0022446688AACCEE1133557799BBDDFF&quot;),</span>
+        <span class="comment">// },</span>
+        <span class="comment">// },</span>
+        <span class="comment">// ValidatorAddress: []byte{0xa3, 0xb2, 0xcc, 0xdd, 0x71, 0x86, 0xf1, 0x68, 0x5f, 0x21,</span>
+        <span class="comment">// 0xf2, 0x48, 0x2a, 0xf4, 0xfb, 0x34, 0x46, 0xa8, 0x4b, 0x35}, ValidatorIndex: 56789}</span>
+        <span class="comment">// signBytes := types.VoteSignBytes(&quot;test_chain_id&quot;, vote.ToProto())</span>
+        <span class="comment">// fmt.Println(strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, signBytes), &quot; &quot;), &quot;, &quot;))</span>
+        <span class="comment">// }</span>
 
         <span class="kw">let</span> <span class="ident">want</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="number">90</span>, <span class="number">8</span>, <span class="number">1</span>, <span class="number">17</span>, <span class="number">57</span>, <span class="number">48</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">25</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">34</span>, <span class="number">40</span>, <span class="number">18</span>, <span class="number">38</span>, <span class="number">8</span>,
@@ -805,7 +803,7 @@
             <span class="ident">vote_type</span>: <span class="ident">Type::Prevote</span>,
             <span class="ident">block_id</span>: <span class="prelude-val">Some</span>(<span class="ident">BlockId</span> {
                 <span class="ident">hash</span>: <span class="ident">Hash::from_hex_upper</span>(<span class="ident">Algorithm::Sha256</span>, <span class="string">&quot;DEADBEEFDEADBEEFBAFBAFBAFBAFBAFA&quot;</span>)
-                    .<span class="ident">unwrap</span>(), <span class="comment">//Hash::new(Algorithm::Sha256,</span>
+                    .<span class="ident">unwrap</span>(), <span class="comment">// Hash::new(Algorithm::Sha256,</span>
                 <span class="comment">// b&quot;hash&quot;.to_vec().as_slice()).unwrap(),</span>
                 <span class="ident">part_set_header</span>: <span class="ident">Header::new</span>(
                     <span class="number">1_000_000</span>,

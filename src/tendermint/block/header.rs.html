@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.23.9/src/block/header.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>header.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.25.0/src/block/header.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>header.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tendermint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/informalsystems/tendermint-rs/master/img/logo-tendermint-rs_3961x4001.png" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -262,16 +262,20 @@
 <span id="255">255</span>
 <span id="256">256</span>
 <span id="257">257</span>
+<span id="258">258</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Block headers</span>
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle::simple_hash_from_byte_vectors</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">account</span>, <span class="ident">block</span>, <span class="ident">chain</span>, <span class="ident">AppHash</span>, <span class="ident">Error</span>, <span class="ident">Hash</span>, <span class="ident">Time</span>};
 <span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
+
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::Header</span> <span class="kw">as</span> <span class="ident">RawHeader</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::version::Consensus</span> <span class="kw">as</span> <span class="ident">RawConsensusVersion</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
+<span class="kw">use</span> <span class="ident">tendermint_proto</span>::{
+    <span class="ident">types::Header</span> <span class="kw">as</span> <span class="ident">RawHeader</span>, <span class="ident">version::Consensus</span> <span class="kw">as</span> <span class="ident">RawConsensusVersion</span>, <span class="ident">Protobuf</span>,
+};
+
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">account</span>, <span class="ident">block</span>, <span class="ident">chain</span>, <span class="ident">merkle::simple_hash_from_byte_vectors</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">AppHash</span>, <span class="ident">Error</span>, <span class="ident">Hash</span>,
+    <span class="ident">Time</span>,
+};
 
 <span class="doccomment">/// Block `Header` values contain metadata about the block and about the</span>
 <span class="doccomment">/// consensus, as well as commitments to the data in the current block, the</span>
@@ -349,27 +353,27 @@
         <span class="kw">let</span> <span class="ident">height</span>: <span class="ident">block::Height</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">height</span>.<span class="ident">try_into</span>()<span class="question-mark">?</span>;
 
         <span class="comment">// Todo: fix domain logic</span>
-        <span class="comment">//if last_block_id.is_none() &amp;&amp; height.value() != 1 {</span>
+        <span class="comment">// if last_block_id.is_none() &amp;&amp; height.value() != 1 {</span>
         <span class="comment">//    return Err(Kind::InvalidHeader.context(&quot;last_block_id is null on non-first</span>
         <span class="comment">// height&quot;).into());</span>
         <span class="comment">//}</span>
         <span class="kw">if</span> <span class="ident">last_block_id</span>.<span class="ident">is_some</span>() <span class="op">&amp;&amp;</span> <span class="ident">height</span>.<span class="ident">value</span>() <span class="op">==</span> <span class="number">1</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::invalid_first_header</span>());
         }
-        <span class="comment">//if last_commit_hash.is_none() &amp;&amp; height.value() != 1 {</span>
+        <span class="comment">// if last_commit_hash.is_none() &amp;&amp; height.value() != 1 {</span>
         <span class="comment">//    return Err(Kind::InvalidHeader.context(&quot;last_commit_hash is null on non-first</span>
         <span class="comment">// height&quot;).into());</span>
         <span class="comment">//}</span>
-        <span class="comment">//if height.value() == 1 &amp;&amp; last_commit_hash.is_some() &amp;&amp;</span>
+        <span class="comment">// if height.value() == 1 &amp;&amp; last_commit_hash.is_some() &amp;&amp;</span>
         <span class="comment">// last_commit_hash.as_ref().unwrap() != simple_hash_from_byte_vectors(Vec::new()) {</span>
         <span class="comment">//    return Err(Kind::InvalidFirstHeader.context(&quot;last_commit_hash is not empty Merkle tree</span>
         <span class="comment">// on first height&quot;).into());</span>
         <span class="comment">//}</span>
-        <span class="comment">//if last_results_hash.is_none() &amp;&amp; height.value() != 1 {</span>
+        <span class="comment">// if last_results_hash.is_none() &amp;&amp; height.value() != 1 {</span>
         <span class="comment">//    return Err(Kind::InvalidHeader.context(&quot;last_results_hash is null on non-first</span>
         <span class="comment">// height&quot;).into());</span>
         <span class="comment">//}</span>
-        <span class="comment">//if last_results_hash.is_some() &amp;&amp; height.value() == 1 {</span>
+        <span class="comment">// if last_results_hash.is_some() &amp;&amp; height.value() == 1 {</span>
         <span class="comment">//    return Err(Kind::InvalidFirstHeader.context(&quot;last_results_hash is not ull on first</span>
         <span class="comment">// height&quot;).into());</span>
         <span class="comment">//}</span>
@@ -495,9 +499,7 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Header</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::hash::Algorithm</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::test::test_serialization_roundtrip</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Hash</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">hash::Algorithm</span>, <span class="ident">test::test_serialization_roundtrip</span>, <span class="ident">Hash</span>};
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">serialization_roundtrip</span>() {

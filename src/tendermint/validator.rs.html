@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.23.9/src/validator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>validator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.25.0/src/validator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>validator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tendermint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/informalsystems/tendermint-rs/master/img/logo-tendermint-rs_3961x4001.png" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -446,19 +446,32 @@
 <span id="439">439</span>
 <span id="440">440</span>
 <span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Tendermint validators</span>
 
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::public_key::deserialize_public_key</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">account</span>, <span class="ident">hash::Hash</span>, <span class="ident">merkle</span>, <span class="ident">vote</span>, <span class="ident">Error</span>, <span class="ident">PublicKey</span>, <span class="ident">Signature</span>};
-
 <span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::SimpleValidator</span> <span class="kw">as</span> <span class="ident">RawSimpleValidator</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::Validator</span> <span class="kw">as</span> <span class="ident">RawValidator</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::ValidatorSet</span> <span class="kw">as</span> <span class="ident">RawValidatorSet</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
+
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">tendermint_proto</span>::{
+    <span class="ident">types</span>::{
+        <span class="ident">SimpleValidator</span> <span class="kw">as</span> <span class="ident">RawSimpleValidator</span>, <span class="ident">Validator</span> <span class="kw">as</span> <span class="ident">RawValidator</span>,
+        <span class="ident">ValidatorSet</span> <span class="kw">as</span> <span class="ident">RawValidatorSet</span>,
+    },
+    <span class="ident">Protobuf</span>,
+};
+
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">account</span>, <span class="ident">hash::Hash</span>, <span class="ident">merkle</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">public_key::deserialize_public_key</span>, <span class="ident">vote</span>, <span class="ident">Error</span>,
+    <span class="ident">PublicKey</span>, <span class="ident">Signature</span>,
+};
 
 <span class="doccomment">/// Validator set contains a vector of validators</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -763,7 +776,7 @@
 }
 
 <span class="doccomment">/// Updates to the validator set</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Update</span> {
     <span class="doccomment">/// Validator public key</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">deserialize_with</span> <span class="op">=</span> <span class="string">&quot;deserialize_public_key&quot;</span>)]</span>
@@ -788,29 +801,34 @@
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_validator_set</span>() {
         <span class="comment">// test vector generated by Go code</span>
-        <span class="comment">/*
-           import (
-               &quot;fmt&quot;
-               &quot;github.com/tendermint/tendermint/crypto/ed25519&quot;
-               &quot;github.com/tendermint/tendermint/types&quot;
-               &quot;strings&quot;
-           )
-           func testValSet() {
-               pk1 := ed25519.GenPrivKeyFromSecret([]byte{4, 211, 14, 157, 10, 0, 205, 9, 10, 116, 207, 161, 4, 211, 190, 37, 108, 88, 202, 168, 63, 135, 0, 141, 53, 55, 254, 57, 40, 184, 20, 242})
-               pk2 := ed25519.GenPrivKeyFromSecret([]byte{99, 231, 126, 151, 159, 236, 2, 229, 33, 44, 200, 248, 147, 176, 13, 127, 105, 76, 49, 83, 25, 101, 44, 57, 20, 215, 166, 188, 134, 94, 56, 165})
-               pk3 := ed25519.GenPrivKeyFromSecret([]byte{54, 253, 151, 16, 182, 114, 125, 12, 74, 101, 54, 253, 174, 153, 121, 74, 145, 180, 111, 16, 214, 48, 193, 109, 104, 134, 55, 162, 151, 16, 182, 114})
-               not_in_set := ed25519.GenPrivKeyFromSecret([]byte{121, 74, 145, 180, 111, 16, 214, 48, 193, 109, 35, 68, 19, 27, 173, 69, 92, 204, 127, 218, 234, 81, 232, 75, 204, 199, 48, 163, 55, 132, 231, 147})
-               fmt.Println(&quot;pk1: &quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, pk1.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;))
-               fmt.Println(&quot;pk2:&quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, pk2.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;))
-               fmt.Println(&quot;pk3: &quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, pk3.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;))
-               fmt.Println(&quot;not_in_set: &quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, not_in_set.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;))
-               v1 := types.NewValidator(pk1.PubKey(), 148151478422287875)
-               v2 := types.NewValidator(pk2.PubKey(), 158095448483785107)
-               v3 := types.NewValidator(pk3.PubKey(), 770561664770006272)
-               set := types.NewValidatorSet([]*types.Validator{v1, v2, v3})
-               fmt.Println(&quot;Hash:&quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, set.Hash()), &quot; &quot;), &quot;, &quot;))
-           }
-        */</span>
+        <span class="comment">// import (</span>
+        <span class="comment">// &quot;fmt&quot;</span>
+        <span class="comment">// &quot;github.com/tendermint/tendermint/crypto/ed25519&quot;</span>
+        <span class="comment">// &quot;github.com/tendermint/tendermint/types&quot;</span>
+        <span class="comment">// &quot;strings&quot;</span>
+        <span class="comment">// )</span>
+        <span class="comment">// func testValSet() {</span>
+        <span class="comment">// pk1 := ed25519.GenPrivKeyFromSecret([]byte{4, 211, 14, 157, 10, 0, 205, 9, 10, 116, 207,</span>
+        <span class="comment">// 161, 4, 211, 190, 37, 108, 88, 202, 168, 63, 135, 0, 141, 53, 55, 254, 57, 40, 184, 20,</span>
+        <span class="comment">// 242}) pk2 := ed25519.GenPrivKeyFromSecret([]byte{99, 231, 126, 151, 159, 236, 2,</span>
+        <span class="comment">// 229, 33, 44, 200, 248, 147, 176, 13, 127, 105, 76, 49, 83, 25, 101, 44, 57, 20, 215, 166,</span>
+        <span class="comment">// 188, 134, 94, 56, 165}) pk3 := ed25519.GenPrivKeyFromSecret([]byte{54, 253, 151,</span>
+        <span class="comment">// 16, 182, 114, 125, 12, 74, 101, 54, 253, 174, 153, 121, 74, 145, 180, 111, 16, 214, 48,</span>
+        <span class="comment">// 193, 109, 104, 134, 55, 162, 151, 16, 182, 114}) not_in_set :=</span>
+        <span class="comment">// ed25519.GenPrivKeyFromSecret([]byte{121, 74, 145, 180, 111, 16, 214, 48, 193, 109, 35,</span>
+        <span class="comment">// 68, 19, 27, 173, 69, 92, 204, 127, 218, 234, 81, 232, 75, 204, 199, 48, 163, 55, 132,</span>
+        <span class="comment">// 231, 147}) fmt.Println(&quot;pk1: &quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;,</span>
+        <span class="comment">// pk1.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;)) fmt.Println(&quot;pk2:&quot;,</span>
+        <span class="comment">// strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, pk2.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;))</span>
+        <span class="comment">// fmt.Println(&quot;pk3: &quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, pk3.PubKey().Bytes()),</span>
+        <span class="comment">// &quot; &quot;), &quot;, &quot;)) fmt.Println(&quot;not_in_set: &quot;,</span>
+        <span class="comment">// strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, not_in_set.PubKey().Bytes()), &quot; &quot;), &quot;, &quot;))</span>
+        <span class="comment">// v1 := types.NewValidator(pk1.PubKey(), 148151478422287875)</span>
+        <span class="comment">// v2 := types.NewValidator(pk2.PubKey(), 158095448483785107)</span>
+        <span class="comment">// v3 := types.NewValidator(pk3.PubKey(), 770561664770006272)</span>
+        <span class="comment">// set := types.NewValidatorSet([]*types.Validator{v1, v2, v3})</span>
+        <span class="comment">// fmt.Println(&quot;Hash:&quot;, strings.Join(strings.Split(fmt.Sprintf(&quot;%v&quot;, set.Hash()), &quot; &quot;), &quot;,</span>
+        <span class="comment">// &quot;)) }</span>
         <span class="kw">let</span> <span class="ident">v1</span> <span class="op">=</span> <span class="ident">make_validator</span>(
             <span class="macro">vec!</span>[
                 <span class="number">48</span>, <span class="number">163</span>, <span class="number">55</span>, <span class="number">132</span>, <span class="number">231</span>, <span class="number">147</span>, <span class="number">230</span>, <span class="number">163</span>, <span class="number">56</span>, <span class="number">158</span>, <span class="number">127</span>, <span class="number">218</span>, <span class="number">179</span>, <span class="number">139</span>, <span class="number">212</span>, <span class="number">103</span>, <span class="number">218</span>,

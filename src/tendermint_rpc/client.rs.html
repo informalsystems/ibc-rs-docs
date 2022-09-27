@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-rpc-0.23.9/src/client.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>client.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-rpc-0.25.0/src/client.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>client.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tendermint_rpc/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -305,6 +305,7 @@
 <span id="300">300</span>
 <span id="301">301</span>
 <span id="302">302</span>
+<span id="303">303</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Tendermint RPC client.</span>
 
 <span class="kw">mod</span> <span class="ident">subscription</span>;
@@ -312,31 +313,32 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">sync</span>;
 
 <span class="kw">mod</span> <span class="ident">transport</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">transport::mock</span>::{<span class="ident">MockClient</span>, <span class="ident">MockRequestMatcher</span>, <span class="ident">MockRequestMethodMatcher</span>};
+<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">time::Duration</span>};
 
+<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">de::DeserializeOwned</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">tendermint</span>::{
+    <span class="ident">abci</span>::{<span class="self">self</span>, <span class="ident">Transaction</span>},
+    <span class="ident">block::Height</span>,
+    <span class="ident">evidence::Evidence</span>,
+    <span class="ident">Genesis</span>,
+};
+<span class="kw">use</span> <span class="ident">tokio::time</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;http-client&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">transport::http</span>::{<span class="ident">HttpClient</span>, <span class="ident">HttpClientUrl</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">transport::mock</span>::{<span class="ident">MockClient</span>, <span class="ident">MockRequestMatcher</span>, <span class="ident">MockRequestMethodMatcher</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;websocket-client&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">transport::websocket</span>::{
     <span class="ident">WebSocketClient</span>, <span class="ident">WebSocketClientDriver</span>, <span class="ident">WebSocketClientUrl</span>, <span class="ident">WebSocketConfig</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::endpoint::validators::DEFAULT_VALIDATORS_PER_PAGE</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::endpoint</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::paging::Paging</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::query::Query</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Error</span>, <span class="ident">Order</span>, <span class="ident">SimpleRequest</span>};
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
-<span class="kw">use</span> <span class="ident">serde::de::DeserializeOwned</span>;
-<span class="kw">use</span> <span class="ident">serde::Serialize</span>;
-<span class="kw">use</span> <span class="ident">tendermint::abci</span>::{<span class="self">self</span>, <span class="ident">Transaction</span>};
-<span class="kw">use</span> <span class="ident">tendermint::block::Height</span>;
-<span class="kw">use</span> <span class="ident">tendermint::evidence::Evidence</span>;
-<span class="kw">use</span> <span class="ident">tendermint::Genesis</span>;
-<span class="kw">use</span> <span class="ident">tokio::time</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">endpoint</span>::{<span class="ident">validators::DEFAULT_VALIDATORS_PER_PAGE</span>, <span class="kw-2">*</span>},
+    <span class="ident">paging::Paging</span>,
+    <span class="ident">prelude</span>::<span class="kw-2">*</span>,
+    <span class="ident">query::Query</span>,
+    <span class="ident">Error</span>, <span class="ident">Order</span>, <span class="ident">SimpleRequest</span>,
+};
 
 <span class="doccomment">/// Provides lightweight access to the Tendermint RPC. It gives access to all</span>
 <span class="doccomment">/// endpoints with the exception of the event subscription-related ones.</span>
@@ -482,7 +484,7 @@
             <span class="ident">Paging::Default</span> =&gt; {
                 <span class="self">self</span>.<span class="ident">perform</span>(<span class="ident">validators::Request::new</span>(<span class="prelude-val">Some</span>(<span class="ident">height</span>), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>))
                     .<span class="kw">await</span>
-            }
+            },
             <span class="ident">Paging::Specific</span> {
                 <span class="ident">page_number</span>,
                 <span class="ident">per_page</span>,
@@ -493,7 +495,7 @@
                     <span class="prelude-val">Some</span>(<span class="ident">per_page</span>),
                 ))
                 .<span class="kw">await</span>
-            }
+            },
             <span class="ident">Paging::All</span> =&gt; {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">page_num</span> <span class="op">=</span> <span class="number">1_usize</span>;
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">validators</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
@@ -516,7 +518,7 @@
                     }
                     <span class="ident">page_num</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
                 }
-            }
+            },
         }
     }
 

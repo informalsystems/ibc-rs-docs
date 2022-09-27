@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.23.9/src/time.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>time.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.25.0/src/time.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>time.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tendermint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/informalsystems/tendermint-rs/master/img/logo-tendermint-rs_3961x4001.png" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -409,24 +409,26 @@
 <span id="402">402</span>
 <span id="403">403</span>
 <span id="404">404</span>
+<span id="405">405</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Timestamps used by Tendermint blockchains</span>
 
+<span class="kw">use</span> <span class="ident">core</span>::{
+    <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
+    <span class="ident">fmt</span>,
+    <span class="ident">ops</span>::{<span class="ident">Add</span>, <span class="ident">Sub</span>},
+    <span class="ident">str::FromStr</span>,
+    <span class="ident">time::Duration</span>,
+};
+
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">tendermint_proto</span>::{<span class="ident">google::protobuf::Timestamp</span>, <span class="ident">serializers::timestamp</span>, <span class="ident">Protobuf</span>};
+<span class="kw">use</span> <span class="ident">time</span>::{
+    <span class="ident">format_description::well_known::Rfc3339</span>,
+    <span class="ident">macros</span>::{<span class="ident">datetime</span>, <span class="ident">offset</span>},
+    <span class="ident">OffsetDateTime</span>, <span class="ident">PrimitiveDateTime</span>,
+};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
-<span class="kw">use</span> <span class="ident">core::fmt</span>;
-<span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Add</span>, <span class="ident">Sub</span>};
-<span class="kw">use</span> <span class="ident">core::str::FromStr</span>;
-<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::google::protobuf::Timestamp</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::serializers::timestamp</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
-<span class="kw">use</span> <span class="ident">time::format_description::well_known::Rfc3339</span>;
-<span class="kw">use</span> <span class="ident">time::macros</span>::{<span class="ident">datetime</span>, <span class="ident">offset</span>};
-<span class="kw">use</span> <span class="ident">time</span>::{<span class="ident">OffsetDateTime</span>, <span class="ident">PrimitiveDateTime</span>};
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">error::Error</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>};
 
 <span class="doccomment">/// Tendermint timestamps</span>
 <span class="doccomment">///</span>
@@ -605,11 +607,12 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::ErrorDetail</span>;
     <span class="kw">use</span> <span class="ident">proptest</span>::{<span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">sample::select</span>};
     <span class="kw">use</span> <span class="ident">tendermint_pbt_gen</span> <span class="kw">as</span> <span class="ident">pbt</span>;
     <span class="kw">use</span> <span class="ident">time</span>::{<span class="ident">Date</span>, <span class="ident">Month</span>::<span class="kw-2">*</span>};
+
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::ErrorDetail</span>;
 
     <span class="comment">// We want to make sure that these timestamps specifically get tested.</span>
     <span class="kw">fn</span> <span class="ident">particular_rfc3339_timestamps</span>() -&gt; <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">String</span><span class="op">&gt;</span> {
@@ -644,7 +647,6 @@
         <span class="kw">let</span> <span class="ident">dts</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="macro">datetime!</span>(<span class="number">0000</span><span class="op">-</span><span class="number">12</span><span class="op">-</span><span class="number">31</span> <span class="number">23</span>:<span class="number">59</span>:<span class="number">59.999999999</span> <span class="ident">UTC</span>),
             <span class="macro">datetime!</span>(<span class="number">0001</span><span class="op">-</span><span class="number">01</span><span class="op">-</span><span class="number">01</span> <span class="number">00</span>:<span class="number">00</span>:<span class="number">00.999999999</span> <span class="op">+</span><span class="number">00</span>:<span class="number">00</span>:<span class="number">01</span>),
-            <span class="macro">datetime!</span>(<span class="number">9999</span><span class="op">-</span><span class="number">12</span><span class="op">-</span><span class="number">31</span> <span class="number">23</span>:<span class="number">59</span>:<span class="number">59</span> <span class="op">-</span><span class="number">00</span>:<span class="number">00</span>:<span class="number">01</span>),
             <span class="ident">Date::from_calendar_date</span>(<span class="op">-</span><span class="number">1</span>, <span class="ident">October</span>, <span class="number">9</span>)
                 .<span class="ident">unwrap</span>()
                 .<span class="ident">midnight</span>()

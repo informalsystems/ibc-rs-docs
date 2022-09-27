@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.23.9/src/evidence.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>evidence.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tendermint-0.25.0/src/evidence.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>evidence.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tendermint/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/informalsystems/tendermint-rs/master/img/logo-tendermint-rs_3961x4001.png" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -300,30 +300,40 @@
 <span id="293">293</span>
 <span id="294">294</span>
 <span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Evidence of malfeasance by validators (i.e. signing conflicting votes).</span>
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">block::signed_header::SignedHeader</span>, <span class="ident">error::Error</span>, <span class="ident">serializers</span>, <span class="ident">vote::Power</span>, <span class="ident">Time</span>, <span class="ident">Vote</span>,
+<span class="kw">use</span> <span class="ident">core</span>::{
+    <span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>},
+    <span class="ident">slice</span>,
 };
-<span class="kw">use</span> <span class="ident">core::convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
-<span class="kw">use</span> <span class="ident">core::slice</span>;
+
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">tendermint_proto::google::protobuf::Duration</span> <span class="kw">as</span> <span class="ident">RawDuration</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::evidence::Sum</span> <span class="kw">as</span> <span class="ident">RawSum</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::evidence::Sum</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::DuplicateVoteEvidence</span> <span class="kw">as</span> <span class="ident">RawDuplicateVoteEvidence</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::Evidence</span> <span class="kw">as</span> <span class="ident">RawEvidence</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::EvidenceList</span> <span class="kw">as</span> <span class="ident">RawEvidenceList</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::types::EvidenceParams</span> <span class="kw">as</span> <span class="ident">RawEvidenceParams</span>;
-<span class="kw">use</span> <span class="ident">tendermint_proto::Protobuf</span>;
+<span class="kw">use</span> <span class="ident">tendermint_proto</span>::{
+    <span class="ident">google::protobuf::Duration</span> <span class="kw">as</span> <span class="ident">RawDuration</span>,
+    <span class="ident">types</span>::{
+        <span class="ident">evidence</span>::{<span class="ident">Sum</span> <span class="kw">as</span> <span class="ident">RawSum</span>, <span class="ident">Sum</span>},
+        <span class="ident">DuplicateVoteEvidence</span> <span class="kw">as</span> <span class="ident">RawDuplicateVoteEvidence</span>, <span class="ident">Evidence</span> <span class="kw">as</span> <span class="ident">RawEvidence</span>,
+        <span class="ident">EvidenceList</span> <span class="kw">as</span> <span class="ident">RawEvidenceList</span>, <span class="ident">EvidenceParams</span> <span class="kw">as</span> <span class="ident">RawEvidenceParams</span>,
+    },
+    <span class="ident">Protobuf</span>,
+};
+
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">block::signed_header::SignedHeader</span>, <span class="ident">error::Error</span>, <span class="ident">prelude</span>::<span class="kw-2">*</span>, <span class="ident">serializers</span>, <span class="ident">vote::Power</span>, <span class="ident">Time</span>,
+    <span class="ident">Vote</span>,
+};
 
 <span class="doccomment">/// Evidence of malfeasance by validators (i.e. signing conflicting votes).</span>
 <span class="doccomment">/// encoded using an Amino prefix. There is currently only a single type of</span>
 <span class="doccomment">/// evidence: `DuplicateVoteEvidence`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// &lt;https://github.com/tendermint/spec/blob/d46cd7f573a2c6a2399fcab2cde981330aa63f37/spec/core/data_structures.md#evidence&gt;</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="comment">//#[serde(tag = &quot;type&quot;, content = &quot;value&quot;)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">try_from</span> <span class="op">=</span> <span class="string">&quot;RawEvidence&quot;</span>, <span class="ident">into</span> <span class="op">=</span> <span class="string">&quot;RawEvidence&quot;</span>)]</span> <span class="comment">// Used by RPC /broadcast_evidence endpoint</span>
 <span class="comment">// To be fixed in 0.24</span>
@@ -365,13 +375,13 @@
 }
 
 <span class="doccomment">/// Duplicate vote evidence</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DuplicateVoteEvidence</span> {
-    <span class="ident">vote_a</span>: <span class="ident">Vote</span>,
-    <span class="ident">vote_b</span>: <span class="ident">Vote</span>,
-    <span class="ident">total_voting_power</span>: <span class="ident">Power</span>,
-    <span class="ident">validator_power</span>: <span class="ident">Power</span>,
-    <span class="ident">timestamp</span>: <span class="ident">Time</span>,
+    <span class="kw">pub</span> <span class="ident">vote_a</span>: <span class="ident">Vote</span>,
+    <span class="kw">pub</span> <span class="ident">vote_b</span>: <span class="ident">Vote</span>,
+    <span class="kw">pub</span> <span class="ident">total_voting_power</span>: <span class="ident">Power</span>,
+    <span class="kw">pub</span> <span class="ident">validator_power</span>: <span class="ident">Power</span>,
+    <span class="kw">pub</span> <span class="ident">timestamp</span>: <span class="ident">Time</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">RawDuplicateVoteEvidence</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">DuplicateVoteEvidence</span> {
@@ -432,12 +442,12 @@
 
 <span class="doccomment">/// Conflicting headers evidence.</span>
 <span class="comment">// Todo: This struct doesn&#39;t seem to have a protobuf definition.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ConflictingHeadersEvidence</span> {
     <span class="comment">//#[serde(rename = &quot;H1&quot;)]</span>
-    <span class="ident">h1</span>: <span class="ident">SignedHeader</span>,
+    <span class="kw">pub</span> <span class="ident">h1</span>: <span class="ident">SignedHeader</span>,
     <span class="comment">//#[serde(rename = &quot;H2&quot;)]</span>
-    <span class="ident">h2</span>: <span class="ident">SignedHeader</span>,
+    <span class="kw">pub</span> <span class="ident">h2</span>: <span class="ident">SignedHeader</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">ConflictingHeadersEvidence</span> {
@@ -450,7 +460,7 @@
 <span class="doccomment">/// Evidence data is a wrapper for a list of `Evidence`.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// &lt;https://github.com/tendermint/spec/blob/d46cd7f573a2c6a2399fcab2cde981330aa63f37/spec/core/data_structures.md#evidencedata&gt;</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">try_from</span> <span class="op">=</span> <span class="string">&quot;RawEvidenceList&quot;</span>, <span class="ident">into</span> <span class="op">=</span> <span class="string">&quot;RawEvidenceList&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Data</span> {
     <span class="ident">evidence</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Evidence</span><span class="op">&gt;</span><span class="op">&gt;</span>,
