@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["TENDERMINT_HEADER_TYPE_URL",""]],"fn":[["decode_header",""],["headers_compatible",""]],"mod":[["test_util",""]],"struct":[["Header","Tendermint consensus header"]]});
+window.SIDEBAR_ITEMS = {"constant":[["TENDERMINT_HEADER_TYPE_URL",""]],"fn":[["decode_header",""],["headers_compatible",""]],"mod":[["test_util",""]],"struct":[["Header","Tendermint consensus header"]]};

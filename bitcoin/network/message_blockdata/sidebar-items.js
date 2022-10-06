@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Inventory","An inventory item."]],"struct":[["GetBlocksMessage","The `getblocks` message"],["GetHeadersMessage","The `getheaders` message"]]});
+window.SIDEBAR_ITEMS = {"enum":[["Inventory","An inventory item."]],"struct":[["GetBlocksMessage","The `getblocks` message"],["GetHeadersMessage","The `getheaders` message"]]};

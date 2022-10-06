@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["spawn",""]],"struct":[["ServerHandle",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["spawn",""]],"struct":[["ServerHandle",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["BitArray",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["BitArray",""]]};

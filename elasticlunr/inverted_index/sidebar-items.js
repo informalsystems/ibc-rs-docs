@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["InvertedIndex","Implements an elasticlunr.js inverted index. Most users do not need to use this type directly."]]});
+window.SIDEBAR_ITEMS = {"struct":[["InvertedIndex","Implements an elasticlunr.js inverted index. Most users do not need to use this type directly."]]};

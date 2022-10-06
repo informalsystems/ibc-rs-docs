@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["protobuf",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["protobuf",""]]};

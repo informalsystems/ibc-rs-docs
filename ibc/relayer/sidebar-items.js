@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["ics18_relayer","ICS 18: Relayer contains utilities for testing `ibc` against the Hermes relayer."]]});
+window.SIDEBAR_ITEMS = {"mod":[["ics18_relayer","ICS 18: Relayer contains utilities for testing `ibc` against the Hermes relayer."]]};

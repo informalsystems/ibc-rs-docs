@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["ED25519_KEYPAIR_SIZE","The length of an “expanded” ed25519 key, `ExpandedSecretKey`, in bytes."]],"enum":[["PrivateKey","Private keys as parsed from configuration files"]],"struct":[["Ed25519","An ed25519 keypair."]]});
+window.SIDEBAR_ITEMS = {"constant":[["ED25519_KEYPAIR_SIZE","The length of an “expanded” ed25519 key, `ExpandedSecretKey`, in bytes."]],"enum":[["PrivateKey","Private keys as parsed from configuration files"]],"struct":[["Ed25519","An ed25519 keypair."]]};

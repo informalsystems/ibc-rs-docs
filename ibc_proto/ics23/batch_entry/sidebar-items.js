@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Proof",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Proof",""]]};

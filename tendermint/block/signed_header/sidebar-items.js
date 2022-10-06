@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SignedHeader","Signed block headers"]]});
+window.SIDEBAR_ITEMS = {"struct":[["SignedHeader","Signed block headers"]]};

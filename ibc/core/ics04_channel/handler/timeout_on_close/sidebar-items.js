@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["process",""]]};

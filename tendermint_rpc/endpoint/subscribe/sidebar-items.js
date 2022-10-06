@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Request","Subscription request for events."],["Response","Status responses"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Request","Subscription request for events."],["Response","Status responses"]]};

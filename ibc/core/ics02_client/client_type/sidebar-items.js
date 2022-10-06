@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ClientType","Type of the client, depending on the specific consensus algorithm."]]});
+window.SIDEBAR_ITEMS = {"enum":[["ClientType","Type of the client, depending on the specific consensus algorithm."]]};

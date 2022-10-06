@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["WorkerType",""]],"struct":[["TelemetryState",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["WorkerType",""]],"struct":[["TelemetryState",""]]};

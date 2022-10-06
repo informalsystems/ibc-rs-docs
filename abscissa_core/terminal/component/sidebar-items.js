@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Terminal","Abscissa terminal subsystem component"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Terminal","Abscissa terminal subsystem component"]]};

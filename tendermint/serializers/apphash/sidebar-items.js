@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize","Deserialize hexstring into AppHash"],["serialize","Serialize from AppHash into hexstring"]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize hexstring into AppHash"],["serialize","Serialize from AppHash into hexstring"]]};

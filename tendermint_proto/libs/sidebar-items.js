@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["bits",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["bits",""]]};

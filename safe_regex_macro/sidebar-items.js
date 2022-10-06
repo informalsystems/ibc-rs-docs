@@ -1,1 +1,1 @@
-initSidebarItems({"macro":[["regex","Compiles a regular expression into a Rust type."]]});
+window.SIDEBAR_ITEMS = {"macro":[["regex","Compiles a regular expression into a Rust type."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["AnyHeader",""]],"mod":[["tendermint",""]],"struct":[["Verified",""]],"trait":[["LightBlock","Defines a light block from the point of view of the relayer."],["LightClient","Defines a client from the point of view of the relayer."]]});
+window.SIDEBAR_ITEMS = {"enum":[["AnyHeader",""]],"mod":[["tendermint",""]],"struct":[["Verified",""]],"trait":[["LightBlock","Defines a light block from the point of view of the relayer."],["LightClient","Defines a client from the point of view of the relayer."]]};

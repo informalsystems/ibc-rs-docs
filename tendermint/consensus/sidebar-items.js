@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["params","Tendermint consensus parameters"],["state","Tendermint consensus state"]]});
+window.SIDEBAR_ITEMS = {"mod":[["params","Tendermint consensus parameters"],["state","Tendermint consensus state"]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Error",""]],"trait":[["Protobuf","Object safe equivalent of `tendermint_proto::Protobuf`."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Error",""]],"trait":[["Protobuf","Object safe equivalent of `tendermint_proto::Protobuf`."]]};

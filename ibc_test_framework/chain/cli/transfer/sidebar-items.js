@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["local_transfer_token",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["local_transfer_token",""]]};

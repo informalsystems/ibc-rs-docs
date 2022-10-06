@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["get_time",""],["get_vote_sign_bytes",""],["parse_as","Tries to parse a string as the given type; otherwise returns the input wrapped in SimpleError"],["read_stdin",""],["verify_signature",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["get_time",""],["get_vote_sign_bytes",""],["parse_as","Tries to parse a string as the given type; otherwise returns the input wrapped in SimpleError"],["read_stdin",""],["verify_signature",""]]};

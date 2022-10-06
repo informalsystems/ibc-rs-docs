@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ExtensionOptionDynamicFeeTx",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["ExtensionOptionDynamicFeeTx",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["info","Node information (used in RPC responses)"]],"struct":[["Id","Node IDs"]]});
+window.SIDEBAR_ITEMS = {"mod":[["info","Node information (used in RPC responses)"]],"struct":[["Id","Node IDs"]]};

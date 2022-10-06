@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["MemoryStore","Transient in-memory store."]]});
+window.SIDEBAR_ITEMS = {"struct":[["MemoryStore","Transient in-memory store."]]};

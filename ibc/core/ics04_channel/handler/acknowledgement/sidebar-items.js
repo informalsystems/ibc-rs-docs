@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process",""]],"struct":[["AckPacketResult",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["process",""]],"struct":[["AckPacketResult",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["estimate_fee_and_send_tx",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["estimate_fee_and_send_tx",""]]};

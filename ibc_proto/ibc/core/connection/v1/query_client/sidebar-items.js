@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["QueryClient","Query provides defines the gRPC querier service"]]});
+window.SIDEBAR_ITEMS = {"struct":[["QueryClient","Query provides defines the gRPC querier service"]]};

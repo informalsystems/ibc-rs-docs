@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["pipe_to_file","Pipe a streaming source implementing [`std::io::Read`] to a file in append mode."]]});
+window.SIDEBAR_ITEMS = {"fn":[["pipe_to_file","Pipe a streaming source implementing [`std::io::Read`] to a file in append mode."]]};

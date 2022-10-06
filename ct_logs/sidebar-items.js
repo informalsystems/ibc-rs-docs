@@ -1,1 +1,1 @@
-initSidebarItems({"static":[["LOGS",""]]});
+window.SIDEBAR_ITEMS = {"static":[["LOGS",""]]};

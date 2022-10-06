@@ -1,1 +1,1 @@
-initSidebarItems({"static":[["ELASTICLUNR_JS",""],["JS",""],["MARK_JS",""]]});
+window.SIDEBAR_ITEMS = {"static":[["ELASTICLUNR_JS",""],["JS",""],["MARK_JS",""]]};

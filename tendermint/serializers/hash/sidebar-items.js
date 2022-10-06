@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize","Deserialize hexstring into Hash"],["serialize","Serialize from Hash into hexstring"]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize hexstring into Hash"],["serialize","Serialize from Hash into hexstring"]]};

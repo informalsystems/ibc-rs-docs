@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize","Deserialize string into Duration"],["serialize","Serialize from Duration into string"]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize string into Duration"],["serialize","Serialize from Duration into string"]]};

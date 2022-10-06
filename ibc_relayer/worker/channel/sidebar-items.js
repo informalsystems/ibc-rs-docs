@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["spawn_channel_worker",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["spawn_channel_worker",""]]};

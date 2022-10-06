@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["send_packet",""]],"struct":[["SendPacketResult",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["send_packet",""]],"struct":[["SendPacketResult",""]]};

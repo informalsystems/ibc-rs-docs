@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["NAME",""],["VER",""]],"enum":[["Command",""],["RestApiError",""]],"fn":[["process_incoming_requests","Process incoming REST requests."]],"mod":[["request",""]],"type":[["Receiver",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["NAME",""],["VER",""]],"enum":[["Command",""],["RestApiError",""]],"fn":[["process_incoming_requests","Process incoming REST requests."]],"mod":[["request",""]],"type":[["Receiver",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Time","Tendermint timestamps"]],"trait":[["ParseTimestamp","Parse [`Time`] from a type"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Time","Tendermint timestamps"]],"trait":[["ParseTimestamp","Parse [`Time`] from a type"]]};

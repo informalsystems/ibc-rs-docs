@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["BlockStoreState",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["BlockStoreState",""]]};

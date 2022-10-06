@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["bootstrap_connections",""],["bootstrap_connections_dynamic","Bootstrap a dynamic number of connections based on the given foreign client NxN matrix."]]});
+window.SIDEBAR_ITEMS = {"fn":[["bootstrap_connections",""],["bootstrap_connections_dynamic","Bootstrap a dynamic number of connections based on the given foreign client NxN matrix."]]};

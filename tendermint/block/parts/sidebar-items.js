@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Header","Block parts header"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Header","Block parts header"]]};

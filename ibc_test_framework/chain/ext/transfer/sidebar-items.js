@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["ChainTransferMethodsExt",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["ChainTransferMethodsExt",""]]};

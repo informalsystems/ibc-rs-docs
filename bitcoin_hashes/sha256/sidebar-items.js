@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Hash","Output of the SHA256 hash function."],["HashEngine","Engine to compute SHA256 hash function."],["Midstate","Output of the SHA256 hash function."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Hash","Output of the SHA256 hash function."],["HashEngine","Engine to compute SHA256 hash function."],["Midstate","Output of the SHA256 hash function."]]};

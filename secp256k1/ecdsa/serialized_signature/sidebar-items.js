@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["IntoIter","Owned iterator over the bytes of [`SerializedSignature`]"],["SerializedSignature","A DER serialized Signature"]]});
+window.SIDEBAR_ITEMS = {"struct":[["IntoIter","Owned iterator over the bytes of [`SerializedSignature`]"],["SerializedSignature","A DER serialized Signature"]]};

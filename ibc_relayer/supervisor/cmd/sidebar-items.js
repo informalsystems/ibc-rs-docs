@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["SupervisorCmd",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["SupervisorCmd",""]]};

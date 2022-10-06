@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["send_tx_simulate",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["send_tx_simulate",""]]};

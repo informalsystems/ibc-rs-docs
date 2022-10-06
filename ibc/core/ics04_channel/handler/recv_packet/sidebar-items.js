@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["RecvPacketResult",""]],"fn":[["process",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["RecvPacketResult",""]],"fn":[["process",""]]};

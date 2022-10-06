@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["MOCK_HEADER_TYPE_URL",""]],"struct":[["MockHeader",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["MOCK_HEADER_TYPE_URL",""]],"struct":[["MockHeader",""]]};

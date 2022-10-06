@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Event",""]],"struct":[["AckEvent",""],["AckStatusEvent",""],["DenomTraceEvent",""],["RecvEvent",""],["TimeoutEvent",""],["TransferEvent",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Event",""]],"struct":[["AckEvent",""],["AckStatusEvent",""],["DenomTraceEvent",""],["RecvEvent",""],["TimeoutEvent",""],["TransferEvent",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["listen",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["listen",""]]};

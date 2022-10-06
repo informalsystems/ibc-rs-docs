@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["FullNode","Represents a full node running as a child process managed by the test."]],"trait":[["TaggedFullNodeExt","Extra methods for [`FullNode`] that is tagged."]],"type":[["TaggedFullNode",""],["TaggedFullNodeRef",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["FullNode","Represents a full node running as a child process managed by the test."]],"trait":[["TaggedFullNodeExt","Extra methods for [`FullNode`] that is tagged."]],"type":[["TaggedFullNode",""],["TaggedFullNodeRef",""]]};

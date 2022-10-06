@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Crate error type."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Error","Crate error type."]]};

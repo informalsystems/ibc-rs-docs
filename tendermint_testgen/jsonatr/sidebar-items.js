@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["run_jsonatr_transform",""]],"struct":[["JsonatrTransform",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["run_jsonatr_transform",""]],"struct":[["JsonatrTransform",""]]};

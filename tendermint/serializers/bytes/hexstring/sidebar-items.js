@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize","Deserialize hexstring into Vec"],["serialize","Serialize from T into hexstring"]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize hexstring into Vec"],["serialize","Serialize from T into hexstring"]]};

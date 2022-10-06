@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SpawnContext","A context for spawning workers within the supervisor."]]});
+window.SIDEBAR_ITEMS = {"struct":[["SpawnContext","A context for spawning workers within the supervisor."]]};

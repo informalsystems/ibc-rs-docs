@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["JsonError","Error that can happen when parsing the JSON input."]],"fn":[["json_input","Attempts to parse the request’s body as JSON."]]});
+window.SIDEBAR_ITEMS = {"enum":[["JsonError","Error that can happen when parsing the JSON input."]],"fn":[["json_input","Attempts to parse the request’s body as JSON."]]};

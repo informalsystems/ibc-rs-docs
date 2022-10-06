@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["encode","Bitcoin consensus-encodable types."],["params","Bitcoin consensus parameters."]]});
+window.SIDEBAR_ITEMS = {"mod":[["encode","Bitcoin consensus-encodable types."],["params","Bitcoin consensus parameters."]]};

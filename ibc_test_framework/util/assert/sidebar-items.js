@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["assert_eq",""],["assert_gt",""],["assert_not_eq",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["assert_eq",""],["assert_gt",""],["assert_not_eq",""]]};

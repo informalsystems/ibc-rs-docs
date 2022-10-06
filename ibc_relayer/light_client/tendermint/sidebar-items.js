@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["LightClient",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["LightClient",""]]};

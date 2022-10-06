@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["AppCell","Application cell: holder of application state."]]});
+window.SIDEBAR_ITEMS = {"struct":[["AppCell","Application cell: holder of application state."]]};

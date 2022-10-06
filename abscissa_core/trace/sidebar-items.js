@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["component","Abscissa tracing component"]],"struct":[["Config","Tracing configuration"]]});
+window.SIDEBAR_ITEMS = {"mod":[["component","Abscissa tracing component"]],"struct":[["Config","Tracing configuration"]]};

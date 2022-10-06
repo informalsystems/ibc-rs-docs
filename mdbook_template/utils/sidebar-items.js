@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SystemFileReader",""],["TestFileReader",""]],"trait":[["FileReader",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["SystemFileReader",""],["TestFileReader",""]],"trait":[["FileReader",""]]};

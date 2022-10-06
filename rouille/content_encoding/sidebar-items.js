@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["apply","Applies content encoding to the response."]]});
+window.SIDEBAR_ITEMS = {"fn":[["apply","Applies content encoding to the response."]]};

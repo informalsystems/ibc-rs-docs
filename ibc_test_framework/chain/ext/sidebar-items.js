@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["bootstrap",""],["ica",""],["transfer",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["bootstrap",""],["ica",""],["transfer",""]]};

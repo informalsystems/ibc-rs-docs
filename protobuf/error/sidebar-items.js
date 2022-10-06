@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ProtobufError","Generic protobuf error"],["WireError","Enum values added here for diagnostic purposes. Users should not depend on specific values."]],"type":[["ProtobufResult","`Result` alias for `ProtobufError`"]]});
+window.SIDEBAR_ITEMS = {"enum":[["ProtobufError","Generic protobuf error"],["WireError","Enum values added here for diagnostic purposes. Users should not depend on specific values."]],"type":[["ProtobufResult","`Result` alias for `ProtobufError`"]]};

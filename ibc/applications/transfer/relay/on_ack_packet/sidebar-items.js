@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process_ack_packet",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["process_ack_packet",""]]};

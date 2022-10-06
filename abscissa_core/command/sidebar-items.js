@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["Command","Subcommand of an application: derives or otherwise implements the `Options` trait, but also has a `run()` method which can be used to invoke the given (sub)command."]]});
+window.SIDEBAR_ITEMS = {"trait":[["Command","Subcommand of an application: derives or otherwise implements the `Options` trait, but also has a `run()` method which can be used to invoke the given (sub)command."]]};

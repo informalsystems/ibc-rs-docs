@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ChainDriver","A driver for interacting with a chain full nodes through command line."]]});
+window.SIDEBAR_ITEMS = {"struct":[["ChainDriver","A driver for interacting with a chain full nodes through command line."]]};

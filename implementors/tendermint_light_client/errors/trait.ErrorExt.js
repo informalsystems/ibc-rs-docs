@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["tendermint_light_client"] = [{"text":"impl <a class=\"trait\" href=\"tendermint_light_client/errors/trait.ErrorExt.html\" title=\"trait tendermint_light_client::errors::ErrorExt\">ErrorExt</a> for <a class=\"enum\" href=\"tendermint_light_client/errors/enum.ErrorDetail.html\" title=\"enum tendermint_light_client::errors::ErrorDetail\">ErrorDetail</a>","synthetic":false,"types":["tendermint_light_client::errors::ErrorDetail"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

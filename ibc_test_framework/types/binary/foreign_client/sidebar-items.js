@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ForeignClientPair",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["ForeignClientPair",""]]};

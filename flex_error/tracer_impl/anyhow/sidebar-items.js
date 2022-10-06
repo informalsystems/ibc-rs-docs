@@ -1,1 +1,1 @@
-initSidebarItems({"type":[["AnyhowTracer","Type alias to [`anyhow::Error`]"]]});
+window.SIDEBAR_ITEMS = {"type":[["AnyhowTracer","Type alias to [`anyhow::Error`]"]]};

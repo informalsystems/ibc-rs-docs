@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["replace_template",""]],"mod":[["utils",""]],"struct":[["Template",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["replace_template",""]],"mod":[["utils",""]],"struct":[["Template",""]]};

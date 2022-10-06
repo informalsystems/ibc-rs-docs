@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ConnectedChannel","A channel that is connected between two chains with the full handshake completed."]]});
+window.SIDEBAR_ITEMS = {"struct":[["ConnectedChannel","A channel that is connected between two chains with the full handshake completed."]]};

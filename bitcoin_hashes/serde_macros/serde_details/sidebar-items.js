@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["SerdeHash","Default serialization/deserialization methods."]]});
+window.SIDEBAR_ITEMS = {"trait":[["SerdeHash","Default serialization/deserialization methods."]]};

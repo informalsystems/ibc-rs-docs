@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Context","Error context"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Context","Error context"]]};

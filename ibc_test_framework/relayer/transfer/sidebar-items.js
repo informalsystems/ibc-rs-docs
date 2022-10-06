@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["build_transfer_message",""],["ibc_token_transfer","Perform a simplified version of IBC token transfer for testing purpose."]]});
+window.SIDEBAR_ITEMS = {"fn":[["build_transfer_message",""],["ibc_token_transfer","Perform a simplified version of IBC token transfer for testing purpose."]]};

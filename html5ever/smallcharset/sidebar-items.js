@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SmallCharSet","Represents a set of “small characters”, those with Unicode scalar values less than 64."]]});
+window.SIDEBAR_ITEMS = {"struct":[["SmallCharSet","Represents a set of “small characters”, those with Unicode scalar values less than 64."]]};

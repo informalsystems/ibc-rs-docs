@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["error",""],["identifier",""],["path",""],["validate",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["error",""],["identifier",""],["path",""],["validate",""]]};

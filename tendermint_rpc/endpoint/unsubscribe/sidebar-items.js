@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Request","Request to unsubscribe from events relating to a given query."],["Response","Status responses"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Request","Request to unsubscribe from events relating to a given query."],["Response","Status responses"]]};

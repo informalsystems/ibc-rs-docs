@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Request","`/broadcast_tx_sync`: returns with the response from `CheckTx`."],["Response","Response from either an async or sync transaction broadcast request."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Request","`/broadcast_tx_sync`: returns with the response from `CheckTx`."],["Response","Response from either an async or sync transaction broadcast request."]]};

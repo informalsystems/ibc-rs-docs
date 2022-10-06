@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["MetricType",""]],"fn":[["file_descriptor_proto",""]],"struct":[["Bucket",""],["Counter",""],["Gauge",""],["Histogram",""],["LabelPair",""],["Metric",""],["MetricFamily",""],["Quantile",""],["Summary",""],["Untyped",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["MetricType",""]],"fn":[["file_descriptor_proto",""]],"struct":[["Bucket",""],["Counter",""],["Gauge",""],["Histogram",""],["LabelPair",""],["Metric",""],["MetricFamily",""],["Quantile",""],["Summary",""],["Untyped",""]]};

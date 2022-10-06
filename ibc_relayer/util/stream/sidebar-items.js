@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["try_group_while","Example"]]});
+window.SIDEBAR_ITEMS = {"fn":[["try_group_while","Example"]]};

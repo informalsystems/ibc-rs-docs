@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["node","Type definition for a single running full node."]]});
+window.SIDEBAR_ITEMS = {"mod":[["node","Type definition for a single running full node."]]};

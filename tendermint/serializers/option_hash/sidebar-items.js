@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize","Deserialize hexstring into Option"],["serialize","Serialize from Option into hexstring"]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize hexstring into Option"],["serialize","Serialize from Option into hexstring"]]};

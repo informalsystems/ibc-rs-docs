@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["commitment",""],["error",""],["merkle",""],["mock",""],["specs",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["commitment",""],["error",""],["merkle",""],["mock",""],["specs",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ChainType",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["ChainType",""]]};

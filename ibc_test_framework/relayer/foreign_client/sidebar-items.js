@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["TaggedForeignClientExt","An extension trait for providing methods for getting tagged identifiers out of a [`ForeignClient`]."]]});
+window.SIDEBAR_ITEMS = {"trait":[["TaggedForeignClientExt","An extension trait for providing methods for getting tagged identifiers out of a [`ForeignClient`]."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Hash","Output of the SHA256d hash function."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Hash","Output of the SHA256d hash function."]]};

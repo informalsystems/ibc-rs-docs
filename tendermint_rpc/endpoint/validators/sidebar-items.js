@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["DEFAULT_VALIDATORS_PER_PAGE","The default number of validators to return per page."]],"struct":[["Request","List validators for a specific block"],["Response","Validator responses"]]});
+window.SIDEBAR_ITEMS = {"constant":[["DEFAULT_VALIDATORS_PER_PAGE","The default number of validators to return per page."]],"struct":[["Request","List validators for a specific block"],["Response","Validator responses"]]};

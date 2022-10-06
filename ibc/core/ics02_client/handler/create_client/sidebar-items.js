@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process",""]],"struct":[["Result","The result following the successful processing of a `MsgCreateClient` message. Preferably this data type should be used with a qualified name `create_client::Result` to avoid ambiguity."]]});
+window.SIDEBAR_ITEMS = {"fn":[["process",""]],"struct":[["Result","The result following the successful processing of a `MsgCreateClient` message. Preferably this data type should be used with a qualified name `create_client::Result` to avoid ambiguity."]]};

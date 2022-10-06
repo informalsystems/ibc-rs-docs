@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ReflectionServiceClient","ReflectionService defines a service for interface reflection."]]});
+window.SIDEBAR_ITEMS = {"struct":[["ReflectionServiceClient","ReflectionService defines a service for interface reflection."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["add_genesis_account",""],["add_genesis_validator",""],["add_wallet",""],["collect_gen_txs",""],["initialize",""],["start_chain",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["add_genesis_account",""],["add_genesis_validator",""],["add_wallet",""],["collect_gen_txs",""],["initialize",""],["start_chain",""]]};

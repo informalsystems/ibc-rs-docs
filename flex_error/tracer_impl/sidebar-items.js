@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["anyhow",""],["eyre",""],["string",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["anyhow",""],["eyre",""],["string",""]]};

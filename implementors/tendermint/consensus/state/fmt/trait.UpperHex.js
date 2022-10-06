@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["tendermint"] = [{"text":"impl <a class=\"trait\" href=\"tendermint/consensus/state/fmt/trait.UpperHex.html\" title=\"trait tendermint::consensus::state::fmt::UpperHex\">UpperHex</a> for <a class=\"struct\" href=\"tendermint/abci/transaction/struct.Transaction.html\" title=\"struct tendermint::abci::transaction::Transaction\">Transaction</a>","synthetic":false,"types":["tendermint::abci::transaction::Transaction"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

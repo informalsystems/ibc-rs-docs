@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DenomTrace","The denom trace"]]});
+window.SIDEBAR_ITEMS = {"struct":[["DenomTrace","The denom trace"]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Registry","Registry for keeping track of [`ChainHandle`]s indexed by a `ChainId`."],["SharedRegistry",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Registry","Registry for keeping track of [`ChainHandle`]s indexed by a `ChainId`."],["SharedRegistry",""]]};

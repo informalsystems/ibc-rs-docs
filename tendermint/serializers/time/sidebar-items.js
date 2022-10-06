@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize","Deserialize `String` into `Time`"],["serialize","Serialize from `Time` into `String`"]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize `String` into `Time`"],["serialize","Serialize from `Time` into `String`"]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Error","The `Error` type, a wrapper around a dynamic error type."]],"type":[["Result","`Result<T, Error>`"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Error","The `Error` type, a wrapper around a dynamic error type."]],"type":[["Result","`Result<T, Error>`"]]};

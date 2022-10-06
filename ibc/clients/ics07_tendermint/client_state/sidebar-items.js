@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["TENDERMINT_CLIENT_STATE_TYPE_URL",""]],"mod":[["test_util",""]],"struct":[["AllowUpdate",""],["ClientState",""],["UpgradeOptions",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["TENDERMINT_CLIENT_STATE_TYPE_URL",""]],"mod":[["test_util",""]],"struct":[["AllowUpdate",""],["ClientState",""],["UpgradeOptions",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["max_msg_num",""],["max_tx_size",""],["memo",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["max_msg_num",""],["max_tx_size",""],["memo",""]]};

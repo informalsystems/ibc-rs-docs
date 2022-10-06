@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["COMMITISH",""],["REPOSITORY",""]]});
+window.SIDEBAR_ITEMS = {"constant":[["COMMITISH",""],["REPOSITORY",""]]};

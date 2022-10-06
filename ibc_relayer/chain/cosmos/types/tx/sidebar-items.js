@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["TxStatus",""]],"struct":[["SignedTx",""],["TxSyncResult",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["TxStatus",""]],"struct":[["SignedTx",""],["TxSyncResult",""]]};

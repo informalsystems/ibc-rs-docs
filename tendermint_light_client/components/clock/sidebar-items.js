@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["SystemClock","Provides the current wall clock time."]],"trait":[["Clock","Abstracts over the current time."]]});
+window.SIDEBAR_ITEMS = {"struct":[["SystemClock","Provides the current wall clock time."]],"trait":[["Clock","Abstracts over the current time."]]};

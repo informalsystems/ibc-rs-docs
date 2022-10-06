@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ProofSpecs","An array of proof specifications."]]});
+window.SIDEBAR_ITEMS = {"struct":[["ProofSpecs","An array of proof specifications."]]};

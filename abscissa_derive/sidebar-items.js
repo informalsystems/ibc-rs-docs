@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["Command",""],["Component",""],["Runnable",""]]});
+window.SIDEBAR_ITEMS = {"derive":[["Command",""],["Component",""],["Runnable",""]]};

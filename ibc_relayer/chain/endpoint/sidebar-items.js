@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["HealthCheck","The result of a health check."]],"struct":[["ChainStatus","The result of the application status query."]],"trait":[["ChainEndpoint","Defines a blockchain as understood by the relayer"]]});
+window.SIDEBAR_ITEMS = {"enum":[["HealthCheck","The result of a health check."]],"struct":[["ChainStatus","The result of the application status query."]],"trait":[["ChainEndpoint","Defines a blockchain as understood by the relayer"]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Params","Parameters that influence chain consensus."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Params","Parameters that influence chain consensus."]]};

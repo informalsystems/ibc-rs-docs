@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process_recv_packet",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["process_recv_packet",""]]};

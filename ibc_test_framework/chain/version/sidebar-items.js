@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["get_chain_command_version",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["get_chain_command_version",""]]};

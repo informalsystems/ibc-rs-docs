@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["RelayerDriver","Encapsulates the parameters needed to spawn the relayer supervisor."]]});
+window.SIDEBAR_ITEMS = {"struct":[["RelayerDriver","Encapsulates the parameters needed to spawn the relayer supervisor."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["TYPE_URL",""]],"struct":[["MsgConnectionOpenAck","Message definition `MsgConnectionOpenAck`  (i.e., `ConnOpenAck` datagram)."]]});
+window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["MsgConnectionOpenAck","Message definition `MsgConnectionOpenAck`  (i.e., `ConnOpenAck` datagram)."]]};

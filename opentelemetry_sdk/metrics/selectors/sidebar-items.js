@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["simple","Simple Metric Selectors"]]});
+window.SIDEBAR_ITEMS = {"mod":[["simple","Simple Metric Selectors"]]};

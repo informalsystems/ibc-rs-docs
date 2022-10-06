@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["NullWatcher","Stub `Watcher` implementation"]]});
+window.SIDEBAR_ITEMS = {"struct":[["NullWatcher","Stub `Watcher` implementation"]]};

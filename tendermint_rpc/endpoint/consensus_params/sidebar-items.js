@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Request","Get the consensus parameters."],["Response","Consensus parameters response."]]});
+window.SIDEBAR_ITEMS = {"struct":[["Request","Get the consensus parameters."],["Response","Consensus parameters response."]]};

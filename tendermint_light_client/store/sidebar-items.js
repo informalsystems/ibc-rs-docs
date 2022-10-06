@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["memory","Transient in-memory store"]],"trait":[["LightStore","Store for light blocks."]]});
+window.SIDEBAR_ITEMS = {"mod":[["memory","Transient in-memory store"]],"trait":[["LightStore","Store for light blocks."]]};

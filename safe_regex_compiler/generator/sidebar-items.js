@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Predicate",""]],"fn":[["generate","Generates an enum that implements `parsed_re` and implements the `safe_regex::internal::Machine` trait."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Predicate",""]],"fn":[["generate","Generates an enum that implements `parsed_re` and implements the `safe_regex::internal::Machine` trait."]]};

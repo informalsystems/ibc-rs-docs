@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["fmt","Text-format to `fmt::Formatter`."],["print_to","Text-format"],["print_to_string","Text-format"]]});
+window.SIDEBAR_ITEMS = {"fn":[["fmt","Text-format to `fmt::Formatter`."],["print_to","Text-format"],["print_to_string","Text-format"]]};

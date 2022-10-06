@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Balance","The balance for a specific denom"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Balance","The balance for a specific denom"]]};

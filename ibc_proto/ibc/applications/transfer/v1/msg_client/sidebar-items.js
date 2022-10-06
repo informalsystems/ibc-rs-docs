@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["MsgClient","Msg defines the ibc/transfer Msg service."]]});
+window.SIDEBAR_ITEMS = {"struct":[["MsgClient","Msg defines the ibc/transfer Msg service."]]};

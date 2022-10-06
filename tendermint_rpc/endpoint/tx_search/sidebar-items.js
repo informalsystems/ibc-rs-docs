@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Request","Request for searching for transactions with their results."],["Response",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Request","Request for searching for transactions with their results."],["Response",""]]};

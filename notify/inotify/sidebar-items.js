@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["INotifyWatcher","Watcher implementation based on inotify"]]});
+window.SIDEBAR_ITEMS = {"struct":[["INotifyWatcher","Watcher implementation based on inotify"]]};

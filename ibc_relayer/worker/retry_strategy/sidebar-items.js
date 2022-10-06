@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["worker_default_strategy","A basic worker retry strategy."]]});
+window.SIDEBAR_ITEMS = {"fn":[["worker_default_strategy","A basic worker retry strategy."]]};

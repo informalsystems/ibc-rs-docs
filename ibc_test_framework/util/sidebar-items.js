@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["array","Helpers for manipulating fixed-sized arrays."],["assert",""],["file","Filesystem utilities."],["random","Utilities for random value generation."],["retry","Utilities for retrying test operations."],["suspend","Utilities for suspending the test."]]});
+window.SIDEBAR_ITEMS = {"mod":[["array","Helpers for manipulating fixed-sized arrays."],["assert",""],["file","Filesystem utilities."],["random","Utilities for random value generation."],["retry","Utilities for retrying test operations."],["suspend","Utilities for suspending the test."]]};

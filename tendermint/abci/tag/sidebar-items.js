@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Key","Tag keys"],["Tag","Tags"],["Value","Tag values"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Key","Tag keys"],["Tag","Tags"],["Value","Tag values"]]};

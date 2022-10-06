@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["downcast_client_state",""]],"struct":[["UpdatedState",""]],"trait":[["ClientState",""],["UpgradeOptions",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["downcast_client_state",""]],"struct":[["UpdatedState",""]],"trait":[["ClientState",""],["UpgradeOptions",""]]};

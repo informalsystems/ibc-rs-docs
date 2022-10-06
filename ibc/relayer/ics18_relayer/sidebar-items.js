@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["context",""],["error",""],["utils",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["context",""],["error",""],["utils",""]]};

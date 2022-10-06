@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["downcast_header",""]],"trait":[["Header","Abstract of consensus state update information"]]});
+window.SIDEBAR_ITEMS = {"fn":[["downcast_header",""]],"trait":[["Header","Abstract of consensus state update information"]]};

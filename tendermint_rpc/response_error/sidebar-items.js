@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Code","See `func RPC*Error()` definitions in: https://github.com/tendermint/tendermint/blob/main/rpc/jsonrpc/types/types.go"]],"struct":[["ResponseError",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Code","See `func RPC*Error()` definitions in: https://github.com/tendermint/tendermint/blob/main/rpc/jsonrpc/types/types.go"]],"struct":[["ResponseError",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["AbciInfo","ABCI information"],["Request","Request ABCI information from a node"],["Response","ABCI information response"]]});
+window.SIDEBAR_ITEMS = {"struct":[["AbciInfo","ABCI information"],["Request","Request ABCI information from a node"],["Response","ABCI information response"]]};

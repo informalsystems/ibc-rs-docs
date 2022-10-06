@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PacketData",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["PacketData",""]]};

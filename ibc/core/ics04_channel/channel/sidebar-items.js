@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Order",""],["State",""]],"struct":[["ChannelEnd",""],["Counterparty",""],["IdentifiedChannelEnd",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["Order",""],["State",""]],"struct":[["ChannelEnd",""],["Counterparty",""],["IdentifiedChannelEnd",""]]};

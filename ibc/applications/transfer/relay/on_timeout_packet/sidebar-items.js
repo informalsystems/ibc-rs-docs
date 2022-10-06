@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["process_timeout_packet",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["process_timeout_packet",""]]};

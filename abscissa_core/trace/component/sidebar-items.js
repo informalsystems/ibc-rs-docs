@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Tracing","Abscissa component for initializing the `tracing` subsystem"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Tracing","Abscissa component for initializing the `tracing` subsystem"]]};

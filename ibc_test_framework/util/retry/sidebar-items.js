@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["assert_eventually_succeed","A simplified version of retry logic used for testing. We do not need complicated retry logic as we need this only to test eventual consistency which should reach within a few seconds."]]});
+window.SIDEBAR_ITEMS = {"fn":[["assert_eventually_succeed","A simplified version of retry logic used for testing. We do not need complicated retry logic as we need this only to test eventual consistency which should reach within a few seconds."]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["generate_session_id","Generates a string suitable for a session ID."],["session",""]],"struct":[["Session","Contains the ID of the session."]]});
+window.SIDEBAR_ITEMS = {"fn":[["generate_session_id","Generates a string suitable for a session ID."],["session",""]],"struct":[["Session","Contains the ID of the session."]]};

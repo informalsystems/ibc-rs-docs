@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ErrorDetail",""]],"struct":[["DecodeSubdetail",""],["EncodeSubdetail",""],["Error",""],["IoSubdetail",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["ErrorDetail",""]],"struct":[["DecodeSubdetail",""],["EncodeSubdetail",""],["Error",""],["IoSubdetail",""]]};

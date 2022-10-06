@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["on_ack_packet",""],["on_recv_packet",""],["on_timeout_packet",""],["send_transfer",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["on_ack_packet",""],["on_recv_packet",""],["on_timeout_packet",""],["send_transfer",""]]};

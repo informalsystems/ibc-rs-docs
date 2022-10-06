@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["generate_validators","A helper function to generate multiple validators at once."],["sort_validators","A helper function to sort validators according to the Tendermint specs."]],"struct":[["Validator",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["generate_validators","A helper function to generate multiple validators at once."],["sort_validators","A helper function to sort validators according to the Tendermint specs."]],"struct":[["Validator",""]]};

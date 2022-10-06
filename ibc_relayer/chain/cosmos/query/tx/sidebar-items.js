@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["query_tx_response",""],["query_txs","This function queries transactions for events matching certain criteria."]]});
+window.SIDEBAR_ITEMS = {"fn":[["query_tx_response",""],["query_txs","This function queries transactions for events matching certain criteria."]]};

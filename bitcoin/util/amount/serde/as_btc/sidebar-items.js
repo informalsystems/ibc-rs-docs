@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["deserialize",""],["serialize",""]],"mod":[["opt","Serialize and deserialize [Option] as JSON numbers denominated in BTC. Use with `#[serde(default, with = \"amount::serde::as_btc::opt\")]`."]]});
+window.SIDEBAR_ITEMS = {"fn":[["deserialize",""],["serialize",""]],"mod":[["opt","Serialize and deserialize [Option] as JSON numbers denominated in BTC. Use with `#[serde(default, with = \"amount::serde::as_btc::opt\")]`."]]};

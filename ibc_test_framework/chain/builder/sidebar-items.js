@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ChainBuilder","Used for holding common configuration needed to create new `ChainDriver`s."]]});
+window.SIDEBAR_ITEMS = {"struct":[["ChainBuilder","Used for holding common configuration needed to create new `ChainDriver`s."]]};

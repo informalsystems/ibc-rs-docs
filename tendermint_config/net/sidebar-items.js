@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["TCP_PREFIX","URI prefix for TCP connections"],["UNIX_PREFIX","URI prefix for Unix socket connections"]],"enum":[["Address","Remote address (TCP or UNIX socket)"]]});
+window.SIDEBAR_ITEMS = {"constant":[["TCP_PREFIX","URI prefix for TCP connections"],["UNIX_PREFIX","URI prefix for Unix socket connections"]],"enum":[["Address","Remote address (TCP or UNIX socket)"]]};

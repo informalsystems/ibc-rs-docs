@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["multisig",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["multisig",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["get_dummy_ics07_header",""],["get_dummy_tendermint_header",""]]});
+window.SIDEBAR_ITEMS = {"fn":[["get_dummy_ics07_header",""],["get_dummy_tendermint_header",""]]};

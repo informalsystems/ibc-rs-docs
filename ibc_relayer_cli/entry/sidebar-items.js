@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["EntryPoint","Entry point for Hermes CLI."]]});
+window.SIDEBAR_ITEMS = {"struct":[["EntryPoint","Entry point for Hermes CLI."]]};

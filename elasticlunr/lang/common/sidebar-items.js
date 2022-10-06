@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["RegexTrimmer",""],["StopWordFilter",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["RegexTrimmer",""],["StopWordFilter",""]]};

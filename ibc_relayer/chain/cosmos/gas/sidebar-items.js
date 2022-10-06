@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["calculate_fee",""],["gas_amount_to_fee",""],["mul_ceil","Multiply `a` with `f` and round the result up to the nearest integer."],["mul_floor","Multiply `a` with `f` and round the result down to the nearest integer."]]});
+window.SIDEBAR_ITEMS = {"fn":[["calculate_fee",""],["gas_amount_to_fee",""],["mul_ceil","Multiply `a` with `f` and round the result up to the nearest integer."],["mul_floor","Multiply `a` with `f` and round the result down to the nearest integer."]]};

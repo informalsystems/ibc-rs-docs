@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ClientSettings","Client parameters for the `build_create_client` operation."]]});
+window.SIDEBAR_ITEMS = {"enum":[["ClientSettings","Client parameters for the `build_create_client` operation."]]};

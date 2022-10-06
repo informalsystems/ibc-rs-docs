@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Bip34Error","An error when looking up a BIP34 block height."]],"struct":[["Block","Bitcoin block."],["BlockHeader","Bitcoin block header."]]});
+window.SIDEBAR_ITEMS = {"enum":[["Bip34Error","An error when looking up a BIP34 block height."]],"struct":[["Block","Bitcoin block."],["BlockHeader","Bitcoin block header."]]};
