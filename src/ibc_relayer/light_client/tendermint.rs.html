@@ -307,7 +307,7 @@
 <span class="kw">use</span> <span class="ident">tendermint_light_client_verifier::ProdVerifier</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc</span> <span class="kw">as</span> <span class="ident">rpc</span>;
 
-<span class="kw">use</span> <span class="ident">ibc</span>::{
+<span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
     <span class="ident">clients::ics07_tendermint</span>::{
         <span class="ident">header</span>::{<span class="ident">headers_compatible</span>, <span class="ident">Header</span> <span class="kw">as</span> <span class="ident">TmHeader</span>},
         <span class="ident">misbehaviour::Misbehaviour</span> <span class="kw">as</span> <span class="ident">TmMisbehaviour</span>,
@@ -316,7 +316,7 @@
         <span class="ident">ics02_client</span>::{<span class="ident">client_type::ClientType</span>, <span class="ident">events::UpdateClient</span>, <span class="ident">header::downcast_header</span>},
         <span class="ident">ics24_host::identifier::ChainId</span>,
     },
-    <span class="ident">downcast</span>,
+    <span class="ident">downcast</span>, <span class="ident">Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>,
 };
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 
@@ -336,8 +336,8 @@
 <span class="kw">impl</span> <span class="ident"><span class="kw">super</span>::LightClient</span><span class="op">&lt;</span><span class="ident">CosmosSdkChain</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">LightClient</span> {
     <span class="kw">fn</span> <span class="ident">header_and_minimal_set</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">trusted</span>: <span class="ident">ibc::Height</span>,
-        <span class="ident">target</span>: <span class="ident">ibc::Height</span>,
+        <span class="ident">trusted</span>: <span class="ident">ICSHeight</span>,
+        <span class="ident">target</span>: <span class="ident">ICSHeight</span>,
         <span class="ident">client_state</span>: <span class="kw-2">&amp;</span><span class="ident">AnyClientState</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Verified</span><span class="op">&lt;</span><span class="ident">TmHeader</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">Verified</span> { <span class="ident">target</span>, <span class="ident">supporting</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">verify</span>(<span class="ident">trusted</span>, <span class="ident">target</span>, <span class="ident">client_state</span>)<span class="question-mark">?</span>;
@@ -347,8 +347,8 @@
 
     <span class="kw">fn</span> <span class="ident">verify</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">trusted</span>: <span class="ident">ibc::Height</span>,
-        <span class="ident">target</span>: <span class="ident">ibc::Height</span>,
+        <span class="ident">trusted</span>: <span class="ident">ICSHeight</span>,
+        <span class="ident">target</span>: <span class="ident">ICSHeight</span>,
         <span class="ident">client_state</span>: <span class="kw-2">&amp;</span><span class="ident">AnyClientState</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Verified</span><span class="op">&lt;</span><span class="ident">LightBlock</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">trace!</span>(<span class="op">%</span><span class="ident">trusted</span>, <span class="op">%</span><span class="ident">target</span>, <span class="string">&quot;light client verification&quot;</span>);
@@ -378,7 +378,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">Verified</span> { <span class="ident">target</span>, <span class="ident">supporting</span> })
     }
 
-    <span class="kw">fn</span> <span class="ident">fetch</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">height</span>: <span class="ident">ibc::Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">LightBlock</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fetch</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">height</span>: <span class="ident">ICSHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">LightBlock</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">trace!</span>(<span class="op">%</span><span class="ident">height</span>, <span class="string">&quot;fetching header&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">TMHeight::try_from</span>(<span class="ident">height</span>.<span class="ident">revision_height</span>()).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
@@ -415,7 +415,7 @@
 
         <span class="kw">let</span> <span class="ident">latest_chain_block</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">fetch_light_block</span>(<span class="ident">AtHeight::Highest</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">latest_chain_height</span> <span class="op">=</span>
-            <span class="ident">ibc::Height::new</span>(<span class="self">self</span>.<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">latest_chain_block</span>.<span class="ident">height</span>().<span class="ident">into</span>())
+            <span class="ident">ICSHeight::new</span>(<span class="self">self</span>.<span class="ident">chain_id</span>.<span class="ident">version</span>(), <span class="ident">latest_chain_block</span>.<span class="ident">height</span>().<span class="ident">into</span>())
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::invalid_height_no_source</span>())<span class="question-mark">?</span>;
 
         <span class="comment">// set the target height to the minimum between the update height and latest chain height</span>
@@ -503,7 +503,7 @@
         ))
     }
 
-    <span class="kw">fn</span> <span class="ident">prepare_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">trusted</span>: <span class="ident">ibc::Height</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">LightClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">prepare_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">trusted</span>: <span class="ident">ICSHeight</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">LightClientState</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">trusted_height</span> <span class="op">=</span>
             <span class="ident">TMHeight::try_from</span>(<span class="ident">trusted</span>.<span class="ident">revision_height</span>()).<span class="ident">map_err</span>(<span class="ident">Error::invalid_height</span>)<span class="question-mark">?</span>;
 
@@ -525,7 +525,7 @@
 
     <span class="kw">fn</span> <span class="ident">adjust_headers</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">trusted_height</span>: <span class="ident">ibc::Height</span>,
+        <span class="ident">trusted_height</span>: <span class="ident">ICSHeight</span>,
         <span class="ident">target</span>: <span class="ident">LightBlock</span>,
         <span class="ident">supporting</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">LightBlock</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">TmHeader</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TmHeader</span><span class="op">&gt;</span>), <span class="ident">Error</span><span class="op">&gt;</span> {

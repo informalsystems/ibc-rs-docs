@@ -1,4 +1,0 @@
-(function() {var implementors = {};
-implementors["ibc"] = [];
-implementors["ibc_relayer"] = [{"text":"impl <a class=\"trait\" href=\"ibc/core/ics02_client/misbehaviour/trait.Misbehaviour.html\" title=\"trait ibc::core::ics02_client::misbehaviour::Misbehaviour\">Misbehaviour</a> for <a class=\"enum\" href=\"ibc_relayer/misbehaviour/enum.AnyMisbehaviour.html\" title=\"enum ibc_relayer::misbehaviour::AnyMisbehaviour\">AnyMisbehaviour</a>","synthetic":false,"types":["ibc_relayer::misbehaviour::AnyMisbehaviour"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

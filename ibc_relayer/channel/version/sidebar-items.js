@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["default_by_port","Returns the default channel version, depending on the the given [`PortId`]."]]};
+window.SIDEBAR_ITEMS = {"fn":[["default_by_port","Returns the default channel version, depending on the the given [`PortId`]."]],"struct":[["Version","The version field for a `ChannelEnd`."]]};

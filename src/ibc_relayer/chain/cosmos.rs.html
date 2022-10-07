@@ -1915,6 +1915,10 @@
 <span id="1915">1915</span>
 <span id="1916">1916</span>
 <span id="1917">1917</span>
+<span id="1918">1918</span>
+<span id="1919">1919</span>
+<span id="1920">1920</span>
+<span id="1921">1921</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">bytes</span>::{<span class="ident">Buf</span>, <span class="ident">Bytes</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
@@ -1941,31 +1945,35 @@
 <span class="kw">use</span> <span class="ident">tonic</span>::{<span class="ident">codegen::http::Uri</span>, <span class="ident">metadata::AsciiMetadataValue</span>};
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">instrument</span>, <span class="ident">warn</span>};
 
-<span class="kw">use</span> <span class="ident">ibc::clients::ics07_tendermint::header::Header</span> <span class="kw">as</span> <span class="ident">TmHeader</span>;
-<span class="kw">use</span> <span class="ident">ibc::core::ics02_client::client_type::ClientType</span>;
-<span class="kw">use</span> <span class="ident">ibc::core::ics02_client::error::Error</span> <span class="kw">as</span> <span class="ident">ClientError</span>;
-<span class="kw">use</span> <span class="ident">ibc::core::ics03_connection::connection</span>::{<span class="ident">ConnectionEnd</span>, <span class="ident">IdentifiedConnectionEnd</span>};
-<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">IdentifiedChannelEnd</span>};
-<span class="kw">use</span> <span class="ident">ibc::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">Sequence</span>};
-<span class="kw">use</span> <span class="ident">ibc::core::ics23_commitment::commitment::CommitmentPrefix</span>;
-<span class="kw">use</span> <span class="ident">ibc::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>};
-<span class="kw">use</span> <span class="ident">ibc::core::ics24_host::path</span>::{
+<span class="kw">use</span> <span class="ident">ibc_proto::cosmos::staking::v1beta1::Params</span> <span class="kw">as</span> <span class="ident">StakingParams</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::clients::ics07_tendermint::header::Header</span> <span class="kw">as</span> <span class="ident">TmHeader</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics02_client::client_type::ClientType</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics02_client::error::Error</span> <span class="kw">as</span> <span class="ident">ClientError</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics03_connection::connection</span>::{
+    <span class="ident">ConnectionEnd</span>, <span class="ident">IdentifiedConnectionEnd</span>,
+};
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics04_channel::channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">IdentifiedChannelEnd</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">Sequence</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics23_commitment::commitment::CommitmentPrefix</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics24_host::path</span>::{
     <span class="ident">AcksPath</span>, <span class="ident">ChannelEndsPath</span>, <span class="ident">ClientConsensusStatePath</span>, <span class="ident">ClientStatePath</span>, <span class="ident">CommitmentsPath</span>,
     <span class="ident">ConnectionsPath</span>, <span class="ident">ReceiptsPath</span>, <span class="ident">SeqRecvsPath</span>,
 };
-<span class="kw">use</span> <span class="ident">ibc::core::ics24_host</span>::{<span class="ident">ClientUpgradePath</span>, <span class="ident">Path</span>, <span class="ident">IBC_QUERY_PATH</span>, <span class="ident">SDK_UPGRADE_QUERY_PATH</span>};
-<span class="kw">use</span> <span class="ident">ibc::events::IbcEvent</span>;
-<span class="kw">use</span> <span class="ident">ibc::signer::Signer</span>;
-<span class="kw">use</span> <span class="ident">ibc::Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>;
-<span class="kw">use</span> <span class="ident">ibc</span>::{
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics24_host</span>::{
+    <span class="ident">ClientUpgradePath</span>, <span class="ident">Path</span>, <span class="ident">IBC_QUERY_PATH</span>, <span class="ident">SDK_UPGRADE_QUERY_PATH</span>,
+};
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::events::IbcEvent</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::signer::Signer</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::Height</span> <span class="kw">as</span> <span class="ident">ICSHeight</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
     <span class="ident">clients::ics07_tendermint::client_state</span>::{<span class="ident">AllowUpdate</span>, <span class="ident">ClientState</span> <span class="kw">as</span> <span class="ident">TmClientState</span>},
     <span class="ident">core::ics23_commitment::merkle::MerkleProof</span>,
 };
-<span class="kw">use</span> <span class="ident">ibc</span>::{
+<span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
     <span class="ident">clients::ics07_tendermint::consensus_state::ConsensusState</span> <span class="kw">as</span> <span class="ident">TMConsensusState</span>,
     <span class="ident">core::ics02_client::events::UpdateClient</span>,
 };
-<span class="kw">use</span> <span class="ident">ibc_proto::cosmos::staking::v1beta1::Params</span> <span class="kw">as</span> <span class="ident">StakingParams</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
@@ -2293,7 +2301,7 @@
     <span class="kw">fn</span> <span class="ident">query_client_upgrade_state</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">query_data</span>: <span class="ident">ClientUpgradePath</span>,
-        <span class="ident">query_height</span>: <span class="ident">ibc::Height</span>,
+        <span class="ident">query_height</span>: <span class="ident">ICSHeight</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">MerkleProof</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// SAFETY: Creating a Path from a constant; this should never fail</span>
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">TendermintABCIPath::from_str</span>(<span class="ident">SDK_UPGRADE_QUERY_PATH</span>)
@@ -3749,7 +3757,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">ibc</span>::{
+    <span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
         <span class="ident">core</span>::{<span class="ident">ics02_client::client_type::ClientType</span>, <span class="ident">ics24_host::identifier::ClientId</span>},
         <span class="ident">mock::client_state::MockClientState</span>,
         <span class="ident">mock::header::MockHeader</span>,

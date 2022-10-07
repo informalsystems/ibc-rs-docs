@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["send_transfer","This function handles the transfer sending logic. If this method returns an error, the runtime is expected to rollback all state modifications to the `Ctx` caused by all messages from the transaction that this `msg` is a part of."]]};

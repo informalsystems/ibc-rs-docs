@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"trait":[["PortReader","A context supplying all the necessary read-only dependencies for processing any information regarding a port."]]};

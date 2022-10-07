@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["build_client_update_datagram","Builds a `ClientMsg::UpdateClient` for a client with id `client_id` running on the `dest` context, assuming that the latest header on the source context is `src_header`."]]};

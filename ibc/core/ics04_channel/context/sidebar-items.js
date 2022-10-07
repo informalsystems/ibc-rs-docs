@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["calculate_block_delay",""]],"trait":[["ChannelKeeper","A context supplying all the necessary write-only dependencies (i.e., storage writing facility) for processing any `ChannelMsg`."],["ChannelReader","A context supplying all the necessary read-only dependencies for processing any `ChannelMsg`."]]};

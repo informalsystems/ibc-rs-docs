@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":[["DEFAULT_BLOCK_TIME_SECS",""]],"struct":[["MockContext","A context implementing the dependencies necessary for testing any IBC module."],["MockIbcStore","An object that stores all IBC related data."],["MockRouter",""],["MockRouterBuilder",""]]};

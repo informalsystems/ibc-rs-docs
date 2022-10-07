@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"trait":[["ConnectionKeeper","A context supplying all the necessary write-only dependencies (i.e., storage writing facility) for processing any `ConnectionMsg`."],["ConnectionReader","A context supplying all the necessary read-only dependencies for processing any `ConnectionMsg`."]]};

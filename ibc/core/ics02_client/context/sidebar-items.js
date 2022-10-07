@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"trait":[["ClientKeeper","Defines the write-only part of ICS2 (client functions) context."],["ClientReader","Defines the read-only part of ICS2 (client functions) context."]]};
