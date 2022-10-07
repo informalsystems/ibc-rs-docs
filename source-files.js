@@ -8,7 +8,6 @@ var sourcesIndex = JSON.parse('{\
 "alloc_no_stdlib":["",[["allocated_memory",[],["index_macro.rs","mod.rs"]]],["allocated_stack_memory.rs","init.rs","lib.rs","stack_allocator.rs"]],\
 "alloc_stdlib":["",[],["heap_alloc.rs","lib.rs","std_alloc.rs"]],\
 "ammonia":["",[],["lib.rs","rcdom.rs"]],\
-"ansi_term":["",[],["ansi.rs","debug.rs","difference.rs","display.rs","lib.rs","style.rs","util.rs","windows.rs","write.rs"]],\
 "anyhow":["",[],["backtrace.rs","chain.rs","context.rs","ensure.rs","error.rs","fmt.rs","kind.rs","lib.rs","macros.rs","ptr.rs","wrapper.rs"]],\
 "arc_swap":["",[["debt",[],["fast.rs","helping.rs","list.rs","mod.rs"]],["docs",[],["internal.rs","limitations.rs","mod.rs","patterns.rs","performance.rs"]],["strategy",[],["hybrid.rs","mod.rs","rw_lock.rs"]]],["access.rs","as_raw.rs","cache.rs","compile_fail_tests.rs","lib.rs","ref_cnt.rs"]],\
 "ascii":["",[],["ascii_char.rs","ascii_str.rs","ascii_string.rs","free_functions.rs","lib.rs"]],\
@@ -181,6 +180,7 @@ var sourcesIndex = JSON.parse('{\
 "multipart":["",[["server",[],["boundary.rs","field.rs","mod.rs","save.rs"]]],["lib.rs"]],\
 "native_tls":["",[["imp",[],["openssl.rs"]]],["lib.rs"]],\
 "notify":["",[["debounce",[],["mod.rs","timer.rs"]]],["inotify.rs","lib.rs","null.rs","poll.rs"]],\
+"nu_ansi_term":["",[],["ansi.rs","debug.rs","difference.rs","display.rs","gradient.rs","lib.rs","rgb.rs","style.rs","util.rs","windows.rs","write.rs"]],\
 "num_bigint":["",[["bigint",[],["addition.rs","bits.rs","convert.rs","division.rs","multiplication.rs","power.rs","serde.rs","shift.rs","subtraction.rs"]],["biguint",[],["addition.rs","bits.rs","convert.rs","division.rs","iter.rs","monty.rs","multiplication.rs","power.rs","serde.rs","shift.rs","subtraction.rs"]]],["bigint.rs","biguint.rs","lib.rs","macros.rs"]],\
 "num_cpus":["",[],["lib.rs","linux.rs"]],\
 "num_derive":["",[],["lib.rs","test.rs"]],\
@@ -202,6 +202,7 @@ var sourcesIndex = JSON.parse('{\
 "opentelemetry_prometheus":["",[],["lib.rs","sanitize.rs"]],\
 "opentelemetry_sdk":["",[["export",[["metrics",[["aggregation",[],["mod.rs","temporality.rs"]]],["mod.rs","stdout.rs"]],["trace",[],["mod.rs","stdout.rs"]]],["mod.rs"]],["metrics",[["aggregators",[],["histogram.rs","last_value.rs","mod.rs","sum.rs"]],["controllers",[],["basic.rs","mod.rs"]],["processors",[],["basic.rs","mod.rs"]],["sdk_api",[],["descriptor.rs","instrument_kind.rs","mod.rs","number.rs","wrap.rs"]],["selectors",[],["mod.rs","simple.rs"]]],["mod.rs","registry.rs"]],["propagation",[],["baggage.rs","composite.rs","mod.rs","trace_context.rs"]],["resource",[],["env.rs","mod.rs","os.rs","process.rs"]],["trace",[["id_generator",[],["aws.rs","mod.rs"]]],["config.rs","evicted_hash_map.rs","evicted_queue.rs","mod.rs","provider.rs","runtime.rs","sampler.rs","span.rs","span_limit.rs","span_processor.rs","tracer.rs"]]],["instrumentation.rs","lib.rs","runtime.rs","util.rs"]],\
 "os_str_bytes":["",[["common",[],["mod.rs","raw.rs"]]],["iter.rs","lib.rs","pattern.rs","raw_str.rs"]],\
+"overload":["",[],["assignment.rs","binary.rs","lib.rs","unary.rs"]],\
 "owo_colors":["",[["colors",[],["css.rs","custom.rs","dynamic.rs","xterm.rs"]]],["colors.rs","combo.rs","dyn_colors.rs","dyn_styles.rs","lib.rs","styled_list.rs","styles.rs"]],\
 "parking_lot":["",[],["condvar.rs","deadlock.rs","elision.rs","fair_mutex.rs","lib.rs","mutex.rs","once.rs","raw_fair_mutex.rs","raw_mutex.rs","raw_rwlock.rs","remutex.rs","rwlock.rs","util.rs"]],\
 "parking_lot_core":["",[["thread_parker",[],["linux.rs","mod.rs"]]],["lib.rs","parking_lot.rs","spinwait.rs","util.rs","word_lock.rs"]],\
