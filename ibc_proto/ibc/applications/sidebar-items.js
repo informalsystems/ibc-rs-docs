@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["interchain_accounts",""],["transfer",""]]};
+window.SIDEBAR_ITEMS = {"mod":[["fee",""],["interchain_accounts",""],["transfer",""]]};
