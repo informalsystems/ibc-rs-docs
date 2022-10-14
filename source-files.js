@@ -371,7 +371,7 @@ var sourcesIndex = JSON.parse('{\
 "untrusted":["",[],["untrusted.rs"]],\
 "url":["",[],["host.rs","lib.rs","origin.rs","parser.rs","path_segments.rs","quirks.rs","slicing.rs"]],\
 "utf8":["",[],["lib.rs","lossy.rs","read.rs"]],\
-"uuid":["",[["external",[],["mod.rs"]]],["builder.rs","error.rs","fmt.rs","lib.rs","macros.rs","parser.rs","rng.rs","v4.rs"]],\
+"uuid":["",[],["builder.rs","error.rs","external.rs","fmt.rs","lib.rs","macros.rs","parser.rs","rng.rs","timestamp.rs","v4.rs"]],\
 "wait_timeout":["",[],["lib.rs","unix.rs"]],\
 "walkdir":["",[],["dent.rs","error.rs","lib.rs","util.rs"]],\
 "want":["",[],["lib.rs"]],\
