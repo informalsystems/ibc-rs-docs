@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_balance","Uses the GRPC client to retrieve the account balance for a specific denom"]]};
+window.SIDEBAR_ITEMS = {"fn":[["query_all_balances","Uses the GRPC client to retrieve the account balance for all denom"],["query_balance","Uses the GRPC client to retrieve the account balance for a specific denom"]]};

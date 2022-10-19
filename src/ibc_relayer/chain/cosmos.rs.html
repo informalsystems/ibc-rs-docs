@@ -1919,6 +1919,16 @@
 <span id="1919">1919</span>
 <span id="1920">1920</span>
 <span id="1921">1921</span>
+<span id="1922">1922</span>
+<span id="1923">1923</span>
+<span id="1924">1924</span>
+<span id="1925">1925</span>
+<span id="1926">1926</span>
+<span id="1927">1927</span>
+<span id="1928">1928</span>
+<span id="1929">1929</span>
+<span id="1930">1930</span>
+<span id="1931">1931</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">bytes</span>::{<span class="ident">Buf</span>, <span class="ident">Bytes</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
@@ -1978,7 +1988,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::account::get_or_fetch_account</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::balance::query_balance</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::balance</span>::{<span class="ident">query_all_balances</span>, <span class="ident">query_balance</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::denom_trace::query_denom_trace</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::status::query_status</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::tx::query_txs</span>;
@@ -2640,25 +2650,35 @@
         <span class="prelude-val">Ok</span>(<span class="ident">version_specs</span>.<span class="ident">ibc_go</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Balance</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">query_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">denom</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Balance</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// If a key_name is given, extract the account hash.</span>
         <span class="comment">// Else retrieve the account from the configuration file.</span>
         <span class="kw">let</span> <span class="ident">account</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">key_name</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">account</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">keybase</span>().<span class="ident">get_key</span>(<span class="kw-2">&amp;</span><span class="ident">account</span>).<span class="ident">map_err</span>(<span class="ident">Error::key_base</span>)<span class="question-mark">?</span>;
+            <span class="prelude-val">Some</span>(<span class="ident">key_name</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">keybase</span>().<span class="ident">get_key</span>(<span class="ident">key_name</span>).<span class="ident">map_err</span>(<span class="ident">Error::key_base</span>)<span class="question-mark">?</span>;
                 <span class="ident">key</span>.<span class="ident">account</span>
             }
-            <span class="kw">_</span> =&gt; {
-                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>;
-                <span class="ident">key</span>.<span class="ident">account</span>
-            }
+            <span class="kw">_</span> =&gt; <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>.<span class="ident">account</span>,
         };
 
-        <span class="kw">let</span> <span class="ident">balance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">block_on</span>(<span class="ident">query_balance</span>(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">grpc_addr</span>,
-            <span class="kw-2">&amp;</span><span class="ident">account</span>,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">gas_price</span>.<span class="ident">denom</span>,
-        ))<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">denom</span> <span class="op">=</span> <span class="ident">denom</span>.<span class="ident">unwrap_or</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">gas_price</span>.<span class="ident">denom</span>);
+        <span class="kw">let</span> <span class="ident">balance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">block_on</span>(<span class="ident">query_balance</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">grpc_addr</span>, <span class="kw-2">&amp;</span><span class="ident">account</span>, <span class="ident">denom</span>))<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="ident">balance</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">query_all_balances</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Balance</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="comment">// If a key_name is given, extract the account hash.</span>
+        <span class="comment">// Else retrieve the account from the configuration file.</span>
+        <span class="kw">let</span> <span class="ident">account</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">key_name</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">key_name</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">keybase</span>().<span class="ident">get_key</span>(<span class="ident">key_name</span>).<span class="ident">map_err</span>(<span class="ident">Error::key_base</span>)<span class="question-mark">?</span>;
+                <span class="ident">key</span>.<span class="ident">account</span>
+            }
+            <span class="kw">_</span> =&gt; <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>.<span class="ident">account</span>,
+        };
+
+        <span class="kw">let</span> <span class="ident">balance</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">block_on</span>(<span class="ident">query_all_balances</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">grpc_addr</span>, <span class="kw-2">&amp;</span><span class="ident">account</span>))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">balance</span>)
     }
