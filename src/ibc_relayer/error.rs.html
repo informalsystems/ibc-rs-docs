@@ -694,11 +694,20 @@
 <span id="694">694</span>
 <span id="695">695</span>
 <span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines the various errors that be raised in the relayer.</span>
 
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
-<span class="kw">use</span> <span class="ident">flex_error</span>::{<span class="ident">define_error</span>, <span class="ident">DisplayOnly</span>, <span class="ident">TraceClone</span>, <span class="ident">TraceError</span>};
+<span class="kw">use</span> <span class="ident">flex_error</span>::{<span class="ident">define_error</span>, <span class="ident">DisplayOnly</span>, <span class="ident">TraceError</span>};
 <span class="kw">use</span> <span class="ident">http::uri::InvalidUri</span>;
 <span class="kw">use</span> <span class="ident">humantime::format_duration</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::protobuf::Error</span> <span class="kw">as</span> <span class="ident">TendermintProtoError</span>;
@@ -711,6 +720,7 @@
 };
 <span class="kw">use</span> <span class="ident">tendermint_rpc::endpoint::abci_query::AbciQuery</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc::endpoint::broadcast::tx_commit::TxResult</span>;
+<span class="kw">use</span> <span class="ident">tendermint_rpc::endpoint::broadcast::tx_sync::Response</span> <span class="kw">as</span> <span class="ident">TxSyncResponse</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc::Error</span> <span class="kw">as</span> <span class="ident">TendermintRpcError</span>;
 <span class="kw">use</span> <span class="ident">tonic</span>::{
     <span class="ident">metadata::errors::InvalidMetadataValue</span>, <span class="ident">transport::Error</span> <span class="kw">as</span> <span class="ident">TransportError</span>,
@@ -718,6 +728,7 @@
 };
 
 <span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
+    <span class="ident">applications::ics29_fee::error::Error</span> <span class="kw">as</span> <span class="ident">FeeError</span>,
     <span class="ident">clients::ics07_tendermint::error</span> <span class="kw">as</span> <span class="ident">tendermint_error</span>,
     <span class="ident">core</span>::{
         <span class="ident">ics02_client</span>::{<span class="ident">client_type::ClientType</span>, <span class="ident">error</span> <span class="kw">as</span> <span class="ident">client_error</span>},
@@ -743,7 +754,7 @@
 
         <span class="ident">Rpc</span>
             { <span class="ident">url</span>: <span class="ident">tendermint_rpc::Url</span> }
-            [ <span class="ident">TraceClone</span><span class="op">&lt;</span><span class="ident">TendermintRpcError</span><span class="op">&gt;</span> ]
+            [ <span class="ident">TendermintRpcError</span> ]
             <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;RPC error to endpoint {}&quot;</span>, <span class="ident">e</span>.<span class="ident">url</span>) },
 
         <span class="ident">AbciQuery</span>
@@ -752,10 +763,9 @@
 
         <span class="ident">CheckTx</span>
             {
-                <span class="ident">detail</span>: <span class="ident">SdkError</span>,
-                <span class="ident">tx</span>: <span class="ident">TxResult</span>
+                <span class="ident">response</span>: <span class="ident">TxSyncResponse</span>,
             }
-            <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;CheckTx commit returned an error: {0}, raw result: {1:?}&quot;</span>, <span class="ident">e</span>.<span class="ident">detail</span>, <span class="ident">e</span>.<span class="ident">tx</span>) },
+            <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;CheckTx returned an error: {:?}&quot;</span>, <span class="ident">e</span>.<span class="ident">response</span>) },
 
         <span class="ident">DeliverTx</span>
             {
@@ -788,7 +798,7 @@
             <span class="op">|</span><span class="ident">e</span><span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;missing parameter in GRPC response: {}&quot;</span>, <span class="ident">e</span>.<span class="ident">param</span>) },
 
         <span class="ident">Decode</span>
-            [ <span class="ident">TraceError</span><span class="op">&lt;</span><span class="ident">TendermintProtoError</span><span class="op">&gt;</span> ]
+            [ <span class="ident">TendermintProtoError</span> ]
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;error decoding protobuf&quot;</span> },
 
         <span class="ident">LightClientVerification</span>
@@ -819,7 +829,7 @@
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;bad notification&quot;</span> },
 
         <span class="ident">ConversionFromAny</span>
-            [ <span class="ident">TraceError</span><span class="op">&lt;</span><span class="ident">TendermintProtoError</span><span class="op">&gt;</span> ]
+            [ <span class="ident">TendermintProtoError</span> ]
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;conversion from a protobuf `Any` into a domain type failed&quot;</span> },
 
         <span class="ident">EmptyUpgradedClientState</span>
@@ -837,6 +847,10 @@
 
         <span class="ident">EmptyResponseProof</span>
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;empty response proof&quot;</span> },
+
+        <span class="ident">RpcResponse</span>
+            { <span class="ident">detail</span>: <span class="ident">String</span> }
+            <span class="op">|</span> <span class="ident">e</span> <span class="op">|</span> { <span class="macro">format!</span>(<span class="string">&quot;RPC client returns error response: {}&quot;</span>, <span class="ident">e</span>.<span class="ident">detail</span>) },
 
         <span class="ident">MalformedProof</span>
             [ <span class="ident">ProofError</span> ]
@@ -961,6 +975,10 @@
         <span class="ident">Ics23</span>
             [ <span class="ident">commitment_error::Error</span> ]
             <span class="op">|</span><span class="kw">_</span><span class="op">|</span> { <span class="string">&quot;ICS 23 error&quot;</span> },
+
+        <span class="ident">Ics29</span>
+            [ <span class="ident">FeeError</span> ]
+            <span class="op">|</span> <span class="kw">_</span> <span class="op">|</span> { <span class="string">&quot;ICS 29 error&quot;</span> },
 
         <span class="ident">InvalidUri</span>
             { <span class="ident">uri</span>: <span class="ident">String</span> }
@@ -1221,7 +1239,7 @@
             { <span class="ident">len</span>: <span class="ident">usize</span> }
             <span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                 <span class="macro">format_args!</span>(<span class="string">&quot;message with length {} is too large for a transaction&quot;</span>, <span class="ident">e</span>.<span class="ident">len</span>)
-            }
+            },
     }
 }
 

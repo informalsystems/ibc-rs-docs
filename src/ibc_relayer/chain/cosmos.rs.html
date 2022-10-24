@@ -1929,6 +1929,24 @@
 <span id="1929">1929</span>
 <span id="1930">1930</span>
 <span id="1931">1931</span>
+<span id="1932">1932</span>
+<span id="1933">1933</span>
+<span id="1934">1934</span>
+<span id="1935">1935</span>
+<span id="1936">1936</span>
+<span id="1937">1937</span>
+<span id="1938">1938</span>
+<span id="1939">1939</span>
+<span id="1940">1940</span>
+<span id="1941">1941</span>
+<span id="1942">1942</span>
+<span id="1943">1943</span>
+<span id="1944">1944</span>
+<span id="1945">1945</span>
+<span id="1946">1946</span>
+<span id="1947">1947</span>
+<span id="1948">1948</span>
+<span id="1949">1949</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">bytes</span>::{<span class="ident">Buf</span>, <span class="ident">Bytes</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
@@ -1940,7 +1958,6 @@
 <span class="kw">use</span> <span class="ident">num_bigint::BigInt</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 
-<span class="kw">use</span> <span class="ident">bitcoin::hashes::hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::protobuf::Protobuf</span>;
 <span class="kw">use</span> <span class="ident">tendermint::block::Height</span> <span class="kw">as</span> <span class="ident">TmHeight</span>;
 <span class="kw">use</span> <span class="ident">tendermint</span>::{
@@ -1965,7 +1982,9 @@
 <span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics04_channel::channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">IdentifiedChannelEnd</span>};
 <span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics04_channel::packet</span>::{<span class="ident">Packet</span>, <span class="ident">Sequence</span>};
 <span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics23_commitment::commitment::CommitmentPrefix</span>;
-<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>};
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics24_host::identifier</span>::{
+    <span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>,
+};
 <span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics24_host::path</span>::{
     <span class="ident">AcksPath</span>, <span class="ident">ChannelEndsPath</span>, <span class="ident">ClientConsensusStatePath</span>, <span class="ident">ClientStatePath</span>, <span class="ident">CommitmentsPath</span>,
     <span class="ident">ConnectionsPath</span>, <span class="ident">ReceiptsPath</span>, <span class="ident">SeqRecvsPath</span>,
@@ -1987,6 +2006,8 @@
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::account::Balance</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::client::ClientSettings</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::encode::key_entry_to_signer</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::fee::maybe_register_counterparty_payee</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::account::get_or_fetch_account</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::balance</span>::{<span class="ident">query_all_balances</span>, <span class="ident">query_balance</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::cosmos::query::denom_trace::query_denom_trace</span>;
@@ -2015,15 +2036,12 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client::tendermint::LightClient</span> <span class="kw">as</span> <span class="ident">TmLightClient</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::light_client</span>::{<span class="ident">LightClient</span>, <span class="ident">Verified</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::pretty</span>::{<span class="ident">PrettyConsensusStateWithHeight</span>, <span class="ident">PrettyIdentifiedChannel</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">chain::cosmos::batch</span>::{
         <span class="ident">send_batched_messages_and_wait_check_tx</span>, <span class="ident">send_batched_messages_and_wait_commit</span>,
     },
     <span class="ident">util::pretty</span>::{<span class="ident">PrettyIdentifiedClientState</span>, <span class="ident">PrettyIdentifiedConnection</span>},
-};
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">chain::cosmos::encode::encode_to_bech32</span>,
-    <span class="ident">util::pretty</span>::{<span class="ident">PrettyConsensusStateWithHeight</span>, <span class="ident">PrettyIdentifiedChannel</span>},
 };
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::requests</span>::{
@@ -2044,6 +2062,7 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">compatibility</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">encode</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">estimate</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">fee</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">gas</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">query</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">retry</span>;
@@ -2604,19 +2623,15 @@
     }
 
     <span class="doccomment">/// Get the account for the signer</span>
-    <span class="kw">fn</span> <span class="ident">get_signer</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Signer</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">get_signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Signer</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">crate::time!</span>(<span class="string">&quot;get_signer&quot;</span>);
 
         <span class="comment">// Get the key from key seed file</span>
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">keybase</span>()
-            .<span class="ident">get_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">key_name</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::key_not_found</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">key_name</span>.<span class="ident">clone</span>(), <span class="ident">e</span>))<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">key_entry</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">bech32</span> <span class="op">=</span> <span class="ident">encode_to_bech32</span>(<span class="kw-2">&amp;</span><span class="ident">key</span>.<span class="ident">address</span>.<span class="ident">to_hex</span>(), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">account_prefix</span>)<span class="question-mark">?</span>;
-        <span class="ident">bech32</span>
-            .<span class="ident">parse</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">Error::ics02</span>(<span class="ident">ClientError::signer</span>(<span class="ident">e</span>)))
+        <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">key_entry_to_signer</span>(<span class="kw-2">&amp;</span><span class="ident">key_entry</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">account_prefix</span>)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="ident">signer</span>)
     }
 
     <span class="doccomment">/// Get the chain configuration</span>
@@ -3652,6 +3667,27 @@
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((<span class="ident">target</span>, <span class="ident">supporting</span>))
+    }
+
+    <span class="kw">fn</span> <span class="ident">maybe_register_counterparty_payee</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
+        <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
+        <span class="ident">counterparty_payee</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_signer</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">key_entry</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">key</span>()<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.<span class="ident">rt</span>.<span class="ident">block_on</span>(<span class="ident">maybe_register_counterparty_payee</span>(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">tx_config</span>,
+            <span class="kw-2">&amp;</span><span class="ident">key_entry</span>,
+            <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">account</span>,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">memo_prefix</span>,
+            <span class="ident">channel_id</span>,
+            <span class="ident">port_id</span>,
+            <span class="kw-2">&amp;</span><span class="ident">address</span>,
+            <span class="ident">counterparty_payee</span>,
+        ))
     }
 }
 

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["chain_type",""],["clear_packets_interval",""],["clock_drift",""],["connection_delay",""],["max_block_time",""],["rpc_timeout",""],["tx_confirmation",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["auto_register_counterparty_payee",""],["chain_type",""],["clear_on_start",""],["clear_packets_interval",""],["clock_drift",""],["connection_delay",""],["max_block_time",""],["rpc_timeout",""],["tx_confirmation",""]]};

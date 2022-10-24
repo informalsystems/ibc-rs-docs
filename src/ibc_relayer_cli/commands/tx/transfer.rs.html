@@ -560,102 +560,23 @@
 <span id="560">560</span>
 <span id="561">561</span>
 <span id="562">562</span>
-<span id="563">563</span>
-<span id="564">564</span>
-<span id="565">565</span>
-<span id="566">566</span>
-<span id="567">567</span>
-<span id="568">568</span>
-<span id="569">569</span>
-<span id="570">570</span>
-<span id="571">571</span>
-<span id="572">572</span>
-<span id="573">573</span>
-<span id="574">574</span>
-<span id="575">575</span>
-<span id="576">576</span>
-<span id="577">577</span>
-<span id="578">578</span>
-<span id="579">579</span>
-<span id="580">580</span>
-<span id="581">581</span>
-<span id="582">582</span>
-<span id="583">583</span>
-<span id="584">584</span>
-<span id="585">585</span>
-<span id="586">586</span>
-<span id="587">587</span>
-<span id="588">588</span>
-<span id="589">589</span>
-<span id="590">590</span>
-<span id="591">591</span>
-<span id="592">592</span>
-<span id="593">593</span>
-<span id="594">594</span>
-<span id="595">595</span>
-<span id="596">596</span>
-<span id="597">597</span>
-<span id="598">598</span>
-<span id="599">599</span>
-<span id="600">600</span>
-<span id="601">601</span>
-<span id="602">602</span>
-<span id="603">603</span>
-<span id="604">604</span>
-<span id="605">605</span>
-<span id="606">606</span>
-<span id="607">607</span>
-<span id="608">608</span>
-<span id="609">609</span>
-<span id="610">610</span>
-<span id="611">611</span>
-<span id="612">612</span>
-<span id="613">613</span>
-<span id="614">614</span>
-<span id="615">615</span>
-<span id="616">616</span>
-<span id="617">617</span>
-<span id="618">618</span>
-<span id="619">619</span>
-<span id="620">620</span>
-<span id="621">621</span>
-<span id="622">622</span>
-<span id="623">623</span>
-<span id="624">624</span>
-<span id="625">625</span>
-<span id="626">626</span>
-<span id="627">627</span>
-<span id="628">628</span>
-<span id="629">629</span>
-<span id="630">630</span>
-<span id="631">631</span>
-<span id="632">632</span>
-<span id="633">633</span>
-<span id="634">634</span>
-<span id="635">635</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">config::Override</span>, <span class="ident">Command</span>, <span class="ident">FrameworkErrorKind</span>, <span class="ident">Runnable</span>};
 
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">eyre::eyre</span>;
 <span class="kw">use</span> <span class="ident">ibc_relayer::chain::handle::ChainHandle</span>;
-<span class="kw">use</span> <span class="ident">ibc_relayer::chain::requests</span>::{
-    <span class="ident">IncludeProof</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryConnectionRequest</span>, <span class="ident">QueryHeight</span>,
-};
 <span class="kw">use</span> <span class="ident">ibc_relayer</span>::{
     <span class="ident">config::Config</span>,
     <span class="ident">transfer</span>::{<span class="ident">build_and_send_transfer_messages</span>, <span class="ident">TransferOptions</span>},
 };
 <span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
     <span class="ident">applications::transfer::Amount</span>,
-    <span class="ident">core</span>::{
-        <span class="ident">ics02_client::client_state::ClientState</span>,
-        <span class="ident">ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">PortId</span>},
-    },
+    <span class="ident">core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">PortId</span>},
     <span class="ident">events::IbcEvent</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cli_utils::ChainHandlePair</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cli_utils</span>::{<span class="ident">check_can_send_on_channel</span>, <span class="ident">ChainHandlePair</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::conclude</span>::{<span class="ident">exit_with_unrecoverable_error</span>, <span class="ident">Output</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude</span>::<span class="kw-2">*</span>;
@@ -795,8 +716,8 @@
         }
 
         <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">TransferOptions</span> {
-            <span class="ident">packet_src_port_id</span>: <span class="self">self</span>.<span class="ident">src_port_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">packet_src_channel_id</span>: <span class="self">self</span>.<span class="ident">src_channel_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">src_port_id</span>: <span class="self">self</span>.<span class="ident">src_port_id</span>.<span class="ident">clone</span>(),
+            <span class="ident">src_channel_id</span>: <span class="self">self</span>.<span class="ident">src_channel_id</span>.<span class="ident">clone</span>(),
             <span class="ident">amount</span>: <span class="self">self</span>.<span class="ident">amount</span>,
             <span class="ident">denom</span>,
             <span class="ident">receiver</span>: <span class="self">self</span>.<span class="ident">receiver</span>.<span class="ident">clone</span>(),
@@ -821,80 +742,13 @@
         <span class="kw">let</span> <span class="ident">chains</span> <span class="op">=</span> <span class="ident">ChainHandlePair::spawn</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">src_chain_id</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dst_chain_id</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
-        <span class="comment">// Double check that channels and chain identifiers match.</span>
-        <span class="comment">// To do this, fetch from the source chain the channel end, then the associated connection</span>
-        <span class="comment">// end, and then the underlying client state; finally, check that this client is verifying</span>
-        <span class="comment">// headers for the destination chain.</span>
-        <span class="kw">let</span> (<span class="ident">channel_end_src</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chains</span>
-            .<span class="ident">src</span>
-            .<span class="ident">query_channel</span>(
-                <span class="ident">QueryChannelRequest</span> {
-                    <span class="ident">port_id</span>: <span class="ident">opts</span>.<span class="ident">packet_src_port_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">channel_id</span>: <span class="ident">opts</span>.<span class="ident">packet_src_channel_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
-                },
-                <span class="ident">IncludeProof::No</span>,
-            )
-            .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">channel_end_src</span>.<span class="ident">is_open</span>() {
-            <span class="ident">Output::error</span>(<span class="macro">format!</span>(
-                <span class="string">&quot;the requested port/channel (&#39;{}&#39;/&#39;{}&#39;) on chain id &#39;{}&#39; is in state &#39;{}&#39;; expected &#39;open&#39; state&quot;</span>,
-                <span class="ident">opts</span>.<span class="ident">packet_src_port_id</span>,
-                <span class="ident">opts</span>.<span class="ident">packet_src_channel_id</span>,
-                <span class="self">self</span>.<span class="ident">src_chain_id</span>,
-                <span class="ident">channel_end_src</span>.<span class="ident">state</span>
-            ))
-                .<span class="ident">exit</span>();
-        }
-
-        <span class="kw">let</span> <span class="ident">conn_id</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">channel_end_src</span>.<span class="ident">connection_hops</span>.<span class="ident">first</span>() {
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="ident">Output::error</span>(<span class="macro">format!</span>(
-                    <span class="string">&quot;could not retrieve the connection hop underlying port/channel &#39;{}&#39;/&#39;{}&#39; on chain &#39;{}&#39;&quot;</span>,
-                    <span class="ident">opts</span>.<span class="ident">packet_src_port_id</span>, <span class="ident">opts</span>.<span class="ident">packet_src_channel_id</span>, <span class="self">self</span>.<span class="ident">src_chain_id</span>
-                ))
-                    .<span class="ident">exit</span>();
-            }
-            <span class="prelude-val">Some</span>(<span class="ident">cid</span>) =&gt; <span class="ident">cid</span>,
-        };
-
-        <span class="kw">let</span> (<span class="ident">conn_end</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chains</span>
-            .<span class="ident">src</span>
-            .<span class="ident">query_connection</span>(
-                <span class="ident">QueryConnectionRequest</span> {
-                    <span class="ident">connection_id</span>: <span class="ident">conn_id</span>.<span class="ident">clone</span>(),
-                    <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
-                },
-                <span class="ident">IncludeProof::No</span>,
-            )
-            .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
-
-        <span class="macro">debug!</span>(<span class="string">&quot;connection hop underlying the channel: {:?}&quot;</span>, <span class="ident">conn_end</span>);
-
-        <span class="kw">let</span> (<span class="ident">src_chain_client_state</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">chains</span>
-            .<span class="ident">src</span>
-            .<span class="ident">query_client_state</span>(
-                <span class="ident">QueryClientStateRequest</span> {
-                    <span class="ident">client_id</span>: <span class="ident">conn_end</span>.<span class="ident">client_id</span>().<span class="ident">clone</span>(),
-                    <span class="ident">height</span>: <span class="ident">QueryHeight::Latest</span>,
-                },
-                <span class="ident">IncludeProof::No</span>,
-            )
-            .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
-
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;client state underlying the channel: {:?}&quot;</span>,
-            <span class="ident">src_chain_client_state</span>
-        );
-
-        <span class="kw">if</span> <span class="ident">src_chain_client_state</span>.<span class="ident">chain_id</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">dst_chain_id</span> {
-            <span class="ident">Output::error</span>(
-                <span class="macro">format!</span>(<span class="string">&quot;the requested port/channel (&#39;{}&#39;/&#39;{}&#39;) provides a path from chain &#39;{}&#39; to \
-                 chain &#39;{}&#39; (not to the destination chain &#39;{}&#39;). Bailing due to mismatching arguments.&quot;</span>,
-                        <span class="ident">opts</span>.<span class="ident">packet_src_port_id</span>, <span class="ident">opts</span>.<span class="ident">packet_src_channel_id</span>,
-                        <span class="self">self</span>.<span class="ident">src_chain_id</span>,
-                        <span class="ident">src_chain_client_state</span>.<span class="ident">chain_id</span>(), <span class="self">self</span>.<span class="ident">dst_chain_id</span>)).<span class="ident">exit</span>();
-        }
+        <span class="ident">check_can_send_on_channel</span>(
+            <span class="kw-2">&amp;</span><span class="ident">chains</span>.<span class="ident">src</span>,
+            <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">src_channel_id</span>,
+            <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">src_port_id</span>,
+            <span class="kw-2">&amp;</span><span class="ident">chains</span>.<span class="ident">dst</span>.<span class="ident">id</span>(),
+        )
+        .<span class="ident">unwrap_or_else</span>(<span class="ident">exit_with_unrecoverable_error</span>);
 
         <span class="comment">// Checks pass, build and send the tx</span>
         <span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="op">=</span>
@@ -928,7 +782,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,
@@ -960,7 +814,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,
@@ -992,7 +846,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,
@@ -1026,7 +880,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,
@@ -1060,7 +914,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,
@@ -1094,7 +948,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">Some</span>(<span class="string">&quot;receiver_addr&quot;</span>.<span class="ident">to_owned</span>()),
@@ -1128,7 +982,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">21</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">0</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,
@@ -1162,7 +1016,7 @@
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
                 <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42</span>),
+                <span class="ident">amount</span>: <span class="ident">Amount::from</span>(<span class="number">42u64</span>),
                 <span class="ident">timeout_height_offset</span>: <span class="number">0</span>,
                 <span class="ident">timeout_seconds</span>: <span class="number">21</span>,
                 <span class="ident">receiver</span>: <span class="prelude-val">None</span>,

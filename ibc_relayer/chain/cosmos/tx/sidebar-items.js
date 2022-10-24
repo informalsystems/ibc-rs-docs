@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["estimate_fee_and_send_tx",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["estimate_fee_and_send_tx",""],["simple_send_tx","A simplified version of send_tx that does not depend on `ChainHandle`."]]};

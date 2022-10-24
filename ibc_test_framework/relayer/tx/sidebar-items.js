@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["gas_config_for_test",""],["new_tx_config_for_test",""],["simple_send_tx","A simplified version of send_tx that does not depend on `ChainHandle`."]]};
+window.SIDEBAR_ITEMS = {"fn":[["gas_config_for_test",""],["new_tx_config_for_test",""]]};

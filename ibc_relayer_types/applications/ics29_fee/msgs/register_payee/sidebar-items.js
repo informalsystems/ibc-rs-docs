@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["build_register_counterparty_payee_message",""],["build_register_payee_message",""]]};

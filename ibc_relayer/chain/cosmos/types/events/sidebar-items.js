@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["from_tx_response_event",""]],"mod":[["channel",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["from_tx_response_event",""]],"mod":[["channel",""],["fee",""]]};

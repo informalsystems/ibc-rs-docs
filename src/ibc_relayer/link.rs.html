@@ -168,11 +168,41 @@
 <span id="168">168</span>
 <span id="169">169</span>
 <span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc_relayer_types::core</span>::{
     <span class="ident">ics03_connection::connection::State</span> <span class="kw">as</span> <span class="ident">ConnectionState</span>,
     <span class="ident">ics04_channel::channel::State</span> <span class="kw">as</span> <span class="ident">ChannelState</span>,
     <span class="ident">ics24_host::identifier</span>::{<span class="ident">ChannelId</span>, <span class="ident">PortChannelId</span>, <span class="ident">PortId</span>},
 };
+<span class="kw">use</span> <span class="ident">tracing::info</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests</span>::{<span class="ident">QueryChannelRequest</span>, <span class="ident">QueryHeight</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain</span>::{<span class="ident">counterparty::check_channel_counterparty</span>, <span class="ident">requests::QueryConnectionRequest</span>};
@@ -223,6 +253,7 @@
         <span class="ident">b_chain</span>: <span class="ident">ChainB</span>,
         <span class="ident">opts</span>: <span class="ident">LinkParameters</span>,
         <span class="ident">with_tx_confirmation</span>: <span class="ident">bool</span>,
+        <span class="ident">auto_register_counterparty_payee</span>: <span class="ident">bool</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="comment">// Check that the packet&#39;s channel on source chain is Open</span>
         <span class="kw">let</span> <span class="ident">a_channel_id</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">opts</span>.<span class="ident">src_channel_id</span>;
@@ -258,6 +289,8 @@
             .<span class="ident">counterparty</span>()
             .<span class="ident">channel_id</span>()
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">LinkError::counterparty_channel_not_found</span>(<span class="ident">a_channel_id</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
+
+        <span class="kw">let</span> <span class="ident">b_port_id</span> <span class="op">=</span> <span class="ident">a_channel</span>.<span class="ident">counterparty</span>().<span class="ident">port_id</span>.<span class="ident">clone</span>();
 
         <span class="kw">if</span> <span class="ident">a_channel</span>.<span class="ident">connection_hops</span>().<span class="ident">is_empty</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">LinkError::no_connection_hop</span>(
@@ -302,7 +335,7 @@
         <span class="kw">let</span> <span class="ident">channel</span> <span class="op">=</span> <span class="ident">Channel</span> {
             <span class="ident">ordering</span>: <span class="ident">a_channel</span>.<span class="ident">ordering</span>,
             <span class="ident">a_side</span>: <span class="ident">ChannelSide::new</span>(
-                <span class="ident">a_chain</span>,
+                <span class="ident">a_chain</span>.<span class="ident">clone</span>(),
                 <span class="ident">a_connection</span>.<span class="ident">client_id</span>().<span class="ident">clone</span>(),
                 <span class="ident">a_connection_id</span>,
                 <span class="ident">opts</span>.<span class="ident">src_port_id</span>.<span class="ident">clone</span>(),
@@ -310,7 +343,7 @@
                 <span class="prelude-val">None</span>,
             ),
             <span class="ident">b_side</span>: <span class="ident">ChannelSide::new</span>(
-                <span class="ident">b_chain</span>,
+                <span class="ident">b_chain</span>.<span class="ident">clone</span>(),
                 <span class="ident">a_connection</span>.<span class="ident">counterparty</span>().<span class="ident">client_id</span>().<span class="ident">clone</span>(),
                 <span class="ident">a_connection</span>.<span class="ident">counterparty</span>().<span class="ident">connection_id</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>(),
                 <span class="ident">a_channel</span>.<span class="ident">counterparty</span>().<span class="ident">port_id</span>.<span class="ident">clone</span>(),
@@ -320,12 +353,31 @@
             <span class="ident">connection_delay</span>: <span class="ident">a_connection</span>.<span class="ident">delay_period</span>(),
         };
 
+        <span class="kw">if</span> <span class="ident">auto_register_counterparty_payee</span> <span class="op">&amp;&amp;</span> <span class="ident">a_channel</span>.<span class="ident">version</span>.<span class="ident">supports_fee</span>() {
+            <span class="kw">let</span> <span class="ident">address_a</span> <span class="op">=</span> <span class="ident">a_chain</span>.<span class="ident">get_signer</span>().<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
+
+            <span class="macro">info!</span>(
+                <span class="string">&quot;auto registering counterparty payee on chain {} as {} on chain {}&quot;</span>,
+                <span class="ident">b_chain</span>.<span class="ident">id</span>(),
+                <span class="ident">address_a</span>,
+                <span class="ident">a_chain</span>.<span class="ident">id</span>()
+            );
+
+            <span class="ident">b_chain</span>
+                .<span class="ident">maybe_register_counterparty_payee</span>(<span class="ident">b_channel_id</span>.<span class="ident">clone</span>(), <span class="ident">b_port_id</span>, <span class="ident">address_a</span>)
+                .<span class="ident">map_err</span>(<span class="ident">LinkError::relayer</span>)<span class="question-mark">?</span>;
+        }
+
         <span class="ident">Link::new</span>(<span class="ident">channel</span>, <span class="ident">with_tx_confirmation</span>)
     }
 
     <span class="doccomment">/// Constructs a link around the channel that is reverse to the channel</span>
     <span class="doccomment">/// in this link.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reverse</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">with_tx_confirmation</span>: <span class="ident">bool</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reverse</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">with_tx_confirmation</span>: <span class="ident">bool</span>,
+        <span class="ident">auto_register_counterparty_payee</span>: <span class="ident">bool</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Link</span><span class="op">&lt;</span><span class="ident">ChainB</span>, <span class="ident">ChainA</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">LinkParameters</span> {
             <span class="ident">src_port_id</span>: <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">dst_port_id</span>().<span class="ident">clone</span>(),
             <span class="ident">src_channel_id</span>: <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">dst_channel_id</span>().<span class="ident">clone</span>(),
@@ -335,7 +387,13 @@
 
         <span class="comment">// Some of the checks and initializations may be redundant;</span>
         <span class="comment">// going slowly, but reliably.</span>
-        <span class="ident">Link::new_from_opts</span>(<span class="ident">chain_b</span>, <span class="ident">chain_a</span>, <span class="ident">opts</span>, <span class="ident">with_tx_confirmation</span>)
+        <span class="ident">Link::new_from_opts</span>(
+            <span class="ident">chain_b</span>,
+            <span class="ident">chain_a</span>,
+            <span class="ident">opts</span>,
+            <span class="ident">with_tx_confirmation</span>,
+            <span class="ident">auto_register_counterparty_payee</span>,
+        )
     }
 }
 </code></pre></div>

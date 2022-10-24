@@ -47,14 +47,35 @@
 <span id="47">47</span>
 <span id="48">48</span>
 <span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Utilities for suspending the test.
 */</span>
 
-<span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Debug</span>, <span class="ident">Display</span>};
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+<span class="kw">use</span> <span class="ident">std::panic</span>::{<span class="ident">catch_unwind</span>, <span class="ident">resume_unwind</span>, <span class="ident">AssertUnwindSafe</span>};
 <span class="kw">use</span> <span class="ident">std::thread::sleep</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">warn</span>};
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 
 <span class="doccomment">/**
    Call this function in the middle of a test code of interest,
@@ -77,23 +98,40 @@
    [`TestConfig`](crate::types::config::TestConfig),
    which in turns is set from the `HANG_ON_FAIL` environment variable.
 */</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hang_on_error</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">E</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Display</span><span class="op">&gt;</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hang_on_error</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(
     <span class="ident">hang_on_fail</span>: <span class="ident">bool</span>,
-    <span class="ident">cont</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">E</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">hang_on_fail</span> {
-        <span class="ident">cont</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-            <span class="macro">error!</span>(<span class="string">&quot;test failure occured with HANG_ON_FAIL=1, suspending the test to allow debugging: {:?}&quot;</span>,
-                <span class="ident">e</span>);
+    <span class="ident">cont</span>: <span class="kw">impl</span> <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">catch_unwind</span>(<span class="ident">AssertUnwindSafe</span>(<span class="ident">cont</span>));
 
-            <span class="ident">suspend</span>()
-        })
-    } <span class="kw">else</span> {
-        <span class="ident">cont</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-            <span class="macro">error!</span>(<span class="string">&quot;test failure occured. set HANG_ON_FAIL=1 to suspend the test on failure for debugging: {}&quot;</span>,
-                <span class="ident">e</span>);
-            <span class="ident">e</span>
-        })
+    <span class="kw">match</span> <span class="ident">result</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+            <span class="kw">if</span> <span class="ident">hang_on_fail</span> {
+                <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">e</span>.<span class="ident">downcast</span>::<span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>().<span class="ident">ok</span>();
+                <span class="macro">error!</span>(<span class="string">&quot;test panicked with HANG_ON_FAIL=1, suspending the test to allow debugging: {:?}&quot;</span>,
+                    <span class="ident">message</span>);
+
+                <span class="ident">suspend</span>()
+            } <span class="kw">else</span> {
+                <span class="macro">error!</span>(<span class="string">&quot;test panicked. set HANG_ON_FAIL=1 to suspend the test on failure for debugging.&quot;</span>);
+
+                <span class="ident">resume_unwind</span>(<span class="ident">e</span>)
+            }
+        }
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="ident">e</span>)) =&gt; {
+            <span class="kw">if</span> <span class="ident">hang_on_fail</span> {
+                <span class="macro">error!</span>(<span class="string">&quot;test failure occured with HANG_ON_FAIL=1, suspending the test to allow debugging: {:?}&quot;</span>,
+                    <span class="ident">e</span>);
+
+                <span class="ident">suspend</span>()
+            } <span class="kw">else</span> {
+                <span class="macro">error!</span>(<span class="string">&quot;test failure occured. set HANG_ON_FAIL=1 to suspend the test on failure for debugging: {:?}&quot;</span>,
+                    <span class="ident">e</span>);
+
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>)
+            }
+        }
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(<span class="ident">res</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">res</span>),
     }
 }
 </code></pre></div>

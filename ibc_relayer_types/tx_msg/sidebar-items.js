@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["Msg",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["encode_message",""]],"trait":[["Msg",""]]};

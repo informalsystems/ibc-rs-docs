@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["error",""],["events",""],["msgs",""],["packet_fee",""]]};
