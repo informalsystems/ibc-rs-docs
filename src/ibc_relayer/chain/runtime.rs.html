@@ -941,12 +941,12 @@
         <span class="ident">ics23_commitment</span>::{<span class="ident">commitment::CommitmentPrefix</span>, <span class="ident">merkle::MerkleProof</span>},
         <span class="ident">ics24_host::identifier</span>::{<span class="ident">ChannelId</span>, <span class="ident">ClientId</span>, <span class="ident">ConnectionId</span>, <span class="ident">PortId</span>},
     },
-    <span class="ident">events::IbcEvent</span>,
     <span class="ident">proofs::Proofs</span>,
     <span class="ident">signer::Signer</span>,
     <span class="ident">Height</span>,
 };
 
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::QueryPacketEventDataRequest</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">account::Balance</span>,
     <span class="ident">client_state</span>::{<span class="ident">AnyClientState</span>, <span class="ident">IdentifiedAnyClientState</span>},
@@ -970,15 +970,15 @@
     <span class="ident">endpoint</span>::{<span class="ident">ChainEndpoint</span>, <span class="ident">ChainStatus</span>, <span class="ident">HealthCheck</span>},
     <span class="ident">handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainRequest</span>, <span class="ident">ReplyTo</span>, <span class="ident">Subscription</span>},
     <span class="ident">requests</span>::{
-        <span class="ident">IncludeProof</span>, <span class="ident">QueryBlockRequest</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>,
-        <span class="ident">QueryChannelsRequest</span>, <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>,
-        <span class="ident">QueryClientStatesRequest</span>, <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>,
-        <span class="ident">QueryConnectionsRequest</span>, <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>,
-        <span class="ident">QueryHostConsensusStateRequest</span>, <span class="ident">QueryNextSequenceReceiveRequest</span>,
-        <span class="ident">QueryPacketAcknowledgementRequest</span>, <span class="ident">QueryPacketAcknowledgementsRequest</span>,
-        <span class="ident">QueryPacketCommitmentRequest</span>, <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>,
-        <span class="ident">QueryTxRequest</span>, <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>,
-        <span class="ident">QueryUpgradedClientStateRequest</span>, <span class="ident">QueryUpgradedConsensusStateRequest</span>,
+        <span class="ident">IncludeProof</span>, <span class="ident">QueryChannelClientStateRequest</span>, <span class="ident">QueryChannelRequest</span>, <span class="ident">QueryChannelsRequest</span>,
+        <span class="ident">QueryClientConnectionsRequest</span>, <span class="ident">QueryClientStateRequest</span>, <span class="ident">QueryClientStatesRequest</span>,
+        <span class="ident">QueryConnectionChannelsRequest</span>, <span class="ident">QueryConnectionRequest</span>, <span class="ident">QueryConnectionsRequest</span>,
+        <span class="ident">QueryConsensusStateRequest</span>, <span class="ident">QueryConsensusStatesRequest</span>, <span class="ident">QueryHostConsensusStateRequest</span>,
+        <span class="ident">QueryNextSequenceReceiveRequest</span>, <span class="ident">QueryPacketAcknowledgementRequest</span>,
+        <span class="ident">QueryPacketAcknowledgementsRequest</span>, <span class="ident">QueryPacketCommitmentRequest</span>,
+        <span class="ident">QueryPacketCommitmentsRequest</span>, <span class="ident">QueryPacketReceiptRequest</span>, <span class="ident">QueryTxRequest</span>,
+        <span class="ident">QueryUnreceivedAcksRequest</span>, <span class="ident">QueryUnreceivedPacketsRequest</span>, <span class="ident">QueryUpgradedClientStateRequest</span>,
+        <span class="ident">QueryUpgradedConsensusStateRequest</span>,
     },
     <span class="ident">tracking::TrackedMsgs</span>,
 };
@@ -1341,8 +1341,8 @@
                             <span class="self">self</span>.<span class="ident">query_txs</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
-                        <span class="ident">ChainRequest::QueryPacketEventDataFromBlocks</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
-                            <span class="self">self</span>.<span class="ident">query_blocks</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
+                        <span class="ident">ChainRequest::QueryPacketEventData</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
+                            <span class="self">self</span>.<span class="ident">query_packet_events</span>(<span class="ident">request</span>, <span class="ident">reply_to</span>)<span class="question-mark">?</span>
                         },
 
                         <span class="ident">ChainRequest::QueryHostConsensusState</span> { <span class="ident">request</span>, <span class="ident">reply_to</span> } =&gt; {
@@ -1799,12 +1799,12 @@
         <span class="ident">reply_to</span>.<span class="ident">send</span>(<span class="ident">result</span>).<span class="ident">map_err</span>(<span class="ident">Error::send</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">query_blocks</span>(
+    <span class="kw">fn</span> <span class="ident">query_packet_events</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">request</span>: <span class="ident">QueryBlockRequest</span>,
-        <span class="ident">reply_to</span>: <span class="ident">ReplyTo</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+        <span class="ident">request</span>: <span class="ident">QueryPacketEventDataRequest</span>,
+        <span class="ident">reply_to</span>: <span class="ident">ReplyTo</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">query_blocks</span>(<span class="ident">request</span>);
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">chain</span>.<span class="ident">query_packet_events</span>(<span class="ident">request</span>);
 
         <span class="ident">reply_to</span>.<span class="ident">send</span>(<span class="ident">result</span>).<span class="ident">map_err</span>(<span class="ident">Error::send</span>)<span class="question-mark">?</span>;
 

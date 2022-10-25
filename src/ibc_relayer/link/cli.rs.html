@@ -260,6 +260,19 @@
 <span id="260">260</span>
 <span id="261">261</span>
 <span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
@@ -272,7 +285,9 @@
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::counterparty</span>::{<span class="ident">unreceived_acknowledgements</span>, <span class="ident">unreceived_packets</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::handle::ChainHandle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::requests::Qualified</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain::tracking::TrackingId</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::IbcEventWithHeight</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::error::LinkError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::link::operational_data</span>::{<span class="ident">OperationalData</span>, <span class="ident">TrackedEvents</span>};
@@ -338,7 +353,7 @@
         <span class="ident">packet_data_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">error_span!</span>(
-            <span class="string">&quot;PacketRecvCmd&quot;</span>,
+            <span class="string">&quot;relay_recv_packet_and_timeout_messages&quot;</span>,
             <span class="ident">src_chain</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
             <span class="ident">src_port</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_port_id</span>(),
             <span class="ident">src_channel</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_channel_id</span>(),
@@ -364,19 +379,30 @@
             <span class="ident">PrettySlice</span>(<span class="kw-2">&amp;</span><span class="ident">sequences</span>)
         );
 
+        <span class="kw">let</span> <span class="ident">query_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">packet_data_query_height</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">height</span>) =&gt; <span class="ident">Qualified::Equal</span>(<span class="ident">height</span>),
+            <span class="prelude-val">None</span> =&gt; <span class="ident">Qualified::SmallerEqual</span>(<span class="ident">src_response_height</span>),
+        };
+
         <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(
             <span class="ident">sequences</span>,
-            <span class="ident">src_response_height</span>,
-            <span class="ident">packet_data_query_height</span>,
+            <span class="ident">query_height</span>,
             <span class="ident">query_send_packet_events</span>,
             <span class="ident">TrackingId::new_static</span>(<span class="string">&quot;packet-recv&quot;</span>),
         )
     }
 
-    <span class="doccomment">/// Implements the `packet-ack` CLI</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">relay_ack_packet_messages</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">relay_ack_packet_messages_with_packet_data_query_height</span>(<span class="prelude-val">None</span>)
+    }
+
+    <span class="doccomment">/// Implements the `packet-ack` CLI</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">relay_ack_packet_messages_with_packet_data_query_height</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">packet_data_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">error_span!</span>(
-            <span class="string">&quot;PacketAckCmd&quot;</span>,
+            <span class="string">&quot;relay_ack_packet_messages&quot;</span>,
             <span class="ident">src_chain</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>(),
             <span class="ident">src_port</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_port_id</span>(),
             <span class="ident">src_channel</span> <span class="op">=</span> <span class="op">%</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_channel_id</span>(),
@@ -401,47 +427,47 @@
             <span class="ident">sequences</span>.<span class="ident">len</span>(),
             <span class="ident">PrettySlice</span>(<span class="kw-2">&amp;</span><span class="ident">sequences</span>)
         );
+
+        <span class="kw">let</span> <span class="ident">query_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">packet_data_query_height</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">height</span>) =&gt; <span class="ident">Qualified::Equal</span>(<span class="ident">height</span>),
+            <span class="prelude-val">None</span> =&gt; <span class="ident">Qualified::SmallerEqual</span>(<span class="ident">src_response_height</span>),
+        };
+
         <span class="self">self</span>.<span class="ident">relay_packet_messages</span>(
             <span class="ident">sequences</span>,
-            <span class="ident">src_response_height</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">src_response_height</span>),
+            <span class="ident">query_height</span>,
             <span class="ident">query_write_ack_events</span>,
             <span class="ident">TrackingId::new_static</span>(<span class="string">&quot;packet-ack&quot;</span>),
         )
     }
 
-    <span class="kw">fn</span> <span class="ident">relay_packet_messages</span>(
+    <span class="kw">fn</span> <span class="ident">relay_packet_messages</span><span class="op">&lt;</span><span class="ident">QueryFn</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">sequences</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>,
-        <span class="ident">src_response_height</span>: <span class="ident">Height</span>,
-        <span class="ident">packet_data_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
-        <span class="ident">query_fn</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(
+        <span class="ident">query_height</span>: <span class="ident">Qualified</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+        <span class="ident">query_fn</span>: <span class="ident">QueryFn</span>,
+        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">QueryFn</span>: <span class="ident">Fn</span>(
             <span class="kw-2">&amp;</span><span class="ident">ChainA</span>,
             <span class="kw-2">&amp;</span><span class="ident">PathIdentifiers</span>,
-            <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Sequence</span><span class="op">&gt;</span>,
-            <span class="ident">Height</span>,
-        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span>,
-        <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">LinkError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-
-        <span class="kw">let</span> <span class="ident">solved_query_height</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">packet_data_query_height</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">height</span>) =&gt; <span class="ident">height</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="ident">src_response_height</span>,
-        };
-        <span class="kw">for</span> <span class="ident">events_chunk</span> <span class="kw">in</span> <span class="ident">query_packet_events_with</span>(
+            <span class="kw-2">&amp;</span>[<span class="ident">Sequence</span>],
+            <span class="ident">Qualified</span><span class="op">&lt;</span><span class="ident">Height</span><span class="op">&gt;</span>,
+        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
+    {
+        <span class="kw">let</span> <span class="ident">event_chunks</span> <span class="op">=</span> <span class="ident">query_packet_events_with</span>(
             <span class="kw-2">&amp;</span><span class="ident">sequences</span>,
-            <span class="ident">solved_query_height</span>,
+            <span class="ident">query_height</span>,
             <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">path_id</span>,
             <span class="ident">query_fn</span>,
-        ) {
-            <span class="kw">let</span> <span class="ident">updated_event_chunk</span> <span class="op">=</span> <span class="ident">events_chunk</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">IbcEventWithHeight::new</span>(<span class="ident">e</span>.<span class="ident">event</span>.<span class="ident">clone</span>(), <span class="ident">src_response_height</span>))
-                .<span class="ident">collect</span>();
+        );
 
-            <span class="kw">let</span> <span class="ident">tracked_events</span> <span class="op">=</span> <span class="ident">TrackedEvents::new</span>(<span class="ident">updated_event_chunk</span>, <span class="ident">tracking_id</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">results</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+
+        <span class="kw">for</span> <span class="ident">event_chunk</span> <span class="kw">in</span> <span class="ident">event_chunks</span> {
+            <span class="kw">let</span> <span class="ident">tracked_events</span> <span class="op">=</span> <span class="ident">TrackedEvents::new</span>(<span class="ident">event_chunk</span>, <span class="ident">tracking_id</span>);
             <span class="self">self</span>.<span class="ident">a_to_b</span>.<span class="ident">events_to_operational_data</span>(<span class="ident">tracked_events</span>)<span class="question-mark">?</span>;
 
             <span class="comment">// In case of zero connection delay, the op. data will already be ready</span>

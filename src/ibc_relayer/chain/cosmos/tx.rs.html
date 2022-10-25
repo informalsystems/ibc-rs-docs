@@ -97,8 +97,41 @@
 <span id="97">97</span>
 <span id="98">98</span>
 <span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">ibc_proto::cosmos::tx::v1beta1::Fee</span>;
 <span class="kw">use</span> <span class="ident">ibc_proto::google::protobuf::Any</span>;
+<span class="kw">use</span> <span class="ident">ibc_relayer_types::events::IbcEvent</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc::endpoint::broadcast::tx_sync::Response</span>;
 <span class="kw">use</span> <span class="ident">tendermint_rpc</span>::{<span class="ident">Client</span>, <span class="ident">HttpClient</span>, <span class="ident">Url</span>};
 
@@ -113,6 +146,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Error</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::IbcEventWithHeight</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::keyring::KeyEntry</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::batch::send_batched_messages_and_wait_commit</span>;
 
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">estimate_fee_and_send_tx</span>(
     <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">TxConfig</span>,
@@ -193,6 +228,35 @@
     .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">all_ibc_events_from_tx_search_response</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">chain_id</span>, <span class="ident">response</span>);
+
+    <span class="prelude-val">Ok</span>(<span class="ident">events</span>)
+}
+
+<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">batched_send_tx</span>(
+    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">TxConfig</span>,
+    <span class="ident">key_entry</span>: <span class="kw-2">&amp;</span><span class="ident">KeyEntry</span>,
+    <span class="ident">messages</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Any</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">account</span> <span class="op">=</span> <span class="ident">query_account</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">grpc_address</span>, <span class="kw-2">&amp;</span><span class="ident">key_entry</span>.<span class="ident">account</span>)
+        .<span class="kw">await</span><span class="question-mark">?</span>
+        .<span class="ident">into</span>();
+
+    <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">send_batched_messages_and_wait_commit</span>(
+        <span class="ident">config</span>,
+        <span class="ident">config</span>.<span class="ident">max_msg_num</span>,
+        <span class="ident">config</span>.<span class="ident">max_tx_size</span>,
+        <span class="ident">key_entry</span>,
+        <span class="kw-2">&amp;mut</span> <span class="ident">account</span>,
+        <span class="kw-2">&amp;</span><span class="ident">Default::default</span>(),
+        <span class="ident">messages</span>,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">events</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">IbcEvent::ChainError</span>(<span class="kw-2">ref</span> <span class="ident">e</span>) <span class="op">=</span> <span class="ident">event</span>.<span class="ident">event</span> {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::send_tx</span>(<span class="ident">e</span>.<span class="ident">clone</span>()));
+        }
+    }
 
     <span class="prelude-val">Ok</span>(<span class="ident">events</span>)
 }

@@ -401,6 +401,19 @@
 <span id="401">401</span>
 <span id="402">402</span>
 <span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">abscissa_core::clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">abscissa_core</span>::{<span class="ident">Command</span>, <span class="ident">Runnable</span>};
 <span class="kw">use</span> <span class="ident">ibc_relayer_types::core::ics02_client::height::Height</span>;
@@ -456,7 +469,7 @@
 
     <span class="attribute">#[<span class="ident">clap</span>(
         <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;packet-data-query-height&quot;</span>,
-        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Height at which the packet data is queried&quot;</span>
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Exact height at which the packet data is queried via block_results RPC&quot;</span>
     )]</span>
     <span class="ident">packet_data_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
@@ -534,6 +547,12 @@
         <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Identifier of the source channel&quot;</span>
     )]</span>
     <span class="ident">src_channel_id</span>: <span class="ident">ChannelId</span>,
+
+    <span class="attribute">#[<span class="ident">clap</span>(
+        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;packet-data-query-height&quot;</span>,
+        <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Exact height at which the packet data is queried via block_results RPC&quot;</span>
+    )]</span>
+    <span class="ident">packet_data_query_height</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Runnable</span> <span class="kw">for</span> <span class="ident">TxPacketAckCmd</span> {
@@ -554,8 +573,13 @@
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">Output::error</span>(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)).<span class="ident">exit</span>(),
         };
 
-        <span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="op">=</span>
-            <span class="ident">link</span>.<span class="ident">relay_ack_packet_messages</span>().<span class="ident">map_err</span>(<span class="ident">Error::link</span>);
+        <span class="kw">let</span> <span class="ident">packet_data_query_height</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">packet_data_query_height</span>
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">height</span><span class="op">|</span> <span class="ident">Height::new</span>(<span class="ident">link</span>.<span class="ident">a_to_b</span>.<span class="ident">src_chain</span>().<span class="ident">id</span>().<span class="ident">version</span>(), <span class="ident">height</span>).<span class="ident">unwrap</span>());
+
+        <span class="kw">let</span> <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">link</span>
+            .<span class="ident">relay_ack_packet_messages_with_packet_data_query_height</span>(<span class="ident">packet_data_query_height</span>)
+            .<span class="ident">map_err</span>(<span class="ident">Error::link</span>);
 
         <span class="kw">match</span> <span class="ident">res</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">ev</span>) =&gt; <span class="ident">Output::success</span>(<span class="ident">ev</span>).<span class="ident">exit</span>(),
@@ -709,7 +733,8 @@
                 <span class="ident">dst_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_receiver&quot;</span>),
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>()
+                <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
+                <span class="ident">packet_data_query_height</span>: <span class="prelude-val">None</span>
             },
             <span class="ident">TxPacketAckCmd::parse_from</span>(<span class="kw-2">&amp;</span>[
                 <span class="string">&quot;test&quot;</span>,
@@ -732,7 +757,8 @@
                 <span class="ident">dst_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_receiver&quot;</span>),
                 <span class="ident">src_chain_id</span>: <span class="ident">ChainId::from_string</span>(<span class="string">&quot;chain_sender&quot;</span>),
                 <span class="ident">src_port_id</span>: <span class="ident">PortId::from_str</span>(<span class="string">&quot;port_sender&quot;</span>).<span class="ident">unwrap</span>(),
-                <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>()
+                <span class="ident">src_channel_id</span>: <span class="ident">ChannelId::from_str</span>(<span class="string">&quot;channel_sender&quot;</span>).<span class="ident">unwrap</span>(),
+                <span class="ident">packet_data_query_height</span>: <span class="prelude-val">None</span>
             },
             <span class="ident">TxPacketAckCmd::parse_from</span>(<span class="kw-2">&amp;</span>[
                 <span class="string">&quot;test&quot;</span>,
