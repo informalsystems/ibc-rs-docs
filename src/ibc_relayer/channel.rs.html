@@ -1507,6 +1507,12 @@
 <span id="1507">1507</span>
 <span id="1508">1508</span>
 <span id="1509">1509</span>
+<span id="1510">1510</span>
+<span id="1511">1511</span>
+<span id="1512">1512</span>
+<span id="1513">1513</span>
+<span id="1514">1514</span>
+<span id="1515">1515</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 
@@ -2256,7 +2262,7 @@
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">state</span>: <span class="ident">State</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>, <span class="ident">Next</span>), <span class="ident">ChannelError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">state</span>, <span class="self">self</span>.<span class="ident">counterparty_state</span>()<span class="question-mark">?</span>) {
+        <span class="kw">let</span> <span class="ident">event</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">state</span>, <span class="self">self</span>.<span class="ident">counterparty_state</span>()<span class="question-mark">?</span>) {
             (<span class="ident">State::Init</span>, <span class="ident">State::Uninitialized</span>) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">build_chan_open_try_and_send</span>()<span class="question-mark">?</span>),
             (<span class="ident">State::Init</span>, <span class="ident">State::Init</span>) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">build_chan_open_try_and_send</span>()<span class="question-mark">?</span>),
             (<span class="ident">State::TryOpen</span>, <span class="ident">State::Init</span>) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">build_chan_open_ack_and_send</span>()<span class="question-mark">?</span>),
@@ -2271,7 +2277,13 @@
             <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         };
 
-        <span class="prelude-val">Ok</span>((<span class="ident">res</span>, <span class="ident">Next::Continue</span>))
+        <span class="comment">// Abort if the channel is at OpenAck or OpenConfirm stage, as there is nothing more for the worker to do</span>
+        <span class="kw">match</span> <span class="ident">event</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="kw">_</span>)) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">IbcEvent::OpenAckChannel</span>(<span class="kw">_</span>)) =&gt; {
+                <span class="prelude-val">Ok</span>((<span class="ident">event</span>, <span class="ident">Next::Abort</span>))
+            }
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">event</span>, <span class="ident">Next::Continue</span>)),
+        }
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">step_state</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">state</span>: <span class="ident">State</span>, <span class="ident">index</span>: <span class="ident">u64</span>) -&gt; <span class="ident">RetryResult</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">u64</span><span class="op">&gt;</span> {

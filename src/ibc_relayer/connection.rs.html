@@ -1374,6 +1374,12 @@
 <span id="1374">1374</span>
 <span id="1375">1375</span>
 <span id="1376">1376</span>
+<span id="1377">1377</span>
+<span id="1378">1378</span>
+<span id="1379">1379</span>
+<span id="1380">1380</span>
+<span id="1381">1381</span>
+<span id="1382">1382</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::fmt</span>::{<span class="ident">Display</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>};
 <span class="kw">use</span> <span class="ident">core::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">std::thread</span>;
@@ -2102,7 +2108,13 @@
             <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         };
 
-        <span class="prelude-val">Ok</span>((<span class="ident">event</span>, <span class="ident">Next::Continue</span>))
+        <span class="comment">// Abort if the connection is at OpenAck or OpenConfirm stage, as there is nothing more for the worker to do</span>
+        <span class="kw">match</span> <span class="ident">event</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">IbcEvent::OpenConfirmConnection</span>(<span class="kw">_</span>)) <span class="op">|</span> <span class="prelude-val">Some</span>(<span class="ident">IbcEvent::OpenAckConnection</span>(<span class="kw">_</span>)) =&gt; {
+                <span class="prelude-val">Ok</span>((<span class="ident">event</span>, <span class="ident">Next::Abort</span>))
+            }
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>((<span class="ident">event</span>, <span class="ident">Next::Continue</span>)),
+        }
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">step_state</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">state</span>: <span class="ident">State</span>, <span class="ident">index</span>: <span class="ident">u64</span>) -&gt; <span class="ident">RetryResult</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">u64</span><span class="op">&gt;</span> {
