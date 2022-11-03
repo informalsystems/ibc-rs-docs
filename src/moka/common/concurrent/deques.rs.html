@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.4/src/common/concurrent/deques.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>deques.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../moka/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.4/src/common/concurrent/deques.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>deques.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../moka/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -187,194 +187,194 @@
 <span id="187">187</span>
 <span id="188">188</span>
 <span id="189">189</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">KeyDate</span>, <span class="ident">KeyHashDate</span>, <span class="ident">ValueEntry</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::common</span>::{
-    <span class="ident">deque</span>::{<span class="ident">DeqNode</span>, <span class="ident">Deque</span>},
-    <span class="ident">CacheRegion</span>,
+</pre><pre class="rust"><code><span class="kw">use super</span>::{KeyDate, KeyHashDate, ValueEntry};
+<span class="kw">use </span><span class="kw">crate</span>::common::{
+    deque::{DeqNode, Deque},
+    CacheRegion,
 };
 
-<span class="kw">use</span> <span class="ident">std::ptr::NonNull</span>;
-<span class="kw">use</span> <span class="ident">tagptr::TagNonNull</span>;
-<span class="kw">use</span> <span class="ident">triomphe::Arc</span> <span class="kw">as</span> <span class="ident">TrioArc</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Deques</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">window</span>: <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="comment">//    Not used yet.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">probation</span>: <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">protected</span>: <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="comment">// Not used yet.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">write_order</span>: <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">use </span>std::ptr::NonNull;
+<span class="kw">use </span>tagptr::TagNonNull;
+<span class="kw">use </span>triomphe::Arc <span class="kw">as </span>TrioArc;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Deques&lt;K&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) window: Deque&lt;KeyHashDate&lt;K&gt;&gt;, <span class="comment">//    Not used yet.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) probation: Deque&lt;KeyHashDate&lt;K&gt;&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) protected: Deque&lt;KeyHashDate&lt;K&gt;&gt;, <span class="comment">// Not used yet.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) write_order: Deque&lt;KeyDate&lt;K&gt;&gt;,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;future&quot;</span>)]</span>
-<span class="comment">// TODO: https://github.com/moka-rs/moka/issues/54</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::non_send_fields_in_send_ty</span>)]</span>
-<span class="comment">// Multi-threaded async runtimes require base_cache::Inner to be Send, but it will</span>
-<span class="comment">// not be without this `unsafe impl`. This is because DeqNodes have NonNull</span>
-<span class="comment">// pointers.</span>
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">Deques</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> {}
+<span class="attribute">#[cfg(feature = <span class="string">&quot;future&quot;</span>)]
+</span><span class="comment">// TODO: https://github.com/moka-rs/moka/issues/54
+</span><span class="attribute">#[allow(clippy::non_send_fields_in_send_ty)]
+</span><span class="comment">// Multi-threaded async runtimes require base_cache::Inner to be Send, but it will
+// not be without this `unsafe impl`. This is because DeqNodes have NonNull
+// pointers.
+</span><span class="kw">unsafe impl</span>&lt;K&gt; Send <span class="kw">for </span>Deques&lt;K&gt; {}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Deques</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">window</span>: <span class="ident">Deque::new</span>(<span class="ident">CacheRegion::Window</span>),
-            <span class="ident">probation</span>: <span class="ident">Deque::new</span>(<span class="ident">CacheRegion::MainProbation</span>),
-            <span class="ident">protected</span>: <span class="ident">Deque::new</span>(<span class="ident">CacheRegion::MainProtected</span>),
-            <span class="ident">write_order</span>: <span class="ident">Deque::new</span>(<span class="ident">CacheRegion::Other</span>),
+<span class="kw">impl</span>&lt;K&gt; Default <span class="kw">for </span>Deques&lt;K&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            window: Deque::new(CacheRegion::Window),
+            probation: Deque::new(CacheRegion::MainProbation),
+            protected: Deque::new(CacheRegion::MainProtected),
+            write_order: Deque::new(CacheRegion::Other),
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> <span class="ident">Deques</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">push_back_ao</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">region</span>: <span class="ident">CacheRegion</span>,
-        <span class="ident">khd</span>: <span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-        <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;K&gt; Deques&lt;K&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>push_back_ao&lt;V&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        region: CacheRegion,
+        khd: KeyHashDate&lt;K&gt;,
+        entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
     ) {
-        <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="ident">DeqNode::new</span>(<span class="ident">khd</span>));
-        <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">region</span> {
-            <span class="ident">CacheRegion::Window</span> =&gt; <span class="self">self</span>.<span class="ident">window</span>.<span class="ident">push_back</span>(<span class="ident">node</span>),
-            <span class="ident">CacheRegion::MainProbation</span> =&gt; <span class="self">self</span>.<span class="ident">probation</span>.<span class="ident">push_back</span>(<span class="ident">node</span>),
-            <span class="ident">CacheRegion::MainProtected</span> =&gt; <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">push_back</span>(<span class="ident">node</span>),
-            <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+        <span class="kw">let </span>node = Box::new(DeqNode::new(khd));
+        <span class="kw">let </span>node = <span class="kw">match </span>region {
+            CacheRegion::Window =&gt; <span class="self">self</span>.window.push_back(node),
+            CacheRegion::MainProbation =&gt; <span class="self">self</span>.probation.push_back(node),
+            CacheRegion::MainProtected =&gt; <span class="self">self</span>.protected.push_back(node),
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
         };
-        <span class="kw">let</span> <span class="ident">tagged_node</span> <span class="op">=</span> <span class="ident">TagNonNull::compose</span>(<span class="ident">node</span>, <span class="ident">region</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="ident">entry</span>.<span class="ident">set_access_order_q_node</span>(<span class="prelude-val">Some</span>(<span class="ident">tagged_node</span>));
+        <span class="kw">let </span>tagged_node = TagNonNull::compose(node, region <span class="kw">as </span>usize);
+        entry.set_access_order_q_node(<span class="prelude-val">Some</span>(tagged_node));
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">push_back_wo</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">kd</span>: <span class="ident">KeyDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>, <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="ident">DeqNode::new</span>(<span class="ident">kd</span>));
-        <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">write_order</span>.<span class="ident">push_back</span>(<span class="ident">node</span>);
-        <span class="ident">entry</span>.<span class="ident">set_write_order_q_node</span>(<span class="prelude-val">Some</span>(<span class="ident">node</span>));
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>push_back_wo&lt;V&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, kd: KeyDate&lt;K&gt;, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) {
+        <span class="kw">let </span>node = Box::new(DeqNode::new(kd));
+        <span class="kw">let </span>node = <span class="self">self</span>.write_order.push_back(node);
+        entry.set_write_order_q_node(<span class="prelude-val">Some</span>(node));
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">move_to_back_ao</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">tagged_node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">access_order_q_node</span>() {
-            <span class="kw">let</span> (<span class="ident">node</span>, <span class="ident">tag</span>) <span class="op">=</span> <span class="ident">tagged_node</span>.<span class="ident">decompose</span>();
-            <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">node</span>.<span class="ident">as_ref</span>() };
-            <span class="kw">match</span> <span class="ident">tag</span>.<span class="ident">into</span>() {
-                <span class="ident">CacheRegion::Window</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">window</span>.<span class="ident">contains</span>(<span class="ident">p</span>) =&gt; {
-                    <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">window</span>.<span class="ident">move_to_back</span>(<span class="ident">node</span>) };
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>move_to_back_ao&lt;V&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(tagged_node) = entry.access_order_q_node() {
+            <span class="kw">let </span>(node, tag) = tagged_node.decompose();
+            <span class="kw">let </span>p = <span class="kw">unsafe </span>{ node.as_ref() };
+            <span class="kw">match </span>tag.into() {
+                CacheRegion::Window <span class="kw">if </span><span class="self">self</span>.window.contains(p) =&gt; {
+                    <span class="kw">unsafe </span>{ <span class="self">self</span>.window.move_to_back(node) };
                 }
-                <span class="ident">CacheRegion::MainProbation</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">probation</span>.<span class="ident">contains</span>(<span class="ident">p</span>) =&gt; {
-                    <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">probation</span>.<span class="ident">move_to_back</span>(<span class="ident">node</span>) };
+                CacheRegion::MainProbation <span class="kw">if </span><span class="self">self</span>.probation.contains(p) =&gt; {
+                    <span class="kw">unsafe </span>{ <span class="self">self</span>.probation.move_to_back(node) };
                 }
-                <span class="ident">CacheRegion::MainProtected</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">contains</span>(<span class="ident">p</span>) =&gt; {
-                    <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">move_to_back</span>(<span class="ident">node</span>) };
+                CacheRegion::MainProtected <span class="kw">if </span><span class="self">self</span>.protected.contains(p) =&gt; {
+                    <span class="kw">unsafe </span>{ <span class="self">self</span>.protected.move_to_back(node) };
                 }
-                <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             }
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">move_to_back_ao_in_deque</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(
-        <span class="ident">deq_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">deq</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>move_to_back_ao_in_deque&lt;V&gt;(
+        deq_name: <span class="kw-2">&amp;</span>str,
+        deq: <span class="kw-2">&amp;mut </span>Deque&lt;KeyHashDate&lt;K&gt;&gt;,
+        entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
     ) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">tagged_node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">access_order_q_node</span>() {
-            <span class="kw">let</span> (<span class="ident">node</span>, <span class="ident">tag</span>) <span class="op">=</span> <span class="ident">tagged_node</span>.<span class="ident">decompose</span>();
-            <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">node</span>.<span class="ident">as_ref</span>() };
-            <span class="kw">if</span> <span class="ident">deq</span>.<span class="ident">region</span>() <span class="op">==</span> <span class="ident">tag</span> {
-                <span class="kw">if</span> <span class="ident">deq</span>.<span class="ident">contains</span>(<span class="ident">p</span>) {
-                    <span class="kw">unsafe</span> { <span class="ident">deq</span>.<span class="ident">move_to_back</span>(<span class="ident">node</span>) };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(tagged_node) = entry.access_order_q_node() {
+            <span class="kw">let </span>(node, tag) = tagged_node.decompose();
+            <span class="kw">let </span>p = <span class="kw">unsafe </span>{ node.as_ref() };
+            <span class="kw">if </span>deq.region() == tag {
+                <span class="kw">if </span>deq.contains(p) {
+                    <span class="kw">unsafe </span>{ deq.move_to_back(node) };
                 }
-            } <span class="kw">else</span> {
+            } <span class="kw">else </span>{
                 <span class="macro">panic!</span>(
                     <span class="string">&quot;move_to_back_ao_in_deque - node is not a member of {} deque. {:?}&quot;</span>,
-                    <span class="ident">deq_name</span>, <span class="ident">p</span>,
+                    deq_name, p,
                 )
             }
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">move_to_back_wo</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">write_order_q_node</span>() {
-            <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">node</span>.<span class="ident">as_ref</span>() };
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">write_order</span>.<span class="ident">contains</span>(<span class="ident">p</span>) {
-                <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">write_order</span>.<span class="ident">move_to_back</span>(<span class="ident">node</span>) };
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>move_to_back_wo&lt;V&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = entry.write_order_q_node() {
+            <span class="kw">let </span>p = <span class="kw">unsafe </span>{ node.as_ref() };
+            <span class="kw">if </span><span class="self">self</span>.write_order.contains(p) {
+                <span class="kw">unsafe </span>{ <span class="self">self</span>.write_order.move_to_back(node) };
             }
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">move_to_back_wo_in_deque</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(
-        <span class="ident">deq</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>move_to_back_wo_in_deque&lt;V&gt;(
+        deq: <span class="kw-2">&amp;mut </span>Deque&lt;KeyDate&lt;K&gt;&gt;,
+        entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
     ) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">write_order_q_node</span>() {
-            <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">node</span>.<span class="ident">as_ref</span>() };
-            <span class="kw">if</span> <span class="ident">deq</span>.<span class="ident">contains</span>(<span class="ident">p</span>) {
-                <span class="kw">unsafe</span> { <span class="ident">deq</span>.<span class="ident">move_to_back</span>(<span class="ident">node</span>) };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = entry.write_order_q_node() {
+            <span class="kw">let </span>p = <span class="kw">unsafe </span>{ node.as_ref() };
+            <span class="kw">if </span>deq.contains(p) {
+                <span class="kw">unsafe </span>{ deq.move_to_back(node) };
             }
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlink_ao</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">take_access_order_q_node</span>() {
-            <span class="self">self</span>.<span class="ident">unlink_node_ao</span>(<span class="ident">node</span>);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlink_ao&lt;V&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = entry.take_access_order_q_node() {
+            <span class="self">self</span>.unlink_node_ao(node);
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlink_ao_from_deque</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(
-        <span class="ident">deq_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">deq</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlink_ao_from_deque&lt;V&gt;(
+        deq_name: <span class="kw-2">&amp;</span>str,
+        deq: <span class="kw-2">&amp;mut </span>Deque&lt;KeyHashDate&lt;K&gt;&gt;,
+        entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
     ) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">take_access_order_q_node</span>() {
-            <span class="kw">unsafe</span> { <span class="ident"><span class="self">Self</span>::unlink_node_ao_from_deque</span>(<span class="ident">deq_name</span>, <span class="ident">deq</span>, <span class="ident">node</span>) };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = entry.take_access_order_q_node() {
+            <span class="kw">unsafe </span>{ <span class="self">Self</span>::unlink_node_ao_from_deque(deq_name, deq, node) };
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlink_wo</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="ident">deq</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">entry</span>: <span class="kw-2">&amp;</span><span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">ValueEntry</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">node</span>) <span class="op">=</span> <span class="ident">entry</span>.<span class="ident">take_write_order_q_node</span>() {
-            <span class="ident"><span class="self">Self</span>::unlink_node_wo</span>(<span class="ident">deq</span>, <span class="ident">node</span>);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlink_wo&lt;V&gt;(deq: <span class="kw-2">&amp;mut </span>Deque&lt;KeyDate&lt;K&gt;&gt;, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = entry.take_write_order_q_node() {
+            <span class="self">Self</span>::unlink_node_wo(deq, node);
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlink_node_ao</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">tagged_node</span>: <span class="ident">TagNonNull</span><span class="op">&lt;</span><span class="ident">DeqNode</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="number">2</span><span class="op">&gt;</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="kw">match</span> <span class="ident">tagged_node</span>.<span class="ident">decompose_tag</span>().<span class="ident">into</span>() {
-                <span class="ident">CacheRegion::Window</span> =&gt; {
-                    <span class="ident"><span class="self">Self</span>::unlink_node_ao_from_deque</span>(<span class="string">&quot;window&quot;</span>, <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">window</span>, <span class="ident">tagged_node</span>)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlink_node_ao(<span class="kw-2">&amp;mut </span><span class="self">self</span>, tagged_node: TagNonNull&lt;DeqNode&lt;KeyHashDate&lt;K&gt;&gt;, <span class="number">2</span>&gt;) {
+        <span class="kw">unsafe </span>{
+            <span class="kw">match </span>tagged_node.decompose_tag().into() {
+                CacheRegion::Window =&gt; {
+                    <span class="self">Self</span>::unlink_node_ao_from_deque(<span class="string">&quot;window&quot;</span>, <span class="kw-2">&amp;mut </span><span class="self">self</span>.window, tagged_node)
                 }
-                <span class="ident">CacheRegion::MainProbation</span> =&gt; {
-                    <span class="ident"><span class="self">Self</span>::unlink_node_ao_from_deque</span>(<span class="string">&quot;probation&quot;</span>, <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">probation</span>, <span class="ident">tagged_node</span>)
+                CacheRegion::MainProbation =&gt; {
+                    <span class="self">Self</span>::unlink_node_ao_from_deque(<span class="string">&quot;probation&quot;</span>, <span class="kw-2">&amp;mut </span><span class="self">self</span>.probation, tagged_node)
                 }
-                <span class="ident">CacheRegion::MainProtected</span> =&gt; {
-                    <span class="ident"><span class="self">Self</span>::unlink_node_ao_from_deque</span>(<span class="string">&quot;protected&quot;</span>, <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">protected</span>, <span class="ident">tagged_node</span>)
+                CacheRegion::MainProtected =&gt; {
+                    <span class="self">Self</span>::unlink_node_ao_from_deque(<span class="string">&quot;protected&quot;</span>, <span class="kw-2">&amp;mut </span><span class="self">self</span>.protected, tagged_node)
                 }
-                <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             }
         }
     }
 
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">unlink_node_ao_from_deque</span>(
-        <span class="ident">deq_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">deq</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">tagged_node</span>: <span class="ident">TagNonNull</span><span class="op">&lt;</span><span class="ident">DeqNode</span><span class="op">&lt;</span><span class="ident">KeyHashDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="number">2</span><span class="op">&gt;</span>,
+    <span class="kw">unsafe fn </span>unlink_node_ao_from_deque(
+        deq_name: <span class="kw-2">&amp;</span>str,
+        deq: <span class="kw-2">&amp;mut </span>Deque&lt;KeyHashDate&lt;K&gt;&gt;,
+        tagged_node: TagNonNull&lt;DeqNode&lt;KeyHashDate&lt;K&gt;&gt;, <span class="number">2</span>&gt;,
     ) {
-        <span class="kw">let</span> (<span class="ident">node</span>, <span class="ident">tag</span>) <span class="op">=</span> <span class="ident">tagged_node</span>.<span class="ident">decompose</span>();
-        <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">as_ref</span>();
-        <span class="kw">if</span> <span class="ident">deq</span>.<span class="ident">region</span>() <span class="op">==</span> <span class="ident">tag</span> {
-            <span class="kw">if</span> <span class="ident">deq</span>.<span class="ident">contains</span>(<span class="ident">p</span>) {
-                <span class="comment">// https://github.com/moka-rs/moka/issues/64</span>
-                <span class="ident">deq</span>.<span class="ident">unlink_and_drop</span>(<span class="ident">node</span>);
+        <span class="kw">let </span>(node, tag) = tagged_node.decompose();
+        <span class="kw">let </span>p = node.as_ref();
+        <span class="kw">if </span>deq.region() == tag {
+            <span class="kw">if </span>deq.contains(p) {
+                <span class="comment">// https://github.com/moka-rs/moka/issues/64
+                </span>deq.unlink_and_drop(node);
             }
-        } <span class="kw">else</span> {
+        } <span class="kw">else </span>{
             <span class="macro">panic!</span>(
                 <span class="string">&quot;unlink_node - node is not a member of {} deque. {:?}&quot;</span>,
-                <span class="ident">deq_name</span>, <span class="ident">p</span>
+                deq_name, p
             )
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">unlink_node_wo</span>(<span class="ident">deq</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deque</span><span class="op">&lt;</span><span class="ident">KeyDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">node</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">DeqNode</span><span class="op">&lt;</span><span class="ident">KeyDate</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">as_ref</span>();
-            <span class="kw">if</span> <span class="ident">deq</span>.<span class="ident">contains</span>(<span class="ident">p</span>) {
-                <span class="comment">// https://github.com/moka-rs/moka/issues/64</span>
-                <span class="ident">deq</span>.<span class="ident">unlink_and_drop</span>(<span class="ident">node</span>);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unlink_node_wo(deq: <span class="kw-2">&amp;mut </span>Deque&lt;KeyDate&lt;K&gt;&gt;, node: NonNull&lt;DeqNode&lt;KeyDate&lt;K&gt;&gt;&gt;) {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>p = node.as_ref();
+            <span class="kw">if </span>deq.contains(p) {
+                <span class="comment">// https://github.com/moka-rs/moka/issues/64
+                </span>deq.unlink_and_drop(node);
             }
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="moka" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="moka" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

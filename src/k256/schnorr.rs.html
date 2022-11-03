@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/k256-0.11.6/src/schnorr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>schnorr.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../k256/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../k256/index.html"><div class="logo-container">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/k256-0.11.6/src/schnorr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>schnorr.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../k256/index.html"><div class="logo-container"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../k256/index.html"><div class="logo-container">
                     <img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../k256/index.html">
                         <img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
@@ -450,455 +450,455 @@
 <span id="448">448</span>
 <span id="449">449</span>
 <span id="450">450</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Taproot Schnorr signatures as defined in [BIP340].</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # About</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! [Schnorr signatures] are a simple group-based digital signature scheme with</span>
-<span class="doccomment">//! a number of desirable properties relating to security and composability:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - Provably secure: strongly unforgable under chosen message attack (SUF-CMA).</span>
-<span class="doccomment">//! - Non-malleable: signatures cannot be altered by an attacker and still verify.</span>
-<span class="doccomment">//! - Linear: multiple parties can collaborate to produce a valid signature</span>
-<span class="doccomment">//!   a.k.a. multisignatures.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Originally described in the late 1980s by their eponymous creator Claus</span>
-<span class="doccomment">//! Schnorr, they were patent-encumbered and thus lingered in obscurity until</span>
-<span class="doccomment">//! the [relevant patents] expired in 2010.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Since then, Schnorr signatures have seen something of a resurgence, with</span>
-<span class="doccomment">//! [EdDSA] and its concrete instantiation Ed25519 over the Curve25519 elliptic</span>
-<span class="doccomment">//! curve becoming the first Schnorr variant to see mainstream standardization.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The Taproot upgrade to Bitcoin includes a variant of Schnorr which operates</span>
-<span class="doccomment">//! over the secp256k1 elliptic curve, and is specified in [BIP340].</span>
-<span class="doccomment">//! That is the variant which is implemented by this crate.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Because Taproot Schnorr is intended for use in consensus-critical</span>
-<span class="doccomment">//! applications (e.g. Bitcoin), it is fully specified such that no two</span>
-<span class="doccomment">//! implementations should disagree on the validity of a signature.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Usage</span>
-<span class="doccomment">//!</span>
-<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">doc</span> <span class="op">=</span> <span class="string">&quot;```&quot;</span>)]</span>
-<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">doc</span> <span class="op">=</span> <span class="string">&quot;```ignore&quot;</span>)]</span>
-<span class="doccomment">//! # fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {</span>
-<span class="doccomment">//! use k256::schnorr::{</span>
-<span class="doccomment">//!     signature::{Signer, Verifier},</span>
-<span class="doccomment">//!     SigningKey, VerifyingKey</span>
-<span class="doccomment">//! };</span>
-<span class="doccomment">//! use rand_core::OsRng; // requires &#39;getrandom&#39; feature</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! //</span>
-<span class="doccomment">//! // Signing</span>
-<span class="doccomment">//! //</span>
-<span class="doccomment">//! let signing_key = SigningKey::random(&amp;mut OsRng); // serialize with `.to_bytes()`</span>
-<span class="doccomment">//! let verifying_key_bytes = signing_key.verifying_key().to_bytes(); // 32-bytes</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! let message = b&quot;Schnorr signatures prove knowledge of a secret in the random oracle model&quot;;</span>
-<span class="doccomment">//! let signature = signing_key.sign(message); // returns `k256::schnorr::Signature`</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! //</span>
-<span class="doccomment">//! // Verification</span>
-<span class="doccomment">//! //</span>
-<span class="doccomment">//! let verifying_key = VerifyingKey::from_bytes(&amp;verifying_key_bytes)?;</span>
-<span class="doccomment">//! verifying_key.verify(message, &amp;signature)?;</span>
-<span class="doccomment">//! # Ok(())</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! [Schnorr signatures]: https://en.wikipedia.org/wiki/Schnorr_signature</span>
-<span class="doccomment">//! [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki</span>
-<span class="doccomment">//! [relevant patents]: https://patents.google.com/patent/US4995082</span>
-<span class="doccomment">//! [EdDSA]: https://en.wikipedia.org/wiki/EdDSA</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Taproot Schnorr signatures as defined in [BIP340].
+//!
+//! # About
+//!
+//! [Schnorr signatures] are a simple group-based digital signature scheme with
+//! a number of desirable properties relating to security and composability:
+//!
+//! - Provably secure: strongly unforgable under chosen message attack (SUF-CMA).
+//! - Non-malleable: signatures cannot be altered by an attacker and still verify.
+//! - Linear: multiple parties can collaborate to produce a valid signature
+//!   a.k.a. multisignatures.
+//!
+//! Originally described in the late 1980s by their eponymous creator Claus
+//! Schnorr, they were patent-encumbered and thus lingered in obscurity until
+//! the [relevant patents] expired in 2010.
+//!
+//! Since then, Schnorr signatures have seen something of a resurgence, with
+//! [EdDSA] and its concrete instantiation Ed25519 over the Curve25519 elliptic
+//! curve becoming the first Schnorr variant to see mainstream standardization.
+//!
+//! The Taproot upgrade to Bitcoin includes a variant of Schnorr which operates
+//! over the secp256k1 elliptic curve, and is specified in [BIP340].
+//! That is the variant which is implemented by this crate.
+//!
+//! Because Taproot Schnorr is intended for use in consensus-critical
+//! applications (e.g. Bitcoin), it is fully specified such that no two
+//! implementations should disagree on the validity of a signature.
+//!
+//! # Usage
+//!
+</span><span class="attribute">#![cfg_attr(feature = <span class="string">&quot;std&quot;</span>, doc = <span class="string">&quot;```&quot;</span>)]
+#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), doc = <span class="string">&quot;```ignore&quot;</span>)]
+</span><span class="doccomment">//! # fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+//! use k256::schnorr::{
+//!     signature::{Signer, Verifier},
+//!     SigningKey, VerifyingKey
+//! };
+//! use rand_core::OsRng; // requires &#39;getrandom&#39; feature
+//!
+//! //
+//! // Signing
+//! //
+//! let signing_key = SigningKey::random(&amp;mut OsRng); // serialize with `.to_bytes()`
+//! let verifying_key_bytes = signing_key.verifying_key().to_bytes(); // 32-bytes
+//!
+//! let message = b&quot;Schnorr signatures prove knowledge of a secret in the random oracle model&quot;;
+//! let signature = signing_key.sign(message); // returns `k256::schnorr::Signature`
+//!
+//! //
+//! // Verification
+//! //
+//! let verifying_key = VerifyingKey::from_bytes(&amp;verifying_key_bytes)?;
+//! verifying_key.verify(message, &amp;signature)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! [Schnorr signatures]: https://en.wikipedia.org/wiki/Schnorr_signature
+//! [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+//! [relevant patents]: https://patents.google.com/patent/US4995082
+//! [EdDSA]: https://en.wikipedia.org/wiki/EdDSA
 
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">non_snake_case</span>, <span class="ident">clippy::many_single_char_names</span>)]</span>
+</span><span class="attribute">#![allow(non_snake_case, clippy::many_single_char_names)]
 
-<span class="kw">mod</span> <span class="ident">sign</span>;
-<span class="kw">mod</span> <span class="ident">verify</span>;
+</span><span class="kw">mod </span>sign;
+<span class="kw">mod </span>verify;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="self">self</span>::{<span class="ident">sign::SigningKey</span>, <span class="ident">verify::VerifyingKey</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">ecdsa_core::signature</span>::{<span class="self">self</span>, <span class="ident">Error</span>};
+<span class="kw">pub use </span><span class="self">self</span>::{sign::SigningKey, verify::VerifyingKey};
+<span class="kw">pub use </span>ecdsa_core::signature::{<span class="self">self</span>, Error};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">arithmetic::FieldElement</span>, <span class="ident">NonZeroScalar</span>};
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">cmp</span>, <span class="ident">fmt</span>};
-<span class="kw">use</span> <span class="ident">ecdsa_core::signature::Result</span>;
-<span class="kw">use</span> <span class="ident">sha2</span>::{<span class="ident">Digest</span>, <span class="ident">Sha256</span>};
+<span class="kw">use crate</span>::{arithmetic::FieldElement, NonZeroScalar};
+<span class="kw">use </span>core::{cmp, fmt};
+<span class="kw">use </span>ecdsa_core::signature::Result;
+<span class="kw">use </span>sha2::{Digest, Sha256};
 
-<span class="kw">const</span> <span class="ident">AUX_TAG</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;BIP0340/aux&quot;</span>;
-<span class="kw">const</span> <span class="ident">NONCE_TAG</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;BIP0340/nonce&quot;</span>;
-<span class="kw">const</span> <span class="ident">CHALLENGE_TAG</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;BIP0340/challenge&quot;</span>;
+<span class="kw">const </span>AUX_TAG: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;BIP0340/aux&quot;</span>;
+<span class="kw">const </span>NONCE_TAG: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;BIP0340/nonce&quot;</span>;
+<span class="kw">const </span>CHALLENGE_TAG: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;BIP0340/challenge&quot;</span>;
 
-<span class="doccomment">/// Taproot Schnorr signature as defined in [BIP340].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Signature</span> {
-    <span class="ident">bytes</span>: [<span class="ident">u8</span>; <span class="ident"><span class="self">Self</span>::BYTE_SIZE</span>],
+<span class="doccomment">/// Taproot Schnorr signature as defined in [BIP340].
+///
+/// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+</span><span class="attribute">#[derive(Copy, Clone)]
+</span><span class="kw">pub struct </span>Signature {
+    bytes: [u8; <span class="self">Self</span>::BYTE_SIZE],
 
-    <span class="comment">// for efficiency</span>
-    <span class="ident">r</span>: <span class="ident">FieldElement</span>,
-    <span class="ident">s</span>: <span class="ident">NonZeroScalar</span>,
+    <span class="comment">// for efficiency
+    </span>r: FieldElement,
+    s: NonZeroScalar,
 }
 
-<span class="kw">impl</span> <span class="ident">Signature</span> {
-    <span class="doccomment">/// Size of a Taproot Schnorr signature in bytes.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BYTE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+<span class="kw">impl </span>Signature {
+    <span class="doccomment">/// Size of a Taproot Schnorr signature in bytes.
+    </span><span class="kw">pub const </span>BYTE_SIZE: usize = <span class="number">64</span>;
 
-    <span class="doccomment">/// Borrow the serialized signature as bytes.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>; <span class="ident"><span class="self">Self</span>::BYTE_SIZE</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>
+    <span class="doccomment">/// Borrow the serialized signature as bytes.
+    </span><span class="kw">pub fn </span>as_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8; <span class="self">Self</span>::BYTE_SIZE] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.bytes
     }
 
-    <span class="doccomment">/// Get the `r` component of this signature.</span>
-    <span class="kw">fn</span> <span class="ident">r</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">FieldElement</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">r</span>
+    <span class="doccomment">/// Get the `r` component of this signature.
+    </span><span class="kw">fn </span>r(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>FieldElement {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.r
     }
 
-    <span class="doccomment">/// Get the `s` component of this signature.</span>
-    <span class="kw">fn</span> <span class="ident">s</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">NonZeroScalar</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">s</span>
+    <span class="doccomment">/// Get the `s` component of this signature.
+    </span><span class="kw">fn </span>s(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>NonZeroScalar {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.s
     }
 
-    <span class="doccomment">/// Split this signature into its `r` and `s` components.</span>
-    <span class="kw">fn</span> <span class="ident">split</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span><span class="ident">FieldElement</span>, <span class="kw-2">&amp;</span><span class="ident">NonZeroScalar</span>) {
-        (<span class="self">self</span>.<span class="ident">r</span>(), <span class="self">self</span>.<span class="ident">s</span>())
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="self">self</span>.<span class="ident">as_bytes</span>()
+    <span class="doccomment">/// Split this signature into its `r` and `s` components.
+    </span><span class="kw">fn </span>split(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span>FieldElement, <span class="kw-2">&amp;</span>NonZeroScalar) {
+        (<span class="self">self</span>.r(), <span class="self">self</span>.s())
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">Signature</span> {}
-
-<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">bytes</span> <span class="op">==</span> <span class="ident">other</span>.<span class="ident">bytes</span>
+<span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Signature {
+    <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="self">self</span>.as_bytes()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">cmp::Ordering</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp</span>(<span class="ident">other</span>))
+<span class="kw">impl </span>Eq <span class="kw">for </span>Signature {}
+
+<span class="kw">impl </span>PartialEq <span class="kw">for </span>Signature {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        <span class="self">self</span>.bytes == other.bytes
     }
 }
 
-<span class="comment">// useful e.g. for BTreeMaps</span>
-<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">cmp::Ordering</span> {
-        <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">bytes</span>)
+<span class="kw">impl </span>PartialOrd <span class="kw">for </span>Signature {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;cmp::Ordering&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span>;
+<span class="comment">// useful e.g. for BTreeMaps
+</span><span class="kw">impl </span>Ord <span class="kw">for </span>Signature {
+    <span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; cmp::Ordering {
+        <span class="self">self</span>.bytes.cmp(<span class="kw-2">&amp;</span>other.bytes)
+    }
+}
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">bytes</span>: [<span class="ident">u8</span>; <span class="ident"><span class="self">Self</span>::BYTE_SIZE</span>] <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::new</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> (<span class="ident">r_bytes</span>, <span class="ident">s_bytes</span>) <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">split_at</span>(<span class="ident"><span class="self">Self</span>::BYTE_SIZE</span> <span class="op">/</span> <span class="number">2</span>);
+<span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>[u8]&gt; <span class="kw">for </span>Signature {
+    <span class="kw">type </span>Error = Error;
 
-        <span class="kw">let</span> <span class="ident">r</span>: <span class="ident">FieldElement</span> <span class="op">=</span>
-            <span class="ident">Option::from</span>(<span class="ident">FieldElement::from_bytes</span>(<span class="ident">r_bytes</span>.<span class="ident">into</span>())).<span class="ident">ok_or_else</span>(<span class="ident">Error::new</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>try_from(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Signature&gt; {
+        <span class="kw">let </span>bytes: [u8; <span class="self">Self</span>::BYTE_SIZE] = bytes.try_into().map_err(|<span class="kw">_</span>| Error::new())<span class="question-mark">?</span>;
+        <span class="kw">let </span>(r_bytes, s_bytes) = bytes.split_at(<span class="self">Self</span>::BYTE_SIZE / <span class="number">2</span>);
 
-        <span class="comment">// one of the rules for valid signatures: !is_infinite(R);</span>
-        <span class="kw">if</span> <span class="ident">r</span>.<span class="ident">is_zero</span>().<span class="ident">into</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::new</span>());
+        <span class="kw">let </span>r: FieldElement =
+            Option::from(FieldElement::from_bytes(r_bytes.into())).ok_or_else(Error::new)<span class="question-mark">?</span>;
+
+        <span class="comment">// one of the rules for valid signatures: !is_infinite(R);
+        </span><span class="kw">if </span>r.is_zero().into() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new());
         }
 
-        <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">NonZeroScalar::try_from</span>(<span class="ident">s_bytes</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::new</span>())<span class="question-mark">?</span>;
+        <span class="kw">let </span>s = NonZeroScalar::try_from(s_bytes).map_err(|<span class="kw">_</span>| Error::new())<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">bytes</span>, <span class="ident">r</span>, <span class="ident">s</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ bytes, r, s })
     }
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">fmt</span>(<span class="ident">f</span>)
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Signature {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="self">self</span>.bytes.fmt(f)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">signature::Signature</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">bytes</span>.<span class="ident">try_into</span>()
+<span class="kw">impl </span>signature::Signature <span class="kw">for </span>Signature {
+    <span class="kw">fn </span>from_bytes(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        bytes.try_into()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">signature::PrehashSignature</span> <span class="kw">for</span> <span class="ident">Signature</span> {
-    <span class="kw">type</span> <span class="ident">Digest</span> <span class="op">=</span> <span class="ident">Sha256</span>;
+<span class="kw">impl </span>signature::PrehashSignature <span class="kw">for </span>Signature {
+    <span class="kw">type </span>Digest = Sha256;
 }
 
-<span class="kw">fn</span> <span class="ident">tagged_hash</span>(<span class="ident">tag</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Sha256</span> {
-    <span class="kw">let</span> <span class="ident">tag_hash</span> <span class="op">=</span> <span class="ident">Sha256::digest</span>(<span class="ident">tag</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">digest</span> <span class="op">=</span> <span class="ident">Sha256::new</span>();
-    <span class="ident">digest</span>.<span class="ident">update</span>(<span class="kw-2">&amp;</span><span class="ident">tag_hash</span>);
-    <span class="ident">digest</span>.<span class="ident">update</span>(<span class="kw-2">&amp;</span><span class="ident">tag_hash</span>);
-    <span class="ident">digest</span>
+<span class="kw">fn </span>tagged_hash(tag: <span class="kw-2">&amp;</span>[u8]) -&gt; Sha256 {
+    <span class="kw">let </span>tag_hash = Sha256::digest(tag);
+    <span class="kw">let </span><span class="kw-2">mut </span>digest = Sha256::new();
+    digest.update(<span class="kw-2">&amp;</span>tag_hash);
+    digest.update(<span class="kw-2">&amp;</span>tag_hash);
+    digest
 }
 
-<span class="comment">// Test vectors from:</span>
-<span class="comment">// https://github.com/bitcoin/bips/blob/master/bip-0340/test-vectors.csv</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">signature::Signature</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">Signature</span>, <span class="ident">SigningKey</span>, <span class="ident">VerifyingKey</span>};
-    <span class="kw">use</span> <span class="ident">hex_literal::hex</span>;
+<span class="comment">// Test vectors from:
+// https://github.com/bitcoin/bips/blob/master/bip-0340/test-vectors.csv
+</span><span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::{signature::Signature <span class="kw">as _</span>, Signature, SigningKey, VerifyingKey};
+    <span class="kw">use </span>hex_literal::hex;
 
-    <span class="doccomment">/// Signing test vector</span>
-    <span class="kw">struct</span> <span class="ident">SignVector</span> {
-        <span class="doccomment">/// Index of test case</span>
-        <span class="ident">index</span>: <span class="ident">u8</span>,
+    <span class="doccomment">/// Signing test vector
+    </span><span class="kw">struct </span>SignVector {
+        <span class="doccomment">/// Index of test case
+        </span>index: u8,
 
-        <span class="doccomment">/// Signing key</span>
-        <span class="ident">secret_key</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+        <span class="doccomment">/// Signing key
+        </span>secret_key: [u8; <span class="number">32</span>],
 
-        <span class="doccomment">/// Verifying key</span>
-        <span class="ident">public_key</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+        <span class="doccomment">/// Verifying key
+        </span>public_key: [u8; <span class="number">32</span>],
 
-        <span class="doccomment">/// Auxilliary randomness value</span>
-        <span class="ident">aux_rand</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+        <span class="doccomment">/// Auxilliary randomness value
+        </span>aux_rand: [u8; <span class="number">32</span>],
 
-        <span class="doccomment">/// Message digest</span>
-        <span class="ident">message</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+        <span class="doccomment">/// Message digest
+        </span>message: [u8; <span class="number">32</span>],
 
-        <span class="doccomment">/// Expected signature</span>
-        <span class="ident">signature</span>: [<span class="ident">u8</span>; <span class="number">64</span>],
+        <span class="doccomment">/// Expected signature
+        </span>signature: [u8; <span class="number">64</span>],
     }
 
-    <span class="doccomment">/// BIP340 signing test vectors: index 0-3</span>
-    <span class="kw">const</span> <span class="ident">BIP340_SIGN_VECTORS</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignVector</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[
-        <span class="ident">SignVector</span> {
-            <span class="ident">index</span>: <span class="number">0</span>,
-            <span class="ident">secret_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000003&quot;</span>),
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;F9308A019258C31049344F85F89D5229B531C845836F99B08601F113BCE036F9&quot;</span>),
-            <span class="ident">aux_rand</span>: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000000&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000000&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+    <span class="doccomment">/// BIP340 signing test vectors: index 0-3
+    </span><span class="kw">const </span>BIP340_SIGN_VECTORS: <span class="kw-2">&amp;</span>[SignVector] = <span class="kw-2">&amp;</span>[
+        SignVector {
+            index: <span class="number">0</span>,
+            secret_key: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000003&quot;</span>),
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;F9308A019258C31049344F85F89D5229B531C845836F99B08601F113BCE036F9&quot;</span>),
+            aux_rand: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000000&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000000&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;E907831F80848D1069A5371B402410364BDF1C5F8307B0084C55F1CE2DCA8215
-                 25F66A4A85EA8B71E482A74F382D2CE5EBEEE8FDB2172F477DF4900D310536C0&quot;</span>
-            ),
+                 25F66A4A85EA8B71E482A74F382D2CE5EBEEE8FDB2172F477DF4900D310536C0&quot;
+            </span>),
         },
-        <span class="ident">SignVector</span> {
-            <span class="ident">index</span>: <span class="number">1</span>,
-            <span class="ident">secret_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;B7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF&quot;</span>),
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">aux_rand</span>: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000001&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        SignVector {
+            index: <span class="number">1</span>,
+            secret_key: <span class="macro">hex!</span>(<span class="string">&quot;B7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF&quot;</span>),
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            aux_rand: <span class="macro">hex!</span>(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000001&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;6896BD60EEAE296DB48A229FF71DFE071BDE413E6D43F917DC8DCF8C78DE3341
-                 8906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A&quot;</span>
-            ),
+                 8906D11AC976ABCCB20B091292BFF4EA897EFCB639EA871CFA95F6DE339E4B0A&quot;
+            </span>),
         },
-        <span class="ident">SignVector</span> {
-            <span class="ident">index</span>: <span class="number">2</span>,
-            <span class="ident">secret_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;C90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B14E5C9&quot;</span>),
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DD308AFEC5777E13121FA72B9CC1B7CC0139715309B086C960E18FD969774EB8&quot;</span>),
-            <span class="ident">aux_rand</span>: <span class="macro">hex!</span>(<span class="string">&quot;C87AA53824B4D7AE2EB035A2B5BBBCCC080E76CDC6D1692C4B0B62D798E6D906&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;7E2D58D8B3BCDF1ABADEC7829054F90DDA9805AAB56C77333024B9D0A508B75C&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        SignVector {
+            index: <span class="number">2</span>,
+            secret_key: <span class="macro">hex!</span>(<span class="string">&quot;C90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B14E5C9&quot;</span>),
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DD308AFEC5777E13121FA72B9CC1B7CC0139715309B086C960E18FD969774EB8&quot;</span>),
+            aux_rand: <span class="macro">hex!</span>(<span class="string">&quot;C87AA53824B4D7AE2EB035A2B5BBBCCC080E76CDC6D1692C4B0B62D798E6D906&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;7E2D58D8B3BCDF1ABADEC7829054F90DDA9805AAB56C77333024B9D0A508B75C&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;5831AAEED7B44BB74E5EAB94BA9D4294C49BCF2A60728D8B4C200F50DD313C1B
-                 AB745879A5AD954A72C45A91C3A51D3C7ADEA98D82F8481E0E1E03674A6F3FB7&quot;</span>
-            ),
+                 AB745879A5AD954A72C45A91C3A51D3C7ADEA98D82F8481E0E1E03674A6F3FB7&quot;
+            </span>),
         },
-        <span class="comment">// test fails if msg is reduced modulo p or n</span>
-        <span class="ident">SignVector</span> {
-            <span class="ident">index</span>: <span class="number">3</span>,
-            <span class="ident">secret_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;0B432B2677937381AEF05BB02A66ECD012773062CF3FA2549E44F58ED2401710&quot;</span>),
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;25D1DFF95105F5253C4022F628A996AD3A0D95FBF21D468A1B33F8C160D8F517&quot;</span>),
-            <span class="ident">aux_rand</span>: <span class="macro">hex!</span>(<span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// test fails if msg is reduced modulo p or n
+        </span>SignVector {
+            index: <span class="number">3</span>,
+            secret_key: <span class="macro">hex!</span>(<span class="string">&quot;0B432B2677937381AEF05BB02A66ECD012773062CF3FA2549E44F58ED2401710&quot;</span>),
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;25D1DFF95105F5253C4022F628A996AD3A0D95FBF21D468A1B33F8C160D8F517&quot;</span>),
+            aux_rand: <span class="macro">hex!</span>(<span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;7EB0509757E246F19449885651611CB965ECC1A187DD51B64FDA1EDC9637D5EC
-                 97582B9CB13DB3933705B32BA982AF5AF25FD78881EBB32771FC5922EFC66EA3&quot;</span>
-            ),
+                 97582B9CB13DB3933705B32BA982AF5AF25FD78881EBB32771FC5922EFC66EA3&quot;
+            </span>),
         },
     ];
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">bip340_sign_vectors</span>() {
-        <span class="kw">for</span> <span class="ident">vector</span> <span class="kw">in</span> <span class="ident">BIP340_SIGN_VECTORS</span> {
-            <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">secret_key</span>).<span class="ident">unwrap</span>();
-            <span class="macro">assert_eq!</span>(<span class="ident">sk</span>.<span class="ident">verifying_key</span>().<span class="ident">to_bytes</span>().<span class="ident">as_slice</span>(), <span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">public_key</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>bip340_sign_vectors() {
+        <span class="kw">for </span>vector <span class="kw">in </span>BIP340_SIGN_VECTORS {
+            <span class="kw">let </span>sk = SigningKey::from_bytes(<span class="kw-2">&amp;</span>vector.secret_key).unwrap();
+            <span class="macro">assert_eq!</span>(sk.verifying_key().to_bytes().as_slice(), <span class="kw-2">&amp;</span>vector.public_key);
 
-            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">sk</span>
-                .<span class="ident">try_sign_prehashed</span>(<span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">message</span>, <span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">aux_rand</span>)
-                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+            <span class="kw">let </span>sig = sk
+                .try_sign_prehashed(<span class="kw-2">&amp;</span>vector.message, <span class="kw-2">&amp;</span>vector.aux_rand)
+                .unwrap_or_else(|<span class="kw">_</span>| {
                     <span class="macro">panic!</span>(
                         <span class="string">&quot;low-level Schnorr signing failure for index {}&quot;</span>,
-                        <span class="ident">vector</span>.<span class="ident">index</span>
+                        vector.index
                     )
                 });
 
             <span class="macro">assert_eq!</span>(
-                <span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">signature</span>,
-                <span class="ident">sig</span>.<span class="ident">as_ref</span>(),
+                <span class="kw-2">&amp;</span>vector.signature,
+                sig.as_ref(),
                 <span class="string">&quot;wrong signature for index {}&quot;</span>,
-                <span class="ident">vector</span>.<span class="ident">index</span>
+                vector.index
             );
         }
     }
 
-    <span class="doccomment">/// Verification test vector</span>
-    <span class="kw">struct</span> <span class="ident">VerifyVector</span> {
-        <span class="doccomment">/// Index of test case</span>
-        <span class="ident">index</span>: <span class="ident">u8</span>,
+    <span class="doccomment">/// Verification test vector
+    </span><span class="kw">struct </span>VerifyVector {
+        <span class="doccomment">/// Index of test case
+        </span>index: u8,
 
-        <span class="doccomment">/// Verifying key</span>
-        <span class="ident">public_key</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+        <span class="doccomment">/// Verifying key
+        </span>public_key: [u8; <span class="number">32</span>],
 
-        <span class="doccomment">/// Message digest</span>
-        <span class="ident">message</span>: [<span class="ident">u8</span>; <span class="number">32</span>],
+        <span class="doccomment">/// Message digest
+        </span>message: [u8; <span class="number">32</span>],
 
-        <span class="doccomment">/// Claimed signature</span>
-        <span class="ident">signature</span>: [<span class="ident">u8</span>; <span class="number">64</span>],
+        <span class="doccomment">/// Claimed signature
+        </span>signature: [u8; <span class="number">64</span>],
 
-        <span class="doccomment">/// Is signature valid</span>
-        <span class="ident">valid</span>: <span class="ident">bool</span>,
+        <span class="doccomment">/// Is signature valid
+        </span>valid: bool,
     }
 
-    <span class="doccomment">/// BIP340 verification test vectors: index 4-14</span>
-    <span class="kw">const</span> <span class="ident">BIP340_VERIFY_VECTORS</span>: <span class="kw-2">&amp;</span>[<span class="ident">VerifyVector</span>] <span class="op">=</span> <span class="kw-2">&amp;</span>[
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">4</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;D69C3509BB99E412E68B0FE8544E72837DFA30746D8BE2AA65975F29D22DC7B9&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;4DF3C3F68FCC83B27E9D42C90431A72499F17875C81A599B566C9889B9696703&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+    <span class="doccomment">/// BIP340 verification test vectors: index 4-14
+    </span><span class="kw">const </span>BIP340_VERIFY_VECTORS: <span class="kw-2">&amp;</span>[VerifyVector] = <span class="kw-2">&amp;</span>[
+        VerifyVector {
+            index: <span class="number">4</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;D69C3509BB99E412E68B0FE8544E72837DFA30746D8BE2AA65975F29D22DC7B9&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;4DF3C3F68FCC83B27E9D42C90431A72499F17875C81A599B566C9889B9696703&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;00000000000000000000003B78CE563F89A0ED9414F5AA28AD0D96D6795F9C63
-                 76AFB1548AF603B3EB45C9F8207DEE1060CB71C04E80F593060B07D28308D7F4&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">true</span>,
+                 76AFB1548AF603B3EB45C9F8207DEE1060CB71C04E80F593060B07D28308D7F4&quot;
+            </span>),
+            valid: <span class="bool-val">true</span>,
         },
-        <span class="comment">// public key not on curve</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">5</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// public key not on curve
+        </span>VerifyVector {
+            index: <span class="number">5</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;6CFF5C3BA86C69EA4B7376F31A9BCB4F74C1976089B2D9963DA2E5543E177769
-                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// has_even_y(R) is false</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">6</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// has_even_y(R) is false
+        </span>VerifyVector {
+            index: <span class="number">6</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;FFF97BD5755EEEA420453A14355235D382F6472F8568A18B2F057A1460297556
-                 3CC27944640AC607CD107AE10923D9EF7A73C643E166BE5EBEAFA34B1AC553E2&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 3CC27944640AC607CD107AE10923D9EF7A73C643E166BE5EBEAFA34B1AC553E2&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// negated message</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">7</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// negated message
+        </span>VerifyVector {
+            index: <span class="number">7</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;1FA62E331EDBC21C394792D2AB1100A7B432B013DF3F6FF4F99FCB33E0E1515F
-                 28890B3EDB6E7189B630448B515CE4F8622A954CFE545735AAEA5134FCCDB2BD&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 28890B3EDB6E7189B630448B515CE4F8622A954CFE545735AAEA5134FCCDB2BD&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// negated s value</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">8</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// negated s value
+        </span>VerifyVector {
+            index: <span class="number">8</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;6CFF5C3BA86C69EA4B7376F31A9BCB4F74C1976089B2D9963DA2E5543E177769
-                 961764B3AA9B2FFCB6EF947B6887A226E8D7C93E00C5ED0C1834FF0D0C2E6DA6&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 961764B3AA9B2FFCB6EF947B6887A226E8D7C93E00C5ED0C1834FF0D0C2E6DA6&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// sG - eP is infinite. Test fails in single verification if has_even_y(inf) is defined as true and x(inf) as 0</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">9</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// sG - eP is infinite. Test fails in single verification if has_even_y(inf) is defined as true and x(inf) as 0
+        </span>VerifyVector {
+            index: <span class="number">9</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000000
-                 123DDA8328AF9C23A94C1FEECFD123BA4FB73476F0D594DCB65C6425BD186051&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 123DDA8328AF9C23A94C1FEECFD123BA4FB73476F0D594DCB65C6425BD186051&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// sG - eP is infinite. Test fails in single verification if has_even_y(inf) is defined as true and x(inf) as 1</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">10</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// sG - eP is infinite. Test fails in single verification if has_even_y(inf) is defined as true and x(inf) as 1
+        </span>VerifyVector {
+            index: <span class="number">10</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000001
-                 7615FBAF5AE28864013C099742DEADB4DBA87F11AC6754F93780D5A1837CF197&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 7615FBAF5AE28864013C099742DEADB4DBA87F11AC6754F93780D5A1837CF197&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// sig[0:32] is not an X coordinate on the curve</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">11</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// sig[0:32] is not an X coordinate on the curve
+        </span>VerifyVector {
+            index: <span class="number">11</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;4A298DACAE57395A15D0795DDBFD1DCB564DA82B0F269BC70A74F8220429BA1D
-                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// sig[0:32] is equal to field size</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">12</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// sig[0:32] is equal to field size
+        </span>VerifyVector {
+            index: <span class="number">12</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// sig[32:64] is equal to curve order</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">13</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// sig[32:64] is equal to curve order
+        </span>VerifyVector {
+            index: <span class="number">13</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;6CFF5C3BA86C69EA4B7376F31A9BCB4F74C1976089B2D9963DA2E5543E177769
-                 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
-        <span class="comment">// public key is not a valid X coordinate because it exceeds the field size</span>
-        <span class="ident">VerifyVector</span> {
-            <span class="ident">index</span>: <span class="number">14</span>,
-            <span class="ident">public_key</span>: <span class="macro">hex!</span>(<span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC30&quot;</span>),
-            <span class="ident">message</span>: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
-            <span class="ident">signature</span>: <span class="macro">hex!</span>(
+        <span class="comment">// public key is not a valid X coordinate because it exceeds the field size
+        </span>VerifyVector {
+            index: <span class="number">14</span>,
+            public_key: <span class="macro">hex!</span>(<span class="string">&quot;FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC30&quot;</span>),
+            message: <span class="macro">hex!</span>(<span class="string">&quot;243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89&quot;</span>),
+            signature: <span class="macro">hex!</span>(
                 <span class="string">&quot;6CFF5C3BA86C69EA4B7376F31A9BCB4F74C1976089B2D9963DA2E5543E177769
-                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;</span>
-            ),
-            <span class="ident">valid</span>: <span class="bool-val">false</span>,
+                 69E89B4C5564D00349106B8497785DD7D1D713A8AE82B32FA79D5F7FC407D39B&quot;
+            </span>),
+            valid: <span class="bool-val">false</span>,
         },
     ];
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">bip340_verify_vectors</span>() {
-        <span class="kw">for</span> <span class="ident">vector</span> <span class="kw">in</span> <span class="ident">BIP340_VERIFY_VECTORS</span> {
-            <span class="kw">let</span> <span class="ident">valid</span> <span class="op">=</span> <span class="kw">match</span> (
-                <span class="ident">VerifyingKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">public_key</span>),
-                <span class="ident">Signature::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">signature</span>),
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>bip340_verify_vectors() {
+        <span class="kw">for </span>vector <span class="kw">in </span>BIP340_VERIFY_VECTORS {
+            <span class="kw">let </span>valid = <span class="kw">match </span>(
+                VerifyingKey::from_bytes(<span class="kw-2">&amp;</span>vector.public_key),
+                Signature::from_bytes(<span class="kw-2">&amp;</span>vector.signature),
             ) {
-                (<span class="prelude-val">Ok</span>(<span class="ident">pk</span>), <span class="prelude-val">Ok</span>(<span class="ident">sig</span>)) =&gt; <span class="ident">pk</span>.<span class="ident">verify_prehashed</span>(<span class="kw-2">&amp;</span><span class="ident">vector</span>.<span class="ident">message</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>).<span class="ident">is_ok</span>(),
-                <span class="kw">_</span> =&gt; <span class="bool-val">false</span>,
+                (<span class="prelude-val">Ok</span>(pk), <span class="prelude-val">Ok</span>(sig)) =&gt; pk.verify_prehashed(<span class="kw-2">&amp;</span>vector.message, <span class="kw-2">&amp;</span>sig).is_ok(),
+                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
             };
 
             <span class="macro">assert_eq!</span>(
-                <span class="ident">vector</span>.<span class="ident">valid</span>, <span class="ident">valid</span>,
+                vector.valid, valid,
                 <span class="string">&quot;incorrect validation for index {}&quot;</span>,
-                <span class="ident">vector</span>.<span class="ident">index</span>
+                vector.index
             );
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="k256" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="k256" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

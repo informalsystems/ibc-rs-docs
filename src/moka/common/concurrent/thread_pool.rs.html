@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.4/src/common/concurrent/thread_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../moka/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.4/src/common/concurrent/thread_pool.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread_pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../moka/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -103,110 +103,110 @@
 <span id="103">103</span>
 <span id="104">104</span>
 <span id="105">105</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">once_cell::sync::Lazy</span>;
-<span class="kw">use</span> <span class="ident">parking_lot::RwLock</span>;
-<span class="kw">use</span> <span class="ident">scheduled_thread_pool::ScheduledThreadPool</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">sync::Arc</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>once_cell::sync::Lazy;
+<span class="kw">use </span>parking_lot::RwLock;
+<span class="kw">use </span>scheduled_thread_pool::ScheduledThreadPool;
+<span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
-<span class="kw">static</span> <span class="ident">REGISTRY</span>: <span class="ident">Lazy</span><span class="op">&lt;</span><span class="ident">ThreadPoolRegistry</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Lazy::new</span>(<span class="ident">ThreadPoolRegistry::default</span>);
+<span class="kw">static </span>REGISTRY: Lazy&lt;ThreadPoolRegistry&gt; = Lazy::new(ThreadPoolRegistry::default);
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>)]</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;future&quot;</span>), <span class="ident">derive</span>(<span class="ident">Debug</span>))]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">PoolName</span> {
-    <span class="ident">Housekeeper</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;future&quot;</span>))]</span>
-    <span class="ident">Invalidator</span>,
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;future&quot;</span>))]</span>
-    <span class="ident">RemovalNotifier</span>,
+<span class="attribute">#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>), derive(Debug))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>PoolName {
+    Housekeeper,
+    <span class="attribute">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
+    </span>Invalidator,
+    <span class="attribute">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
+    </span>RemovalNotifier,
 }
 
-<span class="kw">impl</span> <span class="ident">PoolName</span> {
-    <span class="kw">fn</span> <span class="ident">thread_name_template</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">PoolName::Housekeeper</span> =&gt; <span class="string">&quot;moka-housekeeper-{}&quot;</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;future&quot;</span>))]</span>
-            <span class="ident">PoolName::Invalidator</span> =&gt; <span class="string">&quot;moka-invalidator-{}&quot;</span>,
-            <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;future&quot;</span>))]</span>
-            <span class="ident">PoolName::RemovalNotifier</span> =&gt; <span class="string">&quot;moka-notifier-{}&quot;</span>,
+<span class="kw">impl </span>PoolName {
+    <span class="kw">fn </span>thread_name_template(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+        <span class="kw">match </span><span class="self">self </span>{
+            PoolName::Housekeeper =&gt; <span class="string">&quot;moka-housekeeper-{}&quot;</span>,
+            <span class="attribute">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
+            </span>PoolName::Invalidator =&gt; <span class="string">&quot;moka-invalidator-{}&quot;</span>,
+            <span class="attribute">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
+            </span>PoolName::RemovalNotifier =&gt; <span class="string">&quot;moka-notifier-{}&quot;</span>,
         }
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ThreadPool</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">name</span>: <span class="ident">PoolName</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">pool</span>: <span class="ident">ScheduledThreadPool</span>,
-    <span class="comment">// pub(crate) num_threads: usize,</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ThreadPool {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) name: PoolName,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) pool: ScheduledThreadPool,
+    <span class="comment">// pub(crate) num_threads: usize,
+</span>}
+
+<span class="kw">impl </span>ThreadPool {
+    <span class="kw">fn </span>new(name: PoolName, num_threads: usize) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>pool = ScheduledThreadPool::with_name(name.thread_name_template(), num_threads);
+        <span class="self">Self </span>{
+            name,
+            pool,
+            <span class="comment">// num_threads,
+        </span>}
+    }
 }
 
-<span class="kw">impl</span> <span class="ident">ThreadPool</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="ident">PoolName</span>, <span class="ident">num_threads</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">ScheduledThreadPool::with_name</span>(<span class="ident">name</span>.<span class="ident">thread_name_template</span>(), <span class="ident">num_threads</span>);
-        <span class="self">Self</span> {
-            <span class="ident">name</span>,
-            <span class="ident">pool</span>,
-            <span class="comment">// num_threads,</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ThreadPoolRegistry {
+    pools: RwLock&lt;HashMap&lt;PoolName, Arc&lt;ThreadPool&gt;&gt;&gt;,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>ThreadPoolRegistry {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            pools: RwLock::new(HashMap::default()),
         }
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ThreadPoolRegistry</span> {
-    <span class="ident">pools</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PoolName</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ThreadPool</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ThreadPoolRegistry</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">pools</span>: <span class="ident">RwLock::new</span>(<span class="ident">HashMap::default</span>()),
-        }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">ThreadPoolRegistry</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">acquire_pool</span>(<span class="ident">name</span>: <span class="ident">PoolName</span>) -&gt; <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ThreadPool</span><span class="op">&gt;</span> {
-        <span class="kw">loop</span> {
+<span class="kw">impl </span>ThreadPoolRegistry {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>acquire_pool(name: PoolName) -&gt; Arc&lt;ThreadPool&gt; {
+        <span class="kw">loop </span>{
             {
-                <span class="comment">// Acquire a read lock and get the pool.</span>
-                <span class="kw">let</span> <span class="ident">pools</span> <span class="op">=</span> <span class="ident">REGISTRY</span>.<span class="ident">pools</span>.<span class="ident">read</span>();
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pool</span>) <span class="op">=</span> <span class="ident">pools</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
-                    <span class="kw">return</span> <span class="ident">Arc::clone</span>(<span class="ident">pool</span>);
+                <span class="comment">// Acquire a read lock and get the pool.
+                </span><span class="kw">let </span>pools = REGISTRY.pools.read();
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(pool) = pools.get(<span class="kw-2">&amp;</span>name) {
+                    <span class="kw">return </span>Arc::clone(pool);
                 }
             }
             {
-                <span class="comment">// Acquire the write lock, double check the pool still does not exist,</span>
-                <span class="comment">// and insert a new pool.</span>
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pools</span> <span class="op">=</span> <span class="ident">REGISTRY</span>.<span class="ident">pools</span>.<span class="ident">write</span>();
-                <span class="ident">pools</span>.<span class="ident">entry</span>(<span class="ident">name</span>).<span class="ident">or_insert_with</span>(<span class="op">|</span><span class="op">|</span> {
-                    <span class="comment">// Some platforms may return 0. In that case, use 1.</span>
-                    <span class="comment">// https://github.com/moka-rs/moka/pull/39#issuecomment-916888859</span>
-                    <span class="comment">// https://github.com/seanmonstar/num_cpus/issues/69</span>
-                    <span class="kw">let</span> <span class="ident">num_threads</span> <span class="op">=</span> <span class="ident">num_cpus::get</span>().<span class="ident">max</span>(<span class="number">1</span>);
-                    <span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="ident">ThreadPool::new</span>(<span class="ident">name</span>, <span class="ident">num_threads</span>);
-                    <span class="ident">Arc::new</span>(<span class="ident">pool</span>)
+                <span class="comment">// Acquire the write lock, double check the pool still does not exist,
+                // and insert a new pool.
+                </span><span class="kw">let </span><span class="kw-2">mut </span>pools = REGISTRY.pools.write();
+                pools.entry(name).or_insert_with(|| {
+                    <span class="comment">// Some platforms may return 0. In that case, use 1.
+                    // https://github.com/moka-rs/moka/pull/39#issuecomment-916888859
+                    // https://github.com/seanmonstar/num_cpus/issues/69
+                    </span><span class="kw">let </span>num_threads = num_cpus::get().max(<span class="number">1</span>);
+                    <span class="kw">let </span>pool = ThreadPool::new(name, num_threads);
+                    Arc::new(pool)
                 });
             }
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">release_pool</span>(<span class="ident">pool</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ThreadPool</span><span class="op">&gt;</span>) {
-        <span class="kw">if</span> <span class="ident">Arc::strong_count</span>(<span class="ident">pool</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">2</span> {
-            <span class="comment">// No other client exists; only this Arc and the registry are</span>
-            <span class="comment">// the owners. Let&#39;s remove and drop the one in the registry.</span>
-            <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">pool</span>.<span class="ident">name</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pools</span> <span class="op">=</span> <span class="ident">REGISTRY</span>.<span class="ident">pools</span>.<span class="ident">write</span>();
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pool</span>) <span class="op">=</span> <span class="ident">pools</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>) {
-                <span class="kw">if</span> <span class="ident">Arc::strong_count</span>(<span class="ident">pool</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">2</span> {
-                    <span class="ident">pools</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>release_pool(pool: <span class="kw-2">&amp;</span>Arc&lt;ThreadPool&gt;) {
+        <span class="kw">if </span>Arc::strong_count(pool) &lt;= <span class="number">2 </span>{
+            <span class="comment">// No other client exists; only this Arc and the registry are
+            // the owners. Let&#39;s remove and drop the one in the registry.
+            </span><span class="kw">let </span>name = pool.name;
+            <span class="kw">let </span><span class="kw-2">mut </span>pools = REGISTRY.pools.write();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(pool) = pools.get(<span class="kw-2">&amp;</span>name) {
+                <span class="kw">if </span>Arc::strong_count(pool) &lt;= <span class="number">2 </span>{
+                    pools.remove(<span class="kw-2">&amp;</span>name);
                 }
             }
         }
     }
 
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;sync&quot;</span>))]</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">enabled_pools</span>() -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">PoolName</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">REGISTRY</span>.<span class="ident">pools</span>.<span class="ident">read</span>().<span class="ident">keys</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>();
-        <span class="ident">names</span>.<span class="ident">sort_unstable</span>();
-        <span class="ident">names</span>
+    <span class="attribute">#[cfg(all(test, feature = <span class="string">&quot;sync&quot;</span>))]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>enabled_pools() -&gt; Vec&lt;PoolName&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>names: Vec&lt;<span class="kw">_</span>&gt; = REGISTRY.pools.read().keys().cloned().collect();
+        names.sort_unstable();
+        names
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="moka" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="moka" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

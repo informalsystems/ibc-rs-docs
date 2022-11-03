@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.4/src/sync_base/key_lock.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>key_lock.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.4/src/sync_base/key_lock.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>key_lock.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../moka/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -86,93 +86,93 @@
 <span id="86">86</span>
 <span id="87">87</span>
 <span id="88">88</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">hash</span>::{<span class="ident">BuildHasher</span>, <span class="ident">Hash</span>},
-    <span class="ident">sync::Arc</span>,
+</pre><pre class="rust"><code><span class="kw">use </span>std::{
+    hash::{BuildHasher, Hash},
+    sync::Arc,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::cht::SegmentedHashMap</span>;
+<span class="kw">use </span><span class="kw">crate</span>::cht::SegmentedHashMap;
 
-<span class="kw">use</span> <span class="ident">parking_lot</span>::{<span class="ident">Mutex</span>, <span class="ident">MutexGuard</span>};
-<span class="kw">use</span> <span class="ident">triomphe::Arc</span> <span class="kw">as</span> <span class="ident">TrioArc</span>;
+<span class="kw">use </span>parking_lot::{Mutex, MutexGuard};
+<span class="kw">use </span>triomphe::Arc <span class="kw">as </span>TrioArc;
 
-<span class="kw">const</span> <span class="ident">LOCK_MAP_NUM_SEGMENTS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+<span class="kw">const </span>LOCK_MAP_NUM_SEGMENTS: usize = <span class="number">64</span>;
 
-<span class="kw">type</span> <span class="ident">LockMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">SegmentedHashMap</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>, <span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">S</span><span class="op">&gt;</span>;
+<span class="kw">type </span>LockMap&lt;K, S&gt; = SegmentedHashMap&lt;Arc&lt;K&gt;, TrioArc&lt;Mutex&lt;()&gt;&gt;, S&gt;;
 
-<span class="comment">// We need the `where` clause here because of the Drop impl.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">KeyLock</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
-    <span class="ident">S</span>: <span class="ident">BuildHasher</span>,
+<span class="comment">// We need the `where` clause here because of the Drop impl.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyLock&lt;<span class="lifetime">&#39;a</span>, K, S&gt;
+<span class="kw">where
+    </span>K: Eq + Hash,
+    S: BuildHasher,
 {
-    <span class="ident">map</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">LockMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>,
-    <span class="ident">key</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-    <span class="ident">hash</span>: <span class="ident">u64</span>,
-    <span class="ident">lock</span>: <span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>,
+    map: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>LockMap&lt;K, S&gt;,
+    key: Arc&lt;K&gt;,
+    hash: u64,
+    lock: TrioArc&lt;Mutex&lt;()&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">KeyLock</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
-    <span class="ident">S</span>: <span class="ident">BuildHasher</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, S&gt; Drop <span class="kw">for </span>KeyLock&lt;<span class="lifetime">&#39;a</span>, K, S&gt;
+<span class="kw">where
+    </span>K: Eq + Hash,
+    S: BuildHasher,
 {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="kw">if</span> <span class="ident">TrioArc::count</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span> {
-            <span class="self">self</span>.<span class="ident">map</span>.<span class="ident">remove_if</span>(
-                <span class="self">self</span>.<span class="ident">hash</span>,
-                <span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="ident">k</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">key</span>,
-                <span class="op">|</span><span class="ident">_k</span>, <span class="ident">v</span><span class="op">|</span> <span class="ident">TrioArc::count</span>(<span class="ident">v</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>,
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">if </span>TrioArc::count(<span class="kw-2">&amp;</span><span class="self">self</span>.lock) &lt;= <span class="number">1 </span>{
+            <span class="self">self</span>.map.remove_if(
+                <span class="self">self</span>.hash,
+                |k| k == <span class="kw-2">&amp;</span><span class="self">self</span>.key,
+                |_k, v| TrioArc::count(v) &lt;= <span class="number">1</span>,
             );
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">KeyLock</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
-    <span class="ident">S</span>: <span class="ident">BuildHasher</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, S&gt; KeyLock&lt;<span class="lifetime">&#39;a</span>, K, S&gt;
+<span class="kw">where
+    </span>K: Eq + Hash,
+    S: BuildHasher,
 {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">map</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">LockMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>, <span class="ident">hash</span>: <span class="ident">u64</span>, <span class="ident">lock</span>: <span class="ident">TrioArc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">map</span>,
-            <span class="ident">key</span>: <span class="ident">Arc::clone</span>(<span class="ident">key</span>),
-            <span class="ident">hash</span>,
-            <span class="ident">lock</span>,
+    <span class="kw">fn </span>new(map: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>LockMap&lt;K, S&gt;, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;, hash: u64, lock: TrioArc&lt;Mutex&lt;()&gt;&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            map,
+            key: Arc::clone(key),
+            hash,
+            lock,
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">lock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, ()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">lock</span>()
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">&#39;_</span>, ()&gt; {
+        <span class="self">self</span>.lock.lock()
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">KeyLockMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="ident">locks</span>: <span class="ident">LockMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>,
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyLockMap&lt;K, S&gt; {
+    locks: LockMap&lt;K, S&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span> <span class="ident">KeyLockMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Hash</span>,
-    <span class="ident">S</span>: <span class="ident">BuildHasher</span>,
+<span class="kw">impl</span>&lt;K, S&gt; KeyLockMap&lt;K, S&gt;
+<span class="kw">where
+    </span>K: Eq + Hash,
+    S: BuildHasher,
 {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">with_hasher</span>(<span class="ident">hasher</span>: <span class="ident">S</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">locks</span>: <span class="ident">SegmentedHashMap::with_num_segments_and_hasher</span>(<span class="ident">LOCK_MAP_NUM_SEGMENTS</span>, <span class="ident">hasher</span>),
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_hasher(hasher: S) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            locks: SegmentedHashMap::with_num_segments_and_hasher(LOCK_MAP_NUM_SEGMENTS, hasher),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">key_lock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>) -&gt; <span class="ident">KeyLock</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">K</span>, <span class="ident">S</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">locks</span>.<span class="ident">hash</span>(<span class="ident">key</span>);
-        <span class="kw">let</span> <span class="ident">kl</span> <span class="op">=</span> <span class="ident">TrioArc::new</span>(<span class="ident">Mutex::new</span>(()));
-        <span class="kw">match</span> <span class="self">self</span>
-            .<span class="ident">locks</span>
-            .<span class="ident">insert_if_not_present</span>(<span class="ident">Arc::clone</span>(<span class="ident">key</span>), <span class="ident">hash</span>, <span class="ident">kl</span>.<span class="ident">clone</span>())
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key_lock(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;) -&gt; KeyLock&lt;<span class="lifetime">&#39;_</span>, K, S&gt; {
+        <span class="kw">let </span>hash = <span class="self">self</span>.locks.hash(key);
+        <span class="kw">let </span>kl = TrioArc::new(Mutex::new(()));
+        <span class="kw">match </span><span class="self">self
+            </span>.locks
+            .insert_if_not_present(Arc::clone(key), hash, kl.clone())
         {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">KeyLock::new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">locks</span>, <span class="ident">key</span>, <span class="ident">hash</span>, <span class="ident">kl</span>),
-            <span class="prelude-val">Some</span>(<span class="ident">existing_kl</span>) =&gt; <span class="ident">KeyLock::new</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">locks</span>, <span class="ident">key</span>, <span class="ident">hash</span>, <span class="ident">existing_kl</span>),
+            <span class="prelude-val">None </span>=&gt; KeyLock::new(<span class="kw-2">&amp;</span><span class="self">self</span>.locks, key, hash, kl),
+            <span class="prelude-val">Some</span>(existing_kl) =&gt; KeyLock::new(<span class="kw-2">&amp;</span><span class="self">self</span>.locks, key, hash, existing_kl),
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="moka" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="moka" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

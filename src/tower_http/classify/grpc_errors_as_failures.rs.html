@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tower-http-0.3.4/src/classify/grpc_errors_as_failures.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>grpc_errors_as_failures.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tower_http/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../tower_http/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../tower_http/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tower-http-0.3.4/src/classify/grpc_errors_as_failures.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>grpc_errors_as_failures.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../tower_http/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../tower_http/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../tower_http/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -356,363 +356,363 @@
 <span id="356">356</span>
 <span id="357">357</span>
 <span id="358">358</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">ClassifiedResponse</span>, <span class="ident">ClassifyEos</span>, <span class="ident">ClassifyResponse</span>, <span class="ident">SharedClassifier</span>};
-<span class="kw">use</span> <span class="ident">bitflags::bitflags</span>;
-<span class="kw">use</span> <span class="ident">http</span>::{<span class="ident">HeaderMap</span>, <span class="ident">Response</span>};
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fmt</span>, <span class="ident">num::NonZeroI32</span>};
+</pre><pre class="rust"><code><span class="kw">use super</span>::{ClassifiedResponse, ClassifyEos, ClassifyResponse, SharedClassifier};
+<span class="kw">use </span>bitflags::bitflags;
+<span class="kw">use </span>http::{HeaderMap, Response};
+<span class="kw">use </span>std::{fmt, num::NonZeroI32};
 
-<span class="doccomment">/// gRPC status codes. Used in [`GrpcErrorsAsFailures::success_codes`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// These variants match the [gRPC status codes].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [gRPC status codes]: https://github.com/grpc/grpc/blob/master/doc/statuscodes.md#status-codes-and-their-use-in-grpc</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">GrpcCode</span> {
-    <span class="doccomment">/// The operation completed successfully.</span>
-    <span class="prelude-val">Ok</span>,
-    <span class="doccomment">/// The operation was cancelled.</span>
-    <span class="ident">Cancelled</span>,
-    <span class="doccomment">/// Unknown error.</span>
-    <span class="ident">Unknown</span>,
-    <span class="doccomment">/// Client specified an invalid argument.</span>
-    <span class="ident">InvalidArgument</span>,
-    <span class="doccomment">/// Deadline expired before operation could complete.</span>
-    <span class="ident">DeadlineExceeded</span>,
-    <span class="doccomment">/// Some requested entity was not found.</span>
-    <span class="ident">NotFound</span>,
-    <span class="doccomment">/// Some entity that we attempted to create already exists.</span>
-    <span class="ident">AlreadyExists</span>,
-    <span class="doccomment">/// The caller does not have permission to execute the specified operation.</span>
-    <span class="ident">PermissionDenied</span>,
-    <span class="doccomment">/// Some resource has been exhausted.</span>
-    <span class="ident">ResourceExhausted</span>,
-    <span class="doccomment">/// The system is not in a state required for the operation&#39;s execution.</span>
-    <span class="ident">FailedPrecondition</span>,
-    <span class="doccomment">/// The operation was aborted.</span>
-    <span class="ident">Aborted</span>,
-    <span class="doccomment">/// Operation was attempted past the valid range.</span>
-    <span class="ident">OutOfRange</span>,
-    <span class="doccomment">/// Operation is not implemented or not supported.</span>
-    <span class="ident">Unimplemented</span>,
-    <span class="doccomment">/// Internal error.</span>
-    <span class="ident">Internal</span>,
-    <span class="doccomment">/// The service is currently unavailable.</span>
-    <span class="ident">Unavailable</span>,
-    <span class="doccomment">/// Unrecoverable data loss or corruption.</span>
-    <span class="ident">DataLoss</span>,
-    <span class="doccomment">/// The request does not have valid authentication credentials</span>
-    <span class="ident">Unauthenticated</span>,
+<span class="doccomment">/// gRPC status codes. Used in [`GrpcErrorsAsFailures::success_codes`].
+///
+/// These variants match the [gRPC status codes].
+///
+/// [gRPC status codes]: https://github.com/grpc/grpc/blob/master/doc/statuscodes.md#status-codes-and-their-use-in-grpc
+</span><span class="attribute">#[derive(Clone, Copy, Debug)]
+</span><span class="kw">pub enum </span>GrpcCode {
+    <span class="doccomment">/// The operation completed successfully.
+    </span><span class="prelude-val">Ok</span>,
+    <span class="doccomment">/// The operation was cancelled.
+    </span>Cancelled,
+    <span class="doccomment">/// Unknown error.
+    </span>Unknown,
+    <span class="doccomment">/// Client specified an invalid argument.
+    </span>InvalidArgument,
+    <span class="doccomment">/// Deadline expired before operation could complete.
+    </span>DeadlineExceeded,
+    <span class="doccomment">/// Some requested entity was not found.
+    </span>NotFound,
+    <span class="doccomment">/// Some entity that we attempted to create already exists.
+    </span>AlreadyExists,
+    <span class="doccomment">/// The caller does not have permission to execute the specified operation.
+    </span>PermissionDenied,
+    <span class="doccomment">/// Some resource has been exhausted.
+    </span>ResourceExhausted,
+    <span class="doccomment">/// The system is not in a state required for the operation&#39;s execution.
+    </span>FailedPrecondition,
+    <span class="doccomment">/// The operation was aborted.
+    </span>Aborted,
+    <span class="doccomment">/// Operation was attempted past the valid range.
+    </span>OutOfRange,
+    <span class="doccomment">/// Operation is not implemented or not supported.
+    </span>Unimplemented,
+    <span class="doccomment">/// Internal error.
+    </span>Internal,
+    <span class="doccomment">/// The service is currently unavailable.
+    </span>Unavailable,
+    <span class="doccomment">/// Unrecoverable data loss or corruption.
+    </span>DataLoss,
+    <span class="doccomment">/// The request does not have valid authentication credentials
+    </span>Unauthenticated,
 }
 
-<span class="kw">impl</span> <span class="ident">GrpcCode</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">into_bitmask</span>(<span class="self">self</span>) -&gt; <span class="ident">GrpcCodeBitmask</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Ok</span> =&gt; <span class="ident">GrpcCodeBitmask::OK</span>,
-            <span class="ident"><span class="self">Self</span>::Cancelled</span> =&gt; <span class="ident">GrpcCodeBitmask::CANCELLED</span>,
-            <span class="ident"><span class="self">Self</span>::Unknown</span> =&gt; <span class="ident">GrpcCodeBitmask::UNKNOWN</span>,
-            <span class="ident"><span class="self">Self</span>::InvalidArgument</span> =&gt; <span class="ident">GrpcCodeBitmask::INVALID_ARGUMENT</span>,
-            <span class="ident"><span class="self">Self</span>::DeadlineExceeded</span> =&gt; <span class="ident">GrpcCodeBitmask::DEADLINE_EXCEEDED</span>,
-            <span class="ident"><span class="self">Self</span>::NotFound</span> =&gt; <span class="ident">GrpcCodeBitmask::NOT_FOUND</span>,
-            <span class="ident"><span class="self">Self</span>::AlreadyExists</span> =&gt; <span class="ident">GrpcCodeBitmask::ALREADY_EXISTS</span>,
-            <span class="ident"><span class="self">Self</span>::PermissionDenied</span> =&gt; <span class="ident">GrpcCodeBitmask::PERMISSION_DENIED</span>,
-            <span class="ident"><span class="self">Self</span>::ResourceExhausted</span> =&gt; <span class="ident">GrpcCodeBitmask::RESOURCE_EXHAUSTED</span>,
-            <span class="ident"><span class="self">Self</span>::FailedPrecondition</span> =&gt; <span class="ident">GrpcCodeBitmask::FAILED_PRECONDITION</span>,
-            <span class="ident"><span class="self">Self</span>::Aborted</span> =&gt; <span class="ident">GrpcCodeBitmask::ABORTED</span>,
-            <span class="ident"><span class="self">Self</span>::OutOfRange</span> =&gt; <span class="ident">GrpcCodeBitmask::OUT_OF_RANGE</span>,
-            <span class="ident"><span class="self">Self</span>::Unimplemented</span> =&gt; <span class="ident">GrpcCodeBitmask::UNIMPLEMENTED</span>,
-            <span class="ident"><span class="self">Self</span>::Internal</span> =&gt; <span class="ident">GrpcCodeBitmask::INTERNAL</span>,
-            <span class="ident"><span class="self">Self</span>::Unavailable</span> =&gt; <span class="ident">GrpcCodeBitmask::UNAVAILABLE</span>,
-            <span class="ident"><span class="self">Self</span>::DataLoss</span> =&gt; <span class="ident">GrpcCodeBitmask::DATA_LOSS</span>,
-            <span class="ident"><span class="self">Self</span>::Unauthenticated</span> =&gt; <span class="ident">GrpcCodeBitmask::UNAUTHENTICATED</span>,
+<span class="kw">impl </span>GrpcCode {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>into_bitmask(<span class="self">self</span>) -&gt; GrpcCodeBitmask {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Ok =&gt; GrpcCodeBitmask::OK,
+            <span class="self">Self</span>::Cancelled =&gt; GrpcCodeBitmask::CANCELLED,
+            <span class="self">Self</span>::Unknown =&gt; GrpcCodeBitmask::UNKNOWN,
+            <span class="self">Self</span>::InvalidArgument =&gt; GrpcCodeBitmask::INVALID_ARGUMENT,
+            <span class="self">Self</span>::DeadlineExceeded =&gt; GrpcCodeBitmask::DEADLINE_EXCEEDED,
+            <span class="self">Self</span>::NotFound =&gt; GrpcCodeBitmask::NOT_FOUND,
+            <span class="self">Self</span>::AlreadyExists =&gt; GrpcCodeBitmask::ALREADY_EXISTS,
+            <span class="self">Self</span>::PermissionDenied =&gt; GrpcCodeBitmask::PERMISSION_DENIED,
+            <span class="self">Self</span>::ResourceExhausted =&gt; GrpcCodeBitmask::RESOURCE_EXHAUSTED,
+            <span class="self">Self</span>::FailedPrecondition =&gt; GrpcCodeBitmask::FAILED_PRECONDITION,
+            <span class="self">Self</span>::Aborted =&gt; GrpcCodeBitmask::ABORTED,
+            <span class="self">Self</span>::OutOfRange =&gt; GrpcCodeBitmask::OUT_OF_RANGE,
+            <span class="self">Self</span>::Unimplemented =&gt; GrpcCodeBitmask::UNIMPLEMENTED,
+            <span class="self">Self</span>::Internal =&gt; GrpcCodeBitmask::INTERNAL,
+            <span class="self">Self</span>::Unavailable =&gt; GrpcCodeBitmask::UNAVAILABLE,
+            <span class="self">Self</span>::DataLoss =&gt; GrpcCodeBitmask::DATA_LOSS,
+            <span class="self">Self</span>::Unauthenticated =&gt; GrpcCodeBitmask::UNAUTHENTICATED,
         }
     }
 }
 
-<span class="macro">bitflags!</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">GrpcCodeBitmask</span>: <span class="ident">u32</span> {
-        <span class="kw">const</span> <span class="ident">OK</span>                  <span class="op">=</span> <span class="number">0b00000000000000001</span>;
-        <span class="kw">const</span> <span class="ident">CANCELLED</span>           <span class="op">=</span> <span class="number">0b00000000000000010</span>;
-        <span class="kw">const</span> <span class="ident">UNKNOWN</span>             <span class="op">=</span> <span class="number">0b00000000000000100</span>;
-        <span class="kw">const</span> <span class="ident">INVALID_ARGUMENT</span>    <span class="op">=</span> <span class="number">0b00000000000001000</span>;
-        <span class="kw">const</span> <span class="ident">DEADLINE_EXCEEDED</span>   <span class="op">=</span> <span class="number">0b00000000000010000</span>;
-        <span class="kw">const</span> <span class="ident">NOT_FOUND</span>           <span class="op">=</span> <span class="number">0b00000000000100000</span>;
-        <span class="kw">const</span> <span class="ident">ALREADY_EXISTS</span>      <span class="op">=</span> <span class="number">0b00000000001000000</span>;
-        <span class="kw">const</span> <span class="ident">PERMISSION_DENIED</span>   <span class="op">=</span> <span class="number">0b00000000010000000</span>;
-        <span class="kw">const</span> <span class="ident">RESOURCE_EXHAUSTED</span>  <span class="op">=</span> <span class="number">0b00000000100000000</span>;
-        <span class="kw">const</span> <span class="ident">FAILED_PRECONDITION</span> <span class="op">=</span> <span class="number">0b00000001000000000</span>;
-        <span class="kw">const</span> <span class="ident">ABORTED</span>             <span class="op">=</span> <span class="number">0b00000010000000000</span>;
-        <span class="kw">const</span> <span class="ident">OUT_OF_RANGE</span>        <span class="op">=</span> <span class="number">0b00000100000000000</span>;
-        <span class="kw">const</span> <span class="ident">UNIMPLEMENTED</span>       <span class="op">=</span> <span class="number">0b00001000000000000</span>;
-        <span class="kw">const</span> <span class="ident">INTERNAL</span>            <span class="op">=</span> <span class="number">0b00010000000000000</span>;
-        <span class="kw">const</span> <span class="ident">UNAVAILABLE</span>         <span class="op">=</span> <span class="number">0b00100000000000000</span>;
-        <span class="kw">const</span> <span class="ident">DATA_LOSS</span>           <span class="op">=</span> <span class="number">0b01000000000000000</span>;
-        <span class="kw">const</span> <span class="ident">UNAUTHENTICATED</span>     <span class="op">=</span> <span class="number">0b10000000000000000</span>;
+<span class="macro">bitflags! </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>GrpcCodeBitmask: u32 {
+        <span class="kw">const </span>OK                  = <span class="number">0b00000000000000001</span>;
+        <span class="kw">const </span>CANCELLED           = <span class="number">0b00000000000000010</span>;
+        <span class="kw">const </span>UNKNOWN             = <span class="number">0b00000000000000100</span>;
+        <span class="kw">const </span>INVALID_ARGUMENT    = <span class="number">0b00000000000001000</span>;
+        <span class="kw">const </span>DEADLINE_EXCEEDED   = <span class="number">0b00000000000010000</span>;
+        <span class="kw">const </span>NOT_FOUND           = <span class="number">0b00000000000100000</span>;
+        <span class="kw">const </span>ALREADY_EXISTS      = <span class="number">0b00000000001000000</span>;
+        <span class="kw">const </span>PERMISSION_DENIED   = <span class="number">0b00000000010000000</span>;
+        <span class="kw">const </span>RESOURCE_EXHAUSTED  = <span class="number">0b00000000100000000</span>;
+        <span class="kw">const </span>FAILED_PRECONDITION = <span class="number">0b00000001000000000</span>;
+        <span class="kw">const </span>ABORTED             = <span class="number">0b00000010000000000</span>;
+        <span class="kw">const </span>OUT_OF_RANGE        = <span class="number">0b00000100000000000</span>;
+        <span class="kw">const </span>UNIMPLEMENTED       = <span class="number">0b00001000000000000</span>;
+        <span class="kw">const </span>INTERNAL            = <span class="number">0b00010000000000000</span>;
+        <span class="kw">const </span>UNAVAILABLE         = <span class="number">0b00100000000000000</span>;
+        <span class="kw">const </span>DATA_LOSS           = <span class="number">0b01000000000000000</span>;
+        <span class="kw">const </span>UNAUTHENTICATED     = <span class="number">0b10000000000000000</span>;
     }
 }
 
-<span class="kw">impl</span> <span class="ident">GrpcCodeBitmask</span> {
-    <span class="kw">fn</span> <span class="ident">try_from_u32</span>(<span class="ident">code</span>: <span class="ident">u32</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">code</span> {
-            <span class="number">0</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::OK</span>),
-            <span class="number">1</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::CANCELLED</span>),
-            <span class="number">2</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::UNKNOWN</span>),
-            <span class="number">3</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::INVALID_ARGUMENT</span>),
-            <span class="number">4</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::DEADLINE_EXCEEDED</span>),
-            <span class="number">5</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::NOT_FOUND</span>),
-            <span class="number">6</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::ALREADY_EXISTS</span>),
-            <span class="number">7</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::PERMISSION_DENIED</span>),
-            <span class="number">8</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::RESOURCE_EXHAUSTED</span>),
-            <span class="number">9</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::FAILED_PRECONDITION</span>),
-            <span class="number">10</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::ABORTED</span>),
-            <span class="number">11</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::OUT_OF_RANGE</span>),
-            <span class="number">12</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::UNIMPLEMENTED</span>),
-            <span class="number">13</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::INTERNAL</span>),
-            <span class="number">14</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::UNAVAILABLE</span>),
-            <span class="number">15</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::DATA_LOSS</span>),
-            <span class="number">16</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident"><span class="self">Self</span>::UNAUTHENTICATED</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+<span class="kw">impl </span>GrpcCodeBitmask {
+    <span class="kw">fn </span>try_from_u32(code: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">match </span>code {
+            <span class="number">0 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::OK),
+            <span class="number">1 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::CANCELLED),
+            <span class="number">2 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::UNKNOWN),
+            <span class="number">3 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::INVALID_ARGUMENT),
+            <span class="number">4 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::DEADLINE_EXCEEDED),
+            <span class="number">5 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::NOT_FOUND),
+            <span class="number">6 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::ALREADY_EXISTS),
+            <span class="number">7 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::PERMISSION_DENIED),
+            <span class="number">8 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::RESOURCE_EXHAUSTED),
+            <span class="number">9 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::FAILED_PRECONDITION),
+            <span class="number">10 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::ABORTED),
+            <span class="number">11 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::OUT_OF_RANGE),
+            <span class="number">12 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::UNIMPLEMENTED),
+            <span class="number">13 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::INTERNAL),
+            <span class="number">14 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::UNAVAILABLE),
+            <span class="number">15 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::DATA_LOSS),
+            <span class="number">16 </span>=&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::UNAUTHENTICATED),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
 }
 
-<span class="doccomment">/// Response classifier for gRPC responses.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// gRPC doesn&#39;t use normal HTTP statuses for indicating success or failure but instead a special</span>
-<span class="doccomment">/// header that might appear in a trailer.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Responses are considered successful if</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// - `grpc-status` header value matches [`GrpcErrorsAsFailures::success_codes`] (only `Ok` by</span>
-<span class="doccomment">/// default).</span>
-<span class="doccomment">/// - `grpc-status` header is missing.</span>
-<span class="doccomment">/// - `grpc-status` header value isn&#39;t a valid `String`.</span>
-<span class="doccomment">/// - `grpc-status` header value can&#39;t parsed into an `i32`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// All others are considered failures.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GrpcErrorsAsFailures</span> {
-    <span class="ident">success_codes</span>: <span class="ident">GrpcCodeBitmask</span>,
+<span class="doccomment">/// Response classifier for gRPC responses.
+///
+/// gRPC doesn&#39;t use normal HTTP statuses for indicating success or failure but instead a special
+/// header that might appear in a trailer.
+///
+/// Responses are considered successful if
+///
+/// - `grpc-status` header value matches [`GrpcErrorsAsFailures::success_codes`] (only `Ok` by
+/// default).
+/// - `grpc-status` header is missing.
+/// - `grpc-status` header value isn&#39;t a valid `String`.
+/// - `grpc-status` header value can&#39;t parsed into an `i32`.
+///
+/// All others are considered failures.
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>GrpcErrorsAsFailures {
+    success_codes: GrpcCodeBitmask,
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">GrpcErrorsAsFailures</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>GrpcErrorsAsFailures {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">GrpcErrorsAsFailures</span> {
-    <span class="doccomment">/// Create a new [`GrpcErrorsAsFailures`].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">success_codes</span>: <span class="ident">GrpcCodeBitmask::OK</span>,
+<span class="kw">impl </span>GrpcErrorsAsFailures {
+    <span class="doccomment">/// Create a new [`GrpcErrorsAsFailures`].
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            success_codes: GrpcCodeBitmask::OK,
         }
     }
 
-    <span class="doccomment">/// Change which gRPC codes are considered success.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Defaults to only considering `Ok` as success.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `Ok` will always be considered a success.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Example</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Servers might not want to consider `Invalid Argument` or `Not Found` as failures since</span>
-    <span class="doccomment">/// thats likely the clients fault:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use tower_http::classify::{GrpcErrorsAsFailures, GrpcCode};</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let classifier = GrpcErrorsAsFailures::new()</span>
-    <span class="doccomment">///     .with_success(GrpcCode::InvalidArgument)</span>
-    <span class="doccomment">///     .with_success(GrpcCode::NotFound);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_success</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">code</span>: <span class="ident">GrpcCode</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">success_codes</span> <span class="op">|</span><span class="op">=</span> <span class="ident">code</span>.<span class="ident">into_bitmask</span>();
-        <span class="self">self</span>
-    }
+    <span class="doccomment">/// Change which gRPC codes are considered success.
+    ///
+    /// Defaults to only considering `Ok` as success.
+    ///
+    /// `Ok` will always be considered a success.
+    ///
+    /// # Example
+    ///
+    /// Servers might not want to consider `Invalid Argument` or `Not Found` as failures since
+    /// thats likely the clients fault:
+    ///
+    /// ```rust
+    /// use tower_http::classify::{GrpcErrorsAsFailures, GrpcCode};
+    ///
+    /// let classifier = GrpcErrorsAsFailures::new()
+    ///     .with_success(GrpcCode::InvalidArgument)
+    ///     .with_success(GrpcCode::NotFound);
+    /// ```
+    </span><span class="kw">pub fn </span>with_success(<span class="kw-2">mut </span><span class="self">self</span>, code: GrpcCode) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.success_codes |= code.into_bitmask();
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Returns a [`MakeClassifier`](super::MakeClassifier) that produces `GrpcErrorsAsFailures`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is a convenience function that simply calls `SharedClassifier::new`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_classifier</span>() -&gt; <span class="ident">SharedClassifier</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">SharedClassifier::new</span>(<span class="ident"><span class="self">Self</span>::new</span>())
+    <span class="doccomment">/// Returns a [`MakeClassifier`](super::MakeClassifier) that produces `GrpcErrorsAsFailures`.
+    ///
+    /// This is a convenience function that simply calls `SharedClassifier::new`.
+    </span><span class="kw">pub fn </span>make_classifier() -&gt; SharedClassifier&lt;<span class="self">Self</span>&gt; {
+        SharedClassifier::new(<span class="self">Self</span>::new())
     }
 }
 
-<span class="kw">impl</span> <span class="ident">ClassifyResponse</span> <span class="kw">for</span> <span class="ident">GrpcErrorsAsFailures</span> {
-    <span class="kw">type</span> <span class="ident">FailureClass</span> <span class="op">=</span> <span class="ident">GrpcFailureClass</span>;
-    <span class="kw">type</span> <span class="ident">ClassifyEos</span> <span class="op">=</span> <span class="ident">GrpcEosErrorsAsFailures</span>;
+<span class="kw">impl </span>ClassifyResponse <span class="kw">for </span>GrpcErrorsAsFailures {
+    <span class="kw">type </span>FailureClass = GrpcFailureClass;
+    <span class="kw">type </span>ClassifyEos = GrpcEosErrorsAsFailures;
 
-    <span class="kw">fn</span> <span class="ident">classify_response</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>(
+    <span class="kw">fn </span>classify_response&lt;B&gt;(
         <span class="self">self</span>,
-        <span class="ident">res</span>: <span class="kw-2">&amp;</span><span class="ident">Response</span><span class="op">&lt;</span><span class="ident">B</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">ClassifiedResponse</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::FailureClass</span>, <span class="ident"><span class="self">Self</span>::ClassifyEos</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">classify_grpc_metadata</span>(<span class="ident">res</span>.<span class="ident">headers</span>(), <span class="self">self</span>.<span class="ident">success_codes</span>) {
-            <span class="ident">ParsedGrpcStatus::Success</span>
-            <span class="op">|</span> <span class="ident">ParsedGrpcStatus::HeaderNotString</span>
-            <span class="op">|</span> <span class="ident">ParsedGrpcStatus::HeaderNotInt</span> =&gt; <span class="ident">ClassifiedResponse::Ready</span>(<span class="prelude-val">Ok</span>(())),
-            <span class="ident">ParsedGrpcStatus::NonSuccess</span>(<span class="ident">status</span>) =&gt; {
-                <span class="ident">ClassifiedResponse::Ready</span>(<span class="prelude-val">Err</span>(<span class="ident">GrpcFailureClass::Code</span>(<span class="ident">status</span>)))
+        res: <span class="kw-2">&amp;</span>Response&lt;B&gt;,
+    ) -&gt; ClassifiedResponse&lt;<span class="self">Self</span>::FailureClass, <span class="self">Self</span>::ClassifyEos&gt; {
+        <span class="kw">match </span>classify_grpc_metadata(res.headers(), <span class="self">self</span>.success_codes) {
+            ParsedGrpcStatus::Success
+            | ParsedGrpcStatus::HeaderNotString
+            | ParsedGrpcStatus::HeaderNotInt =&gt; ClassifiedResponse::Ready(<span class="prelude-val">Ok</span>(())),
+            ParsedGrpcStatus::NonSuccess(status) =&gt; {
+                ClassifiedResponse::Ready(<span class="prelude-val">Err</span>(GrpcFailureClass::Code(status)))
             }
-            <span class="ident">ParsedGrpcStatus::GrpcStatusHeaderMissing</span> =&gt; {
-                <span class="ident">ClassifiedResponse::RequiresEos</span>(<span class="ident">GrpcEosErrorsAsFailures</span> {
-                    <span class="ident">success_codes</span>: <span class="self">self</span>.<span class="ident">success_codes</span>,
+            ParsedGrpcStatus::GrpcStatusHeaderMissing =&gt; {
+                ClassifiedResponse::RequiresEos(GrpcEosErrorsAsFailures {
+                    success_codes: <span class="self">self</span>.success_codes,
                 })
             }
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">classify_error</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">error</span>: <span class="kw-2">&amp;</span><span class="ident">E</span>) -&gt; <span class="ident"><span class="self">Self</span>::FailureClass</span>
-    <span class="kw">where</span>
-        <span class="ident">E</span>: <span class="ident">fmt::Display</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+    <span class="kw">fn </span>classify_error&lt;E&gt;(<span class="self">self</span>, error: <span class="kw-2">&amp;</span>E) -&gt; <span class="self">Self</span>::FailureClass
+    <span class="kw">where
+        </span>E: fmt::Display + <span class="lifetime">&#39;static</span>,
     {
-        <span class="ident">GrpcFailureClass::Error</span>(<span class="ident">error</span>.<span class="ident">to_string</span>())
+        GrpcFailureClass::Error(error.to_string())
     }
 }
 
-<span class="doccomment">/// The [`ClassifyEos`] for [`GrpcErrorsAsFailures`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GrpcEosErrorsAsFailures</span> {
-    <span class="ident">success_codes</span>: <span class="ident">GrpcCodeBitmask</span>,
+<span class="doccomment">/// The [`ClassifyEos`] for [`GrpcErrorsAsFailures`].
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>GrpcEosErrorsAsFailures {
+    success_codes: GrpcCodeBitmask,
 }
 
-<span class="kw">impl</span> <span class="ident">ClassifyEos</span> <span class="kw">for</span> <span class="ident">GrpcEosErrorsAsFailures</span> {
-    <span class="kw">type</span> <span class="ident">FailureClass</span> <span class="op">=</span> <span class="ident">GrpcFailureClass</span>;
+<span class="kw">impl </span>ClassifyEos <span class="kw">for </span>GrpcEosErrorsAsFailures {
+    <span class="kw">type </span>FailureClass = GrpcFailureClass;
 
-    <span class="kw">fn</span> <span class="ident">classify_eos</span>(<span class="self">self</span>, <span class="ident">trailers</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">HeaderMap</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::FailureClass</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">trailers</span>) <span class="op">=</span> <span class="ident">trailers</span> {
-            <span class="kw">match</span> <span class="ident">classify_grpc_metadata</span>(<span class="ident">trailers</span>, <span class="self">self</span>.<span class="ident">success_codes</span>) {
-                <span class="ident">ParsedGrpcStatus::Success</span>
-                <span class="op">|</span> <span class="ident">ParsedGrpcStatus::GrpcStatusHeaderMissing</span>
-                <span class="op">|</span> <span class="ident">ParsedGrpcStatus::HeaderNotString</span>
-                <span class="op">|</span> <span class="ident">ParsedGrpcStatus::HeaderNotInt</span> =&gt; <span class="prelude-val">Ok</span>(()),
-                <span class="ident">ParsedGrpcStatus::NonSuccess</span>(<span class="ident">status</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">GrpcFailureClass::Code</span>(<span class="ident">status</span>)),
+    <span class="kw">fn </span>classify_eos(<span class="self">self</span>, trailers: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>HeaderMap&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::FailureClass&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(trailers) = trailers {
+            <span class="kw">match </span>classify_grpc_metadata(trailers, <span class="self">self</span>.success_codes) {
+                ParsedGrpcStatus::Success
+                | ParsedGrpcStatus::GrpcStatusHeaderMissing
+                | ParsedGrpcStatus::HeaderNotString
+                | ParsedGrpcStatus::HeaderNotInt =&gt; <span class="prelude-val">Ok</span>(()),
+                ParsedGrpcStatus::NonSuccess(status) =&gt; <span class="prelude-val">Err</span>(GrpcFailureClass::Code(status)),
             }
-        } <span class="kw">else</span> {
+        } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(())
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">classify_error</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">error</span>: <span class="kw-2">&amp;</span><span class="ident">E</span>) -&gt; <span class="ident"><span class="self">Self</span>::FailureClass</span>
-    <span class="kw">where</span>
-        <span class="ident">E</span>: <span class="ident">fmt::Display</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
+    <span class="kw">fn </span>classify_error&lt;E&gt;(<span class="self">self</span>, error: <span class="kw-2">&amp;</span>E) -&gt; <span class="self">Self</span>::FailureClass
+    <span class="kw">where
+        </span>E: fmt::Display + <span class="lifetime">&#39;static</span>,
     {
-        <span class="ident">GrpcFailureClass::Error</span>(<span class="ident">error</span>.<span class="ident">to_string</span>())
+        GrpcFailureClass::Error(error.to_string())
     }
 }
 
-<span class="doccomment">/// The failure class for [`GrpcErrorsAsFailures`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">GrpcFailureClass</span> {
-    <span class="doccomment">/// A gRPC response was classified as a failure with the corresponding status.</span>
-    <span class="ident">Code</span>(<span class="ident">std::num::NonZeroI32</span>),
-    <span class="doccomment">/// A gRPC response was classified as an error with the corresponding error description.</span>
-    <span class="ident">Error</span>(<span class="ident">String</span>),
+<span class="doccomment">/// The failure class for [`GrpcErrorsAsFailures`].
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub enum </span>GrpcFailureClass {
+    <span class="doccomment">/// A gRPC response was classified as a failure with the corresponding status.
+    </span>Code(std::num::NonZeroI32),
+    <span class="doccomment">/// A gRPC response was classified as an error with the corresponding error description.
+    </span>Error(String),
 }
 
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">GrpcFailureClass</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Code</span>(<span class="ident">code</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Code: {}&quot;</span>, <span class="ident">code</span>),
-            <span class="ident"><span class="self">Self</span>::Error</span>(<span class="ident">error</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Error: {}&quot;</span>, <span class="ident">error</span>),
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>GrpcFailureClass {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Code(code) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Code: {}&quot;</span>, code),
+            <span class="self">Self</span>::Error(error) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Error: {}&quot;</span>, error),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::if_let_some_result</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">classify_grpc_metadata</span>(
-    <span class="ident">headers</span>: <span class="kw-2">&amp;</span><span class="ident">HeaderMap</span>,
-    <span class="ident">success_codes</span>: <span class="ident">GrpcCodeBitmask</span>,
-) -&gt; <span class="ident">ParsedGrpcStatus</span> {
-    <span class="macro">macro_rules!</span> <span class="ident">or_else</span> {
-        (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">expr</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">other</span>:<span class="ident">ident</span>) =&gt; {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">expr</span> {
-                <span class="ident">value</span>
-            } <span class="kw">else</span> {
-                <span class="kw">return</span> <span class="ident">ParsedGrpcStatus</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">other</span>;
+<span class="attribute">#[allow(clippy::if_let_some_result)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>classify_grpc_metadata(
+    headers: <span class="kw-2">&amp;</span>HeaderMap,
+    success_codes: GrpcCodeBitmask,
+) -&gt; ParsedGrpcStatus {
+    <span class="macro">macro_rules! </span>or_else {
+        (<span class="macro-nonterminal">$expr</span>:expr, <span class="macro-nonterminal">$other</span>:ident) =&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = <span class="macro-nonterminal">$expr </span>{
+                value
+            } <span class="kw">else </span>{
+                <span class="kw">return </span>ParsedGrpcStatus::<span class="macro-nonterminal">$other</span>;
             }
         };
     }
 
-    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="macro">or_else!</span>(<span class="ident">headers</span>.<span class="ident">get</span>(<span class="string">&quot;grpc-status&quot;</span>), <span class="ident">GrpcStatusHeaderMissing</span>);
-    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="macro">or_else!</span>(<span class="ident">status</span>.<span class="ident">to_str</span>().<span class="ident">ok</span>(), <span class="ident">HeaderNotString</span>);
-    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="macro">or_else!</span>(<span class="ident">status</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>().<span class="ident">ok</span>(), <span class="ident">HeaderNotInt</span>);
+    <span class="kw">let </span>status = <span class="macro">or_else!</span>(headers.get(<span class="string">&quot;grpc-status&quot;</span>), GrpcStatusHeaderMissing);
+    <span class="kw">let </span>status = <span class="macro">or_else!</span>(status.to_str().ok(), HeaderNotString);
+    <span class="kw">let </span>status = <span class="macro">or_else!</span>(status.parse::&lt;i32&gt;().ok(), HeaderNotInt);
 
-    <span class="kw">if</span> <span class="ident">GrpcCodeBitmask::try_from_u32</span>(<span class="ident">status</span> <span class="kw">as</span> <span class="kw">_</span>)
-        .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">code</span><span class="op">|</span> <span class="ident">success_codes</span>.<span class="ident">contains</span>(<span class="kw-2">*</span><span class="ident">code</span>))
-        .<span class="ident">is_some</span>()
+    <span class="kw">if </span>GrpcCodeBitmask::try_from_u32(status <span class="kw">as _</span>)
+        .filter(|code| success_codes.contains(<span class="kw-2">*</span>code))
+        .is_some()
     {
-        <span class="ident">ParsedGrpcStatus::Success</span>
-    } <span class="kw">else</span> {
-        <span class="ident">ParsedGrpcStatus::NonSuccess</span>(<span class="ident">NonZeroI32::new</span>(<span class="ident">status</span>).<span class="ident">unwrap</span>())
+        ParsedGrpcStatus::Success
+    } <span class="kw">else </span>{
+        ParsedGrpcStatus::NonSuccess(NonZeroI32::new(status).unwrap())
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">ParsedGrpcStatus</span> {
-    <span class="ident">Success</span>,
-    <span class="ident">NonSuccess</span>(<span class="ident">NonZeroI32</span>),
-    <span class="ident">GrpcStatusHeaderMissing</span>,
-    <span class="comment">// these two are treated as `Success` but kept separate for clarity</span>
-    <span class="ident">HeaderNotString</span>,
-    <span class="ident">HeaderNotInt</span>,
+<span class="attribute">#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ParsedGrpcStatus {
+    Success,
+    NonSuccess(NonZeroI32),
+    GrpcStatusHeaderMissing,
+    <span class="comment">// these two are treated as `Success` but kept separate for clarity
+    </span>HeaderNotString,
+    HeaderNotInt,
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="macro">macro_rules!</span> <span class="ident">classify_grpc_metadata_test</span> {
+    <span class="macro">macro_rules! </span>classify_grpc_metadata_test {
         (
-            <span class="ident">name</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>,
-            <span class="ident">status</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">status</span>:<span class="ident">expr</span>,
-            <span class="ident">success_flags</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">success_flags</span>:<span class="ident">expr</span>,
-            <span class="ident">expected</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">expected</span>:<span class="ident">expr</span>,
+            name: <span class="macro-nonterminal">$name</span>:ident,
+            status: <span class="macro-nonterminal">$status</span>:expr,
+            success_flags: <span class="macro-nonterminal">$success_flags</span>:expr,
+            expected: <span class="macro-nonterminal">$expected</span>:expr,
         ) =&gt; {
-            <span class="attribute">#[<span class="ident">test</span>]</span>
-            <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>() {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">headers</span> <span class="op">=</span> <span class="ident">HeaderMap::new</span>();
-                <span class="ident">headers</span>.<span class="ident">insert</span>(<span class="string">&quot;grpc-status&quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">status</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>());
-                <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">classify_grpc_metadata</span>(<span class="kw-2">&amp;</span><span class="ident">headers</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">success_flags</span>);
-                <span class="macro">assert_eq!</span>(<span class="ident">status</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">expected</span>);
+            <span class="attribute">#[test]
+            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
+                <span class="kw">let </span><span class="kw-2">mut </span>headers = HeaderMap::new();
+                headers.insert(<span class="string">&quot;grpc-status&quot;</span>, <span class="macro-nonterminal">$status</span>.parse().unwrap());
+                <span class="kw">let </span>status = classify_grpc_metadata(<span class="kw-2">&amp;</span>headers, <span class="macro-nonterminal">$success_flags</span>);
+                <span class="macro">assert_eq!</span>(status, <span class="macro-nonterminal">$expected</span>);
             }
         };
     }
 
-    <span class="macro">classify_grpc_metadata_test!</span> {
-        <span class="ident">name</span>: <span class="ident">basic_ok</span>,
-        <span class="ident">status</span>: <span class="string">&quot;0&quot;</span>,
-        <span class="ident">success_flags</span>: <span class="ident">GrpcCodeBitmask::OK</span>,
-        <span class="ident">expected</span>: <span class="ident">ParsedGrpcStatus::Success</span>,
+    <span class="macro">classify_grpc_metadata_test! </span>{
+        name: basic_ok,
+        status: <span class="string">&quot;0&quot;</span>,
+        success_flags: GrpcCodeBitmask::OK,
+        expected: ParsedGrpcStatus::Success,
     }
 
-    <span class="macro">classify_grpc_metadata_test!</span> {
-        <span class="ident">name</span>: <span class="ident">basic_error</span>,
-        <span class="ident">status</span>: <span class="string">&quot;1&quot;</span>,
-        <span class="ident">success_flags</span>: <span class="ident">GrpcCodeBitmask::OK</span>,
-        <span class="ident">expected</span>: <span class="ident">ParsedGrpcStatus::NonSuccess</span>(<span class="ident">NonZeroI32::new</span>(<span class="number">1</span>).<span class="ident">unwrap</span>()),
+    <span class="macro">classify_grpc_metadata_test! </span>{
+        name: basic_error,
+        status: <span class="string">&quot;1&quot;</span>,
+        success_flags: GrpcCodeBitmask::OK,
+        expected: ParsedGrpcStatus::NonSuccess(NonZeroI32::new(<span class="number">1</span>).unwrap()),
     }
 
-    <span class="macro">classify_grpc_metadata_test!</span> {
-        <span class="ident">name</span>: <span class="ident">two_success_codes_first_matches</span>,
-        <span class="ident">status</span>: <span class="string">&quot;0&quot;</span>,
-        <span class="ident">success_flags</span>: <span class="ident">GrpcCodeBitmask::OK</span> <span class="op">|</span> <span class="ident">GrpcCodeBitmask::INVALID_ARGUMENT</span>,
-        <span class="ident">expected</span>: <span class="ident">ParsedGrpcStatus::Success</span>,
+    <span class="macro">classify_grpc_metadata_test! </span>{
+        name: two_success_codes_first_matches,
+        status: <span class="string">&quot;0&quot;</span>,
+        success_flags: GrpcCodeBitmask::OK | GrpcCodeBitmask::INVALID_ARGUMENT,
+        expected: ParsedGrpcStatus::Success,
     }
 
-    <span class="macro">classify_grpc_metadata_test!</span> {
-        <span class="ident">name</span>: <span class="ident">two_success_codes_second_matches</span>,
-        <span class="ident">status</span>: <span class="string">&quot;3&quot;</span>,
-        <span class="ident">success_flags</span>: <span class="ident">GrpcCodeBitmask::OK</span> <span class="op">|</span> <span class="ident">GrpcCodeBitmask::INVALID_ARGUMENT</span>,
-        <span class="ident">expected</span>: <span class="ident">ParsedGrpcStatus::Success</span>,
+    <span class="macro">classify_grpc_metadata_test! </span>{
+        name: two_success_codes_second_matches,
+        status: <span class="string">&quot;3&quot;</span>,
+        success_flags: GrpcCodeBitmask::OK | GrpcCodeBitmask::INVALID_ARGUMENT,
+        expected: ParsedGrpcStatus::Success,
     }
 
-    <span class="macro">classify_grpc_metadata_test!</span> {
-        <span class="ident">name</span>: <span class="ident">two_success_codes_none_matches</span>,
-        <span class="ident">status</span>: <span class="string">&quot;16&quot;</span>,
-        <span class="ident">success_flags</span>: <span class="ident">GrpcCodeBitmask::OK</span> <span class="op">|</span> <span class="ident">GrpcCodeBitmask::INVALID_ARGUMENT</span>,
-        <span class="ident">expected</span>: <span class="ident">ParsedGrpcStatus::NonSuccess</span>(<span class="ident">NonZeroI32::new</span>(<span class="number">16</span>).<span class="ident">unwrap</span>()),
+    <span class="macro">classify_grpc_metadata_test! </span>{
+        name: two_success_codes_none_matches,
+        status: <span class="string">&quot;16&quot;</span>,
+        success_flags: GrpcCodeBitmask::OK | GrpcCodeBitmask::INVALID_ARGUMENT,
+        expected: ParsedGrpcStatus::NonSuccess(NonZeroI32::new(<span class="number">16</span>).unwrap()),
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tower_http" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="tower_http" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/worker/connection.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>connection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/worker/connection.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>connection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -87,94 +87,94 @@
 <span id="87">87</span>
 <span id="88">88</span>
 <span id="89">89</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
-<span class="kw">use</span> <span class="ident">crossbeam_channel::Receiver</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error_span</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
+<span class="kw">use </span>crossbeam_channel::Receiver;
+<span class="kw">use </span>tracing::{debug, error_span};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::Connection</span> <span class="kw">as</span> <span class="ident">RelayConnection</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::util::task</span>::{<span class="ident">spawn_background_task</span>, <span class="ident">Next</span>, <span class="ident">TaskError</span>, <span class="ident">TaskHandle</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">chain::handle</span>::{<span class="ident">ChainHandle</span>, <span class="ident">ChainHandlePair</span>},
-    <span class="ident">object::Connection</span>,
-    <span class="ident">util::retry::retry_with_index</span>,
-    <span class="ident">worker::retry_strategy</span>,
+<span class="kw">use </span><span class="kw">crate</span>::connection::Connection <span class="kw">as </span>RelayConnection;
+<span class="kw">use </span><span class="kw">crate</span>::util::task::{spawn_background_task, Next, TaskError, TaskHandle};
+<span class="kw">use crate</span>::{
+    chain::handle::{ChainHandle, ChainHandlePair},
+    object::Connection,
+    util::retry::retry_with_index,
+    worker::retry_strategy,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::error::RunError</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::WorkerCmd</span>;
+<span class="kw">use </span><span class="kw">super</span>::error::RunError;
+<span class="kw">use </span><span class="kw">super</span>::WorkerCmd;
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_connection_worker</span><span class="op">&lt;</span><span class="ident">ChainA</span>: <span class="ident">ChainHandle</span>, <span class="ident">ChainB</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">connection</span>: <span class="ident">Connection</span>,
-    <span class="ident">chains</span>: <span class="ident">ChainHandlePair</span><span class="op">&lt;</span><span class="ident">ChainA</span>, <span class="ident">ChainB</span><span class="op">&gt;</span>,
-    <span class="ident">cmd_rx</span>: <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">WorkerCmd</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">TaskHandle</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">complete_handshake_on_new_block</span> <span class="op">=</span> <span class="bool-val">true</span>;
-    <span class="ident">spawn_background_task</span>(
-        <span class="macro">error_span!</span>(<span class="string">&quot;worker.connection&quot;</span>, <span class="ident">connection</span> <span class="op">=</span> <span class="op">%</span><span class="ident">connection</span>.<span class="ident">short_name</span>()),
-        <span class="prelude-val">Some</span>(<span class="ident">Duration::from_millis</span>(<span class="number">200</span>)),
-        <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">cmd</span>) <span class="op">=</span> <span class="ident">cmd_rx</span>.<span class="ident">try_recv</span>() {
-                <span class="kw">match</span> <span class="ident">cmd</span> {
-                    <span class="ident">WorkerCmd::IbcEvents</span> { <span class="ident">batch</span> } =&gt; {
-                        <span class="comment">// there can be up to two event for this connection, e.g. init and try.</span>
-                        <span class="comment">// process the last event, the one with highest &quot;rank&quot;.</span>
-                        <span class="kw">let</span> <span class="ident">last_event_with_height</span> <span class="op">=</span> <span class="ident">batch</span>.<span class="ident">events</span>.<span class="ident">last</span>();
+<span class="kw">pub fn </span>spawn_connection_worker&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
+    connection: Connection,
+    chains: ChainHandlePair&lt;ChainA, ChainB&gt;,
+    cmd_rx: Receiver&lt;WorkerCmd&gt;,
+) -&gt; TaskHandle {
+    <span class="kw">let </span><span class="kw-2">mut </span>complete_handshake_on_new_block = <span class="bool-val">true</span>;
+    spawn_background_task(
+        <span class="macro">error_span!</span>(<span class="string">&quot;worker.connection&quot;</span>, connection = %connection.short_name()),
+        <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">200</span>)),
+        <span class="kw">move </span>|| {
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = cmd_rx.try_recv() {
+                <span class="kw">match </span>cmd {
+                    WorkerCmd::IbcEvents { batch } =&gt; {
+                        <span class="comment">// there can be up to two event for this connection, e.g. init and try.
+                        // process the last event, the one with highest &quot;rank&quot;.
+                        </span><span class="kw">let </span>last_event_with_height = batch.events.last();
 
-                        <span class="macro">debug!</span>(<span class="string">&quot;starts processing {:?}&quot;</span>, <span class="ident">last_event_with_height</span>);
+                        <span class="macro">debug!</span>(<span class="string">&quot;starts processing {:?}&quot;</span>, last_event_with_height);
 
-                        <span class="ident">complete_handshake_on_new_block</span> <span class="op">=</span> <span class="bool-val">false</span>;
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">event_with_height</span>) <span class="op">=</span> <span class="ident">last_event_with_height</span> {
-                            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handshake_connection</span> <span class="op">=</span> <span class="ident">RelayConnection::restore_from_event</span>(
-                                <span class="ident">chains</span>.<span class="ident">a</span>.<span class="ident">clone</span>(),
-                                <span class="ident">chains</span>.<span class="ident">b</span>.<span class="ident">clone</span>(),
-                                <span class="kw-2">&amp;</span><span class="ident">event_with_height</span>.<span class="ident">event</span>,
+                        complete_handshake_on_new_block = <span class="bool-val">false</span>;
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(event_with_height) = last_event_with_height {
+                            <span class="kw">let </span><span class="kw-2">mut </span>handshake_connection = RelayConnection::restore_from_event(
+                                chains.a.clone(),
+                                chains.b.clone(),
+                                <span class="kw-2">&amp;</span>event_with_height.event,
                             )
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::connection</span>(<span class="ident">e</span>)))<span class="question-mark">?</span>;
+                            .map_err(|e| TaskError::Fatal(RunError::connection(e)))<span class="question-mark">?</span>;
 
-                            <span class="ident">retry_with_index</span>(<span class="ident">retry_strategy::worker_default_strategy</span>(), <span class="op">|</span><span class="ident">index</span><span class="op">|</span> {
-                                <span class="ident">handshake_connection</span>.<span class="ident">step_event</span>(<span class="kw-2">&amp;</span><span class="ident">event_with_height</span>.<span class="ident">event</span>, <span class="ident">index</span>)
+                            retry_with_index(retry_strategy::worker_default_strategy(), |index| {
+                                handshake_connection.step_event(<span class="kw-2">&amp;</span>event_with_height.event, index)
                             })
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::retry</span>(<span class="ident">e</span>)))
-                        } <span class="kw">else</span> {
-                            <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
+                            .map_err(|e| TaskError::Fatal(RunError::retry(e)))
+                        } <span class="kw">else </span>{
+                            <span class="prelude-val">Ok</span>(Next::Continue)
                         }
                     }
 
-                    <span class="ident">WorkerCmd::NewBlock</span> {
-                        <span class="ident">height</span>: <span class="ident">current_height</span>,
-                        <span class="ident">new_block</span>: <span class="kw">_</span>,
-                    } <span class="kw">if</span> <span class="ident">complete_handshake_on_new_block</span> =&gt; {
-                        <span class="macro">debug!</span>(<span class="string">&quot;starts processing block event at {}&quot;</span>, <span class="ident">current_height</span>);
+                    WorkerCmd::NewBlock {
+                        height: current_height,
+                        new_block: <span class="kw">_</span>,
+                    } <span class="kw">if </span>complete_handshake_on_new_block =&gt; {
+                        <span class="macro">debug!</span>(<span class="string">&quot;starts processing block event at {}&quot;</span>, current_height);
 
-                        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">current_height</span>
-                            .<span class="ident">decrement</span>()
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::ics02</span>(<span class="ident">e</span>)))<span class="question-mark">?</span>;
+                        <span class="kw">let </span>height = current_height
+                            .decrement()
+                            .map_err(|e| TaskError::Fatal(RunError::ics02(e)))<span class="question-mark">?</span>;
 
-                        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">handshake_connection</span>, <span class="ident">state</span>) <span class="op">=</span>
-                            <span class="ident">RelayConnection::restore_from_state</span>(
-                                <span class="ident">chains</span>.<span class="ident">a</span>.<span class="ident">clone</span>(),
-                                <span class="ident">chains</span>.<span class="ident">b</span>.<span class="ident">clone</span>(),
-                                <span class="ident">connection</span>.<span class="ident">clone</span>(),
-                                <span class="ident">height</span>,
+                        <span class="kw">let </span>(<span class="kw-2">mut </span>handshake_connection, state) =
+                            RelayConnection::restore_from_state(
+                                chains.a.clone(),
+                                chains.b.clone(),
+                                connection.clone(),
+                                height,
                             )
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::connection</span>(<span class="ident">e</span>)))<span class="question-mark">?</span>;
+                            .map_err(|e| TaskError::Fatal(RunError::connection(e)))<span class="question-mark">?</span>;
 
-                        <span class="ident">complete_handshake_on_new_block</span> <span class="op">=</span> <span class="bool-val">false</span>;
+                        complete_handshake_on_new_block = <span class="bool-val">false</span>;
 
-                        <span class="ident">retry_with_index</span>(<span class="ident">retry_strategy::worker_default_strategy</span>(), <span class="op">|</span><span class="ident">index</span><span class="op">|</span> {
-                            <span class="ident">handshake_connection</span>.<span class="ident">step_state</span>(<span class="ident">state</span>, <span class="ident">index</span>)
+                        retry_with_index(retry_strategy::worker_default_strategy(), |index| {
+                            handshake_connection.step_state(state, index)
                         })
-                        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">TaskError::Fatal</span>(<span class="ident">RunError::retry</span>(<span class="ident">e</span>)))
+                        .map_err(|e| TaskError::Fatal(RunError::retry(e)))
                     }
 
-                    <span class="comment">// nothing to do</span>
-                    <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>),
+                    <span class="comment">// nothing to do
+                    </span><span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(Next::Continue),
                 }
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Ok</span>(Next::Continue)
             }
         },
     )
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

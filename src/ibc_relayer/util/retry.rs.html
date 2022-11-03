@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/util/retry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>retry.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/util/retry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>retry.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -166,173 +166,173 @@
 <span id="166">166</span>
 <span id="167">167</span>
 <span id="168">168</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::time::Duration</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">retry</span>::{
-    <span class="ident">delay</span>::{<span class="ident">Fibonacci</span>, <span class="ident">Fixed</span>},
-    <span class="ident">retry_with_index</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">RetryError</span>, <span class="ident">OperationResult</span> <span class="kw">as</span> <span class="ident">RetryResult</span>,
+<span class="kw">pub use </span>retry::{
+    delay::{Fibonacci, Fixed},
+    retry_with_index, Error <span class="kw">as </span>RetryError, OperationResult <span class="kw">as </span>RetryResult,
 };
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ConstantGrowth</span> {
-    <span class="ident">delay</span>: <span class="ident">Duration</span>,
-    <span class="ident">incr</span>: <span class="ident">Duration</span>,
+<span class="attribute">#[derive(Copy, Clone, Debug)]
+</span><span class="kw">pub struct </span>ConstantGrowth {
+    delay: Duration,
+    incr: Duration,
 }
 
-<span class="kw">impl</span> <span class="ident">ConstantGrowth</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">delay</span>: <span class="ident">Duration</span>, <span class="ident">incr</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">delay</span>, <span class="ident">incr</span> }
+<span class="kw">impl </span>ConstantGrowth {
+    <span class="kw">pub const fn </span>new(delay: Duration, incr: Duration) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ delay, incr }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clamp</span>(<span class="self">self</span>, <span class="ident">max_delay</span>: <span class="ident">Duration</span>, <span class="ident">max_retries</span>: <span class="ident">usize</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span> {
-        <span class="ident">clamp</span>(<span class="self">self</span>, <span class="ident">max_delay</span>, <span class="ident">max_retries</span>)
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ConstantGrowth</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">delay</span>: <span class="ident">Duration</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">delay</span>, <span class="ident">Duration::from_secs</span>(<span class="number">1</span>))
+    <span class="kw">pub fn </span>clamp(<span class="self">self</span>, max_delay: Duration, max_retries: usize) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
+        clamp(<span class="self">self</span>, max_delay, max_retries)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">ConstantGrowth</span> {
-    <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span>;
+<span class="kw">impl </span>From&lt;Duration&gt; <span class="kw">for </span>ConstantGrowth {
+    <span class="kw">fn </span>from(delay: Duration) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new(delay, Duration::from_secs(<span class="number">1</span>))
+    }
+}
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">delay</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">delay</span>;
+<span class="kw">impl </span>Iterator <span class="kw">for </span>ConstantGrowth {
+    <span class="kw">type </span>Item = Duration;
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">delay</span>.<span class="ident">checked_add</span>(<span class="self">self</span>.<span class="ident">incr</span>) {
-            <span class="self">self</span>.<span class="ident">delay</span> <span class="op">=</span> <span class="ident">next</span>;
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Duration&gt; {
+        <span class="kw">let </span>delay = <span class="self">self</span>.delay;
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(next) = <span class="self">self</span>.delay.checked_add(<span class="self">self</span>.incr) {
+            <span class="self">self</span>.delay = next;
         }
 
-        <span class="prelude-val">Some</span>(<span class="ident">delay</span>)
+        <span class="prelude-val">Some</span>(delay)
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clamp</span>(
-    <span class="ident">strategy</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span>,
-    <span class="ident">max_delay</span>: <span class="ident">Duration</span>,
-    <span class="ident">max_retries</span>: <span class="ident">usize</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span> {
-    <span class="ident">strategy</span>
-        .<span class="ident">take</span>(<span class="ident">max_retries</span>)
-        .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">delay</span><span class="op">|</span> <span class="ident">delay</span>.<span class="ident">min</span>(<span class="ident">max_delay</span>))
+<span class="kw">pub fn </span>clamp(
+    strategy: <span class="kw">impl </span>Iterator&lt;Item = Duration&gt;,
+    max_delay: Duration,
+    max_retries: usize,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
+    strategy
+        .take(max_retries)
+        .map(<span class="kw">move </span>|delay| delay.min(max_delay))
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clamp_total</span>(
-    <span class="ident">strategy</span>: <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span>,
-    <span class="ident">max_delay</span>: <span class="ident">Duration</span>,
-    <span class="ident">max_total_delay</span>: <span class="ident">Duration</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Duration</span><span class="op">&gt;</span> {
-    <span class="ident">strategy</span>.<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">delay</span><span class="op">|</span> <span class="ident">delay</span>.<span class="ident">min</span>(<span class="ident">max_delay</span>)).<span class="ident">scan</span>(
-        <span class="ident">Duration::from_millis</span>(<span class="number">0</span>),
-        <span class="kw">move</span> <span class="op">|</span><span class="ident">elapsed</span>, <span class="ident">delay</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">next</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">elapsed</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">max_total_delay</span> {
-                <span class="prelude-val">None</span>
-            } <span class="kw">else</span> <span class="kw">if</span> (<span class="kw-2">*</span><span class="ident">elapsed</span> <span class="op">+</span> <span class="ident">delay</span>) <span class="op">&gt;</span> <span class="ident">max_total_delay</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">max_total_delay</span> <span class="op">-</span> <span class="kw-2">*</span><span class="ident">elapsed</span>)
-            } <span class="kw">else</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">delay</span>)
+<span class="kw">pub fn </span>clamp_total(
+    strategy: <span class="kw">impl </span>Iterator&lt;Item = Duration&gt;,
+    max_delay: Duration,
+    max_total_delay: Duration,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
+    strategy.map(<span class="kw">move </span>|delay| delay.min(max_delay)).scan(
+        Duration::from_millis(<span class="number">0</span>),
+        <span class="kw">move </span>|elapsed, delay| {
+            <span class="kw">let </span>next = <span class="kw">if </span><span class="kw-2">*</span>elapsed &gt;= max_total_delay {
+                <span class="prelude-val">None
+            </span>} <span class="kw">else if </span>(<span class="kw-2">*</span>elapsed + delay) &gt; max_total_delay {
+                <span class="prelude-val">Some</span>(max_total_delay - <span class="kw-2">*</span>elapsed)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Some</span>(delay)
             };
 
-            <span class="kw-2">*</span><span class="ident">elapsed</span> <span class="op">+</span><span class="op">=</span> <span class="ident">delay</span>;
-            <span class="ident">next</span>
+            <span class="kw-2">*</span>elapsed += delay;
+            next
         },
     )
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">test_log::test</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>test_log::test;
 
-    <span class="kw">const</span> <span class="ident">CONST_STRATEGY</span>: <span class="ident">ConstantGrowth</span> <span class="op">=</span>
-        <span class="ident">ConstantGrowth::new</span>(<span class="ident">Duration::from_secs</span>(<span class="number">1</span>), <span class="ident">Duration::from_millis</span>(<span class="number">500</span>));
+    <span class="kw">const </span>CONST_STRATEGY: ConstantGrowth =
+        ConstantGrowth::new(Duration::from_secs(<span class="number">1</span>), Duration::from_millis(<span class="number">500</span>));
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">const_growth_no_clamp</span>() {
-        <span class="kw">let</span> <span class="ident">delays</span> <span class="op">=</span> <span class="ident">CONST_STRATEGY</span>.<span class="ident">take</span>(<span class="number">10</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>const_growth_no_clamp() {
+        <span class="kw">let </span>delays = CONST_STRATEGY.take(<span class="number">10</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">assert_eq!</span>(
-            <span class="ident">delays</span>,
+            delays,
             <span class="macro">vec!</span>[
-                <span class="ident">Duration::from_millis</span>(<span class="number">1000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">1500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">2000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">2500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">3000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">3500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">4000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">4500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">5000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">5500</span>)
+                Duration::from_millis(<span class="number">1000</span>),
+                Duration::from_millis(<span class="number">1500</span>),
+                Duration::from_millis(<span class="number">2000</span>),
+                Duration::from_millis(<span class="number">2500</span>),
+                Duration::from_millis(<span class="number">3000</span>),
+                Duration::from_millis(<span class="number">3500</span>),
+                Duration::from_millis(<span class="number">4000</span>),
+                Duration::from_millis(<span class="number">4500</span>),
+                Duration::from_millis(<span class="number">5000</span>),
+                Duration::from_millis(<span class="number">5500</span>)
             ]
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">clamped_const_growth_max_delay</span>() {
-        <span class="kw">let</span> <span class="ident">strategy</span> <span class="op">=</span> <span class="ident">CONST_STRATEGY</span>.<span class="ident">clamp</span>(<span class="ident">Duration::from_secs</span>(<span class="number">10</span>), <span class="number">10</span>);
-        <span class="kw">let</span> <span class="ident">delays</span> <span class="op">=</span> <span class="ident">strategy</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>clamped_const_growth_max_delay() {
+        <span class="kw">let </span>strategy = CONST_STRATEGY.clamp(Duration::from_secs(<span class="number">10</span>), <span class="number">10</span>);
+        <span class="kw">let </span>delays = strategy.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">assert_eq!</span>(
-            <span class="ident">delays</span>,
+            delays,
             <span class="macro">vec!</span>[
-                <span class="ident">Duration::from_millis</span>(<span class="number">1000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">1500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">2000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">2500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">3000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">3500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">4000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">4500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">5000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">5500</span>)
+                Duration::from_millis(<span class="number">1000</span>),
+                Duration::from_millis(<span class="number">1500</span>),
+                Duration::from_millis(<span class="number">2000</span>),
+                Duration::from_millis(<span class="number">2500</span>),
+                Duration::from_millis(<span class="number">3000</span>),
+                Duration::from_millis(<span class="number">3500</span>),
+                Duration::from_millis(<span class="number">4000</span>),
+                Duration::from_millis(<span class="number">4500</span>),
+                Duration::from_millis(<span class="number">5000</span>),
+                Duration::from_millis(<span class="number">5500</span>)
             ]
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">clamped_const_growth_max_retries</span>() {
-        <span class="kw">let</span> <span class="ident">strategy</span> <span class="op">=</span> <span class="ident">CONST_STRATEGY</span>.<span class="ident">clamp</span>(<span class="ident">Duration::from_secs</span>(<span class="number">10000</span>), <span class="number">5</span>);
-        <span class="kw">let</span> <span class="ident">delays</span> <span class="op">=</span> <span class="ident">strategy</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>clamped_const_growth_max_retries() {
+        <span class="kw">let </span>strategy = CONST_STRATEGY.clamp(Duration::from_secs(<span class="number">10000</span>), <span class="number">5</span>);
+        <span class="kw">let </span>delays = strategy.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">assert_eq!</span>(
-            <span class="ident">delays</span>,
+            delays,
             <span class="macro">vec!</span>[
-                <span class="ident">Duration::from_millis</span>(<span class="number">1000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">1500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">2000</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">2500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">3000</span>)
+                Duration::from_millis(<span class="number">1000</span>),
+                Duration::from_millis(<span class="number">1500</span>),
+                Duration::from_millis(<span class="number">2000</span>),
+                Duration::from_millis(<span class="number">2500</span>),
+                Duration::from_millis(<span class="number">3000</span>)
             ]
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">clamped_total_const_growth_max_retries</span>() {
-        <span class="kw">const</span> <span class="ident">MAX_DELAY</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">500</span>);
-        <span class="kw">const</span> <span class="ident">DELAY_INCR</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">100</span>);
-        <span class="kw">const</span> <span class="ident">INITIAL_DELAY</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="number">200</span>);
-        <span class="kw">const</span> <span class="ident">MAX_RETRY_DURATION</span>: <span class="ident">Duration</span> <span class="op">=</span> <span class="ident">Duration::from_secs</span>(<span class="number">2</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>clamped_total_const_growth_max_retries() {
+        <span class="kw">const </span>MAX_DELAY: Duration = Duration::from_millis(<span class="number">500</span>);
+        <span class="kw">const </span>DELAY_INCR: Duration = Duration::from_millis(<span class="number">100</span>);
+        <span class="kw">const </span>INITIAL_DELAY: Duration = Duration::from_millis(<span class="number">200</span>);
+        <span class="kw">const </span>MAX_RETRY_DURATION: Duration = Duration::from_secs(<span class="number">2</span>);
 
-        <span class="kw">let</span> <span class="ident">strategy</span> <span class="op">=</span> <span class="ident">clamp_total</span>(
-            <span class="ident">ConstantGrowth::new</span>(<span class="ident">INITIAL_DELAY</span>, <span class="ident">DELAY_INCR</span>),
-            <span class="ident">MAX_DELAY</span>,
-            <span class="ident">MAX_RETRY_DURATION</span>,
+        <span class="kw">let </span>strategy = clamp_total(
+            ConstantGrowth::new(INITIAL_DELAY, DELAY_INCR),
+            MAX_DELAY,
+            MAX_RETRY_DURATION,
         );
 
-        <span class="kw">let</span> <span class="ident">delays</span> <span class="op">=</span> <span class="ident">strategy</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="kw">let </span>delays = strategy.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">delays</span>,
+            delays,
             <span class="macro">vec!</span>[
-                <span class="ident">Duration::from_millis</span>(<span class="number">200</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">300</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">400</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">500</span>),
-                <span class="ident">Duration::from_millis</span>(<span class="number">100</span>)
+                Duration::from_millis(<span class="number">200</span>),
+                Duration::from_millis(<span class="number">300</span>),
+                Duration::from_millis(<span class="number">400</span>),
+                Duration::from_millis(<span class="number">500</span>),
+                Duration::from_millis(<span class="number">500</span>),
+                Duration::from_millis(<span class="number">100</span>)
             ]
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

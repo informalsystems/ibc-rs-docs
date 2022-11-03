@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>supervisor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ibc_relayer/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>supervisor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../ibc_relayer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ibc_relayer/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -856,83 +856,83 @@
 <span id="856">856</span>
 <span id="857">857</span>
 <span id="858">858</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">alloc::collections::btree_map::BTreeMap</span> <span class="kw">as</span> <span class="ident">HashMap</span>;
-<span class="kw">use</span> <span class="ident">alloc::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">core::convert::Infallible</span>;
-<span class="kw">use</span> <span class="ident">core::ops::Deref</span>;
-<span class="kw">use</span> <span class="ident">core::time::Duration</span>;
-<span class="kw">use</span> <span class="ident">std::sync::RwLock</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::btree_map::BTreeMap <span class="kw">as </span>HashMap;
+<span class="kw">use </span>alloc::sync::Arc;
+<span class="kw">use </span>core::convert::Infallible;
+<span class="kw">use </span>core::ops::Deref;
+<span class="kw">use </span>core::time::Duration;
+<span class="kw">use </span>std::sync::RwLock;
 
-<span class="kw">use</span> <span class="ident">crossbeam_channel</span>::{<span class="ident">unbounded</span>, <span class="ident">Receiver</span>, <span class="ident">Sender</span>};
-<span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">error_span</span>, <span class="ident">info</span>, <span class="ident">instrument</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
+<span class="kw">use </span>crossbeam_channel::{unbounded, Receiver, Sender};
+<span class="kw">use </span>itertools::Itertools;
+<span class="kw">use </span>tracing::{debug, error, error_span, info, instrument, trace, warn};
 
-<span class="kw">use</span> <span class="ident">ibc_relayer_types</span>::{
-    <span class="ident">core::ics24_host::identifier</span>::{<span class="ident">ChainId</span>, <span class="ident">ChannelId</span>, <span class="ident">PortId</span>},
-    <span class="ident">events::IbcEvent</span>,
-    <span class="ident">Height</span>,
+<span class="kw">use </span>ibc_relayer_types::{
+    core::ics24_host::identifier::{ChainId, ChannelId, PortId},
+    events::IbcEvent,
+    Height,
 };
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">chain</span>::{<span class="ident">endpoint::HealthCheck</span>, <span class="ident">handle::ChainHandle</span>, <span class="ident">tracking::TrackingId</span>},
-    <span class="ident">config::Config</span>,
-    <span class="ident">event</span>::{
-        <span class="ident">monitor</span>::{<span class="self">self</span>, <span class="ident">Error</span> <span class="kw">as</span> <span class="ident">EventError</span>, <span class="ident">ErrorDetail</span> <span class="kw">as</span> <span class="ident">EventErrorDetail</span>, <span class="ident">EventBatch</span>},
-        <span class="ident">IbcEventWithHeight</span>,
+<span class="kw">use crate</span>::{
+    chain::{endpoint::HealthCheck, handle::ChainHandle, tracking::TrackingId},
+    config::Config,
+    event::{
+        monitor::{<span class="self">self</span>, Error <span class="kw">as </span>EventError, ErrorDetail <span class="kw">as </span>EventErrorDetail, EventBatch},
+        IbcEventWithHeight,
     },
-    <span class="ident">object::Object</span>,
-    <span class="ident">registry</span>::{<span class="ident">Registry</span>, <span class="ident">SharedRegistry</span>},
-    <span class="ident">rest</span>,
-    <span class="ident">supervisor::scan::ScanMode</span>,
-    <span class="ident">telemetry</span>,
-    <span class="ident">util</span>::{
-        <span class="ident">lock::LockExt</span>,
-        <span class="ident">task</span>::{<span class="ident">spawn_background_task</span>, <span class="ident">Next</span>, <span class="ident">TaskError</span>, <span class="ident">TaskHandle</span>},
+    object::Object,
+    registry::{Registry, SharedRegistry},
+    rest,
+    supervisor::scan::ScanMode,
+    telemetry,
+    util::{
+        lock::LockExt,
+        task::{spawn_background_task, Next, TaskError, TaskHandle},
     },
-    <span class="ident">worker::WorkerMap</span>,
+    worker::WorkerMap,
 };
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">client_state_filter</span>;
-<span class="kw">use</span> <span class="ident">client_state_filter</span>::{<span class="ident">FilterPolicy</span>, <span class="ident">Permission</span>};
+<span class="kw">pub mod </span>client_state_filter;
+<span class="kw">use </span>client_state_filter::{FilterPolicy, Permission};
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">ErrorDetail</span>};
+<span class="kw">pub mod </span>error;
+<span class="kw">pub use </span>error::{Error, ErrorDetail};
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">dump_state</span>;
-<span class="kw">use</span> <span class="ident">dump_state::SupervisorState</span>;
+<span class="kw">pub mod </span>dump_state;
+<span class="kw">use </span>dump_state::SupervisorState;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">scan</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">spawn</span>;
+<span class="kw">pub mod </span>scan;
+<span class="kw">pub mod </span>spawn;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">cmd</span>;
-<span class="kw">use</span> <span class="ident">cmd::SupervisorCmd</span>;
+<span class="kw">pub mod </span>cmd;
+<span class="kw">use </span>cmd::SupervisorCmd;
 
-<span class="kw">use</span> <span class="self">self</span>::{<span class="ident">scan::ChainScanner</span>, <span class="ident">spawn::SpawnContext</span>};
+<span class="kw">use </span><span class="self">self</span>::{scan::ChainScanner, spawn::SpawnContext};
 
-<span class="kw">type</span> <span class="ident">ArcBatch</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">monitor::Result</span><span class="op">&lt;</span><span class="ident">EventBatch</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">Subscription</span> <span class="op">=</span> <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">ArcBatch</span><span class="op">&gt;</span>;
+<span class="kw">type </span>ArcBatch = Arc&lt;monitor::Result&lt;EventBatch&gt;&gt;;
+<span class="kw">type </span>Subscription = Receiver&lt;ArcBatch&gt;;
 
 <span class="doccomment">/**
     A wrapper around the SupervisorCmd sender so that we can
     send stop signal to the supervisor before stopping the
     chain drivers to prevent the supervisor from raising
     errors caused by closed connections.
-*/</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SupervisorHandle</span> {
-    <span class="kw">pub</span> <span class="ident">sender</span>: <span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">SupervisorCmd</span><span class="op">&gt;</span>,
-    <span class="ident">tasks</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TaskHandle</span><span class="op">&gt;</span>,
+*/
+</span><span class="kw">pub struct </span>SupervisorHandle {
+    <span class="kw">pub </span>sender: Sender&lt;SupervisorCmd&gt;,
+    tasks: Vec&lt;TaskHandle&gt;,
 }
 
-<span class="doccomment">/// Options for the supervisor</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SupervisorOptions</span> {
-    <span class="doccomment">/// Perform a health check of all chains we connect to</span>
-    <span class="kw">pub</span> <span class="ident">health_check</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// Options for the supervisor
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>SupervisorOptions {
+    <span class="doccomment">/// Perform a health check of all chains we connect to
+    </span><span class="kw">pub </span>health_check: bool,
 
-    <span class="doccomment">/// Force a full scan of the chains for clients, connections, and channels,</span>
-    <span class="doccomment">/// even when an allow list is configured for a chain and the full scan could</span>
-    <span class="doccomment">/// be omitted.</span>
-    <span class="kw">pub</span> <span class="ident">force_full_scan</span>: <span class="ident">bool</span>,
+    <span class="doccomment">/// Force a full scan of the chains for clients, connections, and channels,
+    /// even when an allow list is configured for a chain and the full scan could
+    /// be omitted.
+    </span><span class="kw">pub </span>force_full_scan: bool,
 }
 
 <span class="doccomment">/**
@@ -940,779 +940,779 @@
    [`Config`] and [`SharedRegistry`]. Returns a
    [`SupervisorHandle`] that stops the supervisor when the
    value is dropped.
-*/</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_supervisor</span>(
-    <span class="ident">config</span>: <span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="ident">SharedRegistry</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span><span class="op">&gt;</span>,
-    <span class="ident">rest_rx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">rest::Receiver</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="ident">SupervisorOptions</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SupervisorHandle</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">sender</span>, <span class="ident">receiver</span>) <span class="op">=</span> <span class="ident">unbounded</span>();
+*/
+</span><span class="kw">pub fn </span>spawn_supervisor(
+    config: Config,
+    registry: SharedRegistry&lt;<span class="kw">impl </span>ChainHandle&gt;,
+    rest_rx: <span class="prelude-ty">Option</span>&lt;rest::Receiver&gt;,
+    options: SupervisorOptions,
+) -&gt; <span class="prelude-ty">Result</span>&lt;SupervisorHandle, Error&gt; {
+    <span class="kw">let </span>(sender, receiver) = unbounded();
 
-    <span class="kw">let</span> <span class="ident">tasks</span> <span class="op">=</span> <span class="ident">spawn_supervisor_tasks</span>(<span class="ident">config</span>, <span class="ident">registry</span>, <span class="ident">rest_rx</span>, <span class="ident">receiver</span>, <span class="ident">options</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>tasks = spawn_supervisor_tasks(config, registry, rest_rx, receiver, options)<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(<span class="ident">SupervisorHandle</span> { <span class="ident">sender</span>, <span class="ident">tasks</span> })
+    <span class="prelude-val">Ok</span>(SupervisorHandle { sender, tasks })
 }
 
-<span class="kw">impl</span> <span class="ident">SupervisorHandle</span> {
+<span class="kw">impl </span>SupervisorHandle {
     <span class="doccomment">/**
        Explicitly stop the running supervisor. This is useful in tests where
        the supervisor has to be stopped and restarted explicitly.
 
        Note that after stopping the supervisor, the only way to restart it
        is by respawning a new supervisor using [`spawn_supervisor`].
-    */</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">shutdown</span>(<span class="self">self</span>) {
-        <span class="kw">for</span> <span class="ident">task</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">tasks</span> {
-            <span class="comment">// Send the shutdown signals in parallel</span>
-            <span class="ident">task</span>.<span class="ident">shutdown</span>();
+    */
+    </span><span class="kw">pub fn </span>shutdown(<span class="self">self</span>) {
+        <span class="kw">for </span>task <span class="kw">in </span><span class="self">self</span>.tasks {
+            <span class="comment">// Send the shutdown signals in parallel
+            </span>task.shutdown();
         }
-        <span class="comment">// Dropping the tasks will cause this to block until all tasks</span>
-        <span class="comment">// are terminated.</span>
-    }
+        <span class="comment">// Dropping the tasks will cause this to block until all tasks
+        // are terminated.
+    </span>}
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait</span>(<span class="self">self</span>) {
-        <span class="kw">for</span> <span class="ident">task</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">tasks</span> {
-            <span class="ident">task</span>.<span class="ident">join</span>();
+    <span class="kw">pub fn </span>wait(<span class="self">self</span>) {
+        <span class="kw">for </span>task <span class="kw">in </span><span class="self">self</span>.tasks {
+            task.join();
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_supervisor_tasks</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="ident">SharedRegistry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">rest_rx</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">rest::Receiver</span><span class="op">&gt;</span>,
-    <span class="ident">cmd_rx</span>: <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">SupervisorCmd</span><span class="op">&gt;</span>,
-    <span class="ident">options</span>: <span class="ident">SupervisorOptions</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TaskHandle</span><span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">health_check</span> {
-        <span class="ident">health_check</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;mut</span> <span class="ident">registry</span>.<span class="ident">write</span>());
+<span class="kw">pub fn </span>spawn_supervisor_tasks&lt;Chain: ChainHandle&gt;(
+    config: Config,
+    registry: SharedRegistry&lt;Chain&gt;,
+    rest_rx: <span class="prelude-ty">Option</span>&lt;rest::Receiver&gt;,
+    cmd_rx: Receiver&lt;SupervisorCmd&gt;,
+    options: SupervisorOptions,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TaskHandle&gt;, Error&gt; {
+    <span class="kw">if </span>options.health_check {
+        health_check(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>registry.write());
     }
 
-    <span class="kw">let</span> <span class="ident">workers</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">WorkerMap::new</span>()));
-    <span class="kw">let</span> <span class="ident">client_state_filter</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">FilterPolicy::default</span>()));
+    <span class="kw">let </span>workers = Arc::new(RwLock::new(WorkerMap::new()));
+    <span class="kw">let </span>client_state_filter = Arc::new(RwLock::new(FilterPolicy::default()));
 
-    <span class="kw">let</span> <span class="ident">scan</span> <span class="op">=</span> <span class="ident">chain_scanner</span>(
-        <span class="kw-2">&amp;</span><span class="ident">config</span>,
-        <span class="kw-2">&amp;mut</span> <span class="ident">registry</span>.<span class="ident">write</span>(),
-        <span class="kw-2">&amp;mut</span> <span class="ident">client_state_filter</span>.<span class="ident">acquire_write</span>(),
-        <span class="kw">if</span> <span class="ident">options</span>.<span class="ident">force_full_scan</span> {
-            <span class="ident">ScanMode::Full</span>
-        } <span class="kw">else</span> {
-            <span class="ident">ScanMode::Auto</span>
+    <span class="kw">let </span>scan = chain_scanner(
+        <span class="kw-2">&amp;</span>config,
+        <span class="kw-2">&amp;mut </span>registry.write(),
+        <span class="kw-2">&amp;mut </span>client_state_filter.acquire_write(),
+        <span class="kw">if </span>options.force_full_scan {
+            ScanMode::Full
+        } <span class="kw">else </span>{
+            ScanMode::Auto
         },
     )
-    .<span class="ident">scan_chains</span>();
+    .scan_chains();
 
     <span class="macro">info!</span>(<span class="string">&quot;scanned chains:&quot;</span>);
-    <span class="macro">info!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">scan</span>);
+    <span class="macro">info!</span>(<span class="string">&quot;{}&quot;</span>, scan);
 
-    <span class="ident">spawn_context</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;mut</span> <span class="ident">registry</span>.<span class="ident">write</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">workers</span>.<span class="ident">acquire_write</span>()).<span class="ident">spawn_workers</span>(<span class="ident">scan</span>);
+    spawn_context(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>registry.write(), <span class="kw-2">&amp;mut </span>workers.acquire_write()).spawn_workers(scan);
 
-    <span class="kw">let</span> <span class="ident">subscriptions</span> <span class="op">=</span> <span class="ident">init_subscriptions</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;mut</span> <span class="ident">registry</span>.<span class="ident">write</span>())<span class="question-mark">?</span>;
+    <span class="kw">let </span>subscriptions = init_subscriptions(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>registry.write())<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">batch_tasks</span> <span class="op">=</span> <span class="ident">spawn_batch_workers</span>(
-        <span class="kw-2">&amp;</span><span class="ident">config</span>,
-        <span class="ident">registry</span>.<span class="ident">clone</span>(),
-        <span class="ident">client_state_filter</span>,
-        <span class="ident">workers</span>.<span class="ident">clone</span>(),
-        <span class="ident">subscriptions</span>,
+    <span class="kw">let </span>batch_tasks = spawn_batch_workers(
+        <span class="kw-2">&amp;</span>config,
+        registry.clone(),
+        client_state_filter,
+        workers.clone(),
+        subscriptions,
     );
 
-    <span class="kw">let</span> <span class="ident">cmd_task</span> <span class="op">=</span> <span class="ident">spawn_cmd_worker</span>(<span class="ident">registry</span>.<span class="ident">clone</span>(), <span class="ident">workers</span>.<span class="ident">clone</span>(), <span class="ident">cmd_rx</span>);
+    <span class="kw">let </span>cmd_task = spawn_cmd_worker(registry.clone(), workers.clone(), cmd_rx);
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tasks</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">cmd_task</span>];
-    <span class="ident">tasks</span>.<span class="ident">extend</span>(<span class="ident">batch_tasks</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>tasks = <span class="macro">vec!</span>[cmd_task];
+    tasks.extend(batch_tasks);
 
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rest_rx</span>) <span class="op">=</span> <span class="ident">rest_rx</span> {
-        <span class="kw">let</span> <span class="ident">rest_task</span> <span class="op">=</span> <span class="ident">spawn_rest_worker</span>(<span class="ident">config</span>, <span class="ident">registry</span>, <span class="ident">workers</span>, <span class="ident">rest_rx</span>);
-        <span class="ident">tasks</span>.<span class="ident">push</span>(<span class="ident">rest_task</span>);
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(rest_rx) = rest_rx {
+        <span class="kw">let </span>rest_task = spawn_rest_worker(config, registry, workers, rest_rx);
+        tasks.push(rest_task);
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">tasks</span>)
+    <span class="prelude-val">Ok</span>(tasks)
 }
 
-<span class="kw">fn</span> <span class="ident">spawn_batch_workers</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="ident">SharedRegistry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">client_state_filter</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">FilterPolicy</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">WorkerMap</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">subscriptions</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Chain</span>, <span class="ident">Subscription</span>)<span class="op">&gt;</span>,
-) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TaskHandle</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handles</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">subscriptions</span>.<span class="ident">len</span>());
+<span class="kw">fn </span>spawn_batch_workers&lt;Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    registry: SharedRegistry&lt;Chain&gt;,
+    client_state_filter: Arc&lt;RwLock&lt;FilterPolicy&gt;&gt;,
+    workers: Arc&lt;RwLock&lt;WorkerMap&gt;&gt;,
+    subscriptions: Vec&lt;(Chain, Subscription)&gt;,
+) -&gt; Vec&lt;TaskHandle&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>handles = Vec::with_capacity(subscriptions.len());
 
-    <span class="kw">for</span> (<span class="ident">chain</span>, <span class="ident">subscription</span>) <span class="kw">in</span> <span class="ident">subscriptions</span> {
-        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">client_state_filter</span> <span class="op">=</span> <span class="ident">client_state_filter</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">workers</span> <span class="op">=</span> <span class="ident">workers</span>.<span class="ident">clone</span>();
+    <span class="kw">for </span>(chain, subscription) <span class="kw">in </span>subscriptions {
+        <span class="kw">let </span>config = config.clone();
+        <span class="kw">let </span>registry = registry.clone();
+        <span class="kw">let </span>client_state_filter = client_state_filter.clone();
+        <span class="kw">let </span>workers = workers.clone();
 
-        <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">spawn_background_task</span>(
-            <span class="macro">error_span!</span>(<span class="string">&quot;worker.batch&quot;</span>, <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain</span>.<span class="ident">id</span>()),
-            <span class="prelude-val">Some</span>(<span class="ident">Duration::from_millis</span>(<span class="number">5</span>)),
-            <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">Infallible</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">batch</span>) <span class="op">=</span> <span class="ident">subscription</span>.<span class="ident">try_recv</span>() {
-                    <span class="ident">handle_batch</span>(
-                        <span class="kw-2">&amp;</span><span class="ident">config</span>,
-                        <span class="kw-2">&amp;mut</span> <span class="ident">registry</span>.<span class="ident">write</span>(),
-                        <span class="kw-2">&amp;mut</span> <span class="ident">client_state_filter</span>.<span class="ident">acquire_write</span>(),
-                        <span class="kw-2">&amp;mut</span> <span class="ident">workers</span>.<span class="ident">acquire_write</span>(),
-                        <span class="ident">chain</span>.<span class="ident">clone</span>(),
-                        <span class="ident">batch</span>,
+        <span class="kw">let </span>handle = spawn_background_task(
+            <span class="macro">error_span!</span>(<span class="string">&quot;worker.batch&quot;</span>, chain = %chain.id()),
+            <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">5</span>)),
+            <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(batch) = subscription.try_recv() {
+                    handle_batch(
+                        <span class="kw-2">&amp;</span>config,
+                        <span class="kw-2">&amp;mut </span>registry.write(),
+                        <span class="kw-2">&amp;mut </span>client_state_filter.acquire_write(),
+                        <span class="kw-2">&amp;mut </span>workers.acquire_write(),
+                        chain.clone(),
+                        batch,
                     );
                 }
 
-                <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
+                <span class="prelude-val">Ok</span>(Next::Continue)
             },
         );
 
-        <span class="ident">handles</span>.<span class="ident">push</span>(<span class="ident">handle</span>);
+        handles.push(handle);
     }
 
-    <span class="ident">handles</span>
+    handles
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_cmd_worker</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">registry</span>: <span class="ident">SharedRegistry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">WorkerMap</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">cmd_rx</span>: <span class="ident">Receiver</span><span class="op">&lt;</span><span class="ident">SupervisorCmd</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">TaskHandle</span> {
-    <span class="ident">spawn_background_task</span>(
+<span class="kw">pub fn </span>spawn_cmd_worker&lt;Chain: ChainHandle&gt;(
+    registry: SharedRegistry&lt;Chain&gt;,
+    workers: Arc&lt;RwLock&lt;WorkerMap&gt;&gt;,
+    cmd_rx: Receiver&lt;SupervisorCmd&gt;,
+) -&gt; TaskHandle {
+    spawn_background_task(
         <span class="macro">error_span!</span>(<span class="string">&quot;worker.cmd&quot;</span>),
-        <span class="prelude-val">Some</span>(<span class="ident">Duration::from_millis</span>(<span class="number">500</span>)),
-        <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">Infallible</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">cmd</span>) <span class="op">=</span> <span class="ident">cmd_rx</span>.<span class="ident">try_recv</span>() {
-                <span class="kw">match</span> <span class="ident">cmd</span> {
-                    <span class="ident">SupervisorCmd::DumpState</span>(<span class="ident">reply_to</span>) =&gt; {
-                        <span class="ident">dump_state</span>(<span class="kw-2">&amp;</span><span class="ident">registry</span>.<span class="ident">read</span>(), <span class="kw-2">&amp;</span><span class="ident">workers</span>.<span class="ident">acquire_read</span>(), <span class="ident">reply_to</span>);
+        <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">500</span>)),
+        <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = cmd_rx.try_recv() {
+                <span class="kw">match </span>cmd {
+                    SupervisorCmd::DumpState(reply_to) =&gt; {
+                        dump_state(<span class="kw-2">&amp;</span>registry.read(), <span class="kw-2">&amp;</span>workers.acquire_read(), reply_to);
                     }
                 }
             }
 
-            <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
+            <span class="prelude-val">Ok</span>(Next::Continue)
         },
     )
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn_rest_worker</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="ident">SharedRegistry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">WorkerMap</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">rest_rx</span>: <span class="ident">rest::Receiver</span>,
-) -&gt; <span class="ident">TaskHandle</span> {
-    <span class="ident">spawn_background_task</span>(
+<span class="kw">pub fn </span>spawn_rest_worker&lt;Chain: ChainHandle&gt;(
+    config: Config,
+    registry: SharedRegistry&lt;Chain&gt;,
+    workers: Arc&lt;RwLock&lt;WorkerMap&gt;&gt;,
+    rest_rx: rest::Receiver,
+) -&gt; TaskHandle {
+    spawn_background_task(
         <span class="macro">error_span!</span>(<span class="string">&quot;rest&quot;</span>),
-        <span class="prelude-val">Some</span>(<span class="ident">Duration::from_millis</span>(<span class="number">500</span>)),
-        <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Next</span>, <span class="ident">TaskError</span><span class="op">&lt;</span><span class="ident">Infallible</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-            <span class="ident">handle_rest_requests</span>(<span class="kw-2">&amp;</span><span class="ident">config</span>, <span class="kw-2">&amp;</span><span class="ident">registry</span>.<span class="ident">read</span>(), <span class="kw-2">&amp;</span><span class="ident">workers</span>.<span class="ident">acquire_read</span>(), <span class="kw-2">&amp;</span><span class="ident">rest_rx</span>);
+        <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">500</span>)),
+        <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
+            handle_rest_requests(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>registry.read(), <span class="kw-2">&amp;</span>workers.acquire_read(), <span class="kw-2">&amp;</span>rest_rx);
 
-            <span class="prelude-val">Ok</span>(<span class="ident">Next::Continue</span>)
+            <span class="prelude-val">Ok</span>(Next::Continue)
         },
     )
 }
 
-<span class="doccomment">/// Returns `true` if the relayer should filter based on</span>
-<span class="doccomment">/// client state attributes, e.g., trust threshold.</span>
-<span class="doccomment">/// Returns `false` otherwise.</span>
-<span class="kw">fn</span> <span class="ident">client_filter_enabled</span>(<span class="ident">_config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>) -&gt; <span class="ident">bool</span> {
-    <span class="comment">// we currently always enable the client filter</span>
-    <span class="bool-val">true</span>
-}
+<span class="doccomment">/// Returns `true` if the relayer should filter based on
+/// client state attributes, e.g., trust threshold.
+/// Returns `false` otherwise.
+</span><span class="kw">fn </span>client_filter_enabled(_config: <span class="kw-2">&amp;</span>Config) -&gt; bool {
+    <span class="comment">// we currently always enable the client filter
+    </span><span class="bool-val">true
+</span>}
 
-<span class="doccomment">/// Returns `true` if the relayer should filter based on</span>
-<span class="doccomment">/// channel identifiers.</span>
-<span class="doccomment">/// Returns `false` otherwise.</span>
-<span class="kw">fn</span> <span class="ident">channel_filter_enabled</span>(<span class="ident">_config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>) -&gt; <span class="ident">bool</span> {
-    <span class="comment">// we currently always enable the channel filter</span>
-    <span class="bool-val">true</span>
-}
+<span class="doccomment">/// Returns `true` if the relayer should filter based on
+/// channel identifiers.
+/// Returns `false` otherwise.
+</span><span class="kw">fn </span>channel_filter_enabled(_config: <span class="kw-2">&amp;</span>Config) -&gt; bool {
+    <span class="comment">// we currently always enable the channel filter
+    </span><span class="bool-val">true
+</span>}
 
-<span class="doccomment">/// Whether or not the given channel is allowed by the filter policy, if any.</span>
-<span class="kw">fn</span> <span class="ident">is_channel_allowed</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
-    <span class="ident">port_id</span>: <span class="kw-2">&amp;</span><span class="ident">PortId</span>,
-    <span class="ident">channel_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChannelId</span>,
-) -&gt; <span class="ident">bool</span> {
-    <span class="comment">// If filtering is disabled, then relay all channels</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">channel_filter_enabled</span>(<span class="ident">config</span>) {
-        <span class="kw">return</span> <span class="bool-val">true</span>;
+<span class="doccomment">/// Whether or not the given channel is allowed by the filter policy, if any.
+</span><span class="kw">fn </span>is_channel_allowed(
+    config: <span class="kw-2">&amp;</span>Config,
+    chain_id: <span class="kw-2">&amp;</span>ChainId,
+    port_id: <span class="kw-2">&amp;</span>PortId,
+    channel_id: <span class="kw-2">&amp;</span>ChannelId,
+) -&gt; bool {
+    <span class="comment">// If filtering is disabled, then relay all channels
+    </span><span class="kw">if </span>!channel_filter_enabled(config) {
+        <span class="kw">return </span><span class="bool-val">true</span>;
     }
 
-    <span class="ident">config</span>.<span class="ident">packets_on_channel_allowed</span>(<span class="ident">chain_id</span>, <span class="ident">port_id</span>, <span class="ident">channel_id</span>)
+    config.packets_on_channel_allowed(chain_id, port_id, channel_id)
 }
 
-<span class="doccomment">/// Whether or not the relayer should relay packets</span>
-<span class="doccomment">/// or complete handshakes for the given [`Object`].</span>
-<span class="kw">fn</span> <span class="ident">relay_on_object</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">client_state_filter</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FilterPolicy</span>,
-    <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>,
-    <span class="ident">object</span>: <span class="kw-2">&amp;</span><span class="ident">Object</span>,
-) -&gt; <span class="ident">bool</span> {
-    <span class="comment">// No filter is enabled, bail fast.</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">channel_filter_enabled</span>(<span class="ident">config</span>) <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="ident">client_filter_enabled</span>(<span class="ident">config</span>) {
-        <span class="kw">return</span> <span class="bool-val">true</span>;
+<span class="doccomment">/// Whether or not the relayer should relay packets
+/// or complete handshakes for the given [`Object`].
+</span><span class="kw">fn </span>relay_on_object&lt;Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    registry: <span class="kw-2">&amp;mut </span>Registry&lt;Chain&gt;,
+    client_state_filter: <span class="kw-2">&amp;mut </span>FilterPolicy,
+    chain_id: <span class="kw-2">&amp;</span>ChainId,
+    object: <span class="kw-2">&amp;</span>Object,
+) -&gt; bool {
+    <span class="comment">// No filter is enabled, bail fast.
+    </span><span class="kw">if </span>!channel_filter_enabled(config) &amp;&amp; !client_filter_enabled(config) {
+        <span class="kw">return </span><span class="bool-val">true</span>;
     }
 
-    <span class="comment">// First, apply the channel filter on packets and channel workers</span>
-    <span class="kw">match</span> <span class="ident">object</span> {
-        <span class="ident">Object::Packet</span>(<span class="ident">p</span>) =&gt; {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">is_channel_allowed</span>(<span class="ident">config</span>, <span class="ident">chain_id</span>, <span class="kw-2">&amp;</span><span class="ident">p</span>.<span class="ident">src_port_id</span>, <span class="kw-2">&amp;</span><span class="ident">p</span>.<span class="ident">src_channel_id</span>) {
-                <span class="comment">// Forbid relaying packets on that channel</span>
-                <span class="kw">return</span> <span class="bool-val">false</span>;
+    <span class="comment">// First, apply the channel filter on packets and channel workers
+    </span><span class="kw">match </span>object {
+        Object::Packet(p) =&gt; {
+            <span class="kw">if </span>!is_channel_allowed(config, chain_id, <span class="kw-2">&amp;</span>p.src_port_id, <span class="kw-2">&amp;</span>p.src_channel_id) {
+                <span class="comment">// Forbid relaying packets on that channel
+                </span><span class="kw">return </span><span class="bool-val">false</span>;
             }
         }
-        <span class="ident">Object::Channel</span>(<span class="ident">c</span>) =&gt; {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">is_channel_allowed</span>(<span class="ident">config</span>, <span class="ident">chain_id</span>, <span class="kw-2">&amp;</span><span class="ident">c</span>.<span class="ident">src_port_id</span>, <span class="kw-2">&amp;</span><span class="ident">c</span>.<span class="ident">src_channel_id</span>) {
-                <span class="comment">// Forbid completing handshake for that channel</span>
-                <span class="kw">return</span> <span class="bool-val">false</span>;
+        Object::Channel(c) =&gt; {
+            <span class="kw">if </span>!is_channel_allowed(config, chain_id, <span class="kw-2">&amp;</span>c.src_port_id, <span class="kw-2">&amp;</span>c.src_channel_id) {
+                <span class="comment">// Forbid completing handshake for that channel
+                </span><span class="kw">return </span><span class="bool-val">false</span>;
             }
         }
-        <span class="kw">_</span> =&gt; (),
+        <span class="kw">_ </span>=&gt; (),
     };
 
-    <span class="comment">// Then, apply the client filter</span>
-    <span class="kw">let</span> <span class="ident">client_filter_outcome</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">object</span> {
-        <span class="ident">Object::Client</span>(<span class="ident">client</span>) =&gt; <span class="ident">client_state_filter</span>.<span class="ident">control_client_object</span>(<span class="ident">registry</span>, <span class="ident">client</span>),
-        <span class="ident">Object::Connection</span>(<span class="ident">conn</span>) =&gt; <span class="ident">client_state_filter</span>.<span class="ident">control_conn_object</span>(<span class="ident">registry</span>, <span class="ident">conn</span>),
-        <span class="ident">Object::Channel</span>(<span class="ident">chan</span>) =&gt; <span class="ident">client_state_filter</span>.<span class="ident">control_chan_object</span>(<span class="ident">registry</span>, <span class="ident">chan</span>),
-        <span class="ident">Object::Packet</span>(<span class="ident">packet</span>) =&gt; <span class="ident">client_state_filter</span>.<span class="ident">control_packet_object</span>(<span class="ident">registry</span>, <span class="ident">packet</span>),
-        <span class="ident">Object::Wallet</span>(<span class="ident">_wallet</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Permission::Allow</span>),
+    <span class="comment">// Then, apply the client filter
+    </span><span class="kw">let </span>client_filter_outcome = <span class="kw">match </span>object {
+        Object::Client(client) =&gt; client_state_filter.control_client_object(registry, client),
+        Object::Connection(conn) =&gt; client_state_filter.control_conn_object(registry, conn),
+        Object::Channel(chan) =&gt; client_state_filter.control_chan_object(registry, chan),
+        Object::Packet(packet) =&gt; client_state_filter.control_packet_object(registry, packet),
+        Object::Wallet(_wallet) =&gt; <span class="prelude-val">Ok</span>(Permission::Allow),
     };
 
-    <span class="kw">match</span> <span class="ident">client_filter_outcome</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">Permission::Allow</span>) =&gt; <span class="bool-val">true</span>,
-        <span class="prelude-val">Ok</span>(<span class="ident">Permission::Deny</span>) =&gt; {
+    <span class="kw">match </span>client_filter_outcome {
+        <span class="prelude-val">Ok</span>(Permission::Allow) =&gt; <span class="bool-val">true</span>,
+        <span class="prelude-val">Ok</span>(Permission::Deny) =&gt; {
             <span class="macro">warn!</span>(
                 <span class="string">&quot;client filter denies relaying on object {}&quot;</span>,
-                <span class="ident">object</span>.<span class="ident">short_name</span>()
+                object.short_name()
             );
 
-            <span class="bool-val">false</span>
-        }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="kw">if</span> <span class="ident">e</span>.<span class="ident">log_as_debug</span>() =&gt; {
+            <span class="bool-val">false
+        </span>}
+        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.log_as_debug() =&gt; {
             <span class="macro">debug!</span>(
                 <span class="string">&quot;denying relaying on object {}, caused by: {}&quot;</span>,
-                <span class="ident">object</span>.<span class="ident">short_name</span>(),
-                <span class="ident">e</span>
+                object.short_name(),
+                e
             );
 
-            <span class="bool-val">false</span>
-        }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+            <span class="bool-val">false
+        </span>}
+        <span class="prelude-val">Err</span>(e) =&gt; {
             <span class="macro">warn!</span>(
                 <span class="string">&quot;denying relaying on object {}, caused by: {}&quot;</span>,
-                <span class="ident">object</span>.<span class="ident">short_name</span>(),
-                <span class="ident">e</span>
+                object.short_name(),
+                e
             );
 
-            <span class="bool-val">false</span>
-        }
+            <span class="bool-val">false
+        </span>}
     }
 }
 
-<span class="doccomment">/// If `enabled`, build an `Object` using the provided `object_ctor`</span>
-<span class="doccomment">/// and add the given `event` to the `collected` events for this `object`.</span>
-<span class="kw">fn</span> <span class="ident">collect_event</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(
-    <span class="ident">collected</span>: <span class="kw-2">&amp;mut</span> <span class="ident">CollectedEvents</span>,
-    <span class="ident">event_with_height</span>: <span class="ident">IbcEventWithHeight</span>,
-    <span class="ident">enabled</span>: <span class="ident">bool</span>,
-    <span class="ident">object_ctor</span>: <span class="ident">F</span>,
-) <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">FnOnce</span>() -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Object</span><span class="op">&gt;</span>,
+<span class="doccomment">/// If `enabled`, build an `Object` using the provided `object_ctor`
+/// and add the given `event` to the `collected` events for this `object`.
+</span><span class="kw">fn </span>collect_event&lt;F&gt;(
+    collected: <span class="kw-2">&amp;mut </span>CollectedEvents,
+    event_with_height: IbcEventWithHeight,
+    enabled: bool,
+    object_ctor: F,
+) <span class="kw">where
+    </span>F: FnOnce() -&gt; <span class="prelude-ty">Option</span>&lt;Object&gt;,
 {
-    <span class="kw">if</span> <span class="ident">enabled</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">object</span>) <span class="op">=</span> <span class="ident">object_ctor</span>() {
-            <span class="ident">collected</span>
-                .<span class="ident">per_object</span>
-                .<span class="ident">entry</span>(<span class="ident">object</span>)
-                .<span class="ident">or_default</span>()
-                .<span class="ident">push</span>(<span class="ident">event_with_height</span>);
+    <span class="kw">if </span>enabled {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(object) = object_ctor() {
+            collected
+                .per_object
+                .entry(object)
+                .or_default()
+                .push(event_with_height);
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">collect_events</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;</span><span class="ident">WorkerMap</span>,
-    <span class="ident">src_chain</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ChainHandle</span>,
-    <span class="ident">batch</span>: <span class="kw-2">&amp;</span><span class="ident">EventBatch</span>,
-) -&gt; <span class="ident">CollectedEvents</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">collected</span> <span class="op">=</span>
-        <span class="ident">CollectedEvents::new</span>(<span class="ident">batch</span>.<span class="ident">height</span>, <span class="ident">batch</span>.<span class="ident">chain_id</span>.<span class="ident">clone</span>(), <span class="ident">batch</span>.<span class="ident">tracking_id</span>);
+<span class="kw">pub fn </span>collect_events(
+    config: <span class="kw-2">&amp;</span>Config,
+    workers: <span class="kw-2">&amp;</span>WorkerMap,
+    src_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
+    batch: <span class="kw-2">&amp;</span>EventBatch,
+) -&gt; CollectedEvents {
+    <span class="kw">let </span><span class="kw-2">mut </span>collected =
+        CollectedEvents::new(batch.height, batch.chain_id.clone(), batch.tracking_id);
 
-    <span class="kw">let</span> <span class="ident">mode</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">mode</span>;
+    <span class="kw">let </span>mode = config.mode;
 
-    <span class="kw">for</span> <span class="ident">event_with_height</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">batch</span>.<span class="ident">events</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">event_with_height</span>.<span class="ident">event</span> {
-            <span class="ident">IbcEvent::NewBlock</span>(<span class="kw">_</span>) =&gt; {
-                <span class="ident">collected</span>.<span class="ident">new_block</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">event_with_height</span>.<span class="ident">event</span>.<span class="ident">clone</span>());
+    <span class="kw">for </span>event_with_height <span class="kw">in </span><span class="kw-2">&amp;</span>batch.events {
+        <span class="kw">match </span><span class="kw-2">&amp;</span>event_with_height.event {
+            IbcEvent::NewBlock(<span class="kw">_</span>) =&gt; {
+                collected.new_block = <span class="prelude-val">Some</span>(event_with_height.event.clone());
             }
-            <span class="ident">IbcEvent::UpdateClient</span>(<span class="ident">update</span>) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">clients</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> {
-                        <span class="comment">// Collect update client events only if the worker exists</span>
-                        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">object</span>) <span class="op">=</span> <span class="ident">Object::for_update_client</span>(<span class="ident">update</span>, <span class="ident">src_chain</span>) {
-                            <span class="ident">workers</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">object</span>).<span class="ident">then</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">object</span>)
-                        } <span class="kw">else</span> {
-                            <span class="prelude-val">None</span>
-                        }
+            IbcEvent::UpdateClient(update) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.clients.enabled,
+                    || {
+                        <span class="comment">// Collect update client events only if the worker exists
+                        </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(object) = Object::for_update_client(update, src_chain) {
+                            workers.contains(<span class="kw-2">&amp;</span>object).then(|| object)
+                        } <span class="kw">else </span>{
+                            <span class="prelude-val">None
+                        </span>}
                     },
                 );
             }
-            <span class="ident">IbcEvent::OpenInitConnection</span>(..)
-            <span class="op">|</span> <span class="ident">IbcEvent::OpenTryConnection</span>(..)
-            <span class="op">|</span> <span class="ident">IbcEvent::OpenAckConnection</span>(..) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">connections</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> {
-                        <span class="ident">event_with_height</span>
-                            .<span class="ident">event</span>
-                            .<span class="ident">connection_attributes</span>()
-                            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">attr</span><span class="op">|</span> {
-                                <span class="ident">Object::connection_from_conn_open_events</span>(<span class="ident">attr</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>()
+            IbcEvent::OpenInitConnection(..)
+            | IbcEvent::OpenTryConnection(..)
+            | IbcEvent::OpenAckConnection(..) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.connections.enabled,
+                    || {
+                        event_with_height
+                            .event
+                            .connection_attributes()
+                            .and_then(|attr| {
+                                Object::connection_from_conn_open_events(attr, src_chain).ok()
                             })
                     },
                 );
             }
-            <span class="ident">IbcEvent::OpenInitChannel</span>(..) <span class="op">|</span> <span class="ident">IbcEvent::OpenTryChannel</span>(..) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">channels</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> {
-                        <span class="ident">event_with_height</span>
-                            .<span class="ident">event</span>
-                            .<span class="ident">clone</span>()
-                            .<span class="ident">channel_attributes</span>()
-                            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">attr</span><span class="op">|</span> {
-                                <span class="ident">Object::channel_from_chan_open_events</span>(<span class="kw-2">&amp;</span><span class="ident">attr</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>()
+            IbcEvent::OpenInitChannel(..) | IbcEvent::OpenTryChannel(..) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.channels.enabled,
+                    || {
+                        event_with_height
+                            .event
+                            .clone()
+                            .channel_attributes()
+                            .and_then(|attr| {
+                                Object::channel_from_chan_open_events(<span class="kw-2">&amp;</span>attr, src_chain).ok()
                             })
                     },
                 );
             }
-            <span class="ident">IbcEvent::OpenAckChannel</span>(<span class="ident">open_ack</span>) =&gt; {
-                <span class="comment">// Create client and packet workers here as channel end must be opened</span>
-                <span class="kw">let</span> <span class="ident">attributes</span> <span class="op">=</span> <span class="ident">open_ack</span>.<span class="ident">clone</span>().<span class="ident">into</span>();
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">clients</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::client_from_chan_open_events</span>(<span class="kw-2">&amp;</span><span class="ident">attributes</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+            IbcEvent::OpenAckChannel(open_ack) =&gt; {
+                <span class="comment">// Create client and packet workers here as channel end must be opened
+                </span><span class="kw">let </span>attributes = open_ack.clone().into();
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.clients.enabled,
+                    || Object::client_from_chan_open_events(<span class="kw-2">&amp;</span>attributes, src_chain).ok(),
                 );
 
-                <span class="comment">// If handshake message relaying is enabled create worker to send the MsgChannelOpenConfirm message</span>
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">channels</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::channel_from_chan_open_events</span>(<span class="kw-2">&amp;</span><span class="ident">attributes</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+                <span class="comment">// If handshake message relaying is enabled create worker to send the MsgChannelOpenConfirm message
+                </span>collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.channels.enabled,
+                    || Object::channel_from_chan_open_events(<span class="kw-2">&amp;</span>attributes, src_chain).ok(),
                 );
             }
-            <span class="ident">IbcEvent::OpenConfirmChannel</span>(<span class="ident">open_confirm</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">attributes</span> <span class="op">=</span> <span class="ident">open_confirm</span>.<span class="ident">clone</span>().<span class="ident">into</span>();
-                <span class="comment">// Create client worker here as channel end must be opened</span>
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">clients</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::client_from_chan_open_events</span>(<span class="kw-2">&amp;</span><span class="ident">attributes</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+            IbcEvent::OpenConfirmChannel(open_confirm) =&gt; {
+                <span class="kw">let </span>attributes = open_confirm.clone().into();
+                <span class="comment">// Create client worker here as channel end must be opened
+                </span>collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.clients.enabled,
+                    || Object::client_from_chan_open_events(<span class="kw-2">&amp;</span>attributes, src_chain).ok(),
                 );
             }
-            <span class="ident">IbcEvent::SendPacket</span>(<span class="kw-2">ref</span> <span class="ident">packet</span>) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">packets</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::for_send_packet</span>(<span class="ident">packet</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+            IbcEvent::SendPacket(<span class="kw-2">ref </span>packet) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.packets.enabled,
+                    || Object::for_send_packet(packet, src_chain).ok(),
                 );
             }
-            <span class="ident">IbcEvent::TimeoutPacket</span>(<span class="kw-2">ref</span> <span class="ident">packet</span>) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">packets</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::for_timeout_packet</span>(<span class="ident">packet</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+            IbcEvent::TimeoutPacket(<span class="kw-2">ref </span>packet) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.packets.enabled,
+                    || Object::for_timeout_packet(packet, src_chain).ok(),
                 );
             }
-            <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="kw-2">ref</span> <span class="ident">packet</span>) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">packets</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::for_write_ack</span>(<span class="ident">packet</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+            IbcEvent::WriteAcknowledgement(<span class="kw-2">ref </span>packet) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.packets.enabled,
+                    || Object::for_write_ack(packet, src_chain).ok(),
                 );
             }
-            <span class="ident">IbcEvent::CloseInitChannel</span>(<span class="kw-2">ref</span> <span class="ident">packet</span>) =&gt; {
-                <span class="ident">collect_event</span>(
-                    <span class="kw-2">&amp;mut</span> <span class="ident">collected</span>,
-                    <span class="ident">event_with_height</span>.<span class="ident">clone</span>(),
-                    <span class="ident">mode</span>.<span class="ident">packets</span>.<span class="ident">enabled</span>,
-                    <span class="op">|</span><span class="op">|</span> <span class="ident">Object::for_close_init_channel</span>(<span class="ident">packet</span>, <span class="ident">src_chain</span>).<span class="ident">ok</span>(),
+            IbcEvent::CloseInitChannel(<span class="kw-2">ref </span>packet) =&gt; {
+                collect_event(
+                    <span class="kw-2">&amp;mut </span>collected,
+                    event_with_height.clone(),
+                    mode.packets.enabled,
+                    || Object::for_close_init_channel(packet, src_chain).ok(),
                 );
             }
-            <span class="kw">_</span> =&gt; (),
+            <span class="kw">_ </span>=&gt; (),
         }
     }
 
-    <span class="ident">collected</span>
+    collected
 }
 
-<span class="doccomment">/// Create a new `SpawnContext` for spawning workers.</span>
-<span class="kw">fn</span> <span class="ident">spawn_context</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">WorkerMap</span>,
-) -&gt; <span class="ident">SpawnContext</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Chain</span><span class="op">&gt;</span> {
-    <span class="ident">SpawnContext::new</span>(<span class="ident">config</span>, <span class="ident">registry</span>, <span class="ident">workers</span>)
+<span class="doccomment">/// Create a new `SpawnContext` for spawning workers.
+</span><span class="kw">fn </span>spawn_context&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    workers: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>WorkerMap,
+) -&gt; SpawnContext&lt;<span class="lifetime">&#39;a</span>, Chain&gt; {
+    SpawnContext::new(config, registry, workers)
 }
 
-<span class="kw">fn</span> <span class="ident">chain_scanner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">client_state_filter</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">FilterPolicy</span>,
-    <span class="ident">full_scan</span>: <span class="ident">ScanMode</span>,
-) -&gt; <span class="ident">ChainScanner</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">Chain</span><span class="op">&gt;</span> {
-    <span class="ident">ChainScanner::new</span>(<span class="ident">config</span>, <span class="ident">registry</span>, <span class="ident">client_state_filter</span>, <span class="ident">full_scan</span>)
+<span class="kw">fn </span>chain_scanner&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>FilterPolicy,
+    full_scan: ScanMode,
+) -&gt; ChainScanner&lt;<span class="lifetime">&#39;a</span>, Chain&gt; {
+    ChainScanner::new(config, registry, client_state_filter, full_scan)
 }
 
-<span class="doccomment">/// Perform a health check on all connected chains</span>
-<span class="kw">fn</span> <span class="ident">health_check</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(<span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>, <span class="ident">registry</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>) {
-    <span class="kw">use</span> <span class="ident">HealthCheck</span>::<span class="kw-2">*</span>;
+<span class="doccomment">/// Perform a health check on all connected chains
+</span><span class="kw">fn </span>health_check&lt;Chain: ChainHandle&gt;(config: <span class="kw-2">&amp;</span>Config, registry: <span class="kw-2">&amp;mut </span>Registry&lt;Chain&gt;) {
+    <span class="kw">use </span>HealthCheck::<span class="kw-2">*</span>;
 
-    <span class="kw">let</span> <span class="ident">chains</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">chains</span>;
+    <span class="kw">let </span>chains = <span class="kw-2">&amp;</span>config.chains;
 
-    <span class="kw">for</span> <span class="ident">config</span> <span class="kw">in</span> <span class="ident">chains</span> {
-        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">id</span>;
-        <span class="kw">let</span> <span class="ident">_span</span> <span class="op">=</span> <span class="macro">error_span!</span>(<span class="string">&quot;health_check&quot;</span>, <span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">id</span>).<span class="ident">entered</span>();
+    <span class="kw">for </span>config <span class="kw">in </span>chains {
+        <span class="kw">let </span>id = <span class="kw-2">&amp;</span>config.id;
+        <span class="kw">let </span>_span = <span class="macro">error_span!</span>(<span class="string">&quot;health_check&quot;</span>, chain = %id).entered();
 
-        <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">get_or_spawn</span>(<span class="ident">id</span>);
+        <span class="kw">let </span>chain = registry.get_or_spawn(id);
 
-        <span class="kw">match</span> <span class="ident">chain</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">chain</span>) =&gt; <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">health_check</span>() {
-                <span class="prelude-val">Ok</span>(<span class="ident">Healthy</span>) =&gt; <span class="macro">info!</span>(<span class="string">&quot;chain is healthy&quot;</span>),
-                <span class="prelude-val">Ok</span>(<span class="ident">Unhealthy</span>(<span class="ident">e</span>)) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;chain is not healthy: {}&quot;</span>, <span class="ident">e</span>),
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(<span class="string">&quot;failed to perform health check: {}&quot;</span>, <span class="ident">e</span>),
+        <span class="kw">match </span>chain {
+            <span class="prelude-val">Ok</span>(chain) =&gt; <span class="kw">match </span>chain.health_check() {
+                <span class="prelude-val">Ok</span>(Healthy) =&gt; <span class="macro">info!</span>(<span class="string">&quot;chain is healthy&quot;</span>),
+                <span class="prelude-val">Ok</span>(Unhealthy(e)) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;chain is not healthy: {}&quot;</span>, e),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(<span class="string">&quot;failed to perform health check: {}&quot;</span>, e),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+            <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
                     <span class="string">&quot;skipping health check, reason: failed to spawn chain runtime with error: {}&quot;</span>,
-                    <span class="ident">e</span>
+                    e
                 );
             }
         }
     }
 }
 
-<span class="doccomment">/// Subscribe to the events emitted by the chains the supervisor is connected to.</span>
-<span class="attribute">#[<span class="ident">instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;supervisor.init_subscriptions&quot;</span>, <span class="ident">level</span> <span class="op">=</span> <span class="string">&quot;error&quot;</span>, <span class="ident">skip_all</span>)]</span>
-<span class="kw">fn</span> <span class="ident">init_subscriptions</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Chain</span>, <span class="ident">Subscription</span>)<span class="op">&gt;</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">chains</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">config</span>.<span class="ident">chains</span>;
+<span class="doccomment">/// Subscribe to the events emitted by the chains the supervisor is connected to.
+</span><span class="attribute">#[instrument(name = <span class="string">&quot;supervisor.init_subscriptions&quot;</span>, level = <span class="string">&quot;error&quot;</span>, skip_all)]
+</span><span class="kw">fn </span>init_subscriptions&lt;Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    registry: <span class="kw-2">&amp;mut </span>Registry&lt;Chain&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(Chain, Subscription)&gt;, Error&gt; {
+    <span class="kw">let </span>chains = <span class="kw-2">&amp;</span>config.chains;
 
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">subscriptions</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">chains</span>.<span class="ident">len</span>());
+    <span class="kw">let </span><span class="kw-2">mut </span>subscriptions = Vec::with_capacity(chains.len());
 
-    <span class="kw">for</span> <span class="ident">chain_config</span> <span class="kw">in</span> <span class="ident">chains</span> {
-        <span class="kw">let</span> <span class="ident">chain</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">registry</span>.<span class="ident">get_or_spawn</span>(<span class="kw-2">&amp;</span><span class="ident">chain_config</span>.<span class="ident">id</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">chain</span>) =&gt; <span class="ident">chain</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+    <span class="kw">for </span>chain_config <span class="kw">in </span>chains {
+        <span class="kw">let </span>chain = <span class="kw">match </span>registry.get_or_spawn(<span class="kw-2">&amp;</span>chain_config.id) {
+            <span class="prelude-val">Ok</span>(chain) =&gt; chain,
+            <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
                     <span class="string">&quot;failed to spawn chain runtime for {}: {}&quot;</span>,
-                    <span class="ident">chain_config</span>.<span class="ident">id</span>, <span class="ident">e</span>
+                    chain_config.id, e
                 );
 
                 <span class="kw">continue</span>;
             }
         };
 
-        <span class="kw">match</span> <span class="ident">chain</span>.<span class="ident">subscribe</span>() {
-            <span class="prelude-val">Ok</span>(<span class="ident">subscription</span>) =&gt; <span class="ident">subscriptions</span>.<span class="ident">push</span>((<span class="ident">chain</span>, <span class="ident">subscription</span>)),
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="macro">error!</span>(
+        <span class="kw">match </span>chain.subscribe() {
+            <span class="prelude-val">Ok</span>(subscription) =&gt; subscriptions.push((chain, subscription)),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(
                 <span class="string">&quot;failed to subscribe to events of {}: {}&quot;</span>,
-                <span class="ident">chain_config</span>.<span class="ident">id</span>, <span class="ident">e</span>
+                chain_config.id, e
             ),
         }
     }
 
-    <span class="comment">// At least one chain runtime should be available, otherwise the supervisor</span>
-    <span class="comment">// cannot do anything and will hang indefinitely.</span>
-    <span class="kw">if</span> <span class="ident">registry</span>.<span class="ident">size</span>() <span class="op">==</span> <span class="number">0</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::no_chains_available</span>());
+    <span class="comment">// At least one chain runtime should be available, otherwise the supervisor
+    // cannot do anything and will hang indefinitely.
+    </span><span class="kw">if </span>registry.size() == <span class="number">0 </span>{
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::no_chains_available());
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">subscriptions</span>)
+    <span class="prelude-val">Ok</span>(subscriptions)
 }
 
-<span class="doccomment">/// Dump the state of the supervisor into a [`SupervisorState`] value,</span>
-<span class="doccomment">/// and send it back through the given channel.</span>
-<span class="kw">fn</span> <span class="ident">dump_state</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;</span><span class="ident">WorkerMap</span>,
-    <span class="ident">reply_to</span>: <span class="ident">Sender</span><span class="op">&lt;</span><span class="ident">SupervisorState</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Dump the state of the supervisor into a [`SupervisorState`] value,
+/// and send it back through the given channel.
+</span><span class="kw">fn </span>dump_state&lt;Chain: ChainHandle&gt;(
+    registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;,
+    workers: <span class="kw-2">&amp;</span>WorkerMap,
+    reply_to: Sender&lt;SupervisorState&gt;,
 ) {
-    <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">state</span>(<span class="ident">registry</span>, <span class="ident">workers</span>);
-    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">reply_to</span>.<span class="ident">try_send</span>(<span class="ident">state</span>);
+    <span class="kw">let </span>state = state(registry, workers);
+    <span class="kw">let _ </span>= reply_to.try_send(state);
 }
 
-<span class="doccomment">/// Returns a representation of the supervisor&#39;s internal state</span>
-<span class="doccomment">/// as a [`SupervisorState`].</span>
-<span class="kw">fn</span> <span class="ident">state</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(<span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>, <span class="ident">workers</span>: <span class="kw-2">&amp;</span><span class="ident">WorkerMap</span>) -&gt; <span class="ident">SupervisorState</span> {
-    <span class="kw">let</span> <span class="ident">chains</span> <span class="op">=</span> <span class="ident">registry</span>.<span class="ident">chains</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">c</span><span class="op">|</span> <span class="ident">c</span>.<span class="ident">id</span>()).<span class="ident">collect_vec</span>();
-    <span class="ident">SupervisorState::new</span>(<span class="ident">chains</span>, <span class="ident">workers</span>.<span class="ident">handles</span>())
+<span class="doccomment">/// Returns a representation of the supervisor&#39;s internal state
+/// as a [`SupervisorState`].
+</span><span class="kw">fn </span>state&lt;Chain: ChainHandle&gt;(registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;, workers: <span class="kw-2">&amp;</span>WorkerMap) -&gt; SupervisorState {
+    <span class="kw">let </span>chains = registry.chains().map(|c| c.id()).collect_vec();
+    SupervisorState::new(chains, workers.handles())
 }
 
-<span class="kw">fn</span> <span class="ident">handle_rest_requests</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;</span><span class="ident">WorkerMap</span>,
-    <span class="ident">rest_rx</span>: <span class="kw-2">&amp;</span><span class="ident">rest::Receiver</span>,
+<span class="kw">fn </span>handle_rest_requests&lt;Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;,
+    workers: <span class="kw-2">&amp;</span>WorkerMap,
+    rest_rx: <span class="kw-2">&amp;</span>rest::Receiver,
 ) {
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">cmd</span>) <span class="op">=</span> <span class="ident">rest::process_incoming_requests</span>(<span class="ident">config</span>, <span class="ident">rest_rx</span>) {
-        <span class="ident">handle_rest_cmd</span>(<span class="ident">registry</span>, <span class="ident">workers</span>, <span class="ident">cmd</span>);
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(cmd) = rest::process_incoming_requests(config, rest_rx) {
+        handle_rest_cmd(registry, workers, cmd);
     }
 }
 
-<span class="attribute">#[<span class="ident">instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;supervisor.handle_rest_cmd&quot;</span>, <span class="ident">level</span> <span class="op">=</span> <span class="string">&quot;error&quot;</span>, <span class="ident">skip_all</span>)]</span>
-<span class="kw">fn</span> <span class="ident">handle_rest_cmd</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">registry</span>: <span class="kw-2">&amp;</span><span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;</span><span class="ident">WorkerMap</span>,
-    <span class="ident">m</span>: <span class="ident">rest::Command</span>,
+<span class="attribute">#[instrument(name = <span class="string">&quot;supervisor.handle_rest_cmd&quot;</span>, level = <span class="string">&quot;error&quot;</span>, skip_all)]
+</span><span class="kw">fn </span>handle_rest_cmd&lt;Chain: ChainHandle&gt;(
+    registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;,
+    workers: <span class="kw-2">&amp;</span>WorkerMap,
+    m: rest::Command,
 ) {
-    <span class="kw">match</span> <span class="ident">m</span> {
-        <span class="ident">rest::Command::DumpState</span>(<span class="ident">reply</span>) =&gt; {
-            <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">state</span>(<span class="ident">registry</span>, <span class="ident">workers</span>);
-            <span class="ident">reply</span>
-                .<span class="ident">send</span>(<span class="prelude-val">Ok</span>(<span class="ident">state</span>))
-                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {}&quot;</span>, <span class="ident">e</span>));
+    <span class="kw">match </span>m {
+        rest::Command::DumpState(reply) =&gt; {
+            <span class="kw">let </span>state = state(registry, workers);
+            reply
+                .send(<span class="prelude-val">Ok</span>(state))
+                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {}&quot;</span>, e));
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">instrument</span>(
-    <span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;supervisor.clear_pending_packets&quot;</span>,
-    <span class="ident">level</span> <span class="op">=</span> <span class="string">&quot;error&quot;</span>,
-    <span class="ident">skip_all</span>,
-    <span class="ident">fields</span>(<span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain_id</span>)
-)]</span>
-<span class="kw">fn</span> <span class="ident">clear_pending_packets</span>(<span class="ident">workers</span>: <span class="kw-2">&amp;mut</span> <span class="ident">WorkerMap</span>, <span class="ident">chain_id</span>: <span class="kw-2">&amp;</span><span class="ident">ChainId</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">for</span> <span class="ident">worker</span> <span class="kw">in</span> <span class="ident">workers</span>.<span class="ident">workers_for_chain</span>(<span class="ident">chain_id</span>) {
-        <span class="ident">worker</span>.<span class="ident">clear_pending_packets</span>();
+<span class="attribute">#[instrument(
+    name = <span class="string">&quot;supervisor.clear_pending_packets&quot;</span>,
+    level = <span class="string">&quot;error&quot;</span>,
+    skip_all,
+    fields(chain = %chain_id)
+)]
+</span><span class="kw">fn </span>clear_pending_packets(workers: <span class="kw-2">&amp;mut </span>WorkerMap, chain_id: <span class="kw-2">&amp;</span>ChainId) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">for </span>worker <span class="kw">in </span>workers.workers_for_chain(chain_id) {
+        worker.clear_pending_packets();
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="doccomment">/// Process a batch of events received from a chain.</span>
-<span class="attribute">#[<span class="ident">instrument</span>(
-    <span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;supervisor.process_batch&quot;</span>,
-    <span class="ident">level</span> <span class="op">=</span> <span class="string">&quot;error&quot;</span>,
-    <span class="ident">skip_all</span>,
-    <span class="ident">fields</span>(<span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">src_chain</span>.<span class="ident">id</span>()))
-]</span>
-<span class="kw">fn</span> <span class="ident">process_batch</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">client_state_filter</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FilterPolicy</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;mut</span> <span class="ident">WorkerMap</span>,
-    <span class="ident">src_chain</span>: <span class="ident">Chain</span>,
-    <span class="ident">batch</span>: <span class="kw-2">&amp;</span><span class="ident">EventBatch</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="macro">assert_eq!</span>(<span class="ident">src_chain</span>.<span class="ident">id</span>(), <span class="ident">batch</span>.<span class="ident">chain_id</span>);
+<span class="doccomment">/// Process a batch of events received from a chain.
+</span><span class="attribute">#[instrument(
+    name = <span class="string">&quot;supervisor.process_batch&quot;</span>,
+    level = <span class="string">&quot;error&quot;</span>,
+    skip_all,
+    fields(chain = %src_chain.id()))
+]
+</span><span class="kw">fn </span>process_batch&lt;Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    registry: <span class="kw-2">&amp;mut </span>Registry&lt;Chain&gt;,
+    client_state_filter: <span class="kw-2">&amp;mut </span>FilterPolicy,
+    workers: <span class="kw-2">&amp;mut </span>WorkerMap,
+    src_chain: Chain,
+    batch: <span class="kw-2">&amp;</span>EventBatch,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="macro">assert_eq!</span>(src_chain.id(), batch.chain_id);
 
-    <span class="macro">telemetry!</span>(<span class="ident">received_event_batch</span>, <span class="ident">batch</span>.<span class="ident">tracking_id</span>);
+    <span class="macro">telemetry!</span>(received_event_batch, batch.tracking_id);
 
-    <span class="kw">let</span> <span class="ident">collected</span> <span class="op">=</span> <span class="ident">collect_events</span>(<span class="ident">config</span>, <span class="ident">workers</span>, <span class="kw-2">&amp;</span><span class="ident">src_chain</span>, <span class="ident">batch</span>);
+    <span class="kw">let </span>collected = collect_events(config, workers, <span class="kw-2">&amp;</span>src_chain, batch);
 
-    <span class="comment">// If there is a NewBlock event, forward this event first to any workers affected by it.</span>
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">IbcEvent::NewBlock</span>(<span class="ident">new_block</span>)) <span class="op">=</span> <span class="ident">collected</span>.<span class="ident">new_block</span> {
-        <span class="ident">workers</span>.<span class="ident">notify_new_block</span>(<span class="kw-2">&amp;</span><span class="ident">src_chain</span>.<span class="ident">id</span>(), <span class="ident">batch</span>.<span class="ident">height</span>, <span class="ident">new_block</span>);
+    <span class="comment">// If there is a NewBlock event, forward this event first to any workers affected by it.
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(IbcEvent::NewBlock(new_block)) = collected.new_block {
+        workers.notify_new_block(<span class="kw-2">&amp;</span>src_chain.id(), batch.height, new_block);
     }
 
-    <span class="comment">// Forward the IBC events.</span>
-    <span class="kw">for</span> (<span class="ident">object</span>, <span class="ident">events_with_heights</span>) <span class="kw">in</span> <span class="ident">collected</span>.<span class="ident">per_object</span>.<span class="ident">into_iter</span>() {
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">relay_on_object</span>(
-            <span class="ident">config</span>,
-            <span class="ident">registry</span>,
-            <span class="ident">client_state_filter</span>,
-            <span class="kw-2">&amp;</span><span class="ident">src_chain</span>.<span class="ident">id</span>(),
-            <span class="kw-2">&amp;</span><span class="ident">object</span>,
+    <span class="comment">// Forward the IBC events.
+    </span><span class="kw">for </span>(object, events_with_heights) <span class="kw">in </span>collected.per_object.into_iter() {
+        <span class="kw">if </span>!relay_on_object(
+            config,
+            registry,
+            client_state_filter,
+            <span class="kw-2">&amp;</span>src_chain.id(),
+            <span class="kw-2">&amp;</span>object,
         ) {
             <span class="macro">trace!</span>(
                 <span class="string">&quot;skipping events for &#39;{}&#39;. \
                 reason: filtering is enabled and channel does not match any allowed channels&quot;</span>,
-                <span class="ident">object</span>.<span class="ident">short_name</span>()
+                object.short_name()
             );
 
             <span class="kw">continue</span>;
         }
 
-        <span class="kw">if</span> <span class="ident">events_with_heights</span>.<span class="ident">is_empty</span>() {
+        <span class="kw">if </span>events_with_heights.is_empty() {
             <span class="kw">continue</span>;
         }
 
-        <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="ident">registry</span>
-            .<span class="ident">get_or_spawn</span>(<span class="ident">object</span>.<span class="ident">src_chain_id</span>())
-            .<span class="ident">map_err</span>(<span class="ident">Error::spawn</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>src = registry
+            .get_or_spawn(object.src_chain_id())
+            .map_err(Error::spawn)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">dst</span> <span class="op">=</span> <span class="ident">registry</span>
-            .<span class="ident">get_or_spawn</span>(<span class="ident">object</span>.<span class="ident">dst_chain_id</span>())
-            .<span class="ident">map_err</span>(<span class="ident">Error::spawn</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dst = registry
+            .get_or_spawn(object.dst_chain_id())
+            .map_err(Error::spawn)<span class="question-mark">?</span>;
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Object::Packet</span>(<span class="kw-2">ref</span> <span class="ident">_path</span>) <span class="op">=</span> <span class="ident">object</span> {
-            <span class="comment">// Update telemetry info</span>
-            <span class="macro">telemetry!</span>(<span class="ident">send_telemetry</span>(<span class="kw-2">&amp;</span><span class="ident">src</span>, <span class="kw-2">&amp;</span><span class="ident">dst</span>, <span class="kw-2">&amp;</span><span class="ident">events_with_heights</span>, <span class="ident">_path</span>));
+        <span class="kw">if let </span>Object::Packet(<span class="kw-2">ref </span>_path) = object {
+            <span class="comment">// Update telemetry info
+            </span><span class="macro">telemetry!</span>(send_telemetry(<span class="kw-2">&amp;</span>src, <span class="kw-2">&amp;</span>dst, <span class="kw-2">&amp;</span>events_with_heights, _path));
         }
 
-        <span class="kw">let</span> <span class="ident">worker</span> <span class="op">=</span> <span class="ident">workers</span>.<span class="ident">get_or_spawn</span>(<span class="ident">object</span>, <span class="ident">src</span>, <span class="ident">dst</span>, <span class="ident">config</span>);
+        <span class="kw">let </span>worker = workers.get_or_spawn(object, src, dst, config);
 
-        <span class="ident">worker</span>.<span class="ident">send_events</span>(
-            <span class="ident">batch</span>.<span class="ident">height</span>,
-            <span class="ident">events_with_heights</span>,
-            <span class="ident">batch</span>.<span class="ident">chain_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">batch</span>.<span class="ident">tracking_id</span>,
+        worker.send_events(
+            batch.height,
+            events_with_heights,
+            batch.chain_id.clone(),
+            batch.tracking_id,
         );
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="doccomment">/// This method parses a list of IbcEvent and record the following three metrics if there is</span>
-<span class="doccomment">/// the corresponding event:</span>
-<span class="doccomment">/// * send_packet_events: The number of SendPacket events received</span>
-<span class="doccomment">/// * acknowledgement_events: The number of WriteAcknowledgment events received.</span>
-<span class="doccomment">/// * timeout_events: The number of TimeoutPacket events received.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The labels `chain_id` represents the chain sending the event, and `counterparty_chain_id` represents</span>
-<span class="doccomment">/// the chain receiving the event.</span>
-<span class="doccomment">/// So successfully sending a packet from chain A to chain B will result in first a SendPacket</span>
-<span class="doccomment">/// event with `chain_id = A` and `counterparty_chain_id = B` and then a WriteAcknowlegment</span>
-<span class="doccomment">/// event with `chain_id = B` and `counterparty_chain_id = A`.</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;telemetry&quot;</span>)]</span>
-<span class="kw">fn</span> <span class="ident">send_telemetry</span><span class="op">&lt;</span><span class="ident">Src</span>, <span class="ident">Dst</span><span class="op">&gt;</span>(
-    <span class="ident">src</span>: <span class="kw-2">&amp;</span><span class="ident">Src</span>,
-    <span class="ident">dst</span>: <span class="kw-2">&amp;</span><span class="ident">Dst</span>,
-    <span class="ident">events</span>: <span class="kw-2">&amp;</span>[<span class="ident">IbcEventWithHeight</span>],
-    <span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="kw">crate</span>::object::Packet</span>,
-) <span class="kw">where</span>
-    <span class="ident">Src</span>: <span class="ident">ChainHandle</span>,
-    <span class="ident">Dst</span>: <span class="ident">ChainHandle</span>,
+<span class="doccomment">/// This method parses a list of IbcEvent and record the following three metrics if there is
+/// the corresponding event:
+/// * send_packet_events: The number of SendPacket events received
+/// * acknowledgement_events: The number of WriteAcknowledgment events received.
+/// * timeout_events: The number of TimeoutPacket events received.
+///
+/// The labels `chain_id` represents the chain sending the event, and `counterparty_chain_id` represents
+/// the chain receiving the event.
+/// So successfully sending a packet from chain A to chain B will result in first a SendPacket
+/// event with `chain_id = A` and `counterparty_chain_id = B` and then a WriteAcknowlegment
+/// event with `chain_id = B` and `counterparty_chain_id = A`.
+</span><span class="attribute">#[cfg(feature = <span class="string">&quot;telemetry&quot;</span>)]
+</span><span class="kw">fn </span>send_telemetry&lt;Src, Dst&gt;(
+    src: <span class="kw-2">&amp;</span>Src,
+    dst: <span class="kw-2">&amp;</span>Dst,
+    events: <span class="kw-2">&amp;</span>[IbcEventWithHeight],
+    path: <span class="kw-2">&amp;</span><span class="kw">crate</span>::object::Packet,
+) <span class="kw">where
+    </span>Src: ChainHandle,
+    Dst: ChainHandle,
 {
-    <span class="macro">telemetry!</span> {
-        <span class="kw">for</span> <span class="ident">e</span> <span class="kw">in</span> <span class="ident">events</span> {
-            <span class="kw">match</span> <span class="ident">e</span>.<span class="ident">event</span>.<span class="ident">clone</span>() {
-                <span class="ident">IbcEvent::SendPacket</span>(<span class="ident">send_packet_ev</span>) =&gt; {
-                    <span class="ident">ibc_telemetry::global</span>().<span class="ident">send_packet_events</span>(
-                        <span class="ident">send_packet_ev</span>.<span class="ident">packet</span>.<span class="ident">sequence</span>.<span class="ident">into</span>(),
-                        <span class="ident">e</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>(),
-                        <span class="kw-2">&amp;</span><span class="ident">src</span>.<span class="ident">id</span>(),
-                        <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">src_channel_id</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">src_port_id</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">dst</span>.<span class="ident">id</span>(),
+    <span class="macro">telemetry! </span>{
+        <span class="kw">for </span>e <span class="kw">in </span>events {
+            <span class="kw">match </span>e.event.clone() {
+                IbcEvent::SendPacket(send_packet_ev) =&gt; {
+                    ibc_telemetry::global().send_packet_events(
+                        send_packet_ev.packet.sequence.into(),
+                        e.height.revision_height(),
+                        <span class="kw-2">&amp;</span>src.id(),
+                        <span class="kw-2">&amp;</span>path.src_channel_id,
+                        <span class="kw-2">&amp;</span>path.src_port_id,
+                        <span class="kw-2">&amp;</span>dst.id(),
                     );
                 }
-                <span class="ident">IbcEvent::WriteAcknowledgement</span>(<span class="ident">write_ack_ev</span>) =&gt; {
-                    <span class="ident">ibc_telemetry::global</span>().<span class="ident">acknowledgement_events</span>(
-                        <span class="ident">write_ack_ev</span>.<span class="ident">packet</span>.<span class="ident">sequence</span>.<span class="ident">into</span>(),
-                        <span class="ident">e</span>.<span class="ident">height</span>.<span class="ident">revision_height</span>(),
-                        <span class="kw-2">&amp;</span><span class="ident">src</span>.<span class="ident">id</span>(),
-                        <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">src_channel_id</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">src_port_id</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">dst</span>.<span class="ident">id</span>(),
+                IbcEvent::WriteAcknowledgement(write_ack_ev) =&gt; {
+                    ibc_telemetry::global().acknowledgement_events(
+                        write_ack_ev.packet.sequence.into(),
+                        e.height.revision_height(),
+                        <span class="kw-2">&amp;</span>src.id(),
+                        <span class="kw-2">&amp;</span>path.src_channel_id,
+                        <span class="kw-2">&amp;</span>path.src_port_id,
+                        <span class="kw-2">&amp;</span>dst.id(),
                     );
                 }
-                <span class="ident">IbcEvent::TimeoutPacket</span>(<span class="kw">_</span>) =&gt; {
-                    <span class="ident">ibc_telemetry::global</span>().<span class="ident">timeout_events</span>(
-                        <span class="kw-2">&amp;</span><span class="ident">src</span>.<span class="ident">id</span>(),
-                        <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">src_channel_id</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">path</span>.<span class="ident">src_port_id</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">dst</span>.<span class="ident">id</span>(),
+                IbcEvent::TimeoutPacket(<span class="kw">_</span>) =&gt; {
+                    ibc_telemetry::global().timeout_events(
+                        <span class="kw-2">&amp;</span>src.id(),
+                        <span class="kw-2">&amp;</span>path.src_channel_id,
+                        <span class="kw-2">&amp;</span>path.src_port_id,
+                        <span class="kw-2">&amp;</span>dst.id(),
                     );
                 }
-                <span class="kw">_</span> =&gt; {}
+                <span class="kw">_ </span>=&gt; {}
             }
         }
     }
 }
 
-<span class="doccomment">/// Process the given batch if it does not contain any errors,</span>
-<span class="doccomment">/// output the errors on the console otherwise.</span>
-<span class="attribute">#[<span class="ident">instrument</span>(
-    <span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;supervisor.handle_batch&quot;</span>,
-    <span class="ident">level</span> <span class="op">=</span> <span class="string">&quot;error&quot;</span>,
-    <span class="ident">skip_all</span>,
-    <span class="ident">fields</span>(<span class="ident">chain</span> <span class="op">=</span> <span class="op">%</span><span class="ident">chain</span>.<span class="ident">id</span>())
-)]</span>
-<span class="kw">fn</span> <span class="ident">handle_batch</span><span class="op">&lt;</span><span class="ident">Chain</span>: <span class="ident">ChainHandle</span><span class="op">&gt;</span>(
-    <span class="ident">config</span>: <span class="kw-2">&amp;</span><span class="ident">Config</span>,
-    <span class="ident">registry</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Registry</span><span class="op">&lt;</span><span class="ident">Chain</span><span class="op">&gt;</span>,
-    <span class="ident">client_state_filter</span>: <span class="kw-2">&amp;mut</span> <span class="ident">FilterPolicy</span>,
-    <span class="ident">workers</span>: <span class="kw-2">&amp;mut</span> <span class="ident">WorkerMap</span>,
-    <span class="ident">chain</span>: <span class="ident">Chain</span>,
-    <span class="ident">batch</span>: <span class="ident">ArcBatch</span>,
+<span class="doccomment">/// Process the given batch if it does not contain any errors,
+/// output the errors on the console otherwise.
+</span><span class="attribute">#[instrument(
+    name = <span class="string">&quot;supervisor.handle_batch&quot;</span>,
+    level = <span class="string">&quot;error&quot;</span>,
+    skip_all,
+    fields(chain = %chain.id())
+)]
+</span><span class="kw">fn </span>handle_batch&lt;Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    registry: <span class="kw-2">&amp;mut </span>Registry&lt;Chain&gt;,
+    client_state_filter: <span class="kw-2">&amp;mut </span>FilterPolicy,
+    workers: <span class="kw-2">&amp;mut </span>WorkerMap,
+    chain: Chain,
+    batch: ArcBatch,
 ) {
-    <span class="kw">let</span> <span class="ident">chain_id</span> <span class="op">=</span> <span class="ident">chain</span>.<span class="ident">id</span>();
+    <span class="kw">let </span>chain_id = chain.id();
 
-    <span class="kw">match</span> <span class="ident">batch</span>.<span class="ident">deref</span>() {
-        <span class="prelude-val">Ok</span>(<span class="ident">batch</span>) =&gt; {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span>
-                <span class="ident">process_batch</span>(<span class="ident">config</span>, <span class="ident">registry</span>, <span class="ident">client_state_filter</span>, <span class="ident">workers</span>, <span class="ident">chain</span>, <span class="ident">batch</span>)
+    <span class="kw">match </span>batch.deref() {
+        <span class="prelude-val">Ok</span>(batch) =&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
+                process_batch(config, registry, client_state_filter, workers, chain, batch)
             {
-                <span class="macro">error!</span>(<span class="string">&quot;error during batch processing: {}&quot;</span>, <span class="ident">e</span>);
+                <span class="macro">error!</span>(<span class="string">&quot;error during batch processing: {}&quot;</span>, e);
             }
         }
-        <span class="prelude-val">Err</span>(<span class="ident">EventError</span>(<span class="ident">EventErrorDetail::SubscriptionCancelled</span>(<span class="kw">_</span>), <span class="kw">_</span>)) =&gt; {
+        <span class="prelude-val">Err</span>(EventError(EventErrorDetail::SubscriptionCancelled(<span class="kw">_</span>), <span class="kw">_</span>)) =&gt; {
             <span class="macro">warn!</span>(<span class="string">&quot;event subscription was cancelled, clearing pending packets&quot;</span>);
 
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">clear_pending_packets</span>(<span class="ident">workers</span>, <span class="kw-2">&amp;</span><span class="ident">chain_id</span>)
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">error!</span>(<span class="string">&quot;error during clearing pending packets: {}&quot;</span>, <span class="ident">e</span>));
+            <span class="kw">let _ </span>= clear_pending_packets(workers, <span class="kw-2">&amp;</span>chain_id)
+                .map_err(|e| <span class="macro">error!</span>(<span class="string">&quot;error during clearing pending packets: {}&quot;</span>, e));
         }
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
-            <span class="macro">error!</span>(<span class="string">&quot;error when receiving event batch: {}&quot;</span>, <span class="ident">e</span>)
+        <span class="prelude-val">Err</span>(e) =&gt; {
+            <span class="macro">error!</span>(<span class="string">&quot;error when receiving event batch: {}&quot;</span>, e)
         }
     }
 }
 
-<span class="doccomment">/// Describes the result of [`collect_events`].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CollectedEvents</span> {
-    <span class="doccomment">/// The height at which these events were emitted from the chain.</span>
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">Height</span>,
-    <span class="doccomment">/// The chain from which the events were emitted.</span>
-    <span class="kw">pub</span> <span class="ident">chain_id</span>: <span class="ident">ChainId</span>,
-    <span class="doccomment">/// [`NewBlock`](ibc_relayer_types::events::IbcEventType::NewBlock) event</span>
-    <span class="doccomment">/// collected from the [`EventBatch`].</span>
-    <span class="kw">pub</span> <span class="ident">new_block</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">IbcEvent</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// Mapping between [`Object`]s and their associated [`IbcEvent`]s.</span>
-    <span class="kw">pub</span> <span class="ident">per_object</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">Object</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">IbcEventWithHeight</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// Unique identifier for tracking this event batch</span>
-    <span class="kw">pub</span> <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>,
+<span class="doccomment">/// Describes the result of [`collect_events`].
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>CollectedEvents {
+    <span class="doccomment">/// The height at which these events were emitted from the chain.
+    </span><span class="kw">pub </span>height: Height,
+    <span class="doccomment">/// The chain from which the events were emitted.
+    </span><span class="kw">pub </span>chain_id: ChainId,
+    <span class="doccomment">/// [`NewBlock`](ibc_relayer_types::events::IbcEventType::NewBlock) event
+    /// collected from the [`EventBatch`].
+    </span><span class="kw">pub </span>new_block: <span class="prelude-ty">Option</span>&lt;IbcEvent&gt;,
+    <span class="doccomment">/// Mapping between [`Object`]s and their associated [`IbcEvent`]s.
+    </span><span class="kw">pub </span>per_object: HashMap&lt;Object, Vec&lt;IbcEventWithHeight&gt;&gt;,
+    <span class="doccomment">/// Unique identifier for tracking this event batch
+    </span><span class="kw">pub </span>tracking_id: TrackingId,
 }
 
-<span class="kw">impl</span> <span class="ident">CollectedEvents</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">height</span>: <span class="ident">Height</span>, <span class="ident">chain_id</span>: <span class="ident">ChainId</span>, <span class="ident">tracking_id</span>: <span class="ident">TrackingId</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">height</span>,
-            <span class="ident">chain_id</span>,
-            <span class="ident">tracking_id</span>,
-            <span class="ident">new_block</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">per_object</span>: <span class="ident">Default::default</span>(),
+<span class="kw">impl </span>CollectedEvents {
+    <span class="kw">pub fn </span>new(height: Height, chain_id: ChainId, tracking_id: TrackingId) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            height,
+            chain_id,
+            tracking_id,
+            new_block: Default::default(),
+            per_object: Default::default(),
         }
     }
 
-    <span class="doccomment">/// Whether the collected events include a</span>
-    <span class="doccomment">/// [`NewBlock`](ibc_relayer_types::events::IbcEventType::NewBlock) event.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_new_block</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">new_block</span>.<span class="ident">is_some</span>()
+    <span class="doccomment">/// Whether the collected events include a
+    /// [`NewBlock`](ibc_relayer_types::events::IbcEventType::NewBlock) event.
+    </span><span class="kw">pub fn </span>has_new_block(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.new_block.is_some()
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ibc_relayer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

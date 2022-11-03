@@ -1,3 +1,3 @@
-(function() {var implementors = {};
-implementors["ripemd160"] = [{"text":"impl FixedOutputDirty for <a class=\"struct\" href=\"ripemd160/struct.Ripemd160.html\" title=\"struct ripemd160::Ripemd160\">Ripemd160</a>","synthetic":false,"types":["ripemd160::Ripemd160"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"ripemd160":[["impl <a class=\"trait\" href=\"digest/fixed/trait.FixedOutputDirty.html\" title=\"trait digest::fixed::FixedOutputDirty\">FixedOutputDirty</a> for <a class=\"struct\" href=\"ripemd160/struct.Ripemd160.html\" title=\"struct ripemd160::Ripemd160\">Ripemd160</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
