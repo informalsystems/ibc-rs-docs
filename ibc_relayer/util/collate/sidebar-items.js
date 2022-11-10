@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["collate",""]],"struct":[["Collate",""],["Collated",""]],"trait":[["CollatedIterExt",""]]};

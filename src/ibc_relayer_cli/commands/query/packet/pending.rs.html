@@ -184,6 +184,23 @@
 <span id="184">184</span>
 <span id="185">185</span>
 <span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 <span class="kw">use </span>serde::Serialize;
@@ -199,14 +216,25 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
+<span class="kw">use </span><span class="kw">super</span>::util::CollatedPendingPackets;
+
 <span class="doccomment">/// A structure to display pending packet commitment sequence IDs
 /// at both ends of a channel.
 </span><span class="attribute">#[derive(Debug, Serialize)]
-</span><span class="kw">struct </span>Summary {
+</span><span class="kw">struct </span>Summary&lt;P&gt; {
     <span class="doccomment">/// The packets sent on the source chain as identified by the command.
-    </span>src: PendingPackets,
+    </span>src: P,
     <span class="doccomment">/// The packets sent on the counterparty chain.
-    </span>dst: PendingPackets,
+    </span>dst: P,
+}
+
+<span class="kw">impl </span>Summary&lt;PendingPackets&gt; {
+    <span class="kw">fn </span>collate(<span class="self">self</span>) -&gt; Summary&lt;CollatedPendingPackets&gt; {
+        Summary {
+            src: CollatedPendingPackets::new(<span class="self">self</span>.src),
+            dst: CollatedPendingPackets::new(<span class="self">self</span>.dst),
+        }
+    }
 }
 
 <span class="doccomment">/// This command does the following:
@@ -247,7 +275,7 @@
 }
 
 <span class="kw">impl </span>QueryPendingPacketsCmd {
-    <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Summary, Error&gt; {
+    <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Summary&lt;PendingPackets&gt;, Error&gt; {
         <span class="kw">let </span>config = app_config();
 
         <span class="kw">let </span>(chains, chan_conn_cli) = spawn_chain_counterparty::&lt;BaseChainHandle&gt;(
@@ -264,6 +292,7 @@
 
         <span class="kw">let </span>src_summary = pending_packet_summary(<span class="kw-2">&amp;</span>chains.src, <span class="kw-2">&amp;</span>chains.dst, <span class="kw-2">&amp;</span>chan_conn_cli.channel)
             .map_err(Error::supervisor)<span class="question-mark">?</span>;
+
         <span class="kw">let </span>counterparty_channel = channel_on_destination(
             <span class="kw-2">&amp;</span>chan_conn_cli.channel,
             <span class="kw-2">&amp;</span>chan_conn_cli.connection,
@@ -271,8 +300,10 @@
         )
         .map_err(Error::supervisor)<span class="question-mark">?
         </span>.ok_or_else(|| Error::missing_counterparty_channel_id(chan_conn_cli.channel))<span class="question-mark">?</span>;
+
         <span class="kw">let </span>dst_summary = pending_packet_summary(<span class="kw-2">&amp;</span>chains.dst, <span class="kw-2">&amp;</span>chains.src, <span class="kw-2">&amp;</span>counterparty_channel)
             .map_err(Error::supervisor)<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(Summary {
             src: src_summary,
             dst: dst_summary,
@@ -282,9 +313,12 @@
 
 <span class="kw">impl </span>Runnable <span class="kw">for </span>QueryPendingPacketsCmd {
     <span class="kw">fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">use </span><span class="kw">crate</span>::conclude::json;
+
         <span class="kw">match </span><span class="self">self</span>.execute() {
-            <span class="prelude-val">Ok</span>(pending) =&gt; Output::success(pending).exit(),
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
+            <span class="prelude-val">Ok</span>(summary) <span class="kw">if </span>json() =&gt; Output::success(summary).exit(),
+            <span class="prelude-val">Ok</span>(summary) =&gt; Output::success(summary.collate()).exit(),
+            <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }
 }

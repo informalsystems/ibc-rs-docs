@@ -164,12 +164,17 @@
 <span id="164">164</span>
 <span id="165">165</span>
 <span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
 </pre><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 
 <span class="kw">use </span>ibc_relayer::chain::counterparty::unreceived_acknowledgements;
 <span class="kw">use </span>ibc_relayer::chain::handle::BaseChainHandle;
 <span class="kw">use </span>ibc_relayer::path::PathIdentifiers;
+<span class="kw">use </span>ibc_relayer::util::collate::CollatedIterExt;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 
@@ -242,9 +247,12 @@
 
 <span class="kw">impl </span>Runnable <span class="kw">for </span>QueryPendingAcksCmd {
     <span class="kw">fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">use </span><span class="kw">crate</span>::conclude::json;
+
         <span class="kw">match </span><span class="self">self</span>.execute() {
-            <span class="prelude-val">Ok</span>(seqs) =&gt; Output::success(seqs).exit(),
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
+            <span class="prelude-val">Ok</span>(seqs) <span class="kw">if </span>json() =&gt; Output::success(seqs).exit(),
+            <span class="prelude-val">Ok</span>(seqs) =&gt; Output::success(seqs.into_iter().collated().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()).exit(),
+            <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }
 }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["block_on","Spawns a new tokio runtime and use it to block on the given future."]],"mod":[["diff",""],["iter",""],["lock",""],["pretty",""],["queue",""],["retry",""],["stream",""],["task",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["block_on","Spawns a new tokio runtime and use it to block on the given future."]],"mod":[["collate",""],["diff",""],["iter",""],["lock",""],["pretty",""],["queue",""],["retry",""],["stream",""],["task",""]]};

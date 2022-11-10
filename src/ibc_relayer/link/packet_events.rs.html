@@ -137,10 +137,10 @@
 <span id="137">137</span>
 <span id="138">138</span>
 <span id="139">139</span>
-<span id="140">140</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Utility methods for querying packet event data.
 
-</span><span class="kw">use </span>tracing::{info, span, warn, Level};
+</span><span class="kw">use </span>itertools::Itertools;
+<span class="kw">use </span>tracing::{info, span, warn, Level};
 
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::events::WithBlockDataType;
@@ -151,10 +151,10 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
 <span class="kw">use </span><span class="kw">crate</span>::path::PathIdentifiers;
-<span class="kw">use </span><span class="kw">crate</span>::util::pretty::PrettySlice;
+<span class="kw">use </span><span class="kw">crate</span>::util::collate::CollatedIterExt;
 
 <span class="doccomment">/// Limit on how many query results should be expected.
-</span><span class="kw">pub const </span>QUERY_RESULT_LIMIT: usize = <span class="number">50</span>;
+</span><span class="kw">pub const </span>CHUNK_LENGTH: usize = <span class="number">50</span>;
 
 <span class="doccomment">/// Returns an iterator on batches of packet events.
 </span><span class="kw">pub fn </span>query_packet_events_with&lt;<span class="lifetime">&#39;a</span>, ChainA, QueryFn&gt;(
@@ -177,39 +177,37 @@
     <span class="kw">let </span>events_total = sequences.len();
     <span class="kw">let </span><span class="kw-2">mut </span>events_left = events_total;
 
-    sequences
-        .chunks(QUERY_RESULT_LIMIT)
-        .map_while(
-            <span class="kw">move </span>|chunk| <span class="kw">match </span>query_fn(src_chain, path, chunk, query_height) {
-                <span class="prelude-val">Ok</span>(events) =&gt; {
-                    events_left -= chunk.len();
+    sequences.chunks(CHUNK_LENGTH).map_while(<span class="kw">move </span>|chunk| {
+        <span class="kw">match </span>query_fn(src_chain, path, chunk, query_height) {
+            <span class="prelude-val">Ok</span>(events) =&gt; {
+                events_left -= chunk.len();
 
-                    <span class="macro">info!</span>(
-                        events.total = %events_total,
-                        events.left = %events_left,
-                        <span class="string">&quot;pulled packet data for {} events out of {} sequences: {};&quot;</span>,
-                        events.len(),
-                        chunk.len(),
-                        PrettySlice(chunk)
-                    );
+                <span class="macro">info!</span>(
+                    events.total = %events_total,
+                    events.left = %events_left,
+                    <span class="string">&quot;pulled packet data for {} events out of {} sequences: {};&quot;</span>,
+                    events.len(),
+                    chunk.len(),
+                    chunk.iter().copied().collated().format(<span class="string">&quot;, &quot;</span>),
+                );
 
-                    <span class="comment">// Because we use the first event height to do the client update,
-                    // if the heights of the events differ, we get proof verification failures.
-                    // Therefore we overwrite the events height with the query height,
-                    // ie. the height of the first event.
-                    </span><span class="kw">let </span>events = events
-                        .into_iter()
-                        .map(|ev| ev.with_height(query_height.get()))
-                        .collect();
+                <span class="comment">// Because we use the first event height to do the client update,
+                // if the heights of the events differ, we get proof verification failures.
+                // Therefore we overwrite the events height with the query height,
+                // ie. the height of the first event.
+                </span><span class="kw">let </span>events = events
+                    .into_iter()
+                    .map(|ev| ev.with_height(query_height.get()))
+                    .collect();
 
-                    <span class="prelude-val">Some</span>(events)
-                }
-                <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">warn!</span>(<span class="string">&quot;encountered query failure while pulling packet data: {}&quot;</span>, e);
-                    <span class="prelude-val">None
-                </span>}
-            },
-        )
+                <span class="prelude-val">Some</span>(events)
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;encountered query failure while pulling packet data: {}&quot;</span>, e);
+                <span class="prelude-val">None
+            </span>}
+        }
+    })
 }
 
 <span class="kw">fn </span>query_packet_events&lt;ChainA: ChainHandle&gt;(
