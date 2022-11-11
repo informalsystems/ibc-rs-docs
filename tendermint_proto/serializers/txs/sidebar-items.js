@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize transactions into Vec<Vec>"],["serialize","Serialize from Vec<Vec> into transactions"]]};
+window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize transactions into `Vec<Vec<u8>>`"],["serialize","Serialize from `Vec<Vec<u8>>` into transactions"]]};

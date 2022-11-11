@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Request","Get information about a specific block by its hash"],["Response","Block responses"]]};

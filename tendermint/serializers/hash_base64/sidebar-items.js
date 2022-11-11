@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize a base64-encoded string into a Hash"],["serialize","Serialize from a Hash into a base64-encoded string"]]};

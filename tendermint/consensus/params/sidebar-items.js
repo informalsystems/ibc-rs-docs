@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Params","Tendermint consensus parameters"],["ValidatorParams","Validator consensus parameters"],["VersionParams","Version Parameters"]]};
+window.SIDEBAR_ITEMS = {"struct":[["Params","All consensus-relevant parameters that can be adjusted by the ABCI app."],["ValidatorParams","ValidatorParams restrict the public key types validators can use."],["VersionParams","Version Parameters"]]};
