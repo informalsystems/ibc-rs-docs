@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["bootstrap",""],["fee",""],["ica",""],["transfer",""]]};
+window.SIDEBAR_ITEMS = {"mod":[["bootstrap",""],["fee",""],["ica",""],["proposal",""],["transfer",""],["wait_chain",""]]};
