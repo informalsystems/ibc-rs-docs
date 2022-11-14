@@ -715,6 +715,7 @@
 <span id="715">715</span>
 <span id="716">716</span>
 <span id="717">717</span>
+<span id="718">718</span>
 </pre><pre class="rust"><code><span class="kw">use </span>core::convert::{TryFrom, TryInto};
 <span class="kw">use </span>core::time::Duration;
 
@@ -748,7 +749,7 @@
 <span class="attribute">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>ClientState {
     <span class="kw">pub </span>chain_id: ChainId,
-    <span class="kw">pub </span>trust_level: TrustThreshold,
+    <span class="kw">pub </span>trust_threshold: TrustThreshold,
     <span class="kw">pub </span>trusting_period: Duration,
     <span class="kw">pub </span>unbonding_period: Duration,
     <span class="kw">pub </span>max_clock_drift: Duration,
@@ -828,7 +829,7 @@
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             chain_id,
-            trust_level: trust_threshold,
+            trust_threshold,
             trusting_period,
             unbonding_period,
             max_clock_drift,
@@ -873,7 +874,7 @@
     </span><span class="kw">pub fn </span>as_light_client_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Options, Error&gt; {
         <span class="prelude-val">Ok</span>(Options {
             trust_threshold: <span class="self">self
-                </span>.trust_level
+                </span>.trust_threshold
                 .try_into()
                 .map_err(|e: Ics02Error| Error::invalid_trust_threshold(e.to_string()))<span class="question-mark">?</span>,
             trusting_period: <span class="self">self</span>.trusting_period,
@@ -959,7 +960,7 @@
 
         <span class="comment">// Reset custom fields to zero values
         </span><span class="self">self</span>.trusting_period = ZERO_DURATION;
-        <span class="self">self</span>.trust_level = TrustThreshold::CLIENT_STATE_RESET;
+        <span class="self">self</span>.trust_threshold = TrustThreshold::CLIENT_STATE_RESET;
         <span class="self">self</span>.allow_update.after_expiry = <span class="bool-val">false</span>;
         <span class="self">self</span>.allow_update.after_misbehaviour = <span class="bool-val">false</span>;
         <span class="self">self</span>.frozen_height = <span class="prelude-val">None</span>;
@@ -982,13 +983,14 @@
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(raw: RawTmClientState) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>trust_level = raw.trust_level.ok_or_else(Error::missing_trust_threshold)<span class="question-mark">?</span>;
+        <span class="kw">let </span>trust_threshold = raw.trust_level.ok_or_else(Error::missing_trust_threshold)<span class="question-mark">?</span>;
 
         <span class="comment">// We need to handle the case where the client is being upgraded and the trust threshold is set to 0/0
-        </span><span class="kw">let </span>trust_threshold = <span class="kw">if </span>trust_level.denominator == <span class="number">0 </span>&amp;&amp; trust_level.numerator == <span class="number">0 </span>{
+        </span><span class="kw">let </span>trust_threshold = <span class="kw">if </span>trust_threshold.denominator == <span class="number">0 </span>&amp;&amp; trust_threshold.numerator == <span class="number">0
+        </span>{
             TrustThreshold::CLIENT_STATE_RESET
         } <span class="kw">else </span>{
-            trust_level
+            trust_threshold
                 .try_into()
                 .map_err(|e| Error::invalid_trust_threshold(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)))<span class="question-mark">?
         </span>};
@@ -1003,7 +1005,7 @@
         <span class="attribute">#[allow(deprecated)]
         </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             chain_id: ChainId::from_string(raw.chain_id.as_str()),
-            trust_level: trust_threshold,
+            trust_threshold,
             trusting_period: raw
                 .trusting_period
                 .ok_or_else(Error::missing_trusting_period)<span class="question-mark">?
@@ -1041,7 +1043,7 @@
         <span class="attribute">#[allow(deprecated)]
         </span><span class="self">Self </span>{
             chain_id: value.chain_id.to_string(),
-            trust_level: <span class="prelude-val">Some</span>(value.trust_level.into()),
+            trust_level: <span class="prelude-val">Some</span>(value.trust_threshold.into()),
             trusting_period: <span class="prelude-val">Some</span>(value.trusting_period.into()),
             unbonding_period: <span class="prelude-val">Some</span>(value.unbonding_period.into()),
             max_clock_drift: <span class="prelude-val">Some</span>(value.max_clock_drift.into()),
@@ -1114,7 +1116,7 @@
     <span class="attribute">#[derive(Clone, Debug, PartialEq)]
     </span><span class="kw">struct </span>ClientStateParams {
         id: ChainId,
-        trust_level: TrustThreshold,
+        trust_threshold: TrustThreshold,
         trusting_period: Duration,
         unbonding_period: Duration,
         max_clock_drift: Duration,
@@ -1143,7 +1145,7 @@
         <span class="comment">// Define a &quot;default&quot; set of parameters to reuse throughout these tests.
         </span><span class="kw">let </span>default_params: ClientStateParams = ClientStateParams {
             id: ChainId::default(),
-            trust_level: TrustThreshold::ONE_THIRD,
+            trust_threshold: TrustThreshold::ONE_THIRD,
             trusting_period: Duration::new(<span class="number">64000</span>, <span class="number">0</span>),
             unbonding_period: Duration::new(<span class="number">128000</span>, <span class="number">0</span>),
             max_clock_drift: Duration::new(<span class="number">3</span>, <span class="number">0</span>),
@@ -1196,7 +1198,7 @@
             Test {
                 name: <span class="string">&quot;Invalid (zero) trust threshold&quot;</span>.to_string(),
                 params: ClientStateParams {
-                    trust_level: TrustThreshold::new(<span class="number">0</span>, <span class="number">3</span>).unwrap(),
+                    trust_threshold: TrustThreshold::new(<span class="number">0</span>, <span class="number">3</span>).unwrap(),
                     ..default_params.clone()
                 },
                 want_pass: <span class="bool-val">false</span>,
@@ -1218,7 +1220,7 @@
 
             <span class="kw">let </span>cs_result = ClientState::new(
                 p.id,
-                p.trust_level,
+                p.trust_threshold,
                 p.trusting_period,
                 p.unbonding_period,
                 p.max_clock_drift,
@@ -1322,7 +1324,7 @@
         <span class="comment">// Define a &quot;default&quot; set of parameters to reuse throughout these tests.
         </span><span class="kw">let </span>default_params: ClientStateParams = ClientStateParams {
             id: ChainId::default(),
-            trust_level: TrustThreshold::ONE_THIRD,
+            trust_threshold: TrustThreshold::ONE_THIRD,
             trusting_period: Duration::new(<span class="number">64000</span>, <span class="number">0</span>),
             unbonding_period: Duration::new(<span class="number">128000</span>, <span class="number">0</span>),
             max_clock_drift: Duration::new(<span class="number">3</span>, <span class="number">0</span>),
@@ -1371,7 +1373,7 @@
             <span class="kw">let </span>p = default_params.clone();
             <span class="kw">let </span>client_state = ClientState::new(
                 p.id,
-                p.trust_level,
+                p.trust_threshold,
                 p.trusting_period,
                 p.unbonding_period,
                 p.max_clock_drift,
