@@ -1992,38 +1992,6 @@
 <span id="1992">1992</span>
 <span id="1993">1993</span>
 <span id="1994">1994</span>
-<span id="1995">1995</span>
-<span id="1996">1996</span>
-<span id="1997">1997</span>
-<span id="1998">1998</span>
-<span id="1999">1999</span>
-<span id="2000">2000</span>
-<span id="2001">2001</span>
-<span id="2002">2002</span>
-<span id="2003">2003</span>
-<span id="2004">2004</span>
-<span id="2005">2005</span>
-<span id="2006">2006</span>
-<span id="2007">2007</span>
-<span id="2008">2008</span>
-<span id="2009">2009</span>
-<span id="2010">2010</span>
-<span id="2011">2011</span>
-<span id="2012">2012</span>
-<span id="2013">2013</span>
-<span id="2014">2014</span>
-<span id="2015">2015</span>
-<span id="2016">2016</span>
-<span id="2017">2017</span>
-<span id="2018">2018</span>
-<span id="2019">2019</span>
-<span id="2020">2020</span>
-<span id="2021">2021</span>
-<span id="2022">2022</span>
-<span id="2023">2023</span>
-<span id="2024">2024</span>
-<span id="2025">2025</span>
-<span id="2026">2026</span>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2033,8 +2001,7 @@
     time::Duration,
 };
 <span class="kw">use </span>num_bigint::BigInt;
-<span class="kw">use </span>std::cmp::Ordering;
-<span class="kw">use </span>std::thread;
+<span class="kw">use </span>std::{cmp::Ordering, thread};
 
 <span class="kw">use </span>ibc_proto::protobuf::Protobuf;
 <span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>TmHeight;
@@ -2049,15 +2016,21 @@
 <span class="kw">use </span>tracing::{error, instrument, trace, warn};
 
 <span class="kw">use </span>ibc_proto::cosmos::staking::v1beta1::Params <span class="kw">as </span>StakingParams;
+<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::client_state::{
+    AllowUpdate, ClientState <span class="kw">as </span>TmClientState,
+};
+<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::consensus_state::ConsensusState <span class="kw">as </span>TMConsensusState;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::header::Header <span class="kw">as </span>TmHeader;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_type::ClientType;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::error::Error <span class="kw">as </span>ClientError;
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
 <span class="kw">use </span>ibc_relayer_types::core::ics03_connection::connection::{
     ConnectionEnd, IdentifiedConnectionEnd,
 };
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd};
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::commitment::CommitmentPrefix;
+<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::merkle::MerkleProof;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{
     ChainId, ChannelId, ClientId, ConnectionId, PortId,
 };
@@ -2070,19 +2043,15 @@
 };
 <span class="kw">use </span>ibc_relayer_types::signer::Signer;
 <span class="kw">use </span>ibc_relayer_types::Height <span class="kw">as </span>ICSHeight;
-<span class="kw">use </span>ibc_relayer_types::{
-    clients::ics07_tendermint::client_state::{AllowUpdate, ClientState <span class="kw">as </span>TmClientState},
-    core::ics23_commitment::merkle::MerkleProof,
-};
-<span class="kw">use </span>ibc_relayer_types::{
-    clients::ics07_tendermint::consensus_state::ConsensusState <span class="kw">as </span>TMConsensusState,
-    core::ics02_client::events::UpdateClient,
-};
 
-<span class="kw">use </span><span class="kw">crate</span>::account::Balance;
 <span class="kw">use </span><span class="kw">crate</span>::chain::client::ClientSettings;
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::batch::sequential_send_batched_messages_and_wait_commit;
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::batch::{
+    send_batched_messages_and_wait_check_tx, send_batched_messages_and_wait_commit,
+};
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::encode::key_entry_to_signer;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::fee::maybe_register_counterparty_payee;
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::gas::{calculate_fee, mul_ceil};
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::account::get_or_fetch_account;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::balance::{query_all_balances, query_balance};
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::denom_trace::query_denom_trace;
@@ -2096,10 +2065,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::types::gas::{
     default_gas_from_config, gas_multiplier_from_config, max_gas_from_config,
 };
-<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::{
-    batch::sequential_send_batched_messages_and_wait_commit,
-    gas::{calculate_fee, mul_ceil},
-};
 <span class="kw">use </span><span class="kw">crate</span>::chain::endpoint::{ChainEndpoint, ChainStatus, HealthCheck};
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::{Qualified, QueryPacketEventDataRequest};
 <span class="kw">use </span><span class="kw">crate</span>::chain::tracking::TrackedMsgs;
@@ -2108,19 +2073,15 @@
 <span class="kw">use </span><span class="kw">crate</span>::consensus_state::{AnyConsensusState, AnyConsensusStateWithHeight};
 <span class="kw">use </span><span class="kw">crate</span>::denom::DenomTrace;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-<span class="kw">use </span><span class="kw">crate</span>::event::monitor::{EventMonitor, EventReceiver, TxMonitorCmd};
+<span class="kw">use </span><span class="kw">crate</span>::event::monitor::{EventReceiver, TxMonitorCmd};
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
 <span class="kw">use </span><span class="kw">crate</span>::keyring::{KeyEntry, KeyRing};
 <span class="kw">use </span><span class="kw">crate</span>::light_client::tendermint::LightClient <span class="kw">as </span>TmLightClient;
 <span class="kw">use </span><span class="kw">crate</span>::light_client::{LightClient, Verified};
 <span class="kw">use </span><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence;
 <span class="kw">use </span><span class="kw">crate</span>::util::pretty::{PrettyConsensusStateWithHeight, PrettyIdentifiedChannel};
-<span class="kw">use crate</span>::{
-    chain::cosmos::batch::{
-        send_batched_messages_and_wait_check_tx, send_batched_messages_and_wait_commit,
-    },
-    util::pretty::{PrettyIdentifiedClientState, PrettyIdentifiedConnection},
-};
+<span class="kw">use </span><span class="kw">crate</span>::util::pretty::{PrettyIdentifiedClientState, PrettyIdentifiedConnection};
+<span class="kw">use crate</span>::{account::Balance, event::monitor::EventMonitor};
 
 <span class="kw">use </span><span class="kw">super</span>::requests::{
     IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
@@ -2708,10 +2669,6 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainId {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.config().id
-    }
-
     <span class="kw">fn </span>keybase(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KeyRing {
         <span class="kw-2">&amp;</span><span class="self">self</span>.keybase
     }
@@ -2814,29 +2771,8 @@
     }
 
     <span class="doccomment">/// Get the chain configuration
-    </span><span class="kw">fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChainConfig {
-        <span class="self">self</span>.config.clone()
-    }
-
-    <span class="doccomment">/// Get the signing key
-    </span><span class="kw">fn </span>get_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;KeyEntry, Error&gt; {
-        <span class="macro">crate::time!</span>(<span class="string">&quot;get_key&quot;</span>);
-
-        <span class="comment">// Get the key from key seed file
-        </span><span class="kw">let </span>key = <span class="self">self
-            </span>.keybase()
-            .get_key(<span class="kw-2">&amp;</span><span class="self">self</span>.config.key_name)
-            .map_err(|e| Error::key_not_found(<span class="self">self</span>.config.key_name.clone(), e))<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(key)
-    }
-
-    <span class="kw">fn </span>add_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key_name: <span class="kw-2">&amp;</span>str, key: KeyEntry) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="self">self</span>.keybase_mut()
-            .add_key(key_name, key)
-            .map_err(Error::key_base)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
+    </span><span class="kw">fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainConfig {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.config
     }
 
     <span class="kw">fn </span>ibc_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
