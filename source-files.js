@@ -21,7 +21,6 @@ var sourcesIndex = JSON.parse('{\
 "backtrace":["",[["backtrace",[],["libunwind.rs","mod.rs"]],["symbolize",[["gimli",[],["elf.rs","libs_dl_iterate_phdr.rs","mmap_unix.rs","stash.rs"]]],["gimli.rs","mod.rs"]]],["capture.rs","lib.rs","print.rs","types.rs"]],\
 "base16ct":["",[],["display.rs","error.rs","lib.rs","lower.rs","mixed.rs","upper.rs"]],\
 "base64":["",[["read",[],["decoder.rs","mod.rs"]],["write",[],["encoder.rs","encoder_string_writer.rs","mod.rs"]]],["chunked_encoder.rs","decode.rs","display.rs","encode.rs","lib.rs","tables.rs"]],\
-"base64ct":["",[["alphabet",[],["bcrypt.rs","crypt.rs","shacrypt.rs","standard.rs","url.rs"]]],["alphabet.rs","decoder.rs","encoder.rs","encoding.rs","errors.rs","lib.rs","line_ending.rs"]],\
 "bech32":["",[],["lib.rs"]],\
 "bip39":["",[],["crypto.rs","error.rs","language.rs","lib.rs","mnemonic.rs","mnemonic_type.rs","seed.rs","util.rs"]],\
 "bit_set":["",[],["lib.rs"]],\
@@ -62,7 +61,7 @@ var sourcesIndex = JSON.parse('{\
 "dashmap":["",[["mapref",[],["entry.rs","mod.rs","multiple.rs","one.rs"]],["setref",[],["mod.rs","multiple.rs","one.rs"]]],["iter.rs","iter_set.rs","lib.rs","lock.rs","read_only.rs","set.rs","t.rs","try_result.rs","util.rs"]],\
 "debug_unreachable":["",[],["lib.rs"]],\
 "deflate":["",[],["bit_reverse.rs","bitstream.rs","chained_hash_table.rs","checksum.rs","compress.rs","compression_options.rs","deflate_state.rs","encoder_state.rs","huffman_lengths.rs","huffman_table.rs","input_buffer.rs","length_encode.rs","lib.rs","lz77.rs","lzvalue.rs","matching.rs","output_writer.rs","rle.rs","stored_block.rs","writer.rs","zlib.rs"]],\
-"der":["",[["asn1",[["integer",[],["bigint.rs","int.rs","uint.rs"]]],["any.rs","bit_string.rs","boolean.rs","choice.rs","context_specific.rs","generalized_time.rs","ia5_string.rs","integer.rs","null.rs","octet_string.rs","oid.rs","optional.rs","printable_string.rs","sequence.rs","sequence_of.rs","set_of.rs","utc_time.rs","utf8_string.rs"]],["reader",[],["nested.rs","slice.rs"]],["tag",[],["class.rs","mode.rs","number.rs"]],["writer",[],["slice.rs"]]],["arrayvec.rs","asn1.rs","byte_slice.rs","datetime.rs","decode.rs","document.rs","encode.rs","encode_ref.rs","error.rs","header.rs","length.rs","lib.rs","ord.rs","reader.rs","str_slice.rs","tag.rs","writer.rs"]],\
+"der":["",[["asn1",[["integer",[],["bigint.rs","int.rs","uint.rs"]]],["any.rs","bit_string.rs","boolean.rs","choice.rs","context_specific.rs","generalized_time.rs","ia5_string.rs","integer.rs","null.rs","octet_string.rs","oid.rs","optional.rs","printable_string.rs","sequence.rs","sequence_of.rs","set_of.rs","utc_time.rs","utf8_string.rs"]],["reader",[],["nested.rs","slice.rs"]],["tag",[],["class.rs","mode.rs","number.rs"]],["writer",[],["slice.rs"]]],["arrayvec.rs","asn1.rs","byte_slice.rs","datetime.rs","decode.rs","encode.rs","encode_ref.rs","error.rs","header.rs","length.rs","lib.rs","ord.rs","reader.rs","str_slice.rs","tag.rs","writer.rs"]],\
 "derive_more":["",[],["display.rs","from.rs","into.rs","lib.rs","parsing.rs","utils.rs"]],\
 "dialoguer":["",[["prompts",[],["confirm.rs","input.rs","mod.rs","multi_select.rs","password.rs","select.rs","sort.rs"]]],["edit.rs","lib.rs","paging.rs","theme.rs","validate.rs"]],\
 "digest":["",[["core_api",[],["ct_variable.rs","rt_variable.rs","wrapper.rs","xof_reader.rs"]]],["core_api.rs","digest.rs","lib.rs","mac.rs"]],\
@@ -74,7 +73,7 @@ var sourcesIndex = JSON.parse('{\
 "ed25519_dalek":["",[],["constants.rs","errors.rs","keypair.rs","lib.rs","public.rs","secret.rs","signature.rs"]],\
 "either":["",[],["lib.rs"]],\
 "elasticlunr":["",[["lang",[],["common.rs","en.rs","mod.rs"]]],["config.rs","document_store.rs","inverted_index.rs","lib.rs","pipeline.rs"]],\
-"elliptic_curve":["",[["scalar",[],["core.rs","nonzero.rs"]],["secret_key",[],["pkcs8.rs"]]],["arithmetic.rs","error.rs","lib.rs","macros.rs","ops.rs","point.rs","public_key.rs","scalar.rs","sec1.rs","secret_key.rs","weierstrass.rs"]],\
+"elliptic_curve":["",[["scalar",[],["core.rs","nonzero.rs"]]],["arithmetic.rs","error.rs","lib.rs","macros.rs","ops.rs","point.rs","public_key.rs","scalar.rs","sec1.rs","secret_key.rs","weierstrass.rs"]],\
 "encoding_rs":["",[],["ascii.rs","big5.rs","data.rs","euc_jp.rs","euc_kr.rs","gb18030.rs","handles.rs","iso_2022_jp.rs","lib.rs","macros.rs","mem.rs","replacement.rs","shift_jis.rs","single_byte.rs","utf_16.rs","utf_8.rs","variant.rs","x_user_defined.rs"]],\
 "env_logger":["",[["filter",[],["mod.rs","regex.rs"]],["fmt",[["humantime",[],["extern_impl.rs","mod.rs"]],["writer",[["termcolor",[],["extern_impl.rs","mod.rs"]]],["atty.rs","mod.rs"]]],["mod.rs"]]],["lib.rs"]],\
 "erased_serde":["",[["features_check",[],["mod.rs"]]],["any.rs","de.rs","error.rs","lib.rs","macros.rs","map.rs","private.rs","ser.rs"]],\
@@ -151,7 +150,7 @@ var sourcesIndex = JSON.parse('{\
 "ipnet":["",[],["ipext.rs","ipnet.rs","lib.rs","parser.rs"]],\
 "itertools":["",[["adaptors",[],["coalesce.rs","map.rs","mod.rs","multi_product.rs"]]],["combinations.rs","combinations_with_replacement.rs","concat_impl.rs","cons_tuples_impl.rs","diff.rs","duplicates_impl.rs","either_or_both.rs","exactly_one_err.rs","extrema_set.rs","flatten_ok.rs","format.rs","free.rs","group_map.rs","groupbylazy.rs","grouping_map.rs","impl_macros.rs","intersperse.rs","k_smallest.rs","kmerge_impl.rs","lazy_buffer.rs","lib.rs","merge_join.rs","minmax.rs","multipeek_impl.rs","pad_tail.rs","peek_nth.rs","peeking_take_while.rs","permutations.rs","powerset.rs","process_results_impl.rs","put_back_n_impl.rs","rciter_impl.rs","repeatn.rs","size_hint.rs","sources.rs","tee.rs","tuple_impl.rs","unique_impl.rs","unziptuple.rs","with_position.rs","zip_eq_impl.rs","zip_longest.rs","ziptuple.rs"]],\
 "itoa":["",[],["lib.rs","udiv128.rs"]],\
-"k256":["",[["arithmetic",[["field",[],["field_5x52.rs","field_impl.rs"]],["scalar",[],["wide64.rs"]]],["affine.rs","field.rs","mul.rs","projective.rs","scalar.rs"]],["ecdsa",[],["normalize.rs","recoverable.rs","sign.rs","verify.rs"]],["schnorr",[],["sign.rs","verify.rs"]]],["arithmetic.rs","ecdsa.rs","lib.rs","schnorr.rs"]],\
+"k256":["",[["arithmetic",[["field",[],["field_5x52.rs","field_impl.rs"]],["scalar",[],["wide64.rs"]]],["affine.rs","field.rs","mul.rs","projective.rs","scalar.rs"]],["ecdsa",[],["normalize.rs","recoverable.rs","sign.rs","verify.rs"]]],["arithmetic.rs","ecdsa.rs","lib.rs"]],\
 "keccak":["",[],["lib.rs","unroll.rs"]],\
 "lazy_static":["",[],["inline_lazy.rs","lib.rs"]],\
 "lazycell":["",[],["lib.rs"]],\
@@ -214,7 +213,6 @@ var sourcesIndex = JSON.parse('{\
 "pin_project_internal":["",[["pin_project",[],["args.rs","attribute.rs","derive.rs","mod.rs"]]],["lib.rs","pinned_drop.rs","utils.rs"]],\
 "pin_project_lite":["",[],["lib.rs"]],\
 "pin_utils":["",[],["lib.rs","projection.rs","stack_pin.rs"]],\
-"pkcs8":["",[],["error.rs","lib.rs","private_key_info.rs","traits.rs","version.rs"]],\
 "ppv_lite86":["",[["x86_64",[],["mod.rs","sse2.rs"]]],["lib.rs","soft.rs","types.rs"]],\
 "precomputed_hash":["",[],["lib.rs"]],\
 "primitive_types":["",[],["lib.rs"]],\
@@ -238,7 +236,7 @@ var sourcesIndex = JSON.parse('{\
 "regex_automata":["",[["nfa",[],["compiler.rs","map.rs","mod.rs","range_trie.rs"]]],["byteorder.rs","classes.rs","dense.rs","determinize.rs","dfa.rs","error.rs","lib.rs","minimize.rs","regex.rs","sparse.rs","sparse_set.rs","state_id.rs"]],\
 "regex_syntax":["",[["ast",[],["mod.rs","parse.rs","print.rs","visitor.rs"]],["hir",[["literal",[],["mod.rs"]]],["interval.rs","mod.rs","print.rs","translate.rs","visitor.rs"]],["unicode_tables",[],["age.rs","case_folding_simple.rs","general_category.rs","grapheme_cluster_break.rs","mod.rs","perl_word.rs","property_bool.rs","property_names.rs","property_values.rs","script.rs","script_extension.rs","sentence_break.rs","word_break.rs"]]],["either.rs","error.rs","lib.rs","parser.rs","unicode.rs","utf8.rs"]],\
 "remove_dir_all":["",[],["lib.rs"]],\
-"reqwest":["",[["async_impl",[],["body.rs","client.rs","decoder.rs","mod.rs","request.rs","response.rs","upgrade.rs"]]],["connect.rs","error.rs","into_url.rs","lib.rs","proxy.rs","redirect.rs","response.rs","tls.rs","util.rs"]],\
+"reqwest":["",[["async_impl",[],["body.rs","client.rs","decoder.rs","mod.rs","request.rs","response.rs","upgrade.rs"]],["dns",[],["gai.rs","mod.rs","resolve.rs"]]],["connect.rs","error.rs","into_url.rs","lib.rs","proxy.rs","redirect.rs","response.rs","tls.rs","util.rs"]],\
 "retry":["",[["delay",[],["mod.rs"]]],["lib.rs","opresult.rs"]],\
 "rfc6979":["",[],["lib.rs"]],\
 "ring":["",[["aead",[["gcm",[],["gcm_nohw.rs"]]],["aes.rs","aes_gcm.rs","block.rs","chacha.rs","chacha20_poly1305.rs","chacha20_poly1305_openssh.rs","counter.rs","gcm.rs","iv.rs","nonce.rs","poly1305.rs","quic.rs","shift.rs"]],["arithmetic",[],["bigint.rs","constant.rs","montgomery.rs"]],["digest",[],["sha1.rs","sha2.rs"]],["ec",[["curve25519",[["ed25519",[],["signing.rs","verification.rs"]]],["ed25519.rs","ops.rs","scalar.rs","x25519.rs"]],["suite_b",[["ecdsa",[],["digest_scalar.rs","signing.rs","verification.rs"]],["ops",[],["elem.rs","p256.rs","p384.rs"]]],["curve.rs","ecdh.rs","ecdsa.rs","ops.rs","private_key.rs","public_key.rs"]]],["curve25519.rs","keys.rs","suite_b.rs"]],["io",[],["der.rs","der_writer.rs","positive.rs","writer.rs"]],["rsa",[],["padding.rs","signing.rs","verification.rs"]]],["aead.rs","agreement.rs","arithmetic.rs","bits.rs","bssl.rs","c.rs","constant_time.rs","cpu.rs","debug.rs","digest.rs","ec.rs","endian.rs","error.rs","hkdf.rs","hmac.rs","io.rs","lib.rs","limb.rs","pbkdf2.rs","pkcs8.rs","polyfill.rs","rand.rs","rsa.rs","signature.rs","test.rs"]],\
@@ -289,7 +287,6 @@ var sourcesIndex = JSON.parse('{\
 "smallvec":["",[],["lib.rs"]],\
 "socket2":["",[["sys",[],["unix.rs"]]],["lib.rs","sockaddr.rs","socket.rs","sockref.rs"]],\
 "spin":["",[],["lib.rs","mutex.rs","once.rs","rw_lock.rs"]],\
-"spki":["",[],["algorithm.rs","error.rs","lib.rs","spki.rs","traits.rs"]],\
 "static_assertions":["",[],["assert_cfg.rs","assert_eq_align.rs","assert_eq_size.rs","assert_fields.rs","assert_impl.rs","assert_obj_safe.rs","assert_trait.rs","assert_type.rs","const_assert.rs","lib.rs"]],\
 "string_cache":["",[],["atom.rs","dynamic_set.rs","lib.rs","static_sets.rs","trivial_impls.rs"]],\
 "strsim":["",[],["lib.rs"]],\

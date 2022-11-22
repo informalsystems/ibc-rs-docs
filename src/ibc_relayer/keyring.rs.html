@@ -469,52 +469,25 @@
 <span id="469">469</span>
 <span id="470">470</span>
 <span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-<span id="475">475</span>
-<span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
-<span id="479">479</span>
-<span id="480">480</span>
-<span id="481">481</span>
-<span id="482">482</span>
-<span id="483">483</span>
-<span id="484">484</span>
-<span id="485">485</span>
-<span id="486">486</span>
-<span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
-<span id="490">490</span>
-<span id="491">491</span>
-<span id="492">492</span>
-<span id="493">493</span>
-<span id="494">494</span>
-<span id="495">495</span>
-<span id="496">496</span>
-<span id="497">497</span>
-<span id="498">498</span>
-<span id="499">499</span>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::btree_map::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>std::ffi::OsStr;
 <span class="kw">use </span>std::fs::{<span class="self">self</span>, File};
 <span class="kw">use </span>std::path::{Path, PathBuf};
 
-<span class="kw">use </span>bech32::{ToBase32, Variant};
+<span class="kw">use </span>bech32::ToBase32;
 <span class="kw">use </span>bip39::{Language, Mnemonic, Seed};
 <span class="kw">use </span>bitcoin::{
     network::constants::Network,
-    secp256k1::{Message, Secp256k1, SecretKey},
     util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey},
 };
+<span class="kw">use </span>digest::Digest;
+<span class="kw">use </span>generic_array::{typenum::U32, GenericArray};
 <span class="kw">use </span>hdpath::StandardHDPath;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
-<span class="kw">use </span>k256::ecdsa::{signature::Signer <span class="kw">as _</span>, Signature, SigningKey};
 <span class="kw">use </span>ripemd::Ripemd160;
+<span class="kw">use </span>secp256k1::{Message, PublicKey, Secp256k1};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>sha2::{Digest, Sha256};
+<span class="kw">use </span>sha2::Sha256;
 <span class="kw">use </span>tiny_keccak::{Hasher, Keccak};
 
 <span class="kw">use </span><span class="kw">crate</span>::config::AddressType;
@@ -562,7 +535,7 @@
 }
 
 <span class="kw">impl </span>KeyEntry {
-    <span class="kw">pub fn </span>from_key_file(key_file: KeyFile, hd_path: <span class="kw-2">&amp;</span>HDPath) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+    <span class="kw">fn </span>from_key_file(key_file: KeyFile, hd_path: <span class="kw-2">&amp;</span>HDPath) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="comment">// Decode the Bech32-encoded address from the key file
         </span><span class="kw">let </span>keyfile_address_bytes = decode_bech32(<span class="kw-2">&amp;</span>key_file.address)<span class="question-mark">?</span>;
 
@@ -571,7 +544,7 @@
 
         <span class="comment">// Decode the private key from the mnemonic
         </span><span class="kw">let </span>private_key = private_key_from_mnemonic(<span class="kw-2">&amp;</span>key_file.mnemonic, hd_path)<span class="question-mark">?</span>;
-        <span class="kw">let </span>derived_pubkey = ExtendedPubKey::from_priv(<span class="kw-2">&amp;</span>Secp256k1::new(), <span class="kw-2">&amp;</span>private_key);
+        <span class="kw">let </span>derived_pubkey = ExtendedPubKey::from_priv(<span class="kw-2">&amp;</span>Secp256k1::signing_only(), <span class="kw-2">&amp;</span>private_key);
         <span class="kw">let </span>derived_pubkey_bytes = derived_pubkey.to_pub().to_bytes();
         <span class="macro">assert!</span>(derived_pubkey_bytes.len() &lt;= keyfile_pubkey_bytes.len());
 
@@ -596,6 +569,41 @@
                 address: keyfile_address_bytes,
             })
         }
+    }
+
+    <span class="doccomment">/// Get key from seed file
+    </span><span class="kw">pub fn </span>from_seed_file(key_file_content: <span class="kw-2">&amp;</span>str, hd_path: <span class="kw-2">&amp;</span>HDPath) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span>key_file = serde_json::from_str(key_file_content).map_err(Error::encode)<span class="question-mark">?</span>;
+        <span class="self">Self</span>::from_key_file(key_file, hd_path)
+    }
+
+    <span class="comment">// NOTE: Neither Cosmos nor Ethermint keep `v` (recovery code) in the
+    // `(r, s, v)` tuple for secp256k1.
+    //
+    // Cosmos: https://github.com/cosmos/cosmos-sdk/blob/main/crypto/keys/secp256k1/secp256k1_cgo.go
+    // Ethermint:
+    // - https://github.com/evmos/ethermint/blob/main/crypto/ethsecp256k1/ethsecp256k1.go
+    // - informalsystems/hermes#2863.
+    </span><span class="kw">pub fn </span>sign_message(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        message: <span class="kw-2">&amp;</span>[u8],
+        address_type: <span class="kw-2">&amp;</span>AddressType,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
+        <span class="kw">let </span>hashed_message: GenericArray&lt;u8, U32&gt; = <span class="kw">match </span>address_type {
+            AddressType::Ethermint { <span class="kw-2">ref </span>pk_type } <span class="kw">if </span>pk_type.ends_with(<span class="string">&quot;.ethsecp256k1.PubKey&quot;</span>) =&gt; {
+                keccak256_hash(message).into()
+            }
+            AddressType::Cosmos | AddressType::Ethermint { .. } =&gt; Sha256::digest(message),
+        };
+
+        <span class="comment">// SAFETY: hashed_message is 32 bytes, as expected in `Message::from_slice`,
+        // so `unwrap` is safe.
+        </span><span class="kw">let </span>message = Message::from_slice(<span class="kw-2">&amp;</span>hashed_message).unwrap();
+
+        <span class="prelude-val">Ok</span>(Secp256k1::signing_only()
+            .sign_ecdsa(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span><span class="self">self</span>.private_key.private_key)
+            .serialize_compact()
+            .to_vec())
     }
 }
 
@@ -749,7 +757,7 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>Store {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        Store::Test
+        <span class="self">Self</span>::Test
     }
 }
 
@@ -812,36 +820,23 @@
         }
     }
 
-    <span class="doccomment">/// Get key from seed file
-    </span><span class="kw">pub fn </span>key_from_seed_file(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        key_file_content: <span class="kw-2">&amp;</span>str,
-        hd_path: <span class="kw-2">&amp;</span>HDPath,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;KeyEntry, Error&gt; {
-        <span class="kw">let </span>key_file: KeyFile = serde_json::from_str(key_file_content).map_err(Error::encode)<span class="question-mark">?</span>;
-
-        KeyEntry::from_key_file(key_file, hd_path)
-    }
-
     <span class="doccomment">/// Add a key entry in the store using a mnemonic.
     </span><span class="kw">pub fn </span>key_from_mnemonic(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         mnemonic_words: <span class="kw-2">&amp;</span>str,
         hd_path: <span class="kw-2">&amp;</span>HDPath,
-        at: <span class="kw-2">&amp;</span>AddressType,
+        address_type: <span class="kw-2">&amp;</span>AddressType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;KeyEntry, Error&gt; {
-        <span class="comment">// Get the private key from the mnemonic
-        </span><span class="kw">let </span>private_key = private_key_from_mnemonic(mnemonic_words, hd_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>private_key = private_key_from_mnemonic(mnemonic_words, hd_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>public_key = ExtendedPubKey::from_priv(<span class="kw-2">&amp;</span>Secp256k1::signing_only(), <span class="kw-2">&amp;</span>private_key);
+        <span class="kw">let </span>address = get_address(<span class="kw-2">&amp;</span>public_key.public_key, address_type).to_vec();
 
-        <span class="comment">// Get the public Key from the private key
-        </span><span class="kw">let </span>public_key = ExtendedPubKey::from_priv(<span class="kw-2">&amp;</span>Secp256k1::new(), <span class="kw-2">&amp;</span>private_key);
-
-        <span class="comment">// Get address from the public Key
-        </span><span class="kw">let </span>address = get_address(public_key, at);
-
-        <span class="comment">// Compute Bech32 account
-        </span><span class="kw">let </span>account = bech32::encode(<span class="self">self</span>.account_prefix(), address.to_base32(), Variant::Bech32)
-            .map_err(Error::bech32)<span class="question-mark">?</span>;
+        <span class="kw">let </span>account = bech32::encode(
+            <span class="self">self</span>.account_prefix(),
+            address.to_base32(),
+            bech32::Variant::Bech32,
+        )
+        .map_err(Error::bech32)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(KeyEntry {
             public_key,
@@ -851,51 +846,10 @@
         })
     }
 
-    <span class="doccomment">/// Sign a message
-    </span><span class="kw">pub fn </span>sign_msg(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        key_name: <span class="kw-2">&amp;</span>str,
-        msg: Vec&lt;u8&gt;,
-        address_type: <span class="kw-2">&amp;</span>AddressType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
-        <span class="kw">let </span>key = <span class="self">self</span>.get_key(key_name)<span class="question-mark">?</span>;
-
-        sign_message(<span class="kw-2">&amp;</span>key, msg, address_type)
-    }
-
     <span class="kw">pub fn </span>account_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
         <span class="kw">match </span><span class="self">self </span>{
             KeyRing::Memory(m) =&gt; <span class="kw-2">&amp;</span>m.account_prefix,
             KeyRing::Test(d) =&gt; <span class="kw-2">&amp;</span>d.account_prefix,
-        }
-    }
-}
-
-<span class="doccomment">/// Sign a message
-</span><span class="kw">pub fn </span>sign_message(
-    key: <span class="kw-2">&amp;</span>KeyEntry,
-    msg: Vec&lt;u8&gt;,
-    address_type: <span class="kw-2">&amp;</span>AddressType,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
-    <span class="kw">let </span>private_key_bytes = key.private_key.to_priv().to_bytes();
-    <span class="kw">match </span>address_type {
-        AddressType::Ethermint { <span class="kw-2">ref </span>pk_type } <span class="kw">if </span>pk_type.ends_with(<span class="string">&quot;.ethsecp256k1.PubKey&quot;</span>) =&gt; {
-            <span class="kw">let </span>hash = keccak256_hash(msg.as_slice());
-            <span class="kw">let </span>s = Secp256k1::signing_only();
-            <span class="comment">// SAFETY: hash is 32 bytes, as expected in `Message::from_slice` -- see `keccak256_hash`, hence `unwrap`
-            </span><span class="kw">let </span>sign_msg = Message::from_slice(hash.as_slice()).unwrap();
-            <span class="kw">let </span>key = SecretKey::from_slice(private_key_bytes.as_slice())
-                .map_err(Error::invalid_key_raw)<span class="question-mark">?</span>;
-            <span class="kw">let </span>(<span class="kw">_</span>, sig_bytes) = s
-                .sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>sign_msg, <span class="kw-2">&amp;</span>key)
-                .serialize_compact();
-            <span class="prelude-val">Ok</span>(sig_bytes.to_vec())
-        }
-        AddressType::Cosmos | AddressType::Ethermint { .. } =&gt; {
-            <span class="kw">let </span>signing_key =
-                SigningKey::from_bytes(private_key_bytes.as_slice()).map_err(Error::invalid_key)<span class="question-mark">?</span>;
-            <span class="kw">let </span>signature: Signature = signing_key.sign(<span class="kw-2">&amp;</span>msg);
-            <span class="prelude-val">Ok</span>(signature.as_ref().to_vec())
         }
     }
 }
@@ -915,7 +869,7 @@
 
     <span class="kw">let </span>private_key = base_key
         .derive_priv(
-            <span class="kw-2">&amp;</span>Secp256k1::new(),
+            <span class="kw-2">&amp;</span>Secp256k1::signing_only(),
             <span class="kw-2">&amp;</span>standard_path_to_derivation_path(hd_path),
         )
         .map_err(Error::private_key)<span class="question-mark">?</span>;
@@ -924,31 +878,21 @@
 }
 
 <span class="doccomment">/// Return an address from a Public Key
-</span><span class="kw">fn </span>get_address(pk: ExtendedPubKey, at: <span class="kw-2">&amp;</span>AddressType) -&gt; Vec&lt;u8&gt; {
-    <span class="kw">match </span>at {
+</span><span class="kw">fn </span>get_address(public_key: <span class="kw-2">&amp;</span>PublicKey, address_type: <span class="kw-2">&amp;</span>AddressType) -&gt; [u8; <span class="number">20</span>] {
+    <span class="kw">match </span>address_type {
         AddressType::Ethermint { <span class="kw-2">ref </span>pk_type } <span class="kw">if </span>pk_type.ends_with(<span class="string">&quot;.ethsecp256k1.PubKey&quot;</span>) =&gt; {
-            <span class="kw">let </span>public_key = pk.public_key.serialize_uncompressed();
-            <span class="comment">// 0x04 is [SECP256K1_TAG_PUBKEY_UNCOMPRESSED](https://github.com/bitcoin-core/secp256k1/blob/d7ec49a6893751f068275cc8ddf4993ef7f31756/include/secp256k1.h#L196)
+            <span class="kw">let </span>public_key = public_key.serialize_uncompressed();
+            <span class="comment">// 0x04 is `SECP256K1_TAG_PUBKEY_UNCOMPRESSED`:
+            // https://github.com/bitcoin-core/secp256k1/blob/d7ec49a6893751f068275cc8ddf4993ef7f31756/include/secp256k1.h#L196
             </span><span class="macro">debug_assert_eq!</span>(public_key[<span class="number">0</span>], <span class="number">0x04</span>);
 
-            <span class="kw">let </span>output = keccak256_hash(<span class="kw-2">&amp;</span>public_key[<span class="number">1</span>..]);
+            <span class="kw">let </span>hashed_key = keccak256_hash(<span class="kw-2">&amp;</span>public_key[<span class="number">1</span>..]);
             <span class="comment">// right-most 20-bytes from the 32-byte keccak hash
             // (see https://kobl.one/blog/create-full-ethereum-keypair-and-address/)
-            </span>output[<span class="number">12</span>..].to_vec()
+            </span>hashed_key[<span class="number">12</span>..].try_into().unwrap()
         }
         AddressType::Cosmos | AddressType::Ethermint { .. } =&gt; {
-            <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
-            hasher.update(pk.to_pub().to_bytes().as_slice());
-
-            <span class="comment">// Read hash digest over the public key bytes &amp; consume hasher
-            </span><span class="kw">let </span>pk_hash = hasher.finalize();
-
-            <span class="comment">// Plug the hash result into the next crypto hash function.
-            </span><span class="kw">let </span><span class="kw-2">mut </span>rip_hasher = Ripemd160::new();
-            rip_hasher.update(pk_hash);
-            <span class="kw">let </span>rip_result = rip_hasher.finalize();
-
-            rip_result.to_vec()
+            Ripemd160::digest(Sha256::digest(public_key.serialize())).into()
         }
     }
 }
@@ -974,12 +918,12 @@
     <span class="prelude-val">Ok</span>(folder)
 }
 
-<span class="kw">fn </span>keccak256_hash(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;u8&gt; {
+<span class="kw">fn </span>keccak256_hash(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
     <span class="kw">let </span><span class="kw-2">mut </span>hasher = Keccak::v256();
     hasher.update(bytes);
-    <span class="kw">let </span><span class="kw-2">mut </span>resp = <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="number">32</span>];
-    hasher.finalize(<span class="kw-2">&amp;mut </span>resp);
-    resp
+    <span class="kw">let </span><span class="kw-2">mut </span>output = [<span class="number">0u8</span>; <span class="number">32</span>];
+    hasher.finalize(<span class="kw-2">&amp;mut </span>output);
+    output
 }
 
 <span class="kw">fn </span>standard_path_to_derivation_path(path: <span class="kw-2">&amp;</span>StandardHDPath) -&gt; DerivationPath {
