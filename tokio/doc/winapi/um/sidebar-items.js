@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["minwinbase","See winapi::um::minwinbase."],["winbase","See winapi::um::winbase."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["io","Windows-specific extensions to general I/O primitives."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Aio","Associates a POSIX AIO control block with the reactor that drives it."],["AioEvent","Opaque data returned by [`Aio::poll_ready`]."]],"trait":[["AioSource","Like [`mio::event::Source`], but for POSIX AIO only."]]};

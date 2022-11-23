@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["AsRawHandle","See std::os::windows::io::AsRawHandle"],["FromRawHandle","See std::os::windows::io::FromRawHandle"]],"type":[["RawHandle","See std::os::windows::io::RawHandle"]]};
