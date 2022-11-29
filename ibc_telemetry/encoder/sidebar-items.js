@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":[["JSON_FORMAT","The JSON format of metric family."]],"struct":[["JsonEncoder","An implementation of an [`Encoder`] that converts a [`MetricFamily`] proto message into JSON format."]]};
