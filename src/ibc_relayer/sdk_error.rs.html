@@ -196,11 +196,8 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
 </pre><pre class="rust"><code><span class="kw">use </span>flex_error::define_error;
-<span class="kw">use </span>tendermint_rpc::abci::Code;
-<span class="kw">use </span>tendermint_rpc::endpoint::broadcast::tx_commit::TxResult;
+<span class="kw">use </span>tendermint::abci::Code;
 
 <span class="comment">// Provides mapping for errors returned from ibc-go and cosmos-sdk
 </span><span class="macro">define_error! </span>{
@@ -363,22 +360,21 @@
     }
 }
 
-<span class="comment">// Converts the error in a TxResult into SdkError with the same
+<span class="comment">// Converts the error in a CheckTx or DeliverTx result into SdkError with the same
 // mapping as defined in ibc-go and cosmos-sdk. This assumes the
 // target chain we are interacting with are using cosmos-sdk and ibc-go.
 //
 // TODO: investigate ways to automatically generate the mapping by parsing
 // the errors.go source code directly
-</span><span class="kw">pub fn </span>sdk_error_from_tx_result(result: <span class="kw-2">&amp;</span>TxResult) -&gt; SdkError {
-    <span class="kw">match </span>result.code {
+</span><span class="kw">pub fn </span>sdk_error_from_tx_result(code: Code, codespace: <span class="kw-2">&amp;</span>str) -&gt; SdkError {
+    <span class="kw">match </span>code {
         Code::Ok =&gt; SdkError::unexpected_ok(),
         Code::Err(code) =&gt; {
-            <span class="kw">let </span>codespace = result.codespace.to_string();
             <span class="kw">if </span>codespace == <span class="string">&quot;client&quot; </span>{
                 SdkError::client(client_error_from_code(code.into()))
             } <span class="kw">else </span>{
                 <span class="comment">// TODO: Implement mapping for other codespaces in ibc-go
-                </span>SdkError::unknown_sdk(codespace, code.into())
+                </span>SdkError::unknown_sdk(codespace.to_owned(), code.into())
             }
         }
     }

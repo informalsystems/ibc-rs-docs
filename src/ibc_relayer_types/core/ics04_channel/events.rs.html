@@ -776,69 +776,12 @@
 <a href="#776" id="776">776</a>
 <a href="#777" id="777">777</a>
 <a href="#778" id="778">778</a>
-<a href="#779" id="779">779</a>
-<a href="#780" id="780">780</a>
-<a href="#781" id="781">781</a>
-<a href="#782" id="782">782</a>
-<a href="#783" id="783">783</a>
-<a href="#784" id="784">784</a>
-<a href="#785" id="785">785</a>
-<a href="#786" id="786">786</a>
-<a href="#787" id="787">787</a>
-<a href="#788" id="788">788</a>
-<a href="#789" id="789">789</a>
-<a href="#790" id="790">790</a>
-<a href="#791" id="791">791</a>
-<a href="#792" id="792">792</a>
-<a href="#793" id="793">793</a>
-<a href="#794" id="794">794</a>
-<a href="#795" id="795">795</a>
-<a href="#796" id="796">796</a>
-<a href="#797" id="797">797</a>
-<a href="#798" id="798">798</a>
-<a href="#799" id="799">799</a>
-<a href="#800" id="800">800</a>
-<a href="#801" id="801">801</a>
-<a href="#802" id="802">802</a>
-<a href="#803" id="803">803</a>
-<a href="#804" id="804">804</a>
-<a href="#805" id="805">805</a>
-<a href="#806" id="806">806</a>
-<a href="#807" id="807">807</a>
-<a href="#808" id="808">808</a>
-<a href="#809" id="809">809</a>
-<a href="#810" id="810">810</a>
-<a href="#811" id="811">811</a>
-<a href="#812" id="812">812</a>
-<a href="#813" id="813">813</a>
-<a href="#814" id="814">814</a>
-<a href="#815" id="815">815</a>
-<a href="#816" id="816">816</a>
-<a href="#817" id="817">817</a>
-<a href="#818" id="818">818</a>
-<a href="#819" id="819">819</a>
-<a href="#820" id="820">820</a>
-<a href="#821" id="821">821</a>
-<a href="#822" id="822">822</a>
-<a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
-<a href="#829" id="829">829</a>
-<a href="#830" id="830">830</a>
-<a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
-<a href="#835" id="835">835</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Types for the IBC events emitted from Tendermint Websocket by the channels module.
 
 </span><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
+<span class="kw">use </span>core::str;
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
-<span class="kw">use </span>tendermint_rpc::abci::tag::Tag;
-<span class="kw">use </span>tendermint_rpc::abci::Event <span class="kw">as </span>AbciEvent;
+<span class="kw">use </span>tendermint::abci;
 
 <span class="kw">use </span><span class="kw">crate</span>::core::ics04_channel::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics04_channel::packet::Packet;
@@ -895,43 +838,25 @@
 }
 
 <span class="doccomment">/// Convert attributes to Tendermint ABCI tags
-///
-/// # Note
-/// The parsing of `Key`s and `Value`s never fails, because the
-/// `FromStr` instance of `tendermint::abci::tag::{Key, Value}`
-/// is infallible, even if it is not represented in the error type.
-/// Once tendermint-rs improves the API of the `Key` and `Value` types,
-/// we will be able to remove the `.parse().unwrap()` calls.
-</span><span class="kw">impl </span>From&lt;Attributes&gt; <span class="kw">for </span>Vec&lt;Tag&gt; {
+</span><span class="kw">impl </span>From&lt;Attributes&gt; <span class="kw">for </span>Vec&lt;abci::EventAttribute&gt; {
     <span class="kw">fn </span>from(a: Attributes) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>attributes = <span class="macro">vec!</span>[];
-        <span class="kw">let </span>port_id = Tag {
-            key: PORT_ID_ATTRIBUTE_KEY.parse().unwrap(),
-            value: a.port_id.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>port_id = (PORT_ID_ATTRIBUTE_KEY, a.port_id.as_str()).into();
         attributes.push(port_id);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(channel_id) = a.channel_id {
-            <span class="kw">let </span>channel_id = Tag {
-                key: CHANNEL_ID_ATTRIBUTE_KEY.parse().unwrap(),
-                value: channel_id.to_string().parse().unwrap(),
-            };
+            <span class="kw">let </span>channel_id = (CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str()).into();
             attributes.push(channel_id);
         }
-        <span class="kw">let </span>connection_id = Tag {
-            key: CONNECTION_ID_ATTRIBUTE_KEY.parse().unwrap(),
-            value: a.connection_id.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>connection_id = (CONNECTION_ID_ATTRIBUTE_KEY, a.connection_id.as_str()).into();
         attributes.push(connection_id);
-        <span class="kw">let </span>counterparty_port_id = Tag {
-            key: COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY.parse().unwrap(),
-            value: a.counterparty_port_id.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>counterparty_port_id = (
+            COUNTERPARTY_PORT_ID_ATTRIBUTE_KEY,
+            a.counterparty_port_id.as_str(),
+        )
+            .into();
         attributes.push(counterparty_port_id);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(channel_id) = a.counterparty_channel_id {
-            <span class="kw">let </span>channel_id = Tag {
-                key: COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY.parse().unwrap(),
-                value: channel_id.to_string().parse().unwrap(),
-            };
+            <span class="kw">let </span>channel_id = (COUNTERPARTY_CHANNEL_ID_ATTRIBUTE_KEY, channel_id.as_str()).into();
             attributes.push(channel_id);
         }
         attributes
@@ -939,68 +864,40 @@
 }
 
 <span class="doccomment">/// Convert attributes to Tendermint ABCI tags
-///
-/// # Note
-/// The parsing of `Key`s and `Value`s never fails, because the
-/// `FromStr` instance of `tendermint::abci::tag::{Key, Value}`
-/// is infallible, even if it is not represented in the error type.
-/// Once tendermint-rs improves the API of the `Key` and `Value` types,
-/// we will be able to remove the `.parse().unwrap()` calls.
-</span><span class="kw">impl </span>TryFrom&lt;Packet&gt; <span class="kw">for </span>Vec&lt;Tag&gt; {
+</span><span class="kw">impl </span>TryFrom&lt;Packet&gt; <span class="kw">for </span>Vec&lt;abci::EventAttribute&gt; {
     <span class="kw">type </span>Error = Error;
     <span class="kw">fn </span>try_from(p: Packet) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>attributes = <span class="macro">vec!</span>[];
-        <span class="kw">let </span>src_port = Tag {
-            key: PKT_SRC_PORT_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p.source_port.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>src_port = (PKT_SRC_PORT_ATTRIBUTE_KEY, p.source_port.to_string()).into();
         attributes.push(src_port);
-        <span class="kw">let </span>src_channel = Tag {
-            key: PKT_SRC_CHANNEL_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p.source_channel.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>src_channel = (PKT_SRC_CHANNEL_ATTRIBUTE_KEY, p.source_channel.to_string()).into();
         attributes.push(src_channel);
-        <span class="kw">let </span>dst_port = Tag {
-            key: PKT_DST_PORT_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p.destination_port.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>dst_port = (PKT_DST_PORT_ATTRIBUTE_KEY, p.destination_port.to_string()).into();
         attributes.push(dst_port);
-        <span class="kw">let </span>dst_channel = Tag {
-            key: PKT_DST_CHANNEL_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p.destination_channel.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>dst_channel = (
+            PKT_DST_CHANNEL_ATTRIBUTE_KEY,
+            p.destination_channel.to_string(),
+        )
+            .into();
         attributes.push(dst_channel);
-        <span class="kw">let </span>sequence = Tag {
-            key: PKT_SEQ_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p.sequence.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>sequence = (PKT_SEQ_ATTRIBUTE_KEY, p.sequence.to_string()).into();
         attributes.push(sequence);
-        <span class="kw">let </span>timeout_height = Tag {
-            key: PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p.timeout_height.into(),
-        };
+        <span class="kw">let </span>timeout_height = (
+            PKT_TIMEOUT_HEIGHT_ATTRIBUTE_KEY,
+            p.timeout_height.to_event_attribute_value(),
+        )
+            .into();
         attributes.push(timeout_height);
-        <span class="kw">let </span>timeout_timestamp = Tag {
-            key: PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY.parse().unwrap(),
-            value: p
-                .timeout_timestamp
-                .nanoseconds()
-                .to_string()
-                .parse()
-                .unwrap(),
-        };
+        <span class="kw">let </span>timeout_timestamp = (
+            PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY,
+            p.timeout_timestamp.nanoseconds().to_string(),
+        )
+            .into();
         attributes.push(timeout_timestamp);
-        <span class="kw">let </span>val =
-            String::from_utf8(p.data).expect(<span class="string">&quot;hex-encoded string should always be valid UTF-8&quot;</span>);
-        <span class="kw">let </span>packet_data = Tag {
-            key: PKT_DATA_ATTRIBUTE_KEY.parse().unwrap(),
-            value: val.parse().unwrap(),
-        };
+        <span class="kw">let </span>val = str::from_utf8(<span class="kw-2">&amp;</span>p.data).expect(<span class="string">&quot;hex-encoded string should always be valid UTF-8&quot;</span>);
+        <span class="kw">let </span>packet_data = (PKT_DATA_ATTRIBUTE_KEY, val).into();
         attributes.push(packet_data);
-        <span class="kw">let </span>ack = Tag {
-            key: PKT_ACK_ATTRIBUTE_KEY.parse().unwrap(),
-            value: <span class="string">&quot;&quot;</span>.parse().unwrap(),
-        };
+        <span class="kw">let </span>ack = (PKT_ACK_ATTRIBUTE_KEY, <span class="string">&quot;&quot;</span>).into();
         attributes.push(ack);
         <span class="prelude-val">Ok</span>(attributes)
     }
@@ -1374,13 +1271,12 @@
 
 <span class="macro">macro_rules! </span>impl_from_ibc_to_abci_event {
     ($(<span class="macro-nonterminal">$event</span>:ty),+) =&gt; {
-        $(<span class="kw">impl </span>From&lt;<span class="macro-nonterminal">$event</span>&gt; <span class="kw">for </span>AbciEvent {
+        $(<span class="kw">impl </span>From&lt;<span class="macro-nonterminal">$event</span>&gt; <span class="kw">for </span>abci::Event {
             <span class="kw">fn </span>from(v: <span class="macro-nonterminal">$event</span>) -&gt; <span class="self">Self </span>{
-                <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(Attributes::from(v));
-                <span class="kw">let </span>type_str = &lt;<span class="macro-nonterminal">$event</span>&gt;::event_type().as_str().to_string();
-                AbciEvent {
-                    type_str,
-                    attributes,
+                <span class="kw">let </span>kind = &lt;<span class="macro-nonterminal">$event</span>&gt;::event_type().as_str().to_owned();
+                <span class="self">Self </span>{
+                    kind,
+                    attributes: Attributes::from(v).into(),
                 }
             }
         })+
@@ -1428,14 +1324,13 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;SendPacket&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>TryFrom&lt;SendPacket&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(v: SendPacket) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::try_from(v.packet)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(AbciEvent {
-            type_str: IbcEventType::SendPacket.as_str().to_string(),
-            attributes,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            kind: IbcEventType::SendPacket.as_str().to_owned(),
+            attributes: v.packet.try_into()<span class="question-mark">?</span>,
         })
     }
 }
@@ -1472,14 +1367,13 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;ReceivePacket&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>TryFrom&lt;ReceivePacket&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(v: ReceivePacket) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::try_from(v.packet)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(AbciEvent {
-            type_str: IbcEventType::ReceivePacket.as_str().to_string(),
-            attributes,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            kind: IbcEventType::ReceivePacket.as_str().to_owned(),
+            attributes: v.packet.try_into()<span class="question-mark">?</span>,
         })
     }
 }
@@ -1523,21 +1417,16 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;WriteAcknowledgement&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>TryFrom&lt;WriteAcknowledgement&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(v: WriteAcknowledgement) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>attributes = Vec::&lt;Tag&gt;::try_from(v.packet)<span class="question-mark">?</span>;
-        <span class="kw">let </span>val =
-            String::from_utf8(v.ack).expect(<span class="string">&quot;hex-encoded string should always be valid UTF-8&quot;</span>);
-        <span class="comment">// No actual conversion from string to `Tag::Key` or `Tag::Value`
-        </span><span class="kw">let </span>ack = Tag {
-            key: PKT_ACK_ATTRIBUTE_KEY.parse().unwrap(),
-            value: val.parse().unwrap(),
-        };
+        <span class="kw">let </span><span class="kw-2">mut </span>attributes: Vec&lt;<span class="kw">_</span>&gt; = v.packet.try_into()<span class="question-mark">?</span>;
+        <span class="kw">let </span>val = str::from_utf8(<span class="kw-2">&amp;</span>v.ack).expect(<span class="string">&quot;hex-encoded string should always be valid UTF-8&quot;</span>);
+        <span class="kw">let </span>ack = (PKT_ACK_ATTRIBUTE_KEY, val).into();
         attributes.push(ack);
-        <span class="prelude-val">Ok</span>(AbciEvent {
-            type_str: IbcEventType::WriteAck.as_str().to_string(),
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            kind: IbcEventType::WriteAck.as_str().to_owned(),
             attributes,
         })
     }
@@ -1569,14 +1458,13 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;AcknowledgePacket&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>TryFrom&lt;AcknowledgePacket&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(v: AcknowledgePacket) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::try_from(v.packet)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(AbciEvent {
-            type_str: IbcEventType::AckPacket.as_str().to_string(),
-            attributes,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            kind: IbcEventType::AckPacket.as_str().to_owned(),
+            attributes: v.packet.try_into()<span class="question-mark">?</span>,
         })
     }
 }
@@ -1613,14 +1501,13 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;TimeoutPacket&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>TryFrom&lt;TimeoutPacket&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(v: TimeoutPacket) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::try_from(v.packet)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(AbciEvent {
-            type_str: IbcEventType::Timeout.as_str().to_string(),
-            attributes,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            kind: IbcEventType::Timeout.as_str().to_owned(),
+            attributes: v.packet.try_into()<span class="question-mark">?</span>,
         })
     }
 }
@@ -1657,14 +1544,13 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;TimeoutOnClosePacket&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>TryFrom&lt;TimeoutOnClosePacket&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">type </span>Error = Error;
 
     <span class="kw">fn </span>try_from(v: TimeoutOnClosePacket) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::try_from(v.packet)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(AbciEvent {
-            type_str: IbcEventType::TimeoutOnClose.as_str().to_string(),
-            attributes,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            kind: IbcEventType::TimeoutOnClose.as_str().to_owned(),
+            attributes: v.packet.try_into()<span class="question-mark">?</span>,
         })
     }
 }

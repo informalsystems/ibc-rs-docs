@@ -261,31 +261,11 @@
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Types for the IBC events emitted from Tendermint Websocket by the client module.
 
 </span><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
-<span class="kw">use </span>tendermint_rpc::abci::tag::Tag;
-<span class="kw">use </span>tendermint_rpc::abci::Event <span class="kw">as </span>AbciEvent;
+<span class="kw">use </span>tendermint::abci;
 
 <span class="kw">use </span><span class="kw">super</span>::header::Header;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::client_type::ClientType;
@@ -365,27 +345,15 @@
 }
 
 <span class="doccomment">/// Convert attributes to Tendermint ABCI tags
-///
-/// # Note
-/// The parsing of `Key`s and `Value`s never fails, because the
-/// `FromStr` instance of `tendermint::abci::tag::{Key, Value}`
-/// is infallible, even if it is not represented in the error type.
-/// Once tendermint-rs improves the API of the `Key` and `Value` types,
-/// we will be able to remove the `.parse().unwrap()` calls.
-</span><span class="kw">impl </span>From&lt;Attributes&gt; <span class="kw">for </span>Vec&lt;Tag&gt; {
+</span><span class="kw">impl </span>From&lt;Attributes&gt; <span class="kw">for </span>Vec&lt;abci::EventAttribute&gt; {
     <span class="kw">fn </span>from(attrs: Attributes) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>client_id = Tag {
-            key: CLIENT_ID_ATTRIBUTE_KEY.parse().unwrap(),
-            value: attrs.client_id.to_string().parse().unwrap(),
-        };
-        <span class="kw">let </span>client_type = Tag {
-            key: CLIENT_TYPE_ATTRIBUTE_KEY.parse().unwrap(),
-            value: attrs.client_type.as_str().parse().unwrap(),
-        };
-        <span class="kw">let </span>consensus_height = Tag {
-            key: CONSENSUS_HEIGHT_ATTRIBUTE_KEY.parse().unwrap(),
-            value: attrs.consensus_height.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>client_id = (CLIENT_ID_ATTRIBUTE_KEY, attrs.client_id.as_str()).into();
+        <span class="kw">let </span>client_type = (CLIENT_TYPE_ATTRIBUTE_KEY, attrs.client_type.as_str()).into();
+        <span class="kw">let </span>consensus_height = (
+            CONSENSUS_HEIGHT_ATTRIBUTE_KEY,
+            attrs.consensus_height.to_string(),
+        )
+            .into();
         <span class="macro">vec!</span>[client_id, client_type, consensus_height]
     }
 }
@@ -418,12 +386,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;CreateClient&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;CreateClient&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: CreateClient) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::CreateClient.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::CreateClient.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }
@@ -475,18 +442,15 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;UpdateClient&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;UpdateClient&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: UpdateClient) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>attributes = Vec::&lt;Tag&gt;::from(v.common);
+        <span class="kw">let </span><span class="kw-2">mut </span>attributes: Vec&lt;<span class="kw">_</span>&gt; = v.common.into();
         <span class="kw">if let </span><span class="prelude-val">Some</span>(h) = v.header {
-            <span class="kw">let </span>header = Tag {
-                key: HEADER_ATTRIBUTE_KEY.parse().unwrap(),
-                value: h.encode_to_hex_string().parse().unwrap(),
-            };
+            <span class="kw">let </span>header = (HEADER_ATTRIBUTE_KEY, h.encode_to_hex_string()).into();
             attributes.push(header);
         }
-        AbciEvent {
-            type_str: IbcEventType::UpdateClient.as_str().to_string(),
+        <span class="self">Self </span>{
+            kind: IbcEventType::UpdateClient.as_str().to_string(),
             attributes,
         }
     }
@@ -521,12 +485,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;ClientMisbehaviour&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;ClientMisbehaviour&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: ClientMisbehaviour) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::ClientMisbehaviour.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::ClientMisbehaviour.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }
@@ -553,12 +516,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;UpgradeClient&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;UpgradeClient&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: UpgradeClient) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::UpgradeClient.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::UpgradeClient.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }

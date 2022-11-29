@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize_validator_updates","Return an empty vec in the event `validator_updates` is `null`"]],"struct":[["BeginBlock","Begin block response."],["Codespace","Codespace"],["DeliverTx","Deliver TX response."],["EndBlock","End block response."],["Event","Event"],["Responses","Responses for ABCI calls which occur during block processing."]]};

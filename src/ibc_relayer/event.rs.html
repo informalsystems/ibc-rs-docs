@@ -601,7 +601,6 @@
 <a href="#601" id="601">601</a>
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>ibc_relayer_types::{
     applications::ics29_fee::events::IncentivizedPacket,
@@ -625,7 +624,7 @@
     Height,
 };
 <span class="kw">use </span>serde::Serialize;
-<span class="kw">use </span>tendermint_rpc::abci::Event <span class="kw">as </span>AbciEvent;
+<span class="kw">use </span>tendermint::abci::Event <span class="kw">as </span>AbciEvent;
 
 <span class="kw">use </span><span class="kw">crate</span>::light_client::decode_header;
 
@@ -664,7 +663,7 @@
 /// defined in this crate. Hence, we are forced to make an ad-hoc function for
 /// it.
 </span><span class="kw">pub fn </span>ibc_event_try_from_abci_event(abci_event: <span class="kw-2">&amp;</span>AbciEvent) -&gt; <span class="prelude-ty">Result</span>&lt;IbcEvent, IbcEventError&gt; {
-    <span class="kw">match </span>abci_event.type_str.parse() {
+    <span class="kw">match </span>abci_event.kind.parse() {
         <span class="prelude-val">Ok</span>(IbcEventType::CreateClient) =&gt; <span class="prelude-val">Ok</span>(IbcEvent::CreateClient(
             create_client_try_from_abci_event(abci_event).map_err(IbcEventError::client)<span class="question-mark">?</span>,
         )),
@@ -726,10 +725,10 @@
             timeout_packet_try_from_abci_event(abci_event).map_err(IbcEventError::channel)<span class="question-mark">?</span>,
         )),
         <span class="prelude-val">Ok</span>(IbcEventType::IncentivizedPacket) =&gt; <span class="prelude-val">Ok</span>(IbcEvent::IncentivizedPacket(
-            IncentivizedPacket::try_from(<span class="kw-2">&amp;</span>abci_event.attributes).map_err(IbcEventError::fee)<span class="question-mark">?</span>,
+            IncentivizedPacket::try_from(<span class="kw-2">&amp;</span>abci_event.attributes[..]).map_err(IbcEventError::fee)<span class="question-mark">?</span>,
         )),
         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(IbcEventError::unsupported_abci_event(
-            abci_event.type_str.to_owned(),
+            abci_event.kind.clone(),
         )),
     }
 }
@@ -854,7 +853,7 @@
             </span><span class="macro">debug_assert_eq!</span>(write_ack.len(), <span class="number">0</span>);
             channel_events::SendPacket { packet }
         })
-        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.type_str.to_owned()))
+        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.kind.clone()))
 }
 
 <span class="kw">pub fn </span>write_acknowledgement_try_from_abci_event(
@@ -865,7 +864,7 @@
             packet,
             ack: write_ack,
         })
-        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.type_str.to_owned()))
+        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.kind.clone()))
 }
 
 <span class="kw">pub fn </span>acknowledge_packet_try_from_abci_event(
@@ -877,7 +876,7 @@
             </span><span class="macro">debug_assert_eq!</span>(write_ack.len(), <span class="number">0</span>);
             channel_events::AcknowledgePacket { packet }
         })
-        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.type_str.to_owned()))
+        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.kind.clone()))
 }
 
 <span class="kw">pub fn </span>timeout_packet_try_from_abci_event(
@@ -889,15 +888,15 @@
             </span><span class="macro">debug_assert_eq!</span>(write_ack.len(), <span class="number">0</span>);
             channel_events::TimeoutPacket { packet }
         })
-        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.type_str.to_owned()))
+        .map_err(|<span class="kw">_</span>| ChannelError::abci_conversion_failed(abci_event.kind.clone()))
 }
 
 <span class="kw">fn </span>client_extract_attributes_from_tx(event: <span class="kw-2">&amp;</span>AbciEvent) -&gt; <span class="prelude-ty">Result</span>&lt;ClientAttributes, ClientError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>attr = ClientAttributes::default();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_ref();
-        <span class="kw">let </span>value = tag.value.as_ref();
+        <span class="kw">let </span>key = tag.key.as_str();
+        <span class="kw">let </span>value = tag.value.as_str();
         <span class="kw">match </span>key {
             client_events::CLIENT_ID_ATTRIBUTE_KEY =&gt; {
                 attr.client_id = value
@@ -923,10 +922,9 @@
 
 <span class="kw">pub fn </span>extract_header_from_tx(event: <span class="kw-2">&amp;</span>AbciEvent) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>Header&gt;, ClientError&gt; {
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_ref();
-        <span class="kw">let </span>value = tag.value.as_ref();
-        <span class="kw">if </span>key == HEADER_ATTRIBUTE_KEY {
-            <span class="kw">let </span>header_bytes = hex::decode(value).map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?</span>;
+        <span class="kw">if </span>tag.key == HEADER_ATTRIBUTE_KEY {
+            <span class="kw">let </span>header_bytes =
+                hex::decode(<span class="kw-2">&amp;</span>tag.value).map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?</span>;
             <span class="kw">return </span>decode_header(<span class="kw-2">&amp;</span>header_bytes);
         }
     }
@@ -939,8 +937,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>attr = ConnectionAttributes::default();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_ref();
-        <span class="kw">let </span>value = tag.value.as_ref();
+        <span class="kw">let </span>key = tag.key.as_str();
+        <span class="kw">let </span>value = tag.value.as_str();
         <span class="kw">match </span>key {
             connection_events::CONN_ID_ATTRIBUTE_KEY =&gt; {
                 attr.connection_id = value.parse().ok();
@@ -968,8 +966,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>attr = ChannelAttributes::default();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_ref();
-        <span class="kw">let </span>value = tag.value.as_ref();
+        <span class="kw">let </span>key = tag.key.as_str();
+        <span class="kw">let </span>value = tag.value.as_str();
         <span class="kw">match </span>key {
             channel_events::PORT_ID_ATTRIBUTE_KEY =&gt; {
                 attr.port_id = value.parse().map_err(ChannelError::identifier)<span class="question-mark">?
@@ -999,8 +997,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>packet = Packet::default();
     <span class="kw">let </span><span class="kw-2">mut </span>write_ack: Vec&lt;u8&gt; = Vec::new();
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_ref();
-        <span class="kw">let </span>value = tag.value.as_ref();
+        <span class="kw">let </span>key = tag.key.as_str();
+        <span class="kw">let </span>value = tag.value.as_str();
         <span class="kw">match </span>key {
             channel_events::PKT_SRC_PORT_ATTRIBUTE_KEY =&gt; {
                 packet.source_port = value.parse().map_err(ChannelError::identifier)<span class="question-mark">?</span>;

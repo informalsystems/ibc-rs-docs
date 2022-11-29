@@ -212,32 +212,11 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Types for the IBC events emitted from Tendermint Websocket by the connection module.
 
 </span><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
-<span class="kw">use </span>tendermint_rpc::abci::tag::Tag;
-<span class="kw">use </span>tendermint_rpc::abci::Event <span class="kw">as </span>AbciEvent;
+<span class="kw">use </span>tendermint::abci;
 
 <span class="kw">use </span><span class="kw">crate</span>::core::ics24_host::identifier::{ClientId, ConnectionId};
 <span class="kw">use </span><span class="kw">crate</span>::events::{IbcEvent, IbcEventType};
@@ -269,39 +248,24 @@
 }
 
 <span class="doccomment">/// Convert attributes to Tendermint ABCI tags
-///
-/// # Note
-/// The parsing of `Key`s and `Value`s never fails, because the
-/// `FromStr` instance of `tendermint::abci::tag::{Key, Value}`
-/// is infallible, even if it is not represented in the error type.
-/// Once tendermint-rs improves the API of the `Key` and `Value` types,
-/// we will be able to remove the `.parse().unwrap()` calls.
-</span><span class="kw">impl </span>From&lt;Attributes&gt; <span class="kw">for </span>Vec&lt;Tag&gt; {
+</span><span class="kw">impl </span>From&lt;Attributes&gt; <span class="kw">for </span>Vec&lt;abci::EventAttribute&gt; {
     <span class="kw">fn </span>from(a: Attributes) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>attributes = <span class="macro">vec!</span>[];
         <span class="kw">if let </span><span class="prelude-val">Some</span>(conn_id) = a.connection_id {
-            <span class="kw">let </span>conn_id = Tag {
-                key: CONN_ID_ATTRIBUTE_KEY.parse().unwrap(),
-                value: conn_id.to_string().parse().unwrap(),
-            };
+            <span class="kw">let </span>conn_id = (CONN_ID_ATTRIBUTE_KEY, conn_id.as_str()).into();
             attributes.push(conn_id);
         }
-        <span class="kw">let </span>client_id = Tag {
-            key: CLIENT_ID_ATTRIBUTE_KEY.parse().unwrap(),
-            value: a.client_id.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>client_id = (CLIENT_ID_ATTRIBUTE_KEY, a.client_id.as_str()).into();
         attributes.push(client_id);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(conn_id) = a.counterparty_connection_id {
-            <span class="kw">let </span>conn_id = Tag {
-                key: COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY.parse().unwrap(),
-                value: conn_id.to_string().parse().unwrap(),
-            };
+            <span class="kw">let </span>conn_id = (COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY, conn_id.as_str()).into();
             attributes.push(conn_id);
         }
-        <span class="kw">let </span>counterparty_client_id = Tag {
-            key: COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY.parse().unwrap(),
-            value: a.counterparty_client_id.to_string().parse().unwrap(),
-        };
+        <span class="kw">let </span>counterparty_client_id = (
+            COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY,
+            a.counterparty_client_id.to_string(),
+        )
+            .into();
         attributes.push(counterparty_client_id);
         attributes
     }
@@ -337,12 +301,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;OpenInit&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;OpenInit&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: OpenInit) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::OpenInitConnection.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::OpenInitConnection.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }
@@ -377,12 +340,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;OpenTry&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;OpenTry&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: OpenTry) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::OpenTryConnection.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::OpenTryConnection.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }
@@ -417,12 +379,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;OpenAck&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;OpenAck&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: OpenAck) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::OpenAckConnection.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::OpenAckConnection.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }
@@ -457,12 +418,11 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;OpenConfirm&gt; <span class="kw">for </span>AbciEvent {
+<span class="kw">impl </span>From&lt;OpenConfirm&gt; <span class="kw">for </span>abci::Event {
     <span class="kw">fn </span>from(v: OpenConfirm) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>attributes = Vec::&lt;Tag&gt;::from(v.<span class="number">0</span>);
-        AbciEvent {
-            type_str: IbcEventType::OpenConfirmConnection.as_str().to_string(),
-            attributes,
+        <span class="self">Self </span>{
+            kind: IbcEventType::OpenConfirmConnection.as_str().to_owned(),
+            attributes: v.<span class="number">0</span>.into(),
         }
     }
 }

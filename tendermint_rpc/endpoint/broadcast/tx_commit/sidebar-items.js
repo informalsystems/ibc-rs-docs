@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Request","`/broadcast_tx_commit`: only returns error if `mempool.CheckTx()` errs or if we timeout waiting for tx to commit."],["Response","Response from `/broadcast_tx_commit`."],["TxResult","Results from either `CheckTx` or `DeliverTx`."]]};
+window.SIDEBAR_ITEMS = {"struct":[["Request","`/broadcast_tx_commit`: only returns error if `mempool.CheckTx()` errs or if we timeout waiting for tx to commit."],["Response","Response from `/broadcast_tx_commit`."]]};

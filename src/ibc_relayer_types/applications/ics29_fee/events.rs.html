@@ -85,19 +85,10 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
-<span class="kw">use </span>tendermint_rpc::abci::tag::Tag;
-<span class="kw">use </span>tendermint_rpc::abci::Event <span class="kw">as </span>AbciEvent;
+<span class="kw">use </span>tendermint::abci;
 
 <span class="kw">use </span><span class="kw">super</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::applications::transfer::coin::RawCoin;
@@ -116,48 +107,41 @@
     <span class="kw">pub </span>total_timeout_fee: Vec&lt;RawCoin&gt;,
 }
 
-<span class="kw">fn </span>find_value(key: <span class="kw-2">&amp;</span>str, entries: <span class="kw-2">&amp;</span>[Tag]) -&gt; <span class="prelude-ty">Result</span>&lt;String, Error&gt; {
+<span class="kw">fn </span>find_value&lt;<span class="lifetime">&#39;a</span>&gt;(key: <span class="kw-2">&amp;</span>str, entries: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[abci::EventAttribute]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Error&gt; {
     entries
         .iter()
         .find_map(|entry| {
-            <span class="kw">if </span>entry.key.as_ref() == key {
-                <span class="prelude-val">Some</span>(entry.value.to_string())
+            <span class="kw">if </span>entry.key == key {
+                <span class="prelude-val">Some</span>(entry.value.as_str())
             } <span class="kw">else </span>{
                 <span class="prelude-val">None
             </span>}
         })
-        .ok_or_else(|| Error::event_attribute_not_found(key.to_string()))
+        .ok_or_else(|| Error::event_attribute_not_found(key.to_owned()))
 }
 
-<span class="kw">fn </span>new_tag(key: <span class="kw-2">&amp;</span>str, value: <span class="kw-2">&amp;</span>str) -&gt; Tag {
-    Tag {
-        key: key.parse().unwrap(),
-        value: value.parse().unwrap(),
-    }
-}
-
-<span class="kw">impl </span>From&lt;IncentivizedPacket&gt; <span class="kw">for </span>AbciEvent {
-    <span class="kw">fn </span>from(event: IncentivizedPacket) -&gt; AbciEvent {
-        <span class="kw">let </span>attributes: Vec&lt;Tag&gt; = <span class="macro">vec!</span>[
-            new_tag(<span class="string">&quot;port_id&quot;</span>, event.port_id.as_str()),
-            new_tag(<span class="string">&quot;channel_id&quot;</span>, event.channel_id.as_ref()),
-            new_tag(<span class="string">&quot;packet_sequence&quot;</span>, <span class="kw-2">&amp;</span>event.sequence.to_string()),
-            new_tag(<span class="string">&quot;recv_fee&quot;</span>, <span class="kw-2">&amp;</span>event.total_recv_fee.iter().join(<span class="string">&quot;,&quot;</span>)),
-            new_tag(<span class="string">&quot;ack_fee&quot;</span>, <span class="kw-2">&amp;</span>event.total_ack_fee.iter().join(<span class="string">&quot;,&quot;</span>)),
-            new_tag(<span class="string">&quot;timeout_fee&quot;</span>, <span class="kw-2">&amp;</span>event.total_timeout_fee.iter().join(<span class="string">&quot;,&quot;</span>)),
+<span class="kw">impl </span>From&lt;IncentivizedPacket&gt; <span class="kw">for </span>abci::Event {
+    <span class="kw">fn </span>from(event: IncentivizedPacket) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[
+            (<span class="string">&quot;port_id&quot;</span>, event.port_id.as_str()).into(),
+            (<span class="string">&quot;channel_id&quot;</span>, event.channel_id.as_str()).into(),
+            (<span class="string">&quot;packet_sequence&quot;</span>, <span class="kw-2">&amp;</span>event.sequence.to_string()).into(),
+            (<span class="string">&quot;recv_fee&quot;</span>, <span class="kw-2">&amp;</span>event.total_recv_fee.iter().join(<span class="string">&quot;,&quot;</span>)).into(),
+            (<span class="string">&quot;ack_fee&quot;</span>, <span class="kw-2">&amp;</span>event.total_ack_fee.iter().join(<span class="string">&quot;,&quot;</span>)).into(),
+            (<span class="string">&quot;timeout_fee&quot;</span>, <span class="kw-2">&amp;</span>event.total_timeout_fee.iter().join(<span class="string">&quot;,&quot;</span>)).into(),
         ];
 
-        AbciEvent {
-            type_str: IbcEventType::IncentivizedPacket.as_str().to_string(),
+        <span class="self">Self </span>{
+            kind: IbcEventType::IncentivizedPacket.as_str().to_owned(),
             attributes,
         }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Vec&lt;Tag&gt;&gt; <span class="kw">for </span>IncentivizedPacket {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[abci::EventAttribute]&gt; <span class="kw">for </span>IncentivizedPacket {
     <span class="kw">type </span>Error = Error;
 
-    <span class="kw">fn </span>try_from(entries: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Vec&lt;Tag&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+    <span class="kw">fn </span>try_from(entries: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[abci::EventAttribute]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">let </span>port_id_str = find_value(<span class="string">&quot;port_id&quot;</span>, entries)<span class="question-mark">?</span>;
         <span class="kw">let </span>channel_id_str = find_value(<span class="string">&quot;channel_id&quot;</span>, entries)<span class="question-mark">?</span>;
         <span class="kw">let </span>sequence_str = find_value(<span class="string">&quot;packet_sequence&quot;</span>, entries)<span class="question-mark">?</span>;
@@ -165,18 +149,18 @@
         <span class="kw">let </span>ack_fee_str = find_value(<span class="string">&quot;ack_fee&quot;</span>, entries)<span class="question-mark">?</span>;
         <span class="kw">let </span>timeout_fee_str = find_value(<span class="string">&quot;timeout_fee&quot;</span>, entries)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>port_id = PortId::from_str(<span class="kw-2">&amp;</span>port_id_str).map_err(Error::ics24)<span class="question-mark">?</span>;
+        <span class="kw">let </span>port_id = PortId::from_str(port_id_str).map_err(Error::ics24)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>channel_id = ChannelId::from_str(<span class="kw-2">&amp;</span>channel_id_str).map_err(Error::ics24)<span class="question-mark">?</span>;
+        <span class="kw">let </span>channel_id = ChannelId::from_str(channel_id_str).map_err(Error::ics24)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>sequence = Sequence::from_str(<span class="kw-2">&amp;</span>sequence_str).map_err(Error::channel)<span class="question-mark">?</span>;
+        <span class="kw">let </span>sequence = Sequence::from_str(sequence_str).map_err(Error::channel)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>total_recv_fee = RawCoin::from_string_list(<span class="kw-2">&amp;</span>recv_fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
+        <span class="kw">let </span>total_recv_fee = RawCoin::from_string_list(recv_fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>total_ack_fee = RawCoin::from_string_list(<span class="kw-2">&amp;</span>ack_fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
+        <span class="kw">let </span>total_ack_fee = RawCoin::from_string_list(ack_fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>total_timeout_fee =
-            RawCoin::from_string_list(<span class="kw-2">&amp;</span>timeout_fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
+            RawCoin::from_string_list(timeout_fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(IncentivizedPacket {
             port_id,
