@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.21.2/src/runtime/task/core.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>core.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-75894291877b32c0.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-3bcdcab5f4113412.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-091ecdca18d5df85.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-45445754dcd01ab2.css"><script id="default-settings" ></script><script src="../../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-d2f7777684990013.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../tokio/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.22.0/src/runtime/task/core.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>core.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ee9f86babca44bc2.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-3bcdcab5f4113412.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-091ecdca18d5df85.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-45445754dcd01ab2.css"><script id="default-settings" ></script><script src="../../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-287cecec4dbb45b0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../tokio/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -299,6 +299,31 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Core task module.
 //!
 //! # Safety
@@ -312,6 +337,7 @@
 
 </span><span class="kw">use </span><span class="kw">crate</span>::future::Future;
 <span class="kw">use </span><span class="kw">crate</span>::loom::cell::UnsafeCell;
+<span class="kw">use </span><span class="kw">crate</span>::runtime::context;
 <span class="kw">use </span><span class="kw">crate</span>::runtime::task::raw::{<span class="self">self</span>, Vtable};
 <span class="kw">use </span><span class="kw">crate</span>::runtime::task::state::State;
 <span class="kw">use </span><span class="kw">crate</span>::runtime::task::{Id, Schedule};
@@ -456,7 +482,29 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>with_mut&lt;R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw">impl </span>FnOnce(<span class="kw-2">*mut </span>Stage&lt;T&gt;) -&gt; R) -&gt; R {
         <span class="self">self</span>.stage.with_mut(f)
     }
+}
 
+<span class="doccomment">/// Set and clear the task id in the context when the future is executed or
+/// dropped, or when the output produced by the future is dropped.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>TaskIdGuard {
+    parent_task_id: <span class="prelude-ty">Option</span>&lt;Id&gt;,
+}
+
+<span class="kw">impl </span>TaskIdGuard {
+    <span class="kw">fn </span>enter(id: Id) -&gt; <span class="self">Self </span>{
+        TaskIdGuard {
+            parent_task_id: context::set_current_task_id(<span class="prelude-val">Some</span>(id)),
+        }
+    }
+}
+
+<span class="kw">impl </span>Drop <span class="kw">for </span>TaskIdGuard {
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        context::set_current_task_id(<span class="self">self</span>.parent_task_id);
+    }
+}
+
+<span class="kw">impl</span>&lt;T: Future, S: Schedule&gt; Core&lt;T, S&gt; {
     <span class="doccomment">/// Polls the future.
     ///
     /// # Safety
@@ -472,7 +520,7 @@
     /// heap.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>poll(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>cx: Context&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Poll&lt;T::Output&gt; {
         <span class="kw">let </span>res = {
-            <span class="self">self</span>.stage.with_mut(|ptr| {
+            <span class="self">self</span>.stage.stage.with_mut(|ptr| {
                 <span class="comment">// Safety: The caller ensures mutual exclusion to the field.
                 </span><span class="kw">let </span>future = <span class="kw">match unsafe </span>{ <span class="kw-2">&amp;mut *</span>ptr } {
                     Stage::Running(future) =&gt; future,
@@ -482,6 +530,7 @@
                 <span class="comment">// Safety: The caller ensures the future is pinned.
                 </span><span class="kw">let </span>future = <span class="kw">unsafe </span>{ Pin::new_unchecked(future) };
 
+                <span class="kw">let </span>_guard = TaskIdGuard::enter(<span class="self">self</span>.task_id);
                 future.poll(<span class="kw-2">&amp;mut </span>cx)
             })
         };
@@ -525,7 +574,7 @@
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>take_output(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">super</span>::Result&lt;T::Output&gt; {
         <span class="kw">use </span>std::mem;
 
-        <span class="self">self</span>.stage.with_mut(|ptr| {
+        <span class="self">self</span>.stage.stage.with_mut(|ptr| {
             <span class="comment">// Safety:: the caller ensures mutual exclusion to the field.
             </span><span class="kw">match </span>mem::replace(<span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span>ptr }, Stage::Consumed) {
                 Stage::Finished(output) =&gt; output,
@@ -535,7 +584,8 @@
     }
 
     <span class="kw">unsafe fn </span>set_stage(<span class="kw-2">&amp;</span><span class="self">self</span>, stage: Stage&lt;T&gt;) {
-        <span class="self">self</span>.stage.with_mut(|ptr| <span class="kw-2">*</span>ptr = stage)
+        <span class="kw">let </span>_guard = TaskIdGuard::enter(<span class="self">self</span>.task_id);
+        <span class="self">self</span>.stage.stage.with_mut(|ptr| <span class="kw-2">*</span>ptr = stage)
     }
 }
 
@@ -601,4 +651,4 @@
     <span class="macro">assert!</span>(size_of::&lt;Header&gt;() &lt;= <span class="number">8 </span>* size_of::&lt;<span class="kw-2">*const </span>()&gt;());
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="tokio" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (2585bcea0 2022-11-28)" data-search-js="search-df80cc3cb87b6482.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="tokio" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (e0098a5cc 2022-11-29)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
