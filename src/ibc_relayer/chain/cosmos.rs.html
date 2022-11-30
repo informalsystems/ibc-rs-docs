@@ -2000,6 +2000,17 @@
 <a href="#2000" id="2000">2000</a>
 <a href="#2001" id="2001">2001</a>
 <a href="#2002" id="2002">2002</a>
+<a href="#2003" id="2003">2003</a>
+<a href="#2004" id="2004">2004</a>
+<a href="#2005" id="2005">2005</a>
+<a href="#2006" id="2006">2006</a>
+<a href="#2007" id="2007">2007</a>
+<a href="#2008" id="2008">2008</a>
+<a href="#2009" id="2009">2009</a>
+<a href="#2010" id="2010">2010</a>
+<a href="#2011" id="2011">2011</a>
+<a href="#2012" id="2012">2012</a>
+<a href="#2013" id="2013">2013</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2575,6 +2586,7 @@
                 .map(|ev| IbcEventWithHeight::new(ev, response_height))
                 .collect(),
         );
+
         <span class="prelude-val">Ok</span>((begin_block_events, end_block_events))
     }
 
@@ -2588,22 +2600,29 @@
         <span class="kw">let </span><span class="kw-2">mut </span>begin_block_events = <span class="macro">vec!</span>[];
         <span class="kw">let </span><span class="kw-2">mut </span>end_block_events = <span class="macro">vec!</span>[];
 
-        <span class="kw">for </span>seq <span class="kw">in </span>request.sequences.iter() {
+        <span class="kw">for </span>seq <span class="kw">in </span>request.sequences.iter().copied() {
             <span class="kw">let </span>response = <span class="self">self
                 </span>.block_on(<span class="self">self</span>.rpc_client.block_search(
-                    packet_query(request, <span class="kw-2">*</span>seq),
-                    <span class="number">1</span>,
-                    <span class="number">1</span>, <span class="comment">// there should only be a single match for this query
-                    </span>Order::Ascending,
+                    packet_query(request, seq),
+                    <span class="comment">// We only need the first page
+                    </span><span class="number">1</span>,
+                    <span class="comment">// There should only be a single match for this query, but due to
+                    // the fact that the indexer treat the query as a disjunction over
+                    // all events in a block rather than a conjunction over a single event,
+                    // we may end up with partial matches and therefore have to account for
+                    // that by fetching multiple results and filter it down after the fact.
+                    // In the worst case we get N blocks where N is the number of channels,
+                    // but 10 seems to work well enough in practice while keeping the response
+                    // size, and therefore pressure on the node, fairly low.
+                    </span><span class="number">10</span>,
+                    <span class="comment">// We could pick either ordering here, since matching blocks may be at pretty
+                    // much any height relative to the target blocks, so we went with most recent
+                    // blocks first.
+                    </span>Order::Descending,
                 ))
                 .map_err(|e| Error::rpc(<span class="self">self</span>.config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
 
-            <span class="macro">assert!</span>(
-                response.blocks.len() &lt;= <span class="number">1</span>,
-                <span class="string">&quot;block_search: unexpected number of blocks&quot;
-            </span>);
-
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(block) = response.blocks.first().map(|first| <span class="kw-2">&amp;</span>first.block) {
+            <span class="kw">for </span>block <span class="kw">in </span>response.blocks.into_iter().map(|response| response.block) {
                 <span class="kw">let </span>response_height =
                     ICSHeight::new(<span class="self">self</span>.id().version(), u64::from(block.header.height))
                         .map_err(|<span class="kw">_</span>| Error::invalid_height_no_source())<span class="question-mark">?</span>;
@@ -2614,13 +2633,16 @@
                     }
                 }
 
-                <span class="kw">let </span>(new_begin_block_events, new_end_block_events) =
-                    <span class="self">self</span>.query_packet_from_block(request, <span class="kw-2">&amp;</span>[<span class="kw-2">*</span>seq], <span class="kw-2">&amp;</span>response_height)<span class="question-mark">?</span>;
+                <span class="comment">// `query_packet_from_block` retrieves the begin and end block events
+                // and filter them to retain only those matching the query
+                </span><span class="kw">let </span>(new_begin_block_events, new_end_block_events) =
+                    <span class="self">self</span>.query_packet_from_block(request, <span class="kw-2">&amp;</span>[seq], <span class="kw-2">&amp;</span>response_height)<span class="question-mark">?</span>;
 
                 begin_block_events.extend(new_begin_block_events);
                 end_block_events.extend(new_end_block_events);
             }
         }
+
         <span class="prelude-val">Ok</span>((begin_block_events, end_block_events))
     }
 }
