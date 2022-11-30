@@ -239,8 +239,6 @@
 <a href="#239" id="239">239</a>
 <a href="#240" id="240">240</a>
 <a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
@@ -251,17 +249,13 @@
 
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{application::fatal_error, Runnable};
+<span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
 <span class="kw">use </span>tracing::{error, info, instrument};
 
+<span class="kw">use </span>ibc_relayer::{chain::handle::Subscription, config::ChainConfig, event::monitor::EventMonitor};
 <span class="kw">use </span>ibc_relayer_types::{core::ics24_host::identifier::ChainId, events::IbcEvent};
-
-<span class="kw">use </span>eyre::eyre;
-<span class="kw">use </span>ibc_relayer::{
-    config::ChainConfig,
-    event::monitor::{EventMonitor, EventReceiver},
-};
 
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
@@ -358,14 +352,14 @@
     thread::spawn(|| event_monitor.run());
 
     <span class="kw">while let </span><span class="prelude-val">Ok</span>(event_batch) = rx.recv() {
-        <span class="kw">match </span>event_batch {
+        <span class="kw">match </span>event_batch.as_ref() {
             <span class="prelude-val">Ok</span>(batch) =&gt; {
                 <span class="kw">let </span>_span =
                     <span class="macro">tracing::error_span!</span>(<span class="string">&quot;event_batch&quot;</span>, batch_height = %batch.height).entered();
 
                 <span class="kw">let </span>matching_events = batch
                     .events
-                    .into_iter()
+                    .iter()
                     .filter(|e| event_match(<span class="kw-2">&amp;</span>e.event, filters))
                     .collect_vec();
 
@@ -391,8 +385,8 @@
 <span class="kw">fn </span>subscribe(
     chain_config: <span class="kw-2">&amp;</span>ChainConfig,
     rt: Arc&lt;TokioRuntime&gt;,
-) -&gt; eyre::Result&lt;(EventMonitor, EventReceiver)&gt; {
-    <span class="kw">let </span>(<span class="kw-2">mut </span>event_monitor, rx, <span class="kw">_</span>) = EventMonitor::new(
+) -&gt; eyre::Result&lt;(EventMonitor, Subscription)&gt; {
+    <span class="kw">let </span>(<span class="kw-2">mut </span>event_monitor, tx_cmd) = EventMonitor::new(
         chain_config.id.clone(),
         chain_config.websocket_addr.clone(),
         rt,
@@ -400,10 +394,12 @@
     .map_err(|e| <span class="macro">eyre!</span>(<span class="string">&quot;could not initialize event monitor: {}&quot;</span>, e))<span class="question-mark">?</span>;
 
     event_monitor
-        .subscribe()
+        .init_subscriptions()
         .map_err(|e| <span class="macro">eyre!</span>(<span class="string">&quot;could not initialize subscriptions: {}&quot;</span>, e))<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>((event_monitor, rx))
+    <span class="kw">let </span>subscription = tx_cmd.subscribe()<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>((event_monitor, subscription))
 }
 
 <span class="attr">#[cfg(test)]

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["EventMonitorCtrl",""]],"struct":[["ChainRuntime",""],["Threads",""]]};
+window.SIDEBAR_ITEMS = {"struct":[["ChainRuntime",""],["Threads",""]]};

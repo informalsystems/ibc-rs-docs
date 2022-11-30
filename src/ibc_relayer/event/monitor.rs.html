@@ -500,6 +500,19 @@
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::cmp::Ordering;
 
@@ -523,7 +536,7 @@
 };
 
 <span class="kw">use crate</span>::{
-    chain::tracking::TrackingId,
+    chain::{handle::Subscription, tracking::TrackingId},
     telemetry,
     util::{
         retry::{retry_with_index, RetryResult},
@@ -534,7 +547,7 @@
 <span class="kw">mod </span>error;
 <span class="kw">pub use </span>error::<span class="kw-2">*</span>;
 
-<span class="kw">use </span><span class="kw">super</span>::IbcEventWithHeight;
+<span class="kw">use super</span>::{bus::EventBus, IbcEventWithHeight};
 
 <span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = core::result::Result&lt;T, Error&gt;;
 
@@ -567,11 +580,33 @@
 
 <span class="kw">pub type </span>EventSender = channel::Sender&lt;<span class="prelude-ty">Result</span>&lt;EventBatch&gt;&gt;;
 <span class="kw">pub type </span>EventReceiver = channel::Receiver&lt;<span class="prelude-ty">Result</span>&lt;EventBatch&gt;&gt;;
-<span class="kw">pub type </span>TxMonitorCmd = channel::Sender&lt;MonitorCmd&gt;;
+
+<span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>TxMonitorCmd(channel::Sender&lt;MonitorCmd&gt;);
+
+<span class="kw">impl </span>TxMonitorCmd {
+    <span class="kw">pub fn </span>shutdown(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.<span class="number">0
+            </span>.send(MonitorCmd::Shutdown)
+            .map_err(|<span class="kw">_</span>| Error::channel_send_failed())
+    }
+
+    <span class="kw">pub fn </span>subscribe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Subscription&gt; {
+        <span class="kw">let </span>(tx, rx) = crossbeam_channel::bounded(<span class="number">1</span>);
+        <span class="self">self</span>.<span class="number">0
+            </span>.send(MonitorCmd::Subscribe(tx))
+            .map_err(|<span class="kw">_</span>| Error::channel_send_failed())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>subscription = rx.recv().map_err(|<span class="kw">_</span>| Error::channel_recv_failed())<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(subscription)
+    }
+}
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>MonitorCmd {
     Shutdown,
+    Subscribe(channel::Sender&lt;Subscription&gt;),
 }
 
 <span class="doccomment">/// Connect to a Tendermint node, subscribe to a set of queries,
@@ -587,8 +622,8 @@
     </span>client: WebSocketClient,
     <span class="doccomment">/// Async task handle for the WebSocket client&#39;s driver
     </span>driver_handle: JoinHandle&lt;()&gt;,
-    <span class="doccomment">/// Channel to handler where the monitor for this chain sends the events
-    </span>tx_batch: channel::Sender&lt;<span class="prelude-ty">Result</span>&lt;EventBatch&gt;&gt;,
+    <span class="doccomment">/// Event bus for broadcasting events
+    </span>event_bus: EventBus&lt;Arc&lt;<span class="prelude-ty">Result</span>&lt;EventBatch&gt;&gt;&gt;,
     <span class="doccomment">/// Channel where to receive client driver errors
     </span>rx_err: mpsc::UnboundedReceiver&lt;tendermint_rpc::Error&gt;,
     <span class="doccomment">/// Channel where to send client driver errors
@@ -650,8 +685,8 @@
         chain_id: ChainId,
         node_addr: Url,
         rt: Arc&lt;TokioRuntime&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, EventReceiver, TxMonitorCmd)&gt; {
-        <span class="kw">let </span>(tx_batch, rx_batch) = channel::unbounded();
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, TxMonitorCmd)&gt; {
+        <span class="kw">let </span>event_bus = EventBus::new();
         <span class="kw">let </span>(tx_cmd, rx_cmd) = channel::unbounded();
 
         <span class="kw">let </span>ws_addr = node_addr.clone();
@@ -660,7 +695,7 @@
             .map_err(|<span class="kw">_</span>| Error::client_creation_failed(chain_id.clone(), node_addr.clone()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(tx_err, rx_err) = mpsc::unbounded_channel();
-        <span class="kw">let </span>websocket_driver_handle = rt.spawn(run_driver(driver, tx_err.clone()));
+        <span class="kw">let </span>driver_handle = rt.spawn(run_driver(driver, tx_err.clone()));
 
         <span class="comment">// TODO: move them to config file(?)
         </span><span class="kw">let </span>event_queries = queries::all();
@@ -669,9 +704,9 @@
             rt,
             chain_id,
             client,
-            driver_handle: websocket_driver_handle,
+            driver_handle,
             event_queries,
-            tx_batch,
+            event_bus,
             rx_err,
             tx_err,
             rx_cmd,
@@ -679,7 +714,7 @@
             subscriptions: Box::new(futures::stream::empty()),
         };
 
-        <span class="prelude-val">Ok</span>((monitor, rx_batch, tx_cmd))
+        <span class="prelude-val">Ok</span>((monitor, TxMonitorCmd(tx_cmd)))
     }
 
     <span class="doccomment">/// The list of [`Query`] that this event monitor is subscribing for.
@@ -688,8 +723,8 @@
     }
 
     <span class="doccomment">/// Clear the current subscriptions, and subscribe again to all queries.
-    </span><span class="attr">#[instrument(name = <span class="string">&quot;event_monitor.subscribe&quot;</span>, skip_all, fields(chain = %<span class="self">self</span>.chain_id))]
-    </span><span class="kw">pub fn </span>subscribe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="attr">#[instrument(name = <span class="string">&quot;event_monitor.init_subscriptions&quot;</span>, skip_all, fields(chain = %<span class="self">self</span>.chain_id))]
+    </span><span class="kw">pub fn </span>init_subscriptions(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>subscriptions = <span class="macro">vec!</span>[];
 
         <span class="kw">for </span>query <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.event_queries {
@@ -762,7 +797,7 @@
     )]
     </span><span class="kw">fn </span>try_resubscribe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="macro">trace!</span>(<span class="string">&quot;trying to resubscribe to events&quot;</span>);
-        <span class="self">self</span>.subscribe()
+        <span class="self">self</span>.init_subscriptions()
     }
 
     <span class="doccomment">/// Attempt to reconnect the WebSocket client using the given retry strategy.
@@ -850,8 +885,11 @@
         </span><span class="kw">let </span>rt = <span class="self">self</span>.rt.clone();
 
         <span class="kw">loop </span>{
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(MonitorCmd::Shutdown) = <span class="self">self</span>.rx_cmd.try_recv() {
-                <span class="kw">return </span>Next::Abort;
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = <span class="self">self</span>.rx_cmd.try_recv() {
+                <span class="kw">match </span>cmd {
+                    MonitorCmd::Shutdown =&gt; <span class="kw">return </span>Next::Abort,
+                    MonitorCmd::Subscribe(tx) =&gt; tx.send(<span class="self">self</span>.event_bus.subscribe()).unwrap(),
+                }
             }
 
             <span class="kw">let </span>result = rt.block_on(<span class="kw">async </span>{
@@ -868,16 +906,12 @@
             }
 
             <span class="kw">match </span>result {
-                <span class="prelude-val">Ok</span>(batch) =&gt; <span class="self">self</span>.process_batch(batch).unwrap_or_else(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;error while processing batch: {}&quot;</span>, e);
-                }),
+                <span class="prelude-val">Ok</span>(batch) =&gt; <span class="self">self</span>.process_batch(batch),
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="kw">if let </span>ErrorDetail::SubscriptionCancelled(reason) = e.detail() {
                         <span class="macro">error!</span>(<span class="string">&quot;subscription cancelled, reason: {}&quot;</span>, reason);
 
-                        <span class="self">self</span>.propagate_error(e).unwrap_or_else(|e| {
-                            <span class="macro">error!</span>(<span class="string">&quot;{}&quot;</span>, e);
-                        });
+                        <span class="self">self</span>.propagate_error(e);
 
                         <span class="macro">telemetry!</span>(ws_reconnect, <span class="kw-2">&amp;</span><span class="self">self</span>.chain_id);
 
@@ -915,23 +949,15 @@
     /// and to trigger a clearing of packets, as this typically means that we have
     /// missed a bunch of events which were emitted after the subscription was closed.
     /// In that case, this error will be handled in [`Supervisor::handle_batch`].
-    </span><span class="kw">fn </span>propagate_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: Error) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="self">self</span>.tx_batch
-            .send(<span class="prelude-val">Err</span>(error))
-            .map_err(|<span class="kw">_</span>| Error::channel_send_failed())<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
+    </span><span class="kw">fn </span>propagate_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, error: Error) {
+        <span class="self">self</span>.event_bus.broadcast(Arc::new(<span class="prelude-val">Err</span>(error)));
     }
 
     <span class="doccomment">/// Collect the IBC events from the subscriptions
-    </span><span class="kw">fn </span>process_batch(<span class="kw-2">&amp;</span><span class="self">self</span>, batch: EventBatch) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">fn </span>process_batch(<span class="kw-2">&amp;mut </span><span class="self">self</span>, batch: EventBatch) {
         <span class="macro">telemetry!</span>(ws_events, <span class="kw-2">&amp;</span>batch.chain_id, batch.events.len() <span class="kw">as </span>u64);
 
-        <span class="self">self</span>.tx_batch
-            .send(<span class="prelude-val">Ok</span>(batch))
-            .map_err(|<span class="kw">_</span>| Error::channel_send_failed())<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
+        <span class="self">self</span>.event_bus.broadcast(Arc::new(<span class="prelude-val">Ok</span>(batch)));
     }
 }
 

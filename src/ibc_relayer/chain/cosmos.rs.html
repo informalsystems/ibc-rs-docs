@@ -1987,6 +1987,19 @@
 <a href="#1987" id="1987">1987</a>
 <a href="#1988" id="1988">1988</a>
 <a href="#1989" id="1989">1989</a>
+<a href="#1990" id="1990">1990</a>
+<a href="#1991" id="1991">1991</a>
+<a href="#1992" id="1992">1992</a>
+<a href="#1993" id="1993">1993</a>
+<a href="#1994" id="1994">1994</a>
+<a href="#1995" id="1995">1995</a>
+<a href="#1996" id="1996">1996</a>
+<a href="#1997" id="1997">1997</a>
+<a href="#1998" id="1998">1998</a>
+<a href="#1999" id="1999">1999</a>
+<a href="#2000" id="2000">2000</a>
+<a href="#2001" id="2001">2001</a>
+<a href="#2002" id="2002">2002</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -1998,18 +2011,12 @@
 <span class="kw">use </span>num_bigint::BigInt;
 <span class="kw">use </span>std::{cmp::Ordering, thread};
 
-<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
-<span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>TmHeight;
-<span class="kw">use </span>tendermint::node::info::TxIndexStatus;
-<span class="kw">use </span>tendermint_light_client_verifier::types::LightBlock <span class="kw">as </span>TmLightBlock;
-<span class="kw">use </span>tendermint_rpc::{
-    endpoint::broadcast::tx_sync::Response, endpoint::status, Client, HttpClient, Order,
-};
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
 <span class="kw">use </span>tonic::{codegen::http::Uri, metadata::AsciiMetadataValue};
 <span class="kw">use </span>tracing::{error, instrument, trace, warn};
 
 <span class="kw">use </span>ibc_proto::cosmos::staking::v1beta1::Params <span class="kw">as </span>StakingParams;
+<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::client_state::{
     AllowUpdate, ClientState <span class="kw">as </span>TmClientState,
 };
@@ -2038,10 +2045,18 @@
 <span class="kw">use </span>ibc_relayer_types::signer::Signer;
 <span class="kw">use </span>ibc_relayer_types::Height <span class="kw">as </span>ICSHeight;
 
+<span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>TmHeight;
+<span class="kw">use </span>tendermint::node::info::TxIndexStatus;
+<span class="kw">use </span>tendermint_light_client_verifier::types::LightBlock <span class="kw">as </span>TmLightBlock;
+<span class="kw">use </span>tendermint_rpc::endpoint::broadcast::tx_sync::Response;
+<span class="kw">use </span>tendermint_rpc::endpoint::status;
+<span class="kw">use </span>tendermint_rpc::{Client, HttpClient, Order};
+
+<span class="kw">use </span><span class="kw">crate</span>::account::Balance;
 <span class="kw">use </span><span class="kw">crate</span>::chain::client::ClientSettings;
-<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::batch::sequential_send_batched_messages_and_wait_commit;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::batch::{
     send_batched_messages_and_wait_check_tx, send_batched_messages_and_wait_commit,
+    sequential_send_batched_messages_and_wait_commit,
 };
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::encode::key_entry_to_signer;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::fee::maybe_register_counterparty_payee;
@@ -2060,33 +2075,23 @@
     default_gas_from_config, gas_multiplier_from_config, max_gas_from_config,
 };
 <span class="kw">use </span><span class="kw">crate</span>::chain::endpoint::{ChainEndpoint, ChainStatus, HealthCheck};
-<span class="kw">use </span><span class="kw">crate</span>::chain::requests::{Qualified, QueryPacketEventDataRequest};
+<span class="kw">use </span><span class="kw">crate</span>::chain::handle::Subscription;
+<span class="kw">use </span><span class="kw">crate</span>::chain::requests::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::chain::tracking::TrackedMsgs;
 <span class="kw">use </span><span class="kw">crate</span>::client_state::{AnyClientState, IdentifiedAnyClientState};
 <span class="kw">use </span><span class="kw">crate</span>::config::ChainConfig;
 <span class="kw">use </span><span class="kw">crate</span>::consensus_state::{AnyConsensusState, AnyConsensusStateWithHeight};
 <span class="kw">use </span><span class="kw">crate</span>::denom::DenomTrace;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-<span class="kw">use </span><span class="kw">crate</span>::event::monitor::{EventReceiver, TxMonitorCmd};
+<span class="kw">use </span><span class="kw">crate</span>::event::monitor::{EventMonitor, TxMonitorCmd};
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
 <span class="kw">use </span><span class="kw">crate</span>::keyring::{KeyEntry, KeyRing};
 <span class="kw">use </span><span class="kw">crate</span>::light_client::tendermint::LightClient <span class="kw">as </span>TmLightClient;
 <span class="kw">use </span><span class="kw">crate</span>::light_client::{LightClient, Verified};
 <span class="kw">use </span><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence;
-<span class="kw">use </span><span class="kw">crate</span>::util::pretty::{PrettyConsensusStateWithHeight, PrettyIdentifiedChannel};
-<span class="kw">use </span><span class="kw">crate</span>::util::pretty::{PrettyIdentifiedClientState, PrettyIdentifiedConnection};
-<span class="kw">use crate</span>::{account::Balance, event::monitor::EventMonitor};
-
-<span class="kw">use </span><span class="kw">super</span>::requests::{
-    IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
-    QueryClientConnectionsRequest, QueryClientStateRequest, QueryClientStatesRequest,
-    QueryConnectionChannelsRequest, QueryConnectionRequest, QueryConnectionsRequest,
-    QueryConsensusStateRequest, QueryConsensusStatesRequest, QueryHeight,
-    QueryHostConsensusStateRequest, QueryNextSequenceReceiveRequest,
-    QueryPacketAcknowledgementRequest, QueryPacketAcknowledgementsRequest,
-    QueryPacketCommitmentRequest, QueryPacketCommitmentsRequest, QueryPacketReceiptRequest,
-    QueryTxRequest, QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
-    QueryUpgradedClientStateRequest, QueryUpgradedConsensusStateRequest,
+<span class="kw">use </span><span class="kw">crate</span>::util::pretty::{
+    PrettyConsensusStateWithHeight, PrettyIdentifiedChannel, PrettyIdentifiedClientState,
+    PrettyIdentifiedConnection,
 };
 
 <span class="kw">pub mod </span>batch;
@@ -2127,8 +2132,11 @@
     light_client: TmLightClient,
     rt: Arc&lt;TokioRuntime&gt;,
     keybase: KeyRing,
+
     <span class="doccomment">/// A cached copy of the account information
     </span>account: <span class="prelude-ty">Option</span>&lt;Account&gt;,
+
+    tx_monitor_cmd: <span class="prelude-ty">Option</span>&lt;TxMonitorCmd&gt;,
 }
 
 <span class="kw">impl </span>CosmosSdkChain {
@@ -2263,6 +2271,25 @@
         }
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn </span>init_event_monitor(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TxMonitorCmd, Error&gt; {
+        <span class="macro">crate::time!</span>(<span class="string">&quot;init_event_monitor&quot;</span>);
+
+        <span class="kw">let </span>(<span class="kw-2">mut </span>event_monitor, monitor_tx) = EventMonitor::new(
+            <span class="self">self</span>.config.id.clone(),
+            <span class="self">self</span>.config.websocket_addr.clone(),
+            <span class="self">self</span>.rt.clone(),
+        )
+        .map_err(Error::event_monitor)<span class="question-mark">?</span>;
+
+        event_monitor
+            .init_subscriptions()
+            .map_err(Error::event_monitor)<span class="question-mark">?</span>;
+
+        thread::spawn(<span class="kw">move </span>|| event_monitor.run());
+
+        <span class="prelude-val">Ok</span>(monitor_tx)
     }
 
     <span class="doccomment">/// Query the chain staking parameters
@@ -2628,34 +2655,19 @@
             light_client,
             rt,
             keybase,
-            account: <span class="prelude-val">None</span>,
             tx_config,
+            account: <span class="prelude-val">None</span>,
+            tx_monitor_cmd: <span class="prelude-val">None</span>,
         };
 
         <span class="prelude-val">Ok</span>(chain)
     }
 
-    <span class="kw">fn </span>init_event_monitor(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        rt: Arc&lt;TokioRuntime&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(EventReceiver, TxMonitorCmd), Error&gt; {
-        <span class="macro">crate::time!</span>(<span class="string">&quot;init_event_monitor&quot;</span>);
-
-        <span class="kw">let </span>(<span class="kw-2">mut </span>event_monitor, event_receiver, monitor_tx) = EventMonitor::new(
-            <span class="self">self</span>.config.id.clone(),
-            <span class="self">self</span>.config.websocket_addr.clone(),
-            rt,
-        )
-        .map_err(Error::event_monitor)<span class="question-mark">?</span>;
-
-        event_monitor.subscribe().map_err(Error::event_monitor)<span class="question-mark">?</span>;
-
-        thread::spawn(<span class="kw">move </span>|| event_monitor.run());
-
-        <span class="prelude-val">Ok</span>((event_receiver, monitor_tx))
-    }
-
     <span class="kw">fn </span>shutdown(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(monitor_tx) = <span class="self">self</span>.tx_monitor_cmd {
+            monitor_tx.shutdown().map_err(Error::event_monitor)<span class="question-mark">?</span>;
+        }
+
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -2665,6 +2677,20 @@
 
     <span class="kw">fn </span>keybase_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>KeyRing {
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.keybase
+    }
+
+    <span class="kw">fn </span>subscribe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Subscription, Error&gt; {
+        <span class="kw">let </span>tx_monitor_cmd = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.tx_monitor_cmd {
+            <span class="prelude-val">Some</span>(tx_monitor_cmd) =&gt; tx_monitor_cmd,
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">let </span>tx_monitor_cmd = <span class="self">self</span>.init_event_monitor()<span class="question-mark">?</span>;
+                <span class="self">self</span>.tx_monitor_cmd = <span class="prelude-val">Some</span>(tx_monitor_cmd);
+                <span class="self">self</span>.tx_monitor_cmd.as_ref().unwrap()
+            }
+        };
+
+        <span class="kw">let </span>subscription = tx_monitor_cmd.subscribe().map_err(Error::event_monitor)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(subscription)
     }
 
     <span class="doccomment">/// Does multiple RPC calls to the full node, to check for
