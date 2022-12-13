@@ -635,10 +635,6 @@
 <a href="#635" id="635">635</a>
 <a href="#636" id="636">636</a>
 <a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::mem;
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
@@ -659,7 +655,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::config::types::{MaxMsgNum, MaxTxSize, Memo};
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::KeyEntry;
+<span class="kw">use </span><span class="kw">crate</span>::keyring::Secp256k1KeyPair;
 
 <span class="doccomment">/**
    Broadcast messages as multiple batched transactions to the chain all at once,
@@ -672,7 +668,7 @@
     config: <span class="kw-2">&amp;</span>TxConfig,
     max_msg_num: MaxMsgNum,
     max_tx_size: MaxTxSize,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: Vec&lt;Any&gt;,
@@ -685,7 +681,7 @@
         config,
         max_msg_num,
         max_tx_size,
-        key_entry,
+        key_pair,
         account,
         tx_memo,
         messages,
@@ -718,7 +714,7 @@
     config: <span class="kw-2">&amp;</span>TxConfig,
     max_msg_num: MaxMsgNum,
     max_tx_size: MaxTxSize,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: Vec&lt;Any&gt;,
@@ -731,7 +727,7 @@
         config,
         max_msg_num,
         max_tx_size,
-        key_entry,
+        key_pair,
         account,
         tx_memo,
         messages,
@@ -750,7 +746,7 @@
     config: <span class="kw-2">&amp;</span>TxConfig,
     max_msg_num: MaxMsgNum,
     max_tx_size: MaxTxSize,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: Vec&lt;Any&gt;,
@@ -763,7 +759,7 @@
         config,
         max_msg_num,
         max_tx_size,
-        key_entry,
+        key_pair,
         account,
         tx_memo,
         messages,
@@ -773,8 +769,7 @@
 
     <span class="kw">for </span>batch <span class="kw">in </span>batches {
         <span class="kw">let </span>response =
-            send_tx_with_account_sequence_retry(config, key_entry, account, tx_memo, <span class="kw-2">&amp;</span>batch)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
+            send_tx_with_account_sequence_retry(config, key_pair, account, tx_memo, <span class="kw-2">&amp;</span>batch).<span class="kw">await</span><span class="question-mark">?</span>;
 
         responses.push(response);
     }
@@ -786,7 +781,7 @@
     config: <span class="kw-2">&amp;</span>TxConfig,
     max_msg_num: MaxMsgNum,
     max_tx_size: MaxTxSize,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: Vec&lt;Any&gt;,
@@ -801,7 +796,7 @@
         config,
         max_msg_num,
         max_tx_size,
-        key_entry,
+        key_pair,
         account,
         tx_memo,
         messages,
@@ -820,8 +815,7 @@
         <span class="kw">let </span>message_count = batch.len();
 
         <span class="kw">let </span>response =
-            send_tx_with_account_sequence_retry(config, key_entry, account, tx_memo, <span class="kw-2">&amp;</span>batch)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
+            send_tx_with_account_sequence_retry(config, key_pair, account, tx_memo, <span class="kw-2">&amp;</span>batch).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>tx_sync_result = response_to_tx_sync_result(<span class="kw-2">&amp;</span>config.chain_id, message_count, response);
 
@@ -835,7 +829,7 @@
     config: <span class="kw-2">&amp;</span>TxConfig,
     max_msg_num: MaxMsgNum,
     max_tx_size: MaxTxSize,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: Vec&lt;Any&gt;,
@@ -850,7 +844,7 @@
         config,
         max_msg_num,
         max_tx_size,
-        key_entry,
+        key_pair,
         account,
         tx_memo,
         messages,
@@ -869,8 +863,7 @@
         <span class="kw">let </span>message_count = batch.len();
 
         <span class="kw">let </span>response =
-            send_tx_with_account_sequence_retry(config, key_entry, account, tx_memo, <span class="kw-2">&amp;</span>batch)
-                .<span class="kw">await</span><span class="question-mark">?</span>;
+            send_tx_with_account_sequence_retry(config, key_pair, account, tx_memo, <span class="kw-2">&amp;</span>batch).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>tx_sync_result = response_to_tx_sync_result(<span class="kw-2">&amp;</span>config.chain_id, message_count, response);
 
@@ -922,7 +915,7 @@
     config: <span class="kw-2">&amp;</span>TxConfig,
     max_msg_num: MaxMsgNum,
     max_tx_size: MaxTxSize,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;</span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: Vec&lt;Any&gt;,
@@ -936,7 +929,7 @@
     // by taking the encoded length of an empty tx with the same auth info and signatures.
     // Use the maximum possible fee to get an upper bound for varint encoding.
     </span><span class="kw">let </span>max_fee = gas_amount_to_fee(<span class="kw-2">&amp;</span>config.gas_config, config.gas_config.max_gas);
-    <span class="kw">let </span>tx_metrics = encoded_tx_metrics(config, key_entry, account, tx_memo, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>max_fee)<span class="question-mark">?</span>;
+    <span class="kw">let </span>tx_metrics = encoded_tx_metrics(config, key_pair, account, tx_memo, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>max_fee)<span class="question-mark">?</span>;
     <span class="kw">let </span>tx_envelope_len = tx_metrics.envelope_len;
     <span class="kw">let </span>empty_body_len = tx_metrics.body_bytes_len;
 
@@ -998,14 +991,14 @@
     <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::types::config::TxConfig;
     <span class="kw">use </span><span class="kw">crate</span>::config;
     <span class="kw">use </span><span class="kw">crate</span>::config::types::{MaxMsgNum, MaxTxSize, Memo};
-    <span class="kw">use </span><span class="kw">crate</span>::keyring::{<span class="self">self</span>, KeyEntry, KeyRing};
+    <span class="kw">use </span><span class="kw">crate</span>::keyring::{<span class="self">self</span>, KeyRing, Secp256k1KeyPair, SigningKeyPair};
     <span class="kw">use </span>ibc_proto::google::protobuf::Any;
     <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
     <span class="kw">use </span>std::fs;
 
     <span class="kw">const </span>COSMOS_HD_PATH: <span class="kw-2">&amp;</span>str = <span class="string">&quot;m/44&#39;/118&#39;/0&#39;/0/0&quot;</span>;
 
-    <span class="kw">fn </span>test_fixture() -&gt; (TxConfig, KeyEntry, Account) {
+    <span class="kw">fn </span>test_fixture() -&gt; (TxConfig, Secp256k1KeyPair, Account) {
         <span class="kw">let </span>path = <span class="macro">concat!</span>(
             <span class="macro">env!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>),
             <span class="string">&quot;/tests/config/fixtures/relayer_conf_example.toml&quot;
@@ -1021,9 +1014,9 @@
             <span class="string">&quot;/tests/config/fixtures/relayer-seed.json&quot;
         </span>);
         <span class="kw">let </span>seed_file_content = fs::read_to_string(path).unwrap();
-        <span class="kw">let </span>_keyring = KeyRing::new(keyring::Store::Memory, <span class="string">&quot;cosmos&quot;</span>, <span class="kw-2">&amp;</span>chain_id).unwrap();
+        <span class="kw">let </span>_keyring = KeyRing::new_secp256k1(keyring::Store::Memory, <span class="string">&quot;cosmos&quot;</span>, <span class="kw-2">&amp;</span>chain_id).unwrap();
         <span class="kw">let </span>hd_path = COSMOS_HD_PATH.parse().unwrap();
-        <span class="kw">let </span>key_entry = KeyEntry::from_seed_file(<span class="kw-2">&amp;</span>seed_file_content, <span class="kw-2">&amp;</span>hd_path).unwrap();
+        <span class="kw">let </span>key_pair = Secp256k1KeyPair::from_seed_file(<span class="kw-2">&amp;</span>seed_file_content, <span class="kw-2">&amp;</span>hd_path).unwrap();
 
         <span class="kw">let </span>account = Account {
             address: AccountAddress::new(<span class="string">&quot;&quot;</span>.to_owned()),
@@ -1031,12 +1024,12 @@
             sequence: AccountSequence::new(<span class="number">0</span>),
         };
 
-        (tx_config, key_entry, account)
+        (tx_config, key_pair, account)
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>batch_does_not_exceed_max_tx_size() {
-        <span class="kw">let </span>(config, key_entry, account) = test_fixture();
+        <span class="kw">let </span>(config, key_pair, account) = test_fixture();
         <span class="kw">let </span>max_fee = gas_amount_to_fee(<span class="kw-2">&amp;</span>config.gas_config, config.gas_config.max_gas);
         <span class="kw">let </span><span class="kw-2">mut </span>messages = <span class="macro">vec!</span>[Any {
             type_url: <span class="string">&quot;/example.Baz&quot;</span>.into(),
@@ -1054,7 +1047,7 @@
             <span class="kw">let </span>expected_batch_len = messages.len() - <span class="number">1</span>;
             <span class="kw">let </span>tx_bytes = sign_and_encode_tx(
                 <span class="kw-2">&amp;</span>config,
-                <span class="kw-2">&amp;</span>key_entry,
+                <span class="kw-2">&amp;</span>key_pair,
                 <span class="kw-2">&amp;</span>account,
                 <span class="kw-2">&amp;</span>memo,
                 <span class="kw-2">&amp;</span>messages[..expected_batch_len],
@@ -1067,7 +1060,7 @@
                 <span class="kw-2">&amp;</span>config,
                 MaxMsgNum::new(<span class="number">100</span>).unwrap(),
                 max_tx_size,
-                <span class="kw-2">&amp;</span>key_entry,
+                <span class="kw-2">&amp;</span>key_pair,
                 <span class="kw-2">&amp;</span>account,
                 <span class="kw-2">&amp;</span>memo,
                 messages.clone(),
@@ -1078,7 +1071,7 @@
             <span class="macro">assert_eq!</span>(batches[<span class="number">0</span>].len(), expected_batch_len);
 
             <span class="kw">let </span>tx_bytes =
-                sign_and_encode_tx(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>key_entry, <span class="kw-2">&amp;</span>account, <span class="kw-2">&amp;</span>memo, <span class="kw-2">&amp;</span>batches[<span class="number">0</span>], <span class="kw-2">&amp;</span>max_fee)
+                sign_and_encode_tx(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>key_pair, <span class="kw-2">&amp;</span>account, <span class="kw-2">&amp;</span>memo, <span class="kw-2">&amp;</span>batches[<span class="number">0</span>], <span class="kw-2">&amp;</span>max_fee)
                     .unwrap();
             <span class="macro">assert_eq!</span>(tx_bytes.len(), max_tx_size.to_usize());
 
@@ -1092,7 +1085,7 @@
     </span><span class="kw">fn </span>batch_error_on_oversized_message() {
         <span class="kw">const </span>MAX_TX_SIZE: usize = <span class="number">203</span>;
 
-        <span class="kw">let </span>(config, key_entry, account) = test_fixture();
+        <span class="kw">let </span>(config, key_pair, account) = test_fixture();
         <span class="kw">let </span>messages = <span class="macro">vec!</span>[Any {
             type_url: <span class="string">&quot;/example.Foo&quot;</span>.into(),
             value: <span class="macro">vec!</span>[<span class="number">0</span>; <span class="number">6</span>],
@@ -1103,7 +1096,7 @@
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::default(),
             MaxTxSize::new(MAX_TX_SIZE).unwrap(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>memo,
             messages.clone(),
@@ -1115,15 +1108,14 @@
 
         <span class="kw">let </span>max_fee = gas_amount_to_fee(<span class="kw-2">&amp;</span>config.gas_config, config.gas_config.max_gas);
         <span class="kw">let </span>tx_bytes =
-            sign_and_encode_tx(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>key_entry, <span class="kw-2">&amp;</span>account, <span class="kw-2">&amp;</span>memo, <span class="kw-2">&amp;</span>batches[<span class="number">0</span>], <span class="kw-2">&amp;</span>max_fee)
-                .unwrap();
+            sign_and_encode_tx(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>key_pair, <span class="kw-2">&amp;</span>account, <span class="kw-2">&amp;</span>memo, <span class="kw-2">&amp;</span>batches[<span class="number">0</span>], <span class="kw-2">&amp;</span>max_fee).unwrap();
         <span class="macro">assert_eq!</span>(tx_bytes.len(), MAX_TX_SIZE);
 
         <span class="kw">let </span>res = batch_messages(
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::default(),
             MaxTxSize::new(MAX_TX_SIZE - <span class="number">1</span>).unwrap(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>memo,
             messages,
@@ -1134,7 +1126,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_batches_are_structured_appropriately_per_max_msg_num() {
-        <span class="kw">let </span>(config, key_entry, account) = test_fixture();
+        <span class="kw">let </span>(config, key_pair, account) = test_fixture();
         <span class="comment">// Ensure that when MaxMsgNum is 1, the resulting batch
         // consists of 5 smaller batches, each with a single message
         </span><span class="kw">let </span>messages = <span class="macro">vec!</span>[
@@ -1164,7 +1156,7 @@
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::new(<span class="number">1</span>).unwrap(),
             MaxTxSize::default(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>Memo::new(<span class="string">&quot;&quot;</span>).unwrap(),
             messages.clone(),
@@ -1183,7 +1175,7 @@
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::new(<span class="number">100</span>).unwrap(),
             MaxTxSize::default(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>Memo::new(<span class="string">&quot;&quot;</span>).unwrap(),
             messages,
@@ -1198,7 +1190,7 @@
     </span><span class="kw">fn </span>test_batches_are_structured_appropriately_per_max_tx_size() {
         <span class="kw">const </span>MAX_TX_SIZE: usize = <span class="number">198</span>;
 
-        <span class="kw">let </span>(config, key_entry, account) = test_fixture();
+        <span class="kw">let </span>(config, key_pair, account) = test_fixture();
         <span class="comment">// Ensure that when MaxTxSize is only enough to fit each one of the messages,
         // the resulting batch consists of 5 smaller batches, each with a single message.
         </span><span class="kw">let </span>messages = <span class="macro">vec!</span>[
@@ -1229,7 +1221,7 @@
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::default(),
             MaxTxSize::new(MAX_TX_SIZE).unwrap(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>memo,
             messages.clone(),
@@ -1243,7 +1235,7 @@
         <span class="kw">for </span>batch <span class="kw">in </span>batches {
             <span class="macro">assert_eq!</span>(batch.len(), <span class="number">1</span>);
             <span class="kw">let </span>tx_bytes =
-                sign_and_encode_tx(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>key_entry, <span class="kw-2">&amp;</span>account, <span class="kw-2">&amp;</span>memo, <span class="kw-2">&amp;</span>batch, <span class="kw-2">&amp;</span>max_fee).unwrap();
+                sign_and_encode_tx(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>key_pair, <span class="kw-2">&amp;</span>account, <span class="kw-2">&amp;</span>memo, <span class="kw-2">&amp;</span>batch, <span class="kw-2">&amp;</span>max_fee).unwrap();
             <span class="macro">assert_eq!</span>(tx_bytes.len(), MAX_TX_SIZE);
         }
 
@@ -1254,7 +1246,7 @@
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::default(),
             MaxTxSize::max(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>Memo::new(<span class="string">&quot;&quot;</span>).unwrap(),
             messages,
@@ -1268,12 +1260,12 @@
     <span class="attr">#[test]
     #[should_panic(expected = <span class="string">&quot;`max_msg_num` must be greater than or equal to 1, found 0&quot;</span>)]
     </span><span class="kw">fn </span>test_max_msg_num_of_zero_panics() {
-        <span class="kw">let </span>(config, key_entry, account) = test_fixture();
+        <span class="kw">let </span>(config, key_pair, account) = test_fixture();
         <span class="kw">let </span>_batches = batch_messages(
             <span class="kw-2">&amp;</span>config,
             MaxMsgNum::new(<span class="number">0</span>).unwrap(),
             MaxTxSize::default(),
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;</span>account,
             <span class="kw-2">&amp;</span>Memo::new(<span class="string">&quot;&quot;</span>).unwrap(),
             <span class="macro">vec!</span>[],
@@ -1281,4 +1273,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

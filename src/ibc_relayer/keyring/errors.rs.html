@@ -114,18 +114,53 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre><pre class="rust"><code><span class="kw">use </span>flex_error::{define_error, DisplayOnly, TraceError};
 <span class="kw">use </span>std::io::Error <span class="kw">as </span>IoError;
 
+<span class="kw">use </span><span class="kw">super</span>::KeyType;
+<span class="kw">use </span><span class="kw">crate</span>::config::AddressType;
+
 <span class="macro">define_error! </span>{
     Error {
-        InvalidKey
+        InvalidPublicKey
             [ TraceError&lt;signature::Error&gt; ]
-            |<span class="kw">_</span>| { <span class="string">&quot;invalid key: could not build signing key from private key bytes&quot; </span>},
-
-        InvalidKeyRaw
-            [ TraceError&lt;bitcoin::secp256k1::Error&gt; ]
-            |<span class="kw">_</span>| { <span class="string">&quot;invalid key: could not build signing key from private key bytes&quot; </span>},
+            |<span class="kw">_</span>| { <span class="string">&quot;invalid key: could not build public key from public key bytes&quot; </span>},
 
         KeyNotFound
             |<span class="kw">_</span>| { <span class="string">&quot;key not found&quot; </span>},
@@ -137,11 +172,12 @@
             [ DisplayOnly&lt;anyhow::Error&gt; ]
             |<span class="kw">_</span>| { <span class="string">&quot;invalid mnemonic&quot; </span>},
 
-        PrivateKey
-            [ TraceError&lt;bitcoin::util::bip32::Error&gt; ]
-            |<span class="kw">_</span>| { <span class="string">&quot;cannot generate private key&quot; </span>},
+        Bip32KeyGenerationFailed
+            { key_type: KeyType }
+            [ TraceError&lt;anyhow::Error&gt; ]
+            |e| { <span class="macro">format!</span>(<span class="string">&quot;cannot generate {} private key from BIP-32 seed&quot;</span>, e.key_type) },
 
-        UnsupportedPublicKey
+        OnlySecp256k1PublicKeySupported
             { key_type: String }
             |e| {
                 <span class="macro">format!</span>(<span class="string">&quot;unsupported public key: {}. only secp256k1 pub keys are currently supported&quot;</span>,
@@ -228,7 +264,43 @@
             |e| {
                 <span class="macro">format!</span>(<span class="string">&quot;invalid HD path: {0}&quot;</span>, e.path)
             },
+
+        AddressTypeNotFound
+            {
+                address: Vec&lt;u8&gt;,
+                public_key: Vec&lt;u8&gt;,
+            }
+            |e| {
+                <span class="macro">format!</span>(<span class="string">&quot;No address type found for address {:?} that matches the public key {:?}&quot;</span>,
+                        e.address,
+                        e.public_key)
+            },
+
+        InvalidAddressLength
+            {
+                address: Vec&lt;u8&gt;,
+                expected_length: usize,
+            }
+            |e| {
+                <span class="macro">format!</span>(<span class="string">&quot;Length of address {:?} did not match expected length {}&quot;</span>,
+                        e.address,
+                        e.expected_length)
+            },
+
+
+        Bs58Decode
+            [ TraceError&lt;bs58::decode::Error&gt; ]
+            |<span class="kw">_</span>| { <span class="string">&quot;bs58 decode error&quot; </span>},
+
+        UnsupportedAddressType
+          {
+              address_type: AddressType,
+              key_type: KeyType,
+          }
+          |e| {
+              <span class="macro">format!</span>(<span class="string">&quot;Unsupported address type {} for key type {}&quot;</span>, e.address_type, e.key_type)
+          }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

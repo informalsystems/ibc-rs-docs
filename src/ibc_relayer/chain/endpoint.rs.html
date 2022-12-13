@@ -619,6 +619,9 @@
 <a href="#619" id="619">619</a>
 <a href="#620" id="620">620</a>
 <a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::convert::TryFrom;
 
@@ -660,7 +663,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::denom::DenomTrace;
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, QUERY_PROOF_EXPECT_MSG};
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::{KeyEntry, KeyRing};
+<span class="kw">use </span><span class="kw">crate</span>::keyring::{AnySigningKeyPair, KeyRing, SigningKeyPairSized};
 <span class="kw">use </span><span class="kw">crate</span>::light_client::AnyHeader;
 <span class="kw">use </span><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence;
 
@@ -692,6 +695,9 @@
     <span class="doccomment">/// Type of the client state for this chain
     </span><span class="kw">type </span>ClientState: ClientState + Into&lt;AnyClientState&gt;;
 
+    <span class="doccomment">/// Type of the key pair used for signatures of messages on chain
+    </span><span class="kw">type </span>SigningKeyPair: SigningKeyPairSized + Into&lt;AnySigningKeyPair&gt;;
+
     <span class="doccomment">/// Returns the chain&#39;s identifier
     </span><span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainId {
         <span class="kw-2">&amp;</span><span class="self">self</span>.config().id
@@ -717,29 +723,29 @@
     <span class="comment">// Keyring
 
     </span><span class="doccomment">/// Returns the chain&#39;s keybase
-    </span><span class="kw">fn </span>keybase(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KeyRing;
+    </span><span class="kw">fn </span>keybase(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KeyRing&lt;<span class="self">Self</span>::SigningKeyPair&gt;;
 
     <span class="doccomment">/// Returns the chain&#39;s keybase, mutably
-    </span><span class="kw">fn </span>keybase_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>KeyRing;
+    </span><span class="kw">fn </span>keybase_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>KeyRing&lt;<span class="self">Self</span>::SigningKeyPair&gt;;
 
     <span class="kw">fn </span>get_signer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Signer, Error&gt;;
 
-    <span class="doccomment">/// Get the signing key
-    </span><span class="kw">fn </span>get_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;KeyEntry, Error&gt; {
+    <span class="doccomment">/// Get the signing key pair
+    </span><span class="kw">fn </span>get_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SigningKeyPair, Error&gt; {
         <span class="macro">crate::time!</span>(<span class="string">&quot;get_key&quot;</span>);
 
         <span class="comment">// Get the key from key seed file
-        </span><span class="kw">let </span>key = <span class="self">self
+        </span><span class="kw">let </span>key_pair = <span class="self">self
             </span>.keybase()
             .get_key(<span class="kw-2">&amp;</span><span class="self">self</span>.config().key_name)
             .map_err(|e| Error::key_not_found(<span class="self">self</span>.config().key_name.clone(), e))<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(key)
+        <span class="prelude-val">Ok</span>(key_pair)
     }
 
-    <span class="kw">fn </span>add_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key_name: <span class="kw-2">&amp;</span>str, key: KeyEntry) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">fn </span>add_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key_name: <span class="kw-2">&amp;</span>str, key_pair: <span class="self">Self</span>::SigningKeyPair) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="self">self</span>.keybase_mut()
-            .add_key(key_name, key)
+            .add_key(key_name, key_pair)
             .map_err(Error::key_base)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
@@ -1241,4 +1247,4 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

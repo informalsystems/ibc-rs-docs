@@ -179,6 +179,7 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>std::thread;
 
@@ -194,7 +195,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::types::config::TxConfig;
 <span class="kw">use </span><span class="kw">crate</span>::config::types::Memo;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::KeyEntry;
+<span class="kw">use </span><span class="kw">crate</span>::keyring::{Secp256k1KeyPair, SigningKeyPair};
 <span class="kw">use </span><span class="kw">crate</span>::sdk_error::sdk_error_from_tx_sync_error_code;
 <span class="kw">use crate</span>::{telemetry, time};
 
@@ -227,7 +228,7 @@
 )]
 </span><span class="kw">pub async fn </span>send_tx_with_account_sequence_retry(
     config: <span class="kw-2">&amp;</span>TxConfig,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
@@ -237,7 +238,7 @@
     <span class="kw">let </span>_message_count = messages.len() <span class="kw">as </span>u64;
 
     <span class="kw">let </span>response =
-        do_send_tx_with_account_sequence_retry(config, key_entry, account, tx_memo, messages).<span class="kw">await</span>;
+        do_send_tx_with_account_sequence_retry(config, key_pair, account, tx_memo, messages).<span class="kw">await</span>;
 
     <span class="kw">if </span>response.is_ok() {
         <span class="macro">telemetry!</span>(total_messages_submitted, <span class="kw-2">&amp;</span>config.chain_id, _message_count);
@@ -248,12 +249,12 @@
 
 <span class="kw">async fn </span>do_send_tx_with_account_sequence_retry(
     config: <span class="kw-2">&amp;</span>TxConfig,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Response, Error&gt; {
-    <span class="kw">match </span>estimate_fee_and_send_tx(config, key_entry, account, tx_memo, messages).<span class="kw">await </span>{
+    <span class="kw">match </span>estimate_fee_and_send_tx(config, key_pair, account, tx_memo, messages).<span class="kw">await </span>{
         <span class="comment">// Gas estimation failed with account sequence mismatch during gas estimation.
         // It indicates that the account sequence cached by hermes is stale (got &lt; expected).
         // This can happen when the same account is used by another agent.
@@ -265,7 +266,7 @@
             );
 
             refresh_account_and_retry_send_tx_with_account_sequence(
-                config, key_entry, account, tx_memo, messages,
+                config, key_pair, account, tx_memo, messages,
             )
             .<span class="kw">await
         </span>}
@@ -279,7 +280,7 @@
             </span>);
 
             refresh_account_and_retry_send_tx_with_account_sequence(
-                config, key_entry, account, tx_memo, messages,
+                config, key_pair, account, tx_memo, messages,
             )
             .<span class="kw">await
         </span>}
@@ -334,18 +335,19 @@
 
 <span class="kw">async fn </span>refresh_account_and_retry_send_tx_with_account_sequence(
     config: <span class="kw-2">&amp;</span>TxConfig,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Response, Error&gt; {
+    <span class="kw">let </span>key_account = key_pair.account();
     <span class="comment">// Re-fetch the account sequence number
-    </span>refresh_account(<span class="kw-2">&amp;</span>config.grpc_address, <span class="kw-2">&amp;</span>key_entry.account, account).<span class="kw">await</span><span class="question-mark">?</span>;
+    </span>refresh_account(<span class="kw-2">&amp;</span>config.grpc_address, <span class="kw-2">&amp;</span>key_account, account).<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="comment">// Retry after delay
     </span>thread::sleep(Duration::from_millis(ACCOUNT_SEQUENCE_RETRY_DELAY));
 
-    estimate_fee_and_send_tx(config, key_entry, account, tx_memo, messages).<span class="kw">await
+    estimate_fee_and_send_tx(config, key_pair, account, tx_memo, messages).<span class="kw">await
 </span>}
 
 <span class="doccomment">/// Determine whether the given error yielded by `tx_simulate`
@@ -361,4 +363,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

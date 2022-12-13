@@ -233,13 +233,7 @@
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
 </pre><pre class="rust"><code><span class="kw">use </span>bech32::{ToBase32, Variant};
-<span class="kw">use </span>bitcoin::hashes::hex::ToHex;
 <span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::mode_info::{Single, Sum};
 <span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::{AuthInfo, Fee, ModeInfo, SignDoc, SignerInfo, TxBody, TxRaw};
@@ -256,17 +250,17 @@
 <span class="kw">use </span><span class="kw">crate</span>::config::types::Memo;
 <span class="kw">use </span><span class="kw">crate</span>::config::AddressType;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::KeyEntry;
+<span class="kw">use </span><span class="kw">crate</span>::keyring::{Secp256k1KeyPair, SigningKeyPair};
 
 <span class="kw">pub fn </span>sign_and_encode_tx(
     config: <span class="kw-2">&amp;</span>TxConfig,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;</span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
     fee: <span class="kw-2">&amp;</span>Fee,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
-    <span class="kw">let </span>signed_tx = sign_tx(config, key_entry, account, tx_memo, messages, fee)<span class="question-mark">?</span>;
+    <span class="kw">let </span>signed_tx = sign_tx(config, key_pair, account, tx_memo, messages, fee)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>tx_raw = TxRaw {
         body_bytes: signed_tx.body_bytes,
@@ -287,13 +281,13 @@
 
 <span class="kw">pub fn </span>encoded_tx_metrics(
     config: <span class="kw-2">&amp;</span>TxConfig,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;</span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
     fee: <span class="kw-2">&amp;</span>Fee,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;EncodedTxMetrics, Error&gt; {
-    <span class="kw">let </span>signed_tx = sign_tx(config, key_entry, account, tx_memo, messages, fee)<span class="question-mark">?</span>;
+    <span class="kw">let </span>signed_tx = sign_tx(config, key_pair, account, tx_memo, messages, fee)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>tx_raw = TxRaw {
         body_bytes: signed_tx.body_bytes,
@@ -317,13 +311,13 @@
 
 <span class="kw">pub fn </span>sign_tx(
     config: <span class="kw-2">&amp;</span>TxConfig,
-    key_entry: <span class="kw-2">&amp;</span>KeyEntry,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;</span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
     fee: <span class="kw-2">&amp;</span>Fee,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;SignedTx, Error&gt; {
-    <span class="kw">let </span>key_bytes = encode_key_bytes(key_entry)<span class="question-mark">?</span>;
+    <span class="kw">let </span>key_bytes = encode_key_bytes(key_pair)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>signer = encode_signer_info(<span class="kw-2">&amp;</span>config.address_type, account.sequence, key_bytes)<span class="question-mark">?</span>;
 
@@ -334,8 +328,7 @@
 
     <span class="kw">let </span>signed_doc = encode_sign_doc(
         <span class="kw-2">&amp;</span>config.chain_id,
-        key_entry,
-        <span class="kw-2">&amp;</span>config.address_type,
+        key_pair,
         account.number,
         auth_info_bytes.clone(),
         body_bytes.clone(),
@@ -350,10 +343,10 @@
     })
 }
 
-<span class="kw">fn </span>encode_key_bytes(key: <span class="kw-2">&amp;</span>KeyEntry) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
+<span class="kw">fn </span>encode_key_bytes(key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>pk_buf = Vec::new();
 
-    prost::Message::encode(<span class="kw-2">&amp;</span>key.public_key.to_pub().to_bytes(), <span class="kw-2">&amp;mut </span>pk_buf)
+    prost::Message::encode(<span class="kw-2">&amp;</span>key_pair.public_key.serialize().to_vec(), <span class="kw-2">&amp;mut </span>pk_buf)
         .map_err(|e| Error::protobuf_encode(<span class="string">&quot;PublicKey&quot;</span>.into(), e))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(pk_buf)
@@ -361,8 +354,7 @@
 
 <span class="kw">fn </span>encode_sign_doc(
     chain_id: <span class="kw-2">&amp;</span>ChainId,
-    key: <span class="kw-2">&amp;</span>KeyEntry,
-    address_type: <span class="kw-2">&amp;</span>AddressType,
+    key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account_number: AccountNumber,
     auth_info_bytes: Vec&lt;u8&gt;,
     body_bytes: Vec&lt;u8&gt;,
@@ -378,9 +370,7 @@
     </span><span class="kw">let </span><span class="kw-2">mut </span>signdoc_buf = Vec::new();
     prost::Message::encode(<span class="kw-2">&amp;</span>sign_doc, <span class="kw-2">&amp;mut </span>signdoc_buf).unwrap();
 
-    <span class="kw">let </span>signed = key
-        .sign_message(<span class="kw-2">&amp;</span>signdoc_buf, address_type)
-        .map_err(Error::key_base)<span class="question-mark">?</span>;
+    <span class="kw">let </span>signed = key_pair.sign(<span class="kw-2">&amp;</span>signdoc_buf).map_err(Error::key_base)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(signed)
 }
@@ -470,13 +460,13 @@
     <span class="prelude-val">Ok</span>((body, body_buf))
 }
 
-<span class="kw">pub fn </span>key_entry_to_signer(key_entry: <span class="kw-2">&amp;</span>KeyEntry, account_prefix: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Signer, Error&gt; {
-    <span class="kw">let </span>bech32 = encode_to_bech32(<span class="kw-2">&amp;</span>key_entry.address.to_hex(), account_prefix)<span class="question-mark">?</span>;
-    <span class="kw">let </span>signer = bech32
+<span class="kw">pub fn </span>key_pair_to_signer(key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair) -&gt; <span class="prelude-ty">Result</span>&lt;Signer, Error&gt; {
+    <span class="kw">let </span>signer = key_pair
+        .account()
         .parse()
         .map_err(|e| Error::ics02(ClientError::signer(e)))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(signer)
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

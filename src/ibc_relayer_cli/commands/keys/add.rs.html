@@ -347,6 +347,34 @@
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
 <a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>std::{
     fs,
@@ -357,9 +385,13 @@
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 
 <span class="kw">use </span>eyre::eyre;
+<span class="kw">use </span>hdpath::StandardHDPath;
 <span class="kw">use </span>ibc_relayer::{
+    chain::ChainType,
     config::{ChainConfig, Config},
-    keyring::{HDPath, KeyEntry, KeyRing, Store},
+    keyring::{
+        AnySigningKeyPair, KeyRing, Secp256k1KeyPair, SigningKeyPair, SigningKeyPairSized, Store,
+    },
 };
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
 <span class="kw">use </span>tracing::warn;
@@ -449,7 +481,7 @@
             .clone()
             .unwrap_or_else(|| chain_config.key_name.clone());
 
-        <span class="kw">let </span>hd_path = HDPath::from_str(<span class="kw-2">&amp;</span><span class="self">self</span>.hd_path)
+        <span class="kw">let </span>hd_path = StandardHDPath::from_str(<span class="kw-2">&amp;</span><span class="self">self</span>.hd_path)
             .map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(<span class="string">&quot;invalid derivation path: {}&quot;</span>, <span class="self">self</span>.hd_path))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(KeysAddOptions {
@@ -464,7 +496,7 @@
 </span><span class="kw">pub struct </span>KeysAddOptions {
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>config: ChainConfig,
-    <span class="kw">pub </span>hd_path: HDPath,
+    <span class="kw">pub </span>hd_path: StandardHDPath,
 }
 
 <span class="kw">impl </span>Runnable <span class="kw">for </span>KeysAddCmd {
@@ -489,7 +521,9 @@
                 <span class="kw">match </span>key {
                     <span class="prelude-val">Ok</span>(key) =&gt; Output::success_msg(<span class="macro">format!</span>(
                         <span class="string">&quot;Added key &#39;{}&#39; ({}) on chain {}&quot;</span>,
-                        opts.name, key.account, opts.config.id
+                        opts.name,
+                        key.account(),
+                        opts.config.id
                     ))
                     .exit(),
                     <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
@@ -511,7 +545,9 @@
                 <span class="kw">match </span>key {
                     <span class="prelude-val">Ok</span>(key) =&gt; Output::success_msg(<span class="macro">format!</span>(
                         <span class="string">&quot;Restored key &#39;{}&#39; ({}) on chain {}&quot;</span>,
-                        opts.name, key.account, opts.config.id
+                        opts.name,
+                        key.account(),
+                        opts.config.id
                     ))
                     .exit(),
                     <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
@@ -536,44 +572,64 @@
     config: <span class="kw-2">&amp;</span>ChainConfig,
     key_name: <span class="kw-2">&amp;</span>str,
     file: <span class="kw-2">&amp;</span>Path,
-    hd_path: <span class="kw-2">&amp;</span>HDPath,
+    hd_path: <span class="kw-2">&amp;</span>StandardHDPath,
     overwrite: bool,
-) -&gt; eyre::Result&lt;KeyEntry&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>keyring = KeyRing::new(Store::Test, <span class="kw-2">&amp;</span>config.account_prefix, <span class="kw-2">&amp;</span>config.id)<span class="question-mark">?</span>;
+) -&gt; eyre::Result&lt;AnySigningKeyPair&gt; {
+    <span class="kw">let </span>key_pair = <span class="kw">match </span>config.r#type {
+        ChainType::CosmosSdk =&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>keyring =
+                KeyRing::new_secp256k1(Store::Test, <span class="kw-2">&amp;</span>config.account_prefix, <span class="kw-2">&amp;</span>config.id)<span class="question-mark">?</span>;
 
-    check_key_exists(<span class="kw-2">&amp;</span>keyring, key_name, overwrite);
+            check_key_exists(<span class="kw-2">&amp;</span>keyring, key_name, overwrite);
 
-    <span class="kw">let </span>key_contents = fs::read_to_string(file).map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(<span class="string">&quot;error reading the key file&quot;</span>))<span class="question-mark">?</span>;
-    <span class="kw">let </span>key = KeyEntry::from_seed_file(<span class="kw-2">&amp;</span>key_contents, hd_path)<span class="question-mark">?</span>;
+            <span class="kw">let </span>key_contents =
+                fs::read_to_string(file).map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(<span class="string">&quot;error reading the key file&quot;</span>))<span class="question-mark">?</span>;
+            <span class="kw">let </span>key_pair = Secp256k1KeyPair::from_seed_file(<span class="kw-2">&amp;</span>key_contents, hd_path)<span class="question-mark">?</span>;
 
-    keyring.add_key(key_name, key.clone())<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(key)
+            keyring.add_key(key_name, key_pair.clone())<span class="question-mark">?</span>;
+            key_pair.into()
+        }
+    };
+
+    <span class="prelude-val">Ok</span>(key_pair)
 }
 
 <span class="kw">pub fn </span>restore_key(
     mnemonic: <span class="kw-2">&amp;</span>Path,
     key_name: <span class="kw-2">&amp;</span>str,
-    hdpath: <span class="kw-2">&amp;</span>HDPath,
+    hdpath: <span class="kw-2">&amp;</span>StandardHDPath,
     config: <span class="kw-2">&amp;</span>ChainConfig,
     overwrite: bool,
-) -&gt; eyre::Result&lt;KeyEntry&gt; {
+) -&gt; eyre::Result&lt;AnySigningKeyPair&gt; {
     <span class="kw">let </span>mnemonic_content =
         fs::read_to_string(mnemonic).map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(<span class="string">&quot;error reading the mnemonic file&quot;</span>))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span><span class="kw-2">mut </span>keyring = KeyRing::new(Store::Test, <span class="kw-2">&amp;</span>config.account_prefix, <span class="kw-2">&amp;</span>config.id)<span class="question-mark">?</span>;
+    <span class="kw">let </span>key_pair = <span class="kw">match </span>config.r#type {
+        ChainType::CosmosSdk =&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>keyring =
+                KeyRing::new_secp256k1(Store::Test, <span class="kw-2">&amp;</span>config.account_prefix, <span class="kw-2">&amp;</span>config.id)<span class="question-mark">?</span>;
 
-    check_key_exists(<span class="kw-2">&amp;</span>keyring, key_name, overwrite);
+            check_key_exists(<span class="kw-2">&amp;</span>keyring, key_name, overwrite);
 
-    <span class="kw">let </span>key_entry = keyring.key_from_mnemonic(<span class="kw-2">&amp;</span>mnemonic_content, hdpath, <span class="kw-2">&amp;</span>config.address_type)<span class="question-mark">?</span>;
+            <span class="kw">let </span>key_pair = Secp256k1KeyPair::from_mnemonic(
+                <span class="kw-2">&amp;</span>mnemonic_content,
+                hdpath,
+                <span class="kw-2">&amp;</span>config.address_type,
+                keyring.account_prefix(),
+            )<span class="question-mark">?</span>;
 
-    keyring.add_key(key_name, key_entry.clone())<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(key_entry)
+            keyring.add_key(key_name, key_pair.clone())<span class="question-mark">?</span>;
+            key_pair.into()
+        }
+    };
+
+    <span class="prelude-val">Ok</span>(key_pair)
 }
 
 <span class="doccomment">/// Check if the key with the given key name already exists.
 /// If it already exists and overwrite is false, abort the command with an error.
 /// If overwrite is true, output a warning message informing the key will be overwritten.
-</span><span class="kw">fn </span>check_key_exists(keyring: <span class="kw-2">&amp;</span>KeyRing, key_name: <span class="kw-2">&amp;</span>str, overwrite: bool) {
+</span><span class="kw">fn </span>check_key_exists&lt;S: SigningKeyPairSized&gt;(keyring: <span class="kw-2">&amp;</span>KeyRing&lt;S&gt;, key_name: <span class="kw-2">&amp;</span>str, overwrite: bool) {
     <span class="kw">if </span>keyring.get_key(key_name).is_ok() {
         <span class="kw">if </span>overwrite {
             <span class="macro">warn!</span>(<span class="string">&quot;key {} will be overwritten&quot;</span>, key_name);
@@ -697,4 +753,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

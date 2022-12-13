@@ -93,15 +93,13 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 
 <span class="kw">use </span>serde::{Deserialize, Deserializer};
 <span class="kw">use </span>subtle_encoding::base64;
 <span class="kw">use </span>tracing::{error, trace};
 
-<span class="kw">use </span><span class="kw">super</span>::decode_bech32;
-<span class="kw">use </span><span class="kw">super</span>::errors::Error;
+<span class="kw">use super</span>::{errors::Error, key_utils::decode_bech32};
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>EncodedPubKey {
@@ -112,8 +110,8 @@
 <span class="kw">impl </span>EncodedPubKey {
     <span class="kw">pub fn </span>into_bytes(<span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
         <span class="kw">match </span><span class="self">self </span>{
-            EncodedPubKey::Bech32(vec) =&gt; vec,
-            EncodedPubKey::Proto(proto) =&gt; proto.key,
+            <span class="self">Self</span>::Bech32(vec) =&gt; vec,
+            <span class="self">Self</span>::Proto(proto) =&gt; proto.key,
         }
     }
 }
@@ -168,16 +166,16 @@
                 </span><span class="kw">if </span>proto.tpe != <span class="string">&quot;/cosmos.crypto.secp256k1.PubKey&quot;
                     </span>&amp;&amp; !proto.tpe.ends_with(<span class="string">&quot;.ethsecp256k1.PubKey&quot;</span>)
                 {
-                    <span class="prelude-val">Err</span>(Error::unsupported_public_key(proto.tpe))
+                    <span class="prelude-val">Err</span>(Error::only_secp256k1_public_key_supported(proto.tpe))
                 } <span class="kw">else </span>{
-                    <span class="prelude-val">Ok</span>(EncodedPubKey::Proto(proto))
+                    <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Proto(proto))
                 }
             }
             <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.classify() == serde_json::error::Category::Syntax =&gt; {
                 <span class="comment">// Input is not syntactically-correct JSON.
                 // Attempt to decode via Bech32, for backwards compatibility with the old format.
                 </span><span class="macro">trace!</span>(<span class="string">&quot;using Bech32 to interpret the encoded pub key &#39;{}&#39;&quot;</span>, s);
-                <span class="prelude-val">Ok</span>(EncodedPubKey::Bech32(decode_bech32(s)<span class="question-mark">?</span>))
+                <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Bech32(decode_bech32(s)<span class="question-mark">?</span>))
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
@@ -191,4 +189,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

@@ -814,6 +814,9 @@
 <a href="#814" id="814">814</a>
 <a href="#815" id="815">815</a>
 <a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>std::thread;
 
@@ -850,7 +853,7 @@
     denom::DenomTrace,
     error::Error,
     event::IbcEventWithHeight,
-    keyring::KeyEntry,
+    keyring::AnySigningKeyPair,
     light_client::AnyHeader,
     misbehaviour::MisbehaviourEvidence,
 };
@@ -1231,17 +1234,20 @@
         reply_to.send(result).map_err(Error::send)
     }
 
-    <span class="kw">fn </span>get_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reply_to: ReplyTo&lt;KeyEntry&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="kw">let </span>result = <span class="self">self</span>.chain.get_key();
+    <span class="kw">fn </span>get_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reply_to: ReplyTo&lt;AnySigningKeyPair&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>result = <span class="self">self</span>.chain.get_key().map(Into::into);
         reply_to.send(result).map_err(Error::send)
     }
 
     <span class="kw">fn </span>add_key(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         key_name: String,
-        key: KeyEntry,
+        key: AnySigningKeyPair,
         reply_to: ReplyTo&lt;()&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>key = key
+            .downcast()
+            .ok_or_else(|| Error::invalid_key_type(key.key_type()))<span class="question-mark">?</span>;
         <span class="kw">let </span>result = <span class="self">self</span>.chain.add_key(<span class="kw-2">&amp;</span>key_name, key);
         reply_to.send(result).map_err(Error::send)
     }
@@ -1631,4 +1637,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

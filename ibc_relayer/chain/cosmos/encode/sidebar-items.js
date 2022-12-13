@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["encode_to_bech32",""],["encoded_tx_metrics",""],["key_entry_to_signer",""],["sign_and_encode_tx",""],["sign_tx",""]],"struct":[["EncodedTxMetrics","Length information for an encoded transaction."]]};
+window.SIDEBAR_ITEMS = {"fn":[["encode_to_bech32",""],["encoded_tx_metrics",""],["key_pair_to_signer",""],["sign_and_encode_tx",""],["sign_tx",""]],"struct":[["EncodedTxMetrics","Length information for an encoded transaction."]]};

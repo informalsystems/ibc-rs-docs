@@ -2161,7 +2161,7 @@
     send_batched_messages_and_wait_check_tx, send_batched_messages_and_wait_commit,
     sequential_send_batched_messages_and_wait_commit,
 };
-<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::encode::key_entry_to_signer;
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::encode::key_pair_to_signer;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::fee::maybe_register_counterparty_payee;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::gas::{calculate_fee, mul_ceil};
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::account::get_or_fetch_account;
@@ -2188,7 +2188,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::event::monitor::{EventMonitor, TxMonitorCmd};
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::{KeyEntry, KeyRing};
+<span class="kw">use </span><span class="kw">crate</span>::keyring::{KeyRing, Secp256k1KeyPair, SigningKeyPair};
 <span class="kw">use </span><span class="kw">crate</span>::light_client::tendermint::LightClient <span class="kw">as </span>TmLightClient;
 <span class="kw">use </span><span class="kw">crate</span>::light_client::{LightClient, Verified};
 <span class="kw">use </span><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence;
@@ -2234,7 +2234,7 @@
     grpc_addr: Uri,
     light_client: TmLightClient,
     rt: Arc&lt;TokioRuntime&gt;,
-    keybase: KeyRing,
+    keybase: KeyRing&lt;Secp256k1KeyPair&gt;,
 
     <span class="doccomment">/// A cached copy of the account information
     </span>account: <span class="prelude-ty">Option</span>&lt;Account&gt;,
@@ -2253,7 +2253,7 @@
         <span class="self">self</span>.config.max_tx_size.into()
     }
 
-    <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;KeyEntry, Error&gt; {
+    <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Secp256k1KeyPair, Error&gt; {
         <span class="self">self</span>.keybase()
             .get_key(<span class="kw-2">&amp;</span><span class="self">self</span>.config.key_name)
             .map_err(Error::key_base)
@@ -2635,17 +2635,18 @@
 
         <span class="kw">let </span>proto_msgs = tracked_msgs.msgs;
 
-        <span class="kw">let </span>key_entry = <span class="self">self</span>.key()<span class="question-mark">?</span>;
+        <span class="kw">let </span>key_pair = <span class="self">self</span>.key()<span class="question-mark">?</span>;
+        <span class="kw">let </span>key_account = key_pair.account();
 
         <span class="kw">let </span>account =
-            get_or_fetch_account(<span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr, <span class="kw-2">&amp;</span>key_entry.account, <span class="kw-2">&amp;mut </span><span class="self">self</span>.account).<span class="kw">await</span><span class="question-mark">?</span>;
+            get_or_fetch_account(<span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr, <span class="kw-2">&amp;</span>key_account, <span class="kw-2">&amp;mut </span><span class="self">self</span>.account).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span><span class="self">self</span>.config.sequential_batch_tx {
             sequential_send_batched_messages_and_wait_commit(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.tx_config,
                 <span class="self">self</span>.config.max_msg_num,
                 <span class="self">self</span>.config.max_tx_size,
-                <span class="kw-2">&amp;</span>key_entry,
+                <span class="kw-2">&amp;</span>key_pair,
                 account,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.config.memo_prefix,
                 proto_msgs,
@@ -2656,7 +2657,7 @@
                 <span class="kw-2">&amp;</span><span class="self">self</span>.tx_config,
                 <span class="self">self</span>.config.max_msg_num,
                 <span class="self">self</span>.config.max_tx_size,
-                <span class="kw-2">&amp;</span>key_entry,
+                <span class="kw-2">&amp;</span>key_pair,
                 account,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.config.memo_prefix,
                 proto_msgs,
@@ -2682,16 +2683,17 @@
 
         <span class="kw">let </span>proto_msgs = tracked_msgs.msgs;
 
-        <span class="kw">let </span>key_entry = <span class="self">self</span>.key()<span class="question-mark">?</span>;
+        <span class="kw">let </span>key_pair = <span class="self">self</span>.key()<span class="question-mark">?</span>;
+        <span class="kw">let </span>key_account = key_pair.account();
 
         <span class="kw">let </span>account =
-            get_or_fetch_account(<span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr, <span class="kw-2">&amp;</span>key_entry.account, <span class="kw-2">&amp;mut </span><span class="self">self</span>.account).<span class="kw">await</span><span class="question-mark">?</span>;
+            get_or_fetch_account(<span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr, <span class="kw-2">&amp;</span>key_account, <span class="kw-2">&amp;mut </span><span class="self">self</span>.account).<span class="kw">await</span><span class="question-mark">?</span>;
 
         send_batched_messages_and_wait_check_tx(
             <span class="kw-2">&amp;</span><span class="self">self</span>.tx_config,
             <span class="self">self</span>.config.max_msg_num,
             <span class="self">self</span>.config.max_tx_size,
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             account,
             <span class="kw-2">&amp;</span><span class="self">self</span>.config.memo_prefix,
             proto_msgs,
@@ -2806,6 +2808,7 @@
     <span class="kw">type </span>Header = TmHeader;
     <span class="kw">type </span>ConsensusState = TMConsensusState;
     <span class="kw">type </span>ClientState = TmClientState;
+    <span class="kw">type </span>SigningKeyPair = Secp256k1KeyPair;
 
     <span class="kw">fn </span>bootstrap(config: ChainConfig, rt: Arc&lt;TokioRuntime&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">let </span>rpc_client = HttpClient::new(config.rpc_addr.clone())
@@ -2814,8 +2817,9 @@
         <span class="kw">let </span>light_client = rt.block_on(init_light_client(<span class="kw-2">&amp;</span>rpc_client, <span class="kw-2">&amp;</span>config))<span class="question-mark">?</span>;
 
         <span class="comment">// Initialize key store and load key
-        </span><span class="kw">let </span>keybase = KeyRing::new(config.key_store_type, <span class="kw-2">&amp;</span>config.account_prefix, <span class="kw-2">&amp;</span>config.id)
-            .map_err(Error::key_base)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>keybase =
+            KeyRing::new_secp256k1(config.key_store_type, <span class="kw-2">&amp;</span>config.account_prefix, <span class="kw-2">&amp;</span>config.id)
+                .map_err(Error::key_base)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>grpc_addr = Uri::from_str(<span class="kw-2">&amp;</span>config.grpc_addr.to_string())
             .map_err(|e| Error::invalid_uri(config.grpc_addr.to_string(), e))<span class="question-mark">?</span>;
@@ -2847,11 +2851,11 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn </span>keybase(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KeyRing {
+    <span class="kw">fn </span>keybase(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>KeyRing&lt;<span class="self">Self</span>::SigningKeyPair&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.keybase
     }
 
-    <span class="kw">fn </span>keybase_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>KeyRing {
+    <span class="kw">fn </span>keybase_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>KeyRing&lt;<span class="self">Self</span>::SigningKeyPair&gt; {
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.keybase
     }
 
@@ -2955,9 +2959,9 @@
         <span class="macro">crate::time!</span>(<span class="string">&quot;get_signer&quot;</span>);
 
         <span class="comment">// Get the key from key seed file
-        </span><span class="kw">let </span>key_entry = <span class="self">self</span>.key()<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>key_pair = <span class="self">self</span>.key()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>signer = key_entry_to_signer(<span class="kw-2">&amp;</span>key_entry, <span class="kw-2">&amp;</span><span class="self">self</span>.config.account_prefix)<span class="question-mark">?</span>;
+        <span class="kw">let </span>signer = key_pair_to_signer(<span class="kw-2">&amp;</span>key_pair)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(signer)
     }
@@ -2975,13 +2979,11 @@
     <span class="kw">fn </span>query_balance(<span class="kw-2">&amp;</span><span class="self">self</span>, key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, denom: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Balance, Error&gt; {
         <span class="comment">// If a key_name is given, extract the account hash.
         // Else retrieve the account from the configuration file.
-        </span><span class="kw">let </span>account = <span class="kw">match </span>key_name {
-            <span class="prelude-val">Some</span>(key_name) =&gt; {
-                <span class="kw">let </span>key = <span class="self">self</span>.keybase().get_key(key_name).map_err(Error::key_base)<span class="question-mark">?</span>;
-                key.account
-            }
-            <span class="kw">_ </span>=&gt; <span class="self">self</span>.key()<span class="question-mark">?</span>.account,
+        </span><span class="kw">let </span>key = <span class="kw">match </span>key_name {
+            <span class="prelude-val">Some</span>(key_name) =&gt; <span class="self">self</span>.keybase().get_key(key_name).map_err(Error::key_base)<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.key()<span class="question-mark">?</span>,
         };
+        <span class="kw">let </span>account = key.account();
 
         <span class="kw">let </span>denom = denom.unwrap_or(<span class="kw-2">&amp;</span><span class="self">self</span>.config.gas_price.denom);
         <span class="kw">let </span>balance = <span class="self">self</span>.block_on(query_balance(<span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr, <span class="kw-2">&amp;</span>account, denom))<span class="question-mark">?</span>;
@@ -2992,13 +2994,11 @@
     <span class="kw">fn </span>query_all_balances(<span class="kw-2">&amp;</span><span class="self">self</span>, key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Balance&gt;, Error&gt; {
         <span class="comment">// If a key_name is given, extract the account hash.
         // Else retrieve the account from the configuration file.
-        </span><span class="kw">let </span>account = <span class="kw">match </span>key_name {
-            <span class="prelude-val">Some</span>(key_name) =&gt; {
-                <span class="kw">let </span>key = <span class="self">self</span>.keybase().get_key(key_name).map_err(Error::key_base)<span class="question-mark">?</span>;
-                key.account
-            }
-            <span class="kw">_ </span>=&gt; <span class="self">self</span>.key()<span class="question-mark">?</span>.account,
+        </span><span class="kw">let </span>key = <span class="kw">match </span>key_name {
+            <span class="prelude-val">Some</span>(key_name) =&gt; <span class="self">self</span>.keybase().get_key(key_name).map_err(Error::key_base)<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.key()<span class="question-mark">?</span>,
         };
+        <span class="kw">let </span>account = key.account();
 
         <span class="kw">let </span>balance = <span class="self">self</span>.block_on(query_all_balances(<span class="kw-2">&amp;</span><span class="self">self</span>.grpc_addr, <span class="kw-2">&amp;</span>account))<span class="question-mark">?</span>;
 
@@ -3983,11 +3983,11 @@
         counterparty_payee: <span class="kw-2">&amp;</span>Signer,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">let </span>address = <span class="self">self</span>.get_signer()<span class="question-mark">?</span>;
-        <span class="kw">let </span>key_entry = <span class="self">self</span>.key()<span class="question-mark">?</span>;
+        <span class="kw">let </span>key_pair = <span class="self">self</span>.key()<span class="question-mark">?</span>;
 
         <span class="self">self</span>.rt.block_on(maybe_register_counterparty_payee(
             <span class="kw-2">&amp;</span><span class="self">self</span>.tx_config,
-            <span class="kw-2">&amp;</span>key_entry,
+            <span class="kw-2">&amp;</span>key_pair,
             <span class="kw-2">&amp;mut </span><span class="self">self</span>.account,
             <span class="kw-2">&amp;</span><span class="self">self</span>.config.memo_prefix,
             channel_id,
@@ -4207,4 +4207,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (bdb07a8ec 2022-12-11)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (37d7de337 2022-12-12)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
