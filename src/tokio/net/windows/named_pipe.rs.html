@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.22.0/src/net/windows/named_pipe.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>named_pipe.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-64f7dca12162a801.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-94f39d4346842c1e.css"><script id="default-settings" ></script><script src="../../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-a211dbb005fb8161.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../tokio/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.23.0/src/net/windows/named_pipe.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>named_pipe.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-64f7dca12162a801.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-94f39d4346842c1e.css"><script id="default-settings" ></script><script src="../../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-a211dbb005fb8161.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../tokio/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2521,6 +2521,39 @@
 <a href="#2521" id="2521">2521</a>
 <a href="#2522" id="2522">2522</a>
 <a href="#2523" id="2523">2523</a>
+<a href="#2524" id="2524">2524</a>
+<a href="#2525" id="2525">2525</a>
+<a href="#2526" id="2526">2526</a>
+<a href="#2527" id="2527">2527</a>
+<a href="#2528" id="2528">2528</a>
+<a href="#2529" id="2529">2529</a>
+<a href="#2530" id="2530">2530</a>
+<a href="#2531" id="2531">2531</a>
+<a href="#2532" id="2532">2532</a>
+<a href="#2533" id="2533">2533</a>
+<a href="#2534" id="2534">2534</a>
+<a href="#2535" id="2535">2535</a>
+<a href="#2536" id="2536">2536</a>
+<a href="#2537" id="2537">2537</a>
+<a href="#2538" id="2538">2538</a>
+<a href="#2539" id="2539">2539</a>
+<a href="#2540" id="2540">2540</a>
+<a href="#2541" id="2541">2541</a>
+<a href="#2542" id="2542">2542</a>
+<a href="#2543" id="2543">2543</a>
+<a href="#2544" id="2544">2544</a>
+<a href="#2545" id="2545">2545</a>
+<a href="#2546" id="2546">2546</a>
+<a href="#2547" id="2547">2547</a>
+<a href="#2548" id="2548">2548</a>
+<a href="#2549" id="2549">2549</a>
+<a href="#2550" id="2550">2550</a>
+<a href="#2551" id="2551">2551</a>
+<a href="#2552" id="2552">2552</a>
+<a href="#2553" id="2553">2553</a>
+<a href="#2554" id="2554">2554</a>
+<a href="#2555" id="2555">2555</a>
+<a href="#2556" id="2556">2556</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Tokio support for [Windows named pipes].
 //!
 //! [Windows named pipes]: https://docs.microsoft.com/en-us/windows/win32/ipc/named-pipes
@@ -2543,21 +2576,18 @@
 </span><span class="attr">#[cfg(not(docsrs))]
 </span><span class="kw">mod </span>doc {
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::os::windows::ffi::OsStrExt;
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::winapi::shared::minwindef::{DWORD, FALSE};
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::winapi::um::fileapi;
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::winapi::um::handleapi;
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::winapi::um::namedpipeapi;
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::winapi::um::winbase;
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span><span class="kw">crate</span>::winapi::um::winnt;
-
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>windows_sys {
+        <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>windows_sys::{
+            Win32::Foundation::<span class="kw-2">*</span>, Win32::Storage::FileSystem::<span class="kw-2">*</span>, Win32::System::Pipes::<span class="kw-2">*</span>,
+            Win32::System::SystemServices::<span class="kw-2">*</span>,
+        };
+    }
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>mio::windows <span class="kw">as </span>mio_windows;
 }
 
 <span class="comment">// NB: none of these shows up in public API, so don&#39;t document them.
 </span><span class="attr">#[cfg(docsrs)]
 </span><span class="kw">mod </span>doc {
-    <span class="kw">pub type </span>DWORD = <span class="kw">crate</span>::doc::NotDefinedHere;
-
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>mio_windows {
         <span class="kw">pub type </span>NamedPipe = <span class="kw">crate</span>::doc::NotDefinedHere;
     }
@@ -2624,7 +2654,6 @@
 /// # Ok(()) }
 /// ```
 ///
-/// [`ERROR_PIPE_BUSY`]: crate::winapi::shared::winerror::ERROR_PIPE_BUSY
 /// [Windows named pipe]: https://docs.microsoft.com/en-us/windows/win32/ipc/named-pipes
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>NamedPipeServer {
@@ -2715,17 +2744,15 @@
     /// # Ok(()) }
     /// ```
     </span><span class="kw">pub async fn </span>connect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Result&lt;()&gt; {
-        <span class="kw">loop </span>{
-            <span class="kw">match </span><span class="self">self</span>.io.connect() {
-                <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">break</span>,
-                <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == io::ErrorKind::WouldBlock =&gt; {
-                    <span class="self">self</span>.io.registration().readiness(Interest::WRITABLE).<span class="kw">await</span><span class="question-mark">?</span>;
-                }
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e),
-            }
+        <span class="kw">match </span><span class="self">self</span>.io.connect() {
+            <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == io::ErrorKind::WouldBlock =&gt; {
+                <span class="self">self</span>.io
+                    .registration()
+                    .async_io(Interest::WRITABLE, || <span class="self">self</span>.io.connect())
+                    .<span class="kw">await
+            </span>}
+            x =&gt; x,
         }
-
-        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Disconnects the server end of a named pipe instance from a client
@@ -2734,7 +2761,7 @@
     /// ```
     /// use tokio::io::AsyncWriteExt;
     /// use tokio::net::windows::named_pipe::{ClientOptions, ServerOptions};
-    /// use winapi::shared::winerror;
+    /// use windows_sys::Win32::Foundation::ERROR_PIPE_NOT_CONNECTED;
     ///
     /// const PIPE_NAME: &amp;str = r&quot;\\.\pipe\tokio-named-pipe-disconnect&quot;;
     ///
@@ -2754,7 +2781,7 @@
     /// // Write fails with an OS-specific error after client has been
     /// // disconnected.
     /// let e = client.write(b&quot;ping&quot;).await.unwrap_err();
-    /// assert_eq!(e.raw_os_error(), Some(winerror::ERROR_PIPE_NOT_CONNECTED as i32));
+    /// assert_eq!(e.raw_os_error(), Some(ERROR_PIPE_NOT_CONNECTED as i32));
     /// # Ok(()) }
     /// ```
     </span><span class="kw">pub fn </span>disconnect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Result&lt;()&gt; {
@@ -2766,6 +2793,12 @@
     /// This function is usually paired with `try_read()` or `try_write()`. It
     /// can be used to concurrently read / write to the same pipe on a single
     /// task without splitting the pipe.
+    ///
+    /// The function may complete without the pipe being ready. This is a
+    /// false-positive and attempting an operation will return with
+    /// `io::ErrorKind::WouldBlock`. The function can also return with an empty
+    /// [`Ready`] set, so you should always check the returned value and possibly
+    /// wait again if the requested states are not set.
     ///
     /// # Examples
     ///
@@ -3063,7 +3096,7 @@
         <span class="doccomment">/// Tries to read data from the stream into the provided buffer, advancing the
         /// buffer&#39;s internal cursor, returning how many bytes were read.
         ///
-        /// Receives any pending data from the socket but does not wait for new data
+        /// Receives any pending data from the pipe but does not wait for new data
         /// to arrive. On success, returns the number of bytes read. Because
         /// `try_read_buf()` is non-blocking, the buffer does not have to be stored by
         /// the async task and can exist entirely on the stack.
@@ -3094,7 +3127,7 @@
         ///     let server = named_pipe::ServerOptions::new().create(PIPE_NAME)?;
         ///
         ///     loop {
-        ///         // Wait for the socket to be readable
+        ///         // Wait for the pipe to be readable
         ///         server.readable().await?;
         ///
         ///         let mut buf = Vec::with_capacity(4096);
@@ -3335,27 +3368,32 @@
             .try_io(Interest::WRITABLE, || (<span class="kw-2">&amp;*</span><span class="self">self</span>.io).write_vectored(buf))
     }
 
-    <span class="doccomment">/// Tries to read or write from the socket using a user-provided IO operation.
+    <span class="doccomment">/// Tries to read or write from the pipe using a user-provided IO operation.
     ///
-    /// If the socket is ready, the provided closure is called. The closure
-    /// should attempt to perform IO operation from the socket by manually
+    /// If the pipe is ready, the provided closure is called. The closure
+    /// should attempt to perform IO operation from the pipe by manually
     /// calling the appropriate syscall. If the operation fails because the
-    /// socket is not actually ready, then the closure should return a
+    /// pipe is not actually ready, then the closure should return a
     /// `WouldBlock` error and the readiness flag is cleared. The return value
     /// of the closure is then returned by `try_io`.
     ///
-    /// If the socket is not ready, then the closure is not called
+    /// If the pipe is not ready, then the closure is not called
     /// and a `WouldBlock` error is returned.
     ///
     /// The closure should only return a `WouldBlock` error if it has performed
-    /// an IO operation on the socket that failed due to the socket not being
+    /// an IO operation on the pipe that failed due to the pipe not being
     /// ready. Returning a `WouldBlock` error in any other situation will
-    /// incorrectly clear the readiness flag, which can cause the socket to
+    /// incorrectly clear the readiness flag, which can cause the pipe to
     /// behave incorrectly.
     ///
     /// The closure should not perform the IO operation using any of the
     /// methods defined on the Tokio `NamedPipeServer` type, as this will mess with
-    /// the readiness flag and can cause the socket to behave incorrectly.
+    /// the readiness flag and can cause the pipe to behave incorrectly.
+    ///
+    /// This method is not intended to be used with combined interests.
+    /// The closure should perform only one type of IO operation, so it should not
+    /// require more than one ready state. This method may panic or sleep forever
+    /// if it is called with a combined interest.
     ///
     /// Usually, [`readable()`], [`writable()`] or [`ready()`] is used with this function.
     ///
@@ -3430,7 +3468,7 @@
 /// use std::time::Duration;
 /// use tokio::net::windows::named_pipe::ClientOptions;
 /// use tokio::time;
-/// use winapi::shared::winerror;
+/// use windows_sys::Win32::Foundation::ERROR_PIPE_BUSY;
 ///
 /// const PIPE_NAME: &amp;str = r&quot;\\.\pipe\named-pipe-idiomatic-client&quot;;
 ///
@@ -3438,7 +3476,7 @@
 /// let client = loop {
 ///     match ClientOptions::new().open(PIPE_NAME) {
 ///         Ok(client) =&gt; break client,
-///         Err(e) if e.raw_os_error() == Some(winerror::ERROR_PIPE_BUSY as i32) =&gt; (),
+///         Err(e) if e.raw_os_error() == Some(ERROR_PIPE_BUSY as i32) =&gt; (),
 ///         Err(e) =&gt; return Err(e),
 ///     }
 ///
@@ -3449,7 +3487,7 @@
 /// # Ok(()) }
 /// ```
 ///
-/// [`ERROR_PIPE_BUSY`]: crate::winapi::shared::winerror::ERROR_PIPE_BUSY
+/// [`ERROR_PIPE_BUSY`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/Foundation/constant.ERROR_PIPE_BUSY.html
 /// [Windows named pipe]: https://docs.microsoft.com/en-us/windows/win32/ipc/named-pipes
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>NamedPipeClient {
@@ -3512,6 +3550,12 @@
     /// This function is usually paired with `try_read()` or `try_write()`. It
     /// can be used to concurrently read / write to the same pipe on a single
     /// task without splitting the pipe.
+    ///
+    /// The function may complete without the pipe being ready. This is a
+    /// false-positive and attempting an operation will return with
+    /// `io::ErrorKind::WouldBlock`. The function can also return with an empty
+    /// [`Ready`] set, so you should always check the returned value and possibly
+    /// wait again if the requested states are not set.
     ///
     /// # Examples
     ///
@@ -3805,7 +3849,7 @@
         <span class="doccomment">/// Tries to read data from the stream into the provided buffer, advancing the
         /// buffer&#39;s internal cursor, returning how many bytes were read.
         ///
-        /// Receives any pending data from the socket but does not wait for new data
+        /// Receives any pending data from the pipe but does not wait for new data
         /// to arrive. On success, returns the number of bytes read. Because
         /// `try_read_buf()` is non-blocking, the buffer does not have to be stored by
         /// the async task and can exist entirely on the stack.
@@ -3836,7 +3880,7 @@
         ///     let client = named_pipe::ClientOptions::new().open(PIPE_NAME)?;
         ///
         ///     loop {
-        ///         // Wait for the socket to be readable
+        ///         // Wait for the pipe to be readable
         ///         client.readable().await?;
         ///
         ///         let mut buf = Vec::with_capacity(4096);
@@ -4074,27 +4118,32 @@
             .try_io(Interest::WRITABLE, || (<span class="kw-2">&amp;*</span><span class="self">self</span>.io).write_vectored(buf))
     }
 
-    <span class="doccomment">/// Tries to read or write from the socket using a user-provided IO operation.
+    <span class="doccomment">/// Tries to read or write from the pipe using a user-provided IO operation.
     ///
-    /// If the socket is ready, the provided closure is called. The closure
-    /// should attempt to perform IO operation from the socket by manually
+    /// If the pipe is ready, the provided closure is called. The closure
+    /// should attempt to perform IO operation from the pipe by manually
     /// calling the appropriate syscall. If the operation fails because the
-    /// socket is not actually ready, then the closure should return a
+    /// pipe is not actually ready, then the closure should return a
     /// `WouldBlock` error and the readiness flag is cleared. The return value
     /// of the closure is then returned by `try_io`.
     ///
-    /// If the socket is not ready, then the closure is not called
+    /// If the pipe is not ready, then the closure is not called
     /// and a `WouldBlock` error is returned.
     ///
     /// The closure should only return a `WouldBlock` error if it has performed
-    /// an IO operation on the socket that failed due to the socket not being
+    /// an IO operation on the pipe that failed due to the pipe not being
     /// ready. Returning a `WouldBlock` error in any other situation will
-    /// incorrectly clear the readiness flag, which can cause the socket to
+    /// incorrectly clear the readiness flag, which can cause the pipe to
     /// behave incorrectly.
     ///
     /// The closure should not perform the IO operation using any of the methods
     /// defined on the Tokio `NamedPipeClient` type, as this will mess with the
-    /// readiness flag and can cause the socket to behave incorrectly.
+    /// readiness flag and can cause the pipe to behave incorrectly.
+    ///
+    /// This method is not intended to be used with combined interests.
+    /// The closure should perform only one type of IO operation, so it should not
+    /// require more than one ready state. This method may panic or sleep forever
+    /// if it is called with a combined interest.
     ///
     /// Usually, [`readable()`], [`writable()`] or [`ready()`] is used with this function.
     ///
@@ -4172,12 +4221,12 @@
 /// See [`ServerOptions::create`].
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ServerOptions {
-    open_mode: DWORD,
-    pipe_mode: DWORD,
-    max_instances: DWORD,
-    out_buffer_size: DWORD,
-    in_buffer_size: DWORD,
-    default_timeout: DWORD,
+    open_mode: u32,
+    pipe_mode: u32,
+    max_instances: u32,
+    out_buffer_size: u32,
+    in_buffer_size: u32,
+    default_timeout: u32,
 }
 
 <span class="kw">impl </span>ServerOptions {
@@ -4194,9 +4243,9 @@
     /// ```
     </span><span class="kw">pub fn </span>new() -&gt; ServerOptions {
         ServerOptions {
-            open_mode: winbase::PIPE_ACCESS_DUPLEX | winbase::FILE_FLAG_OVERLAPPED,
-            pipe_mode: winbase::PIPE_TYPE_BYTE | winbase::PIPE_REJECT_REMOTE_CLIENTS,
-            max_instances: winbase::PIPE_UNLIMITED_INSTANCES,
+            open_mode: windows_sys::PIPE_ACCESS_DUPLEX | windows_sys::FILE_FLAG_OVERLAPPED,
+            pipe_mode: windows_sys::PIPE_TYPE_BYTE | windows_sys::PIPE_REJECT_REMOTE_CLIENTS,
+            max_instances: windows_sys::PIPE_UNLIMITED_INSTANCES,
             out_buffer_size: <span class="number">65536</span>,
             in_buffer_size: <span class="number">65536</span>,
             default_timeout: <span class="number">0</span>,
@@ -4213,8 +4262,8 @@
     /// [`dwPipeMode`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>pipe_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pipe_mode: PipeMode) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.pipe_mode = <span class="kw">match </span>pipe_mode {
-            PipeMode::Byte =&gt; winbase::PIPE_TYPE_BYTE,
-            PipeMode::Message =&gt; winbase::PIPE_TYPE_MESSAGE,
+            PipeMode::Byte =&gt; windows_sys::PIPE_TYPE_BYTE,
+            PipeMode::Message =&gt; windows_sys::PIPE_TYPE_MESSAGE,
         };
 
         <span class="self">self
@@ -4312,7 +4361,7 @@
     /// # Ok(()) }
     /// ```
     </span><span class="kw">pub fn </span>access_inbound(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, allowed, winbase::PIPE_ACCESS_INBOUND);
+        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, allowed, windows_sys::PIPE_ACCESS_INBOUND);
         <span class="self">self
     </span>}
 
@@ -4410,7 +4459,7 @@
     /// # Ok(()) }
     /// ```
     </span><span class="kw">pub fn </span>access_outbound(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, allowed, winbase::PIPE_ACCESS_OUTBOUND);
+        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, allowed, windows_sys::PIPE_ACCESS_OUTBOUND);
         <span class="self">self
     </span>}
 
@@ -4481,7 +4530,7 @@
         <span class="macro">bool_flag!</span>(
             <span class="self">self</span>.open_mode,
             first,
-            winbase::FILE_FLAG_FIRST_PIPE_INSTANCE
+            windows_sys::FILE_FLAG_FIRST_PIPE_INSTANCE
         );
         <span class="self">self
     </span>}
@@ -4496,9 +4545,10 @@
     /// use std::{io, os::windows::prelude::AsRawHandle, ptr};
     </span><span class="comment">//
     </span><span class="doccomment">/// use tokio::net::windows::named_pipe::ServerOptions;
-    /// use winapi::{
-    ///     shared::winerror::ERROR_SUCCESS,
-    ///     um::{accctrl::SE_KERNEL_OBJECT, aclapi::SetSecurityInfo, winnt::DACL_SECURITY_INFORMATION},
+    /// use windows_sys::{
+    ///     Win32::Foundation::ERROR_SUCCESS,
+    ///     Win32::Security::DACL_SECURITY_INFORMATION,
+    ///     Win32::Security::Authorization::{SetSecurityInfo, SE_KERNEL_OBJECT},
     /// };
     ///
     /// const PIPE_NAME: &amp;str = r&quot;\\.\pipe\write_dac_pipe&quot;;
@@ -4512,7 +4562,7 @@
     ///     assert_eq!(
     ///         ERROR_SUCCESS,
     ///         SetSecurityInfo(
-    ///             pipe.as_raw_handle(),
+    ///             pipe.as_raw_handle() as _,
     ///             SE_KERNEL_OBJECT,
     ///             DACL_SECURITY_INFORMATION,
     ///             ptr::null_mut(),
@@ -4530,9 +4580,10 @@
     /// use std::{io, os::windows::prelude::AsRawHandle, ptr};
     </span><span class="comment">//
     </span><span class="doccomment">/// use tokio::net::windows::named_pipe::ServerOptions;
-    /// use winapi::{
-    ///     shared::winerror::ERROR_ACCESS_DENIED,
-    ///     um::{accctrl::SE_KERNEL_OBJECT, aclapi::SetSecurityInfo, winnt::DACL_SECURITY_INFORMATION},
+    /// use windows_sys::{
+    ///     Win32::Foundation::ERROR_ACCESS_DENIED,
+    ///     Win32::Security::DACL_SECURITY_INFORMATION,
+    ///     Win32::Security::Authorization::{SetSecurityInfo, SE_KERNEL_OBJECT},
     /// };
     ///
     /// const PIPE_NAME: &amp;str = r&quot;\\.\pipe\write_dac_pipe_fail&quot;;
@@ -4546,7 +4597,7 @@
     ///     assert_eq!(
     ///         ERROR_ACCESS_DENIED,
     ///         SetSecurityInfo(
-    ///             pipe.as_raw_handle(),
+    ///             pipe.as_raw_handle() as _,
     ///             SE_KERNEL_OBJECT,
     ///             DACL_SECURITY_INFORMATION,
     ///             ptr::null_mut(),
@@ -4562,7 +4613,7 @@
     ///
     /// [`WRITE_DAC`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>write_dac(<span class="kw-2">&amp;mut </span><span class="self">self</span>, requested: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, winnt::WRITE_DAC);
+        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, windows_sys::WRITE_DAC);
         <span class="self">self
     </span>}
 
@@ -4572,7 +4623,7 @@
     ///
     /// [`WRITE_OWNER`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>write_owner(<span class="kw-2">&amp;mut </span><span class="self">self</span>, requested: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, winnt::WRITE_OWNER);
+        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, windows_sys::WRITE_OWNER);
         <span class="self">self
     </span>}
 
@@ -4582,7 +4633,11 @@
     ///
     /// [`ACCESS_SYSTEM_SECURITY`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>access_system_security(<span class="kw-2">&amp;mut </span><span class="self">self</span>, requested: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, winnt::ACCESS_SYSTEM_SECURITY);
+        <span class="macro">bool_flag!</span>(
+            <span class="self">self</span>.open_mode,
+            requested,
+            windows_sys::ACCESS_SYSTEM_SECURITY
+        );
         <span class="self">self
     </span>}
 
@@ -4593,7 +4648,11 @@
     ///
     /// [`PIPE_REJECT_REMOTE_CLIENTS`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea#pipe_reject_remote_clients
     </span><span class="kw">pub fn </span>reject_remote_clients(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reject: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.pipe_mode, reject, winbase::PIPE_REJECT_REMOTE_CLIENTS);
+        <span class="macro">bool_flag!</span>(
+            <span class="self">self</span>.pipe_mode,
+            reject,
+            windows_sys::PIPE_REJECT_REMOTE_CLIENTS
+        );
         <span class="self">self
     </span>}
 
@@ -4615,7 +4674,7 @@
     /// ```
     /// use std::io;
     /// use tokio::net::windows::named_pipe::{ServerOptions, ClientOptions};
-    /// use winapi::shared::winerror;
+    /// use windows_sys::Win32::Foundation::ERROR_PIPE_BUSY;
     ///
     /// const PIPE_NAME: &amp;str = r&quot;\\.\pipe\tokio-named-pipe-max-instances&quot;;
     ///
@@ -4631,11 +4690,11 @@
     ///
     /// // Too many servers!
     /// let e = server.create(PIPE_NAME).unwrap_err();
-    /// assert_eq!(e.raw_os_error(), Some(winerror::ERROR_PIPE_BUSY as i32));
+    /// assert_eq!(e.raw_os_error(), Some(ERROR_PIPE_BUSY as i32));
     ///
     /// // Still too many servers even if we specify a higher value!
     /// let e = server.max_instances(100).create(PIPE_NAME).unwrap_err();
-    /// assert_eq!(e.raw_os_error(), Some(winerror::ERROR_PIPE_BUSY as i32));
+    /// assert_eq!(e.raw_os_error(), Some(ERROR_PIPE_BUSY as i32));
     /// # Ok(()) }
     /// ```
     ///
@@ -4654,7 +4713,7 @@
     </span><span class="attr">#[track_caller]
     </span><span class="kw">pub fn </span>max_instances(<span class="kw-2">&amp;mut </span><span class="self">self</span>, instances: usize) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="macro">assert!</span>(instances &lt; <span class="number">255</span>, <span class="string">&quot;cannot specify more than 254 instances&quot;</span>);
-        <span class="self">self</span>.max_instances = instances <span class="kw">as </span>DWORD;
+        <span class="self">self</span>.max_instances = instances <span class="kw">as </span>u32;
         <span class="self">self
     </span>}
 
@@ -4664,7 +4723,7 @@
     ///
     /// [`nOutBufferSize`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>out_buffer_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: u32) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.out_buffer_size = buffer <span class="kw">as </span>DWORD;
+        <span class="self">self</span>.out_buffer_size = buffer;
         <span class="self">self
     </span>}
 
@@ -4674,7 +4733,7 @@
     ///
     /// [`nInBufferSize`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>in_buffer_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: u32) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.in_buffer_size = buffer <span class="kw">as </span>DWORD;
+        <span class="self">self</span>.in_buffer_size = buffer;
         <span class="self">self
     </span>}
 
@@ -4731,7 +4790,7 @@
     ///
     /// [`create`]: ServerOptions::create
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
-    /// [`SECURITY_ATTRIBUTES`]: crate::winapi::um::minwinbase::SECURITY_ATTRIBUTES
+    /// [`SECURITY_ATTRIBUTES`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/struct.SECURITY_ATTRIBUTES.html
     </span><span class="kw">pub unsafe fn </span>create_with_security_attributes_raw(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         addr: <span class="kw">impl </span>AsRef&lt;OsStr&gt;,
@@ -4739,7 +4798,7 @@
     ) -&gt; io::Result&lt;NamedPipeServer&gt; {
         <span class="kw">let </span>addr = encode_addr(addr);
 
-        <span class="kw">let </span>h = namedpipeapi::CreateNamedPipeW(
+        <span class="kw">let </span>h = windows_sys::CreateNamedPipeW(
             addr.as_ptr(),
             <span class="self">self</span>.open_mode,
             <span class="self">self</span>.pipe_mode,
@@ -4750,11 +4809,11 @@
             attrs <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
         );
 
-        <span class="kw">if </span>h == handleapi::INVALID_HANDLE_VALUE {
+        <span class="kw">if </span>h == windows_sys::INVALID_HANDLE_VALUE {
             <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
         }
 
-        NamedPipeServer::from_raw_handle(h)
+        NamedPipeServer::from_raw_handle(h <span class="kw">as _</span>)
     }
 }
 
@@ -4764,8 +4823,8 @@
 /// See [`ClientOptions::open`].
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ClientOptions {
-    desired_access: DWORD,
-    security_qos_flags: DWORD,
+    desired_access: u32,
+    security_qos_flags: u32,
 }
 
 <span class="kw">impl </span>ClientOptions {
@@ -4784,8 +4843,9 @@
     /// ```
     </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            desired_access: winnt::GENERIC_READ | winnt::GENERIC_WRITE,
-            security_qos_flags: winbase::SECURITY_IDENTIFICATION | winbase::SECURITY_SQOS_PRESENT,
+            desired_access: windows_sys::GENERIC_READ | windows_sys::GENERIC_WRITE,
+            security_qos_flags: windows_sys::SECURITY_IDENTIFICATION
+                | windows_sys::SECURITY_SQOS_PRESENT,
         }
     }
 
@@ -4796,7 +4856,7 @@
     /// [`GENERIC_READ`]: https://docs.microsoft.com/en-us/windows/win32/secauthz/generic-access-rights
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
     </span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.desired_access, allowed, winnt::GENERIC_READ);
+        <span class="macro">bool_flag!</span>(<span class="self">self</span>.desired_access, allowed, windows_sys::GENERIC_READ);
         <span class="self">self
     </span>}
 
@@ -4807,7 +4867,7 @@
     /// [`GENERIC_WRITE`]: https://docs.microsoft.com/en-us/windows/win32/secauthz/generic-access-rights
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
     </span><span class="kw">pub fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.desired_access, allowed, winnt::GENERIC_WRITE);
+        <span class="macro">bool_flag!</span>(<span class="self">self</span>.desired_access, allowed, windows_sys::GENERIC_WRITE);
         <span class="self">self
     </span>}
 
@@ -4830,11 +4890,11 @@
     /// automatically when using this method.
     ///
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea
-    /// [`SECURITY_IDENTIFICATION`]: crate::winapi::um::winbase::SECURITY_IDENTIFICATION
+    /// [`SECURITY_IDENTIFICATION`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/Storage/FileSystem/constant.SECURITY_IDENTIFICATION.html
     /// [Impersonation Levels]: https://docs.microsoft.com/en-us/windows/win32/api/winnt/ne-winnt-security_impersonation_level
     </span><span class="kw">pub fn </span>security_qos_flags(<span class="kw-2">&amp;mut </span><span class="self">self</span>, flags: u32) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="comment">// See: https://github.com/rust-lang/rust/pull/58216
-        </span><span class="self">self</span>.security_qos_flags = flags | winbase::SECURITY_SQOS_PRESENT;
+        </span><span class="self">self</span>.security_qos_flags = flags | windows_sys::SECURITY_SQOS_PRESENT;
         <span class="self">self
     </span>}
 
@@ -4859,8 +4919,7 @@
     ///   but the server is not currently waiting for a connection. Please see the
     ///   examples for how to check for this error.
     ///
-    /// [`ERROR_PIPE_BUSY`]: crate::winapi::shared::winerror::ERROR_PIPE_BUSY
-    /// [`winapi`]: crate::winapi
+    /// [`ERROR_PIPE_BUSY`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/Foundation/constant.ERROR_PIPE_BUSY.html
     /// [enabled I/O]: crate::runtime::Builder::enable_io
     /// [Tokio Runtime]: crate::runtime::Runtime
     ///
@@ -4871,7 +4930,7 @@
     /// use std::time::Duration;
     /// use tokio::net::windows::named_pipe::ClientOptions;
     /// use tokio::time;
-    /// use winapi::shared::winerror;
+    /// use windows_sys::Win32::Foundation::ERROR_PIPE_BUSY;
     ///
     /// const PIPE_NAME: &amp;str = r&quot;\\.\pipe\mynamedpipe&quot;;
     ///
@@ -4879,7 +4938,7 @@
     /// let client = loop {
     ///     match ClientOptions::new().open(PIPE_NAME) {
     ///         Ok(client) =&gt; break client,
-    ///         Err(e) if e.raw_os_error() == Some(winerror::ERROR_PIPE_BUSY as i32) =&gt; (),
+    ///         Err(e) if e.raw_os_error() == Some(ERROR_PIPE_BUSY as i32) =&gt; (),
     ///         Err(e) =&gt; return Err(e),
     ///     }
     ///
@@ -4909,7 +4968,7 @@
     ///
     /// [`open`]: ClientOptions::open
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
-    /// [`SECURITY_ATTRIBUTES`]: crate::winapi::um::minwinbase::SECURITY_ATTRIBUTES
+    /// [`SECURITY_ATTRIBUTES`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/struct.SECURITY_ATTRIBUTES.html
     </span><span class="kw">pub unsafe fn </span>open_with_security_attributes_raw(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         addr: <span class="kw">impl </span>AsRef&lt;OsStr&gt;,
@@ -4918,28 +4977,28 @@
         <span class="kw">let </span>addr = encode_addr(addr);
 
         <span class="comment">// NB: We could use a platform specialized `OpenOptions` here, but since
-        // we have access to winapi it ultimately doesn&#39;t hurt to use
+        // we have access to windows_sys it ultimately doesn&#39;t hurt to use
         // `CreateFile` explicitly since it allows the use of our already
         // well-structured wide `addr` to pass into CreateFileW.
-        </span><span class="kw">let </span>h = fileapi::CreateFileW(
+        </span><span class="kw">let </span>h = windows_sys::CreateFileW(
             addr.as_ptr(),
             <span class="self">self</span>.desired_access,
             <span class="number">0</span>,
             attrs <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
-            fileapi::OPEN_EXISTING,
+            windows_sys::OPEN_EXISTING,
             <span class="self">self</span>.get_flags(),
-            ptr::null_mut(),
+            <span class="number">0</span>,
         );
 
-        <span class="kw">if </span>h == handleapi::INVALID_HANDLE_VALUE {
+        <span class="kw">if </span>h == windows_sys::INVALID_HANDLE_VALUE {
             <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
         }
 
-        NamedPipeClient::from_raw_handle(h)
+        NamedPipeClient::from_raw_handle(h <span class="kw">as _</span>)
     }
 
     <span class="kw">fn </span>get_flags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
-        <span class="self">self</span>.security_qos_flags | winbase::FILE_FLAG_OVERLAPPED
+        <span class="self">self</span>.security_qos_flags | windows_sys::FILE_FLAG_OVERLAPPED
     }
 }
 
@@ -4952,16 +5011,19 @@
     <span class="doccomment">/// Data is written to the pipe as a stream of bytes. The pipe does not
     /// distinguish bytes written during different write operations.
     ///
-    /// Corresponds to [`PIPE_TYPE_BYTE`][crate::winapi::um::winbase::PIPE_TYPE_BYTE].
+    /// Corresponds to [`PIPE_TYPE_BYTE`].
+    ///
+    /// [`PIPE_TYPE_BYTE`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/System/Pipes/constant.PIPE_TYPE_BYTE.html
     </span>Byte,
     <span class="doccomment">/// Data is written to the pipe as a stream of messages. The pipe treats the
     /// bytes written during each write operation as a message unit. Any reading
     /// on a named pipe returns [`ERROR_MORE_DATA`] when a message is not read
     /// completely.
     ///
-    /// Corresponds to [`PIPE_TYPE_MESSAGE`][crate::winapi::um::winbase::PIPE_TYPE_MESSAGE].
+    /// Corresponds to [`PIPE_TYPE_MESSAGE`].
     ///
-    /// [`ERROR_MORE_DATA`]: crate::winapi::shared::winerror::ERROR_MORE_DATA
+    /// [`ERROR_MORE_DATA`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/Foundation/constant.ERROR_MORE_DATA.html
+    /// [`PIPE_TYPE_MESSAGE`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/System/Pipes/constant.PIPE_TYPE_MESSAGE.html
     </span>Message,
 }
 
@@ -4971,11 +5033,15 @@
 </span><span class="kw">pub enum </span>PipeEnd {
     <span class="doccomment">/// The named pipe refers to the client end of a named pipe instance.
     ///
-    /// Corresponds to [`PIPE_CLIENT_END`][crate::winapi::um::winbase::PIPE_CLIENT_END].
+    /// Corresponds to [`PIPE_CLIENT_END`].
+    ///
+    /// [`PIPE_CLIENT_END`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/System/Pipes/constant.PIPE_CLIENT_END.html
     </span>Client,
     <span class="doccomment">/// The named pipe refers to the server end of a named pipe instance.
     ///
-    /// Corresponds to [`PIPE_SERVER_END`][crate::winapi::um::winbase::PIPE_SERVER_END].
+    /// Corresponds to [`PIPE_SERVER_END`].
+    ///
+    /// [`PIPE_SERVER_END`]: https://docs.rs/windows-sys/latest/windows_sys/Win32/System/Pipes/constant.PIPE_SERVER_END.html
     </span>Server,
 }
 
@@ -5013,26 +5079,26 @@
     <span class="kw">let </span><span class="kw-2">mut </span>in_buffer_size = <span class="number">0</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>max_instances = <span class="number">0</span>;
 
-    <span class="kw">let </span>result = namedpipeapi::GetNamedPipeInfo(
-        handle,
+    <span class="kw">let </span>result = windows_sys::GetNamedPipeInfo(
+        handle <span class="kw">as _</span>,
         <span class="kw-2">&amp;mut </span>flags,
         <span class="kw-2">&amp;mut </span>out_buffer_size,
         <span class="kw-2">&amp;mut </span>in_buffer_size,
         <span class="kw-2">&amp;mut </span>max_instances,
     );
 
-    <span class="kw">if </span>result == FALSE {
+    <span class="kw">if </span>result == <span class="number">0 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>end = PipeEnd::Client;
     <span class="kw">let </span><span class="kw-2">mut </span>mode = PipeMode::Byte;
 
-    <span class="kw">if </span>flags &amp; winbase::PIPE_SERVER_END != <span class="number">0 </span>{
+    <span class="kw">if </span>flags &amp; windows_sys::PIPE_SERVER_END != <span class="number">0 </span>{
         end = PipeEnd::Server;
     }
 
-    <span class="kw">if </span>flags &amp; winbase::PIPE_TYPE_MESSAGE != <span class="number">0 </span>{
+    <span class="kw">if </span>flags &amp; windows_sys::PIPE_TYPE_MESSAGE != <span class="number">0 </span>{
         mode = PipeMode::Message;
     }
 
