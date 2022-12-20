@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["msg_client","Generated client implementations."]],"struct":[["MsgSubmitQueryResponse","MsgSubmitQueryResponse represents a message type to fulfil a query request."],["MsgSubmitQueryResponseResponse","MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response type."]]};

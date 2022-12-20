@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["MsgClient","Msg defines the interchainquery Msg service."]]};
