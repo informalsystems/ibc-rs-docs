@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Memo Test"><meta name="keywords" content="rust, rustlang, rust-lang, memo"><title>ibc_test_framework::docs::walkthroughs::memo - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-303867cd4f9d7e56.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../../static.files/main-4a084badb5778746.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../ibc_test_framework/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></div></a><h2></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../ibc_test_framework/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></div></a><h2 class="location"><a href="#">Module memo</a></h2><div class="sidebar-elems"></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1 class="fqn">Module <a href="../../../index.html">ibc_test_framework</a>::<wbr><a href="../../index.html">docs</a>::<wbr><a href="../index.html">walkthroughs</a>::<wbr><a class="mod" href="#">memo</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../../../../src/ibc_test_framework/docs/walkthroughs/memo.rs.html#1-106">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h3 id="memo-test"><a href="#memo-test">Memo Test</a></h3>
+<p>This walkthrough illustrates an integration test that utilizes a non-empty
+struct as test input. This test asserts that the process of transferring
+IBC messages preserves the <code>memo</code> field. For the purposes of this explanation,
+the <code>memo</code> field is nothing more than a <code>String</code> field for carrying along
+some arbitrary metadata as part of the transaction.</p>
+<p>The test in most of its entirety (some parts omitted for brevity) looks like this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[test]
+</span><span class="kw">fn </span>test_memo() -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">let </span>memo = Memo::new(random_string()).unwrap();
+    <span class="kw">let </span>test = MemoTest { memo };
+    run_binary_channel_test(<span class="kw-2">&amp;</span>test)
+}
+
+<span class="kw">pub struct </span>MemoTest {
+    memo: Memo,
+}
+
+<span class="kw">impl </span>TestOverrides <span class="kw">for </span>MemoTest {
+    <span class="kw">fn </span>modify_relayer_config(<span class="kw-2">&amp;</span><span class="self">self</span>, config: <span class="kw-2">&amp;mut </span>Config) {
+        <span class="kw">for </span><span class="kw-2">mut </span>chain <span class="kw">in </span>config.chains.iter_mut() {
+            chain.memo_prefix = <span class="self">self</span>.memo.clone();
+        }
+    }
+}
+
+<span class="kw">impl </span>BinaryChannelTest <span class="kw">for </span>MemoTest {
+    <span class="kw">fn </span>run&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _config: <span class="kw-2">&amp;</span>TestConfig,
+        _relayer: RelayerDriver,
+        chains: ConnectedChains&lt;ChainA, ChainB&gt;,
+        channel: ConnectedChannel&lt;ChainA, ChainB&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>denom_a = chains.node_a.denom();
+
+        <span class="kw">let </span>a_to_b_amount = random_u128_range(<span class="number">1000</span>, <span class="number">5000</span>);
+
+        chains.node_a.chain_driver().ibc_transfer_token(
+            <span class="kw-2">&amp;</span>channel.port_a.as_ref(),
+            <span class="kw-2">&amp;</span>channel.channel_id_a.as_ref(),
+            <span class="kw-2">&amp;</span>chains.node_a.wallets().user1(),
+            <span class="kw-2">&amp;</span>chains.node_b.wallets().user1().address(),
+            <span class="kw-2">&amp;</span>denom_a.with_amount(a_to_b_amount).as_ref(),
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>denom_b = derive_ibc_denom(
+            <span class="kw-2">&amp;</span>channel.port_b.as_ref(),
+            <span class="kw-2">&amp;</span>channel.channel_id_b.as_ref(),
+            <span class="kw-2">&amp;</span>denom_a,
+        )<span class="question-mark">?</span>;
+
+        chains.node_b.chain_driver().assert_eventual_wallet_amount(
+            <span class="kw-2">&amp;</span>chains.node_b.wallets().user1().address(),
+            <span class="kw-2">&amp;</span>denom_b.with_amount(a_to_b_amount).as_ref(),
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>tx_info = chains
+            .node_b
+            .chain_driver()
+            .query_recipient_transactions(<span class="kw-2">&amp;</span>chains.node_b.wallets().user1().address())<span class="question-mark">?</span>;
+
+        assert_tx_memo_equals(<span class="kw-2">&amp;</span>tx_info, <span class="self">self</span>.memo.as_str())<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
+}</code></pre></div>
+<p>This test runs initializes a <code>MemoTest</code> struct with a random string
+in the <code>memo</code> field, then calls the <code>run_binary_channel_test</code> function
+with it. The <code>TestOverrides</code> trait is implemented in order to set the 
+<code>memo_prefix</code> configuration value on the chains that are initialized
+over the course of the test. </p>
+<p>At a high level, this test performs an IBC token transfer operation
+from chain A to chain B. Once chain B has received the transaction
+that chain A initialized, the test asserts that the value of the 
+memo string is indeed what we expected. </p>
+<p>The first two lines of the <code>run</code> function perform some necessary
+setup for performing an IBC token transfer, namely fetching the 
+coin denomination of chain A as well as generating a random amount
+of that denomination that will be sent to chain B. It then calls 
+the <code>ibc_token_transfer</code> function to generate a transaction with
+this information, including the memo string that was generated 
+earlier, and sends it to chain B. </p>
+<p>Next, the <code>derive_ibc_denom</code> function is called in order to 
+calculate the appropriate amount of chain B’s coin denomination
+based on chain A’s denomination and how much of that denomination
+was sent over the transaction so that chain B can represent the
+transferred value. </p>
+<p>The <code>assert_eventual_wallet_amount</code> function is then called on
+chain B in order to confirm that the transaction was indeed 
+received by checking that chain B’s wallet amount reflects the
+expected updated value. The <code>query_recipient_transactions</code> 
+method is then called to fetch the memo value from the transaction
+so that we can confirm that its value is indeed what we expect.</p>
+<p>You can find the file containing this test at <code>tools/integration-test/src/tests/memo.rs</code>.</p>
+</div></details></section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_test_framework" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (d6f99e535 2023-01-02)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>

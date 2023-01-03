@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["memo","Memo Test"],["simple","Simple Test"]]};
