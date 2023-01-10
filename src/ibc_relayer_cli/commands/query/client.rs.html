@@ -567,54 +567,14 @@
 <a href="#567" id="567">567</a>
 <a href="#568" id="568">568</a>
 <a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
 </pre><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer::chain::requests::{
     IncludeProof, PageRequest, QueryClientConnectionsRequest, QueryClientEventRequest,
-    QueryClientStateRequest, QueryConsensusStateRequest, QueryConsensusStatesRequest, QueryHeight,
-    QueryTxRequest,
+    QueryClientStateRequest, QueryConsensusStateHeightsRequest, QueryConsensusStateRequest,
+    QueryHeight, QueryTxRequest,
 };
 
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_state::ClientState;
@@ -678,7 +638,7 @@
             IncludeProof::No,
         ) {
             <span class="prelude-val">Ok</span>((cs, <span class="kw">_</span>)) =&gt; Output::success(cs).exit(),
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
+            <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }
 }
@@ -710,9 +670,6 @@
         help = <span class="string">&quot;Height of the client&#39;s consensus state to query&quot;
     </span>)]
     </span>consensus_height: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-
-    <span class="attr">#[clap(long = <span class="string">&quot;heights-only&quot;</span>, help = <span class="string">&quot;Show only consensus heights&quot;</span>)]
-    </span>heights_only: bool,
 
     <span class="attr">#[clap(
         long = <span class="string">&quot;height&quot;</span>,
@@ -746,52 +703,39 @@
             .exit(),
         };
 
-        <span class="kw">match </span><span class="self">self</span>.consensus_height {
-            <span class="prelude-val">Some</span>(cs_height) =&gt; {
-                <span class="kw">let </span>consensus_height = Height::new(counterparty_chain.version(), cs_height)
-                    .unwrap_or_else(exit_with_unrecoverable_error);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(cs_height) = <span class="self">self</span>.consensus_height {
+            <span class="kw">let </span>consensus_height = Height::new(counterparty_chain.version(), cs_height)
+                .unwrap_or_else(exit_with_unrecoverable_error);
 
-                <span class="kw">let </span>res = chain
-                    .query_consensus_state(
-                        QueryConsensusStateRequest {
-                            client_id: <span class="self">self</span>.client_id.clone(),
-                            consensus_height,
-                            query_height: <span class="self">self</span>.height.map_or(
-                                QueryHeight::Latest,
-                                |revision_height| {
-                                    QueryHeight::Specific(
-                                        Height::new(chain.id().version(), revision_height)
-                                            .unwrap_or_else(exit_with_unrecoverable_error),
-                                    )
-                                },
-                            ),
-                        },
-                        IncludeProof::No,
-                    )
-                    .map(|(consensus_state, <span class="kw">_</span>)| consensus_state);
+            <span class="kw">let </span>res = chain
+                .query_consensus_state(
+                    QueryConsensusStateRequest {
+                        client_id: <span class="self">self</span>.client_id.clone(),
+                        consensus_height,
+                        query_height: <span class="self">self</span>.height.map_or(QueryHeight::Latest, |revision_height| {
+                            QueryHeight::Specific(
+                                Height::new(chain.id().version(), revision_height)
+                                    .unwrap_or_else(exit_with_unrecoverable_error),
+                            )
+                        }),
+                    },
+                    IncludeProof::No,
+                )
+                .map(|(consensus_state, <span class="kw">_</span>)| consensus_state);
 
-                <span class="kw">match </span>res {
-                    <span class="prelude-val">Ok</span>(cs) =&gt; Output::success(cs).exit(),
-                    <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
-                }
+            <span class="kw">match </span>res {
+                <span class="prelude-val">Ok</span>(cs) =&gt; Output::success(cs).exit(),
+                <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
             }
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span>res = chain.query_consensus_states(QueryConsensusStatesRequest {
-                    client_id: <span class="self">self</span>.client_id.clone(),
-                    pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
-                });
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>res = chain.query_consensus_state_heights(QueryConsensusStateHeightsRequest {
+                client_id: <span class="self">self</span>.client_id.clone(),
+                pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
+            });
 
-                <span class="kw">match </span>res {
-                    <span class="prelude-val">Ok</span>(states) =&gt; {
-                        <span class="kw">if </span><span class="self">self</span>.heights_only {
-                            <span class="kw">let </span>heights: Vec&lt;Height&gt; = states.iter().map(|cs| cs.height).collect();
-                            Output::success(heights).exit()
-                        } <span class="kw">else </span>{
-                            Output::success(states).exit()
-                        }
-                    }
-                    <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
-                }
+            <span class="kw">match </span>res {
+                <span class="prelude-val">Ok</span>(heights) =&gt; Output::success(heights).exit(),
+                <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
             }
         }
     }
@@ -878,7 +822,7 @@
 
         <span class="kw">match </span>res {
             <span class="prelude-val">Ok</span>(header) =&gt; Output::success(header).exit(),
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
+            <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }
 }
@@ -926,7 +870,7 @@
 
         <span class="kw">match </span>res {
             <span class="prelude-val">Ok</span>(ce) =&gt; Output::success(ce).exit(),
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)).exit(),
+            <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }
 }
@@ -1000,7 +944,6 @@
                 chain_id: ChainId::from_string(<span class="string">&quot;chain_id&quot;</span>),
                 client_id: ClientId::from_str(<span class="string">&quot;client_id&quot;</span>).unwrap(),
                 consensus_height: <span class="prelude-val">None</span>,
-                heights_only: <span class="bool-val">false</span>,
                 height: <span class="prelude-val">None
             </span>},
             QueryClientConsensusCmd::parse_from([
@@ -1020,7 +963,6 @@
                 chain_id: ChainId::from_string(<span class="string">&quot;chain_id&quot;</span>),
                 client_id: ClientId::from_str(<span class="string">&quot;client_id&quot;</span>).unwrap(),
                 consensus_height: <span class="prelude-val">Some</span>(<span class="number">42</span>),
-                heights_only: <span class="bool-val">false</span>,
                 height: <span class="prelude-val">None
             </span>},
             QueryClientConsensusCmd::parse_from([
@@ -1042,7 +984,6 @@
                 chain_id: ChainId::from_string(<span class="string">&quot;chain_id&quot;</span>),
                 client_id: ClientId::from_str(<span class="string">&quot;client_id&quot;</span>).unwrap(),
                 consensus_height: <span class="prelude-val">None</span>,
-                heights_only: <span class="bool-val">false</span>,
                 height: <span class="prelude-val">Some</span>(<span class="number">42</span>)
             },
             QueryClientConsensusCmd::parse_from([
@@ -1053,27 +994,6 @@
                 <span class="string">&quot;client_id&quot;</span>,
                 <span class="string">&quot;--height&quot;</span>,
                 <span class="string">&quot;42&quot;
-            </span>])
-        )
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_query_client_consensus_heights_only() {
-        <span class="macro">assert_eq!</span>(
-            QueryClientConsensusCmd {
-                chain_id: ChainId::from_string(<span class="string">&quot;chain_id&quot;</span>),
-                client_id: ClientId::from_str(<span class="string">&quot;client_id&quot;</span>).unwrap(),
-                consensus_height: <span class="prelude-val">None</span>,
-                heights_only: <span class="bool-val">true</span>,
-                height: <span class="prelude-val">None
-            </span>},
-            QueryClientConsensusCmd::parse_from([
-                <span class="string">&quot;test&quot;</span>,
-                <span class="string">&quot;--chain&quot;</span>,
-                <span class="string">&quot;chain_id&quot;</span>,
-                <span class="string">&quot;--client&quot;</span>,
-                <span class="string">&quot;client_id&quot;</span>,
-                <span class="string">&quot;--heights-only&quot;
             </span>])
         )
     }
@@ -1217,4 +1137,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (cc47b0699 2023-01-08)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (3020239de 2023-01-09)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>

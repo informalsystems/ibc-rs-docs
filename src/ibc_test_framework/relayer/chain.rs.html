@@ -421,19 +421,6 @@
 <a href="#421" id="421">421</a>
 <a href="#422" id="422">422</a>
 <a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Definition for a proxy [`ChainHandle`] implementation for tagged
    chain handles.
@@ -463,23 +450,12 @@
 <span class="kw">use </span>ibc_relayer::chain::client::ClientSettings;
 <span class="kw">use </span>ibc_relayer::chain::endpoint::{ChainStatus, HealthCheck};
 <span class="kw">use </span>ibc_relayer::chain::handle::{ChainHandle, ChainRequest, Subscription};
-<span class="kw">use </span>ibc_relayer::chain::requests::{
-    CrossChainQueryRequest, IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest,
-    QueryChannelsRequest, QueryClientConnectionsRequest, QueryClientStateRequest,
-    QueryClientStatesRequest, QueryConnectionChannelsRequest, QueryConnectionRequest,
-    QueryConnectionsRequest, QueryConsensusStateRequest, QueryConsensusStatesRequest,
-    QueryHostConsensusStateRequest, QueryNextSequenceReceiveRequest,
-    QueryPacketAcknowledgementRequest, QueryPacketAcknowledgementsRequest,
-    QueryPacketCommitmentRequest, QueryPacketCommitmentsRequest, QueryPacketEventDataRequest,
-    QueryPacketReceiptRequest, QueryTxRequest, QueryUnreceivedAcksRequest,
-    QueryUnreceivedPacketsRequest, QueryUpgradedClientStateRequest,
-    QueryUpgradedConsensusStateRequest,
-};
+<span class="kw">use </span>ibc_relayer::chain::requests::<span class="kw-2">*</span>;
 <span class="kw">use </span>ibc_relayer::chain::tracking::TrackedMsgs;
 <span class="kw">use </span>ibc_relayer::client_state::{AnyClientState, IdentifiedAnyClientState};
 <span class="kw">use </span>ibc_relayer::config::ChainConfig;
 <span class="kw">use </span>ibc_relayer::connection::ConnectionMsgType;
-<span class="kw">use </span>ibc_relayer::consensus_state::{AnyConsensusState, AnyConsensusStateWithHeight};
+<span class="kw">use </span>ibc_relayer::consensus_state::AnyConsensusState;
 <span class="kw">use </span>ibc_relayer::denom::DenomTrace;
 <span class="kw">use </span>ibc_relayer::error::Error;
 <span class="kw">use </span>ibc_relayer::event::IbcEventWithHeight;
@@ -488,22 +464,20 @@
 <span class="kw">use </span>ibc_relayer::misbehaviour::MisbehaviourEvidence;
 <span class="kw">use </span>ibc_relayer_types::applications::ics31_icq::response::CrossChainQueryResponse;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
+<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::connection::ConnectionEnd;
 <span class="kw">use </span>ibc_relayer_types::core::ics03_connection::connection::IdentifiedConnectionEnd;
+<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::version::Version;
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::ChannelEnd;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::IdentifiedChannelEnd;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::{PacketMsgType, Sequence};
+<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::commitment::CommitmentPrefix;
 <span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::merkle::MerkleProof;
-<span class="kw">use </span>ibc_relayer_types::{
-    core::ics03_connection::connection::ConnectionEnd,
-    core::ics03_connection::version::Version,
-    core::ics04_channel::channel::ChannelEnd,
-    core::ics23_commitment::commitment::CommitmentPrefix,
-    core::ics24_host::identifier::ChainId,
-    core::ics24_host::identifier::ChannelId,
-    core::ics24_host::identifier::{ClientId, ConnectionId, PortId},
-    proofs::Proofs,
-    signer::Signer,
-    Height,
-};
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChannelId;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ClientId, ConnectionId, PortId};
+<span class="kw">use </span>ibc_relayer_types::proofs::Proofs;
+<span class="kw">use </span>ibc_relayer_types::signer::Signer;
+<span class="kw">use </span>ibc_relayer_types::Height;
 
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
 
@@ -601,11 +575,11 @@
         <span class="self">self</span>.value().query_client_connections(request)
     }
 
-    <span class="kw">fn </span>query_consensus_states(
+    <span class="kw">fn </span>query_consensus_state_heights(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        request: QueryConsensusStatesRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;AnyConsensusStateWithHeight&gt;, Error&gt; {
-        <span class="self">self</span>.value().query_consensus_states(request)
+        request: QueryConsensusStateHeightsRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Height&gt;, Error&gt; {
+        <span class="self">self</span>.value().query_consensus_state_heights(request)
     }
 
     <span class="kw">fn </span>query_consensus_state(
@@ -871,4 +845,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_test_framework" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (cc47b0699 2023-01-08)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_test_framework" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (3020239de 2023-01-09)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>

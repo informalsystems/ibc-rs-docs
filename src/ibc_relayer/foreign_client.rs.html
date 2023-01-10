@@ -1762,25 +1762,6 @@
 <a href="#1762" id="1762">1762</a>
 <a href="#1763" id="1763">1763</a>
 <a href="#1764" id="1764">1764</a>
-<a href="#1765" id="1765">1765</a>
-<a href="#1766" id="1766">1766</a>
-<a href="#1767" id="1767">1767</a>
-<a href="#1768" id="1768">1768</a>
-<a href="#1769" id="1769">1769</a>
-<a href="#1770" id="1770">1770</a>
-<a href="#1771" id="1771">1771</a>
-<a href="#1772" id="1772">1772</a>
-<a href="#1773" id="1773">1773</a>
-<a href="#1774" id="1774">1774</a>
-<a href="#1775" id="1775">1775</a>
-<a href="#1776" id="1776">1776</a>
-<a href="#1777" id="1777">1777</a>
-<a href="#1778" id="1778">1778</a>
-<a href="#1779" id="1779">1779</a>
-<a href="#1780" id="1780">1780</a>
-<a href="#1781" id="1781">1781</a>
-<a href="#1782" id="1782">1782</a>
-<a href="#1783" id="1783">1783</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,
@@ -1814,14 +1795,10 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::client::ClientSettings;
 <span class="kw">use </span><span class="kw">crate</span>::chain::handle::ChainHandle;
-<span class="kw">use </span><span class="kw">crate</span>::chain::requests::{
-    IncludeProof, PageRequest, QueryClientEventRequest, QueryClientStateRequest,
-    QueryConsensusStateRequest, QueryConsensusStatesRequest, QueryHeight, QueryTxRequest,
-    QueryUpgradedClientStateRequest, QueryUpgradedConsensusStateRequest,
-};
+<span class="kw">use </span><span class="kw">crate</span>::chain::requests::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::chain::tracking::TrackedMsgs;
 <span class="kw">use </span><span class="kw">crate</span>::client_state::AnyClientState;
-<span class="kw">use </span><span class="kw">crate</span>::consensus_state::{AnyConsensusState, AnyConsensusStateWithHeight};
+<span class="kw">use </span><span class="kw">crate</span>::consensus_state::AnyConsensusState;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error <span class="kw">as </span>RelayerError;
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
 <span class="kw">use </span><span class="kw">crate</span>::light_client::AnyHeader;
@@ -3120,33 +3097,6 @@
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(update))
     }
 
-    <span class="doccomment">/// Retrieves all consensus states for this client and sorts them in descending height
-    /// order. If consensus states are not pruned on chain, then last consensus state is the one
-    /// installed by the `CreateClient` operation.
-    </span><span class="attr">#[instrument(
-        name = <span class="string">&quot;foreign_client.fetch_consensus_states&quot;</span>,
-        level = <span class="string">&quot;error&quot;</span>,
-        skip_all,
-        fields(client = %<span class="self">self</span>)
-    )]
-    </span><span class="kw">fn </span>fetch_consensus_states(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;AnyConsensusStateWithHeight&gt;, ForeignClientError&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>consensus_states = <span class="self">self
-            </span>.dst_chain
-            .query_consensus_states(QueryConsensusStatesRequest {
-                client_id: <span class="self">self</span>.id.clone(),
-                pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
-            })
-            .map_err(|e| {
-                ForeignClientError::client_query(<span class="self">self</span>.id().clone(), <span class="self">self</span>.src_chain.id(), e)
-            })<span class="question-mark">?</span>;
-
-        consensus_states.sort_by_key(|a| core::cmp::Reverse(a.height));
-
-        <span class="prelude-val">Ok</span>(consensus_states)
-    }
-
     <span class="doccomment">/// Returns the consensus state at `height` or error if not found.
     </span><span class="attr">#[instrument(
         name = <span class="string">&quot;foreign_client.fetch_consensus_state&quot;</span>,
@@ -3188,15 +3138,27 @@
         fields(client = %<span class="self">self</span>)
     )]
     </span><span class="kw">fn </span>fetch_consensus_state_heights(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Height&gt;, ForeignClientError&gt; {
-        <span class="comment">// [TODO] Utilize query that only fetches consensus state heights
-        // https://github.com/cosmos/ibc-go/issues/798
-        </span><span class="kw">let </span>consensus_state_heights: Vec&lt;Height&gt; = <span class="self">self
-            </span>.fetch_consensus_states()<span class="question-mark">?
-            </span>.iter()
-            .map(|cs| cs.height)
-            .collect();
+        <span class="kw">let </span><span class="kw-2">mut </span>heights = <span class="self">self
+            </span>.dst_chain
+            .query_consensus_state_heights(QueryConsensusStateHeightsRequest {
+                client_id: <span class="self">self</span>.id.clone(),
+                pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
+            })
+            .map_err(|e| {
+                ForeignClientError::client_query(<span class="self">self</span>.id().clone(), <span class="self">self</span>.src_chain.id(), e)
+            })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(consensus_state_heights)
+        <span class="comment">// This is necessary because the results are sorted in lexicographic order instead of
+        // numeric order, and we cannot therefore rely on setting the `reverse = true` in the
+        // `PageRequest` setting. Since we are asking for all heights anyway, we can sort them
+        // ourselves.
+        //
+        // For more context, see:
+        // - https://github.com/informalsystems/hermes/pull/2950#issuecomment-1373733744
+        // - https://github.com/cosmos/ibc-go/issues/1399
+        </span>heights.sort_by_key(|<span class="kw-2">&amp;</span>h| core::cmp::Reverse(h));
+
+        <span class="prelude-val">Ok</span>(heights)
     }
 
     <span class="doccomment">/// Checks for evidence of misbehaviour.
@@ -3565,4 +3527,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (cc47b0699 2023-01-08)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (3020239de 2023-01-09)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>

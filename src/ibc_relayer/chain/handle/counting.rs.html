@@ -500,6 +500,23 @@
 <span class="kw">use </span>crossbeam_channel <span class="kw">as </span>channel;
 <span class="kw">use </span>tracing::{debug, Span};
 
+<span class="kw">use </span>ibc_relayer_types::applications::ics31_icq::response::CrossChainQueryResponse;
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
+<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::connection::ConnectionEnd;
+<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::connection::IdentifiedConnectionEnd;
+<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::version::Version;
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::ChannelEnd;
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::IdentifiedChannelEnd;
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::{PacketMsgType, Sequence};
+<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::commitment::CommitmentPrefix;
+<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::merkle::MerkleProof;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{
+    ChainId, ChannelId, ClientId, ConnectionId, PortId,
+};
+<span class="kw">use </span>ibc_relayer_types::proofs::Proofs;
+<span class="kw">use </span>ibc_relayer_types::signer::Signer;
+<span class="kw">use </span>ibc_relayer_types::Height;
+
 <span class="kw">use </span><span class="kw">crate</span>::account::Balance;
 <span class="kw">use </span><span class="kw">crate</span>::chain::client::ClientSettings;
 <span class="kw">use </span><span class="kw">crate</span>::chain::endpoint::{ChainStatus, HealthCheck};
@@ -509,7 +526,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::client_state::{AnyClientState, IdentifiedAnyClientState};
 <span class="kw">use </span><span class="kw">crate</span>::config::ChainConfig;
 <span class="kw">use </span><span class="kw">crate</span>::connection::ConnectionMsgType;
-<span class="kw">use </span><span class="kw">crate</span>::consensus_state::{AnyConsensusState, AnyConsensusStateWithHeight};
+<span class="kw">use </span><span class="kw">crate</span>::consensus_state::AnyConsensusState;
 <span class="kw">use </span><span class="kw">crate</span>::denom::DenomTrace;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
@@ -517,22 +534,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::light_client::AnyHeader;
 <span class="kw">use </span><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence;
 <span class="kw">use </span><span class="kw">crate</span>::util::lock::LockExt;
-<span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
-<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::connection::IdentifiedConnectionEnd;
-<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::IdentifiedChannelEnd;
-<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::{PacketMsgType, Sequence};
-<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::merkle::MerkleProof;
-<span class="kw">use </span>ibc_relayer_types::{
-    applications::ics31_icq::response::CrossChainQueryResponse,
-    core::ics03_connection::connection::ConnectionEnd,
-    core::ics03_connection::version::Version,
-    core::ics04_channel::channel::ChannelEnd,
-    core::ics23_commitment::commitment::CommitmentPrefix,
-    core::ics24_host::identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId},
-    proofs::Proofs,
-    signer::Signer,
-    Height,
-};
 
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>CountingChainHandle&lt;Handle&gt; {
@@ -703,12 +704,11 @@
         <span class="self">self</span>.inner().query_client_connections(request)
     }
 
-    <span class="kw">fn </span>query_consensus_states(
+    <span class="kw">fn </span>query_consensus_state_heights(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        request: QueryConsensusStatesRequest,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;AnyConsensusStateWithHeight&gt;, Error&gt; {
-        <span class="self">self</span>.inc_metric(<span class="string">&quot;query_consensus_states&quot;</span>);
-        <span class="self">self</span>.inner().query_consensus_states(request)
+        request: QueryConsensusStateHeightsRequest,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Height&gt;, Error&gt; {
+        <span class="self">self</span>.inner().query_consensus_state_heights(request)
     }
 
     <span class="kw">fn </span>query_consensus_state(
@@ -989,4 +989,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (cc47b0699 2023-01-08)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0-nightly (3020239de 2023-01-09)" data-search-js="search-181581080540673f.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-58836c674e2f7bd2.css" ></div></body></html>
