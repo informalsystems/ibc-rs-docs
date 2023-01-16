@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["memo","Memo Test"],["simple","Simple Test"]]};
+window.SIDEBAR_ITEMS = {"mod":[["memo","Memo Test"],["ordered_channel","Ordered Channel Test"],["simple","Simple Test"]]};
