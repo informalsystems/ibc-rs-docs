@@ -282,6 +282,7 @@ var sourcesIndex = JSON.parse('{\
 "sha2":["",[["sha256",[],["soft.rs","x86.rs"]],["sha512",[],["soft.rs","x86.rs"]]],["consts.rs","core_api.rs","lib.rs","sha256.rs","sha512.rs"]],\
 "sha3":["",[],["lib.rs","macros.rs","state.rs"]],\
 "sharded_slab":["",[["page",[],["mod.rs","slot.rs","stack.rs"]]],["cfg.rs","clear.rs","implementation.rs","iter.rs","lib.rs","macros.rs","pool.rs","shard.rs","sync.rs","tid.rs"]],\
+"shell_words":["",[],["lib.rs"]],\
 "shlex":["",[],["lib.rs"]],\
 "signal_hook":["",[["iterator",[["exfiltrator",[],["mod.rs","raw.rs"]]],["backend.rs","mod.rs"]],["low_level",[],["channel.rs","mod.rs","pipe.rs","signal_details.rs"]]],["flag.rs","lib.rs"]],\
 "signal_hook_registry":["",[],["half_lock.rs","lib.rs"]],\
@@ -313,7 +314,6 @@ var sourcesIndex = JSON.parse('{\
 "tendermint_testgen":["",[],["apalache.rs","command.rs","commit.rs","consensus.rs","generator.rs","header.rs","helpers.rs","jsonatr.rs","lib.rs","light_block.rs","light_chain.rs","tester.rs","time.rs","validator.rs","validator_set.rs","vote.rs"]],\
 "tendril":["",[],["buf32.rs","fmt.rs","lib.rs","stream.rs","tendril.rs","utf8_decode.rs","util.rs"]],\
 "termcolor":["",[],["lib.rs"]],\
-"terminal_size":["",[],["lib.rs","unix.rs"]],\
 "test_setup_with_binary_channel":["",[],["test_setup_with_binary_channel.rs"]],\
 "test_setup_with_fee_enabled_binary_channel":["",[],["test_setup_with_fee_enabled_binary_channel.rs"]],\
 "test_setup_with_ternary_channel":["",[],["test_setup_with_ternary_channel.rs"]],\
