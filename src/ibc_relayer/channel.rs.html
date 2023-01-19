@@ -1513,6 +1513,9 @@
 <a href="#1513" id="1513">1513</a>
 <a href="#1514" id="1514">1514</a>
 <a href="#1515" id="1515">1515</a>
+<a href="#1516" id="1516">1516</a>
+<a href="#1517" id="1517">1517</a>
+<a href="#1518" id="1518">1518</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>core::time::Duration;
 
@@ -1557,7 +1560,7 @@
 <span class="kw">pub mod </span>version;
 <span class="kw">use </span>version::Version;
 
-<span class="kw">mod </span>handshake_retry {
+<span class="kw">pub mod </span>channel_handshake_retry {
     <span class="doccomment">//! Provides utility methods and constants to configure the retry behavior
     //! for the channel handshake algorithm.
 
@@ -2217,21 +2220,24 @@
     </span><span class="kw">fn </span>handshake(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), ChannelError&gt; {
         <span class="kw">let </span>max_block_times = <span class="self">self</span>.max_block_times()<span class="question-mark">?</span>;
 
-        retry_with_index(handshake_retry::default_strategy(max_block_times), |<span class="kw">_</span>| {
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.do_chan_open_handshake() {
-                <span class="kw">if </span>e.is_expired_or_frozen_error() {
-                    RetryResult::Err(e)
+        retry_with_index(
+            channel_handshake_retry::default_strategy(max_block_times),
+            |<span class="kw">_</span>| {
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.do_chan_open_handshake() {
+                    <span class="kw">if </span>e.is_expired_or_frozen_error() {
+                        RetryResult::Err(e)
+                    } <span class="kw">else </span>{
+                        RetryResult::Retry(e)
+                    }
                 } <span class="kw">else </span>{
-                    RetryResult::Retry(e)
+                    RetryResult::Ok(())
                 }
-            } <span class="kw">else </span>{
-                RetryResult::Ok(())
-            }
-        })
+            },
+        )
         .map_err(|err| {
             <span class="macro">error!</span>(<span class="string">&quot;failed to open channel after {} retries&quot;</span>, err.tries);
 
-            handshake_retry::from_retry_error(
+            channel_handshake_retry::from_retry_error(
                 err,
                 <span class="macro">format!</span>(<span class="string">&quot;failed to finish channel handshake for {:?}&quot;</span>, <span class="self">self</span>),
             )

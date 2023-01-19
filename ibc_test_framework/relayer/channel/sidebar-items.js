@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["ack_channel",""],["assert_eventually_channel_established",""],["init_channel",""],["query_channel_end",""],["query_identified_channel_end",""],["try_channel",""]],"trait":[["TaggedChannelEndExt",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["ack_channel",""],["assert_eventually_channel_established",""],["init_channel",""],["init_channel_optimistic",""],["query_channel_end",""],["query_identified_channel_end",""],["try_channel",""]],"trait":[["TaggedChannelEndExt",""]]};

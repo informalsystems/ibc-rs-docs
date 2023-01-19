@@ -616,6 +616,23 @@
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashSet;
 
 <span class="kw">use </span>ibc_relayer_types::{
@@ -773,7 +790,7 @@
 
 <span class="doccomment">/// Returns the [`ChannelConnectionClient`] associated with the
 /// provided port and channel id.
-</span><span class="kw">pub fn </span>channel_connection_client(
+</span><span class="kw">pub fn </span>channel_connection_client_no_checks(
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     port_id: <span class="kw-2">&amp;</span>PortId,
     channel_id: <span class="kw-2">&amp;</span>ChannelId,
@@ -812,14 +829,6 @@
         )
         .map_err(Error::relayer)<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>!connection_end.is_open() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::connection_not_open(
-            connection_id.clone(),
-            channel_id.clone(),
-            chain.id(),
-        ));
-    }
-
     <span class="kw">let </span>client_id = connection_end.client_id();
     <span class="kw">let </span>(client_state, <span class="kw">_</span>) = chain
         .query_client_state(
@@ -836,6 +845,31 @@
     <span class="kw">let </span>channel = IdentifiedChannelEnd::new(port_id.clone(), channel_id.clone(), channel_end);
 
     <span class="prelude-val">Ok</span>(ChannelConnectionClient::new(channel, connection, client))
+}
+
+<span class="doccomment">/// Returns the [`ChannelConnectionClient`] associated with the
+/// provided port and channel id.
+/// It checks that the connection is open.
+</span><span class="kw">pub fn </span>channel_connection_client(
+    chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
+    port_id: <span class="kw-2">&amp;</span>PortId,
+    channel_id: <span class="kw-2">&amp;</span>ChannelId,
+) -&gt; <span class="prelude-ty">Result</span>&lt;ChannelConnectionClient, Error&gt; {
+    <span class="kw">let </span>channel_connection_client =
+        channel_connection_client_no_checks(chain, port_id, channel_id)<span class="question-mark">?</span>;
+
+    <span class="kw">if </span>!channel_connection_client
+        .connection
+        .connection_end
+        .is_open()
+    {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::connection_not_open(
+            channel_connection_client.connection.connection_id,
+            channel_id.clone(),
+            chain.id(),
+        ));
+    }
+    <span class="prelude-val">Ok</span>(channel_connection_client)
 }
 
 <span class="kw">pub fn </span>counterparty_chain_from_channel(

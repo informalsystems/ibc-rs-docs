@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["default_strategy","The default retry strategy. We retry with a constant backoff strategy. The strategy is parametrized by the maximum block time expressed as a `Duration`."],["from_retry_error","Translates from an error type that the `retry` mechanism threw into a crate specific error of [`ChannelError`] type."]]};

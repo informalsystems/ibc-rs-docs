@@ -84,21 +84,55 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>crossbeam_channel::Receiver;
 <span class="kw">use </span>tracing::{debug, error_span};
 
-<span class="kw">use </span><span class="kw">crate</span>::channel::Channel <span class="kw">as </span>RelayChannel;
+<span class="kw">use </span><span class="kw">crate</span>::channel::{channel_handshake_retry, Channel <span class="kw">as </span>RelayChannel};
+<span class="kw">use </span><span class="kw">crate</span>::util::retry::RetryResult;
 <span class="kw">use </span><span class="kw">crate</span>::util::task::{spawn_background_task, Next, TaskError, TaskHandle};
 <span class="kw">use crate</span>::{
     chain::handle::{ChainHandle, ChainHandlePair},
     object::Channel,
     util::retry::retry_with_index,
-    worker::retry_strategy,
 };
 
 <span class="kw">use </span><span class="kw">super</span>::error::RunError;
 <span class="kw">use </span><span class="kw">super</span>::WorkerCmd;
+
+<span class="kw">fn </span>max_block_times&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
+    chains: <span class="kw-2">&amp;</span>ChainHandlePair&lt;ChainA, ChainB&gt;,
+) -&gt; Duration {
+    <span class="kw">let </span>a_block_time = <span class="kw">match </span>chains.a.config() {
+        <span class="prelude-val">Err</span>(_e) =&gt; Duration::from_millis(<span class="number">500</span>),
+        <span class="prelude-val">Ok</span>(config) =&gt; config.max_block_time,
+    };
+    <span class="kw">let </span>b_block_time = <span class="kw">match </span>chains.b.config() {
+        <span class="prelude-val">Err</span>(_e) =&gt; Duration::from_millis(<span class="number">500</span>),
+        <span class="prelude-val">Ok</span>(config) =&gt; config.max_block_time,
+    };
+    a_block_time.max(b_block_time)
+}
 
 <span class="kw">pub fn </span>spawn_channel_worker&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
     channel: Channel,
@@ -110,6 +144,7 @@
         <span class="macro">error_span!</span>(<span class="string">&quot;worker.channel&quot;</span>, channel = %channel.short_name()),
         <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">200</span>)),
         <span class="kw">move </span>|| {
+            <span class="kw">let </span>max_block_times = max_block_times(<span class="kw-2">&amp;</span>chains);
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = cmd_rx.try_recv() {
                 <span class="kw">match </span>cmd {
                     WorkerCmd::IbcEvents { batch } =&gt; {
@@ -120,16 +155,18 @@
 
                         complete_handshake_on_new_block = <span class="bool-val">false</span>;
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(event_with_height) = last_event {
-                            <span class="kw">let </span><span class="kw-2">mut </span>handshake_channel = RelayChannel::restore_from_event(
-                                chains.a.clone(),
-                                chains.b.clone(),
-                                event_with_height.event.clone(),
+                            retry_with_index(
+                                channel_handshake_retry::default_strategy(max_block_times),
+                                |index| <span class="kw">match </span>RelayChannel::restore_from_event(
+                                    chains.a.clone(),
+                                    chains.b.clone(),
+                                    event_with_height.event.clone(),
+                                ) {
+                                    <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>handshake_channel) =&gt; handshake_channel
+                                        .step_event(<span class="kw-2">&amp;</span>event_with_height.event, index),
+                                    <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; RetryResult::Retry(index),
+                                },
                             )
-                            .map_err(|e| TaskError::Fatal(RunError::channel(e)))<span class="question-mark">?</span>;
-
-                            retry_with_index(retry_strategy::worker_default_strategy(), |index| {
-                                handshake_channel.step_event(<span class="kw-2">&amp;</span>event_with_height.event, index)
-                            })
                             .map_err(|e| TaskError::Fatal(RunError::retry(e)))
                         } <span class="kw">else </span>{
                             <span class="prelude-val">Ok</span>(Next::Continue)
@@ -146,18 +183,21 @@
                             .decrement()
                             .map_err(|e| TaskError::Fatal(RunError::ics02(e)))<span class="question-mark">?</span>;
 
-                        <span class="kw">let </span>(<span class="kw-2">mut </span>handshake_channel, state) = RelayChannel::restore_from_state(
-                            chains.a.clone(),
-                            chains.b.clone(),
-                            channel.clone(),
-                            height,
-                        )
-                        .map_err(|e| TaskError::Fatal(RunError::channel(e)))<span class="question-mark">?</span>;
-
                         complete_handshake_on_new_block = <span class="bool-val">false</span>;
-                        retry_with_index(retry_strategy::worker_default_strategy(), |index| {
-                            handshake_channel.step_state(state, index)
-                        })
+                        retry_with_index(
+                            channel_handshake_retry::default_strategy(max_block_times),
+                            |index| <span class="kw">match </span>RelayChannel::restore_from_state(
+                                chains.a.clone(),
+                                chains.b.clone(),
+                                channel.clone(),
+                                height,
+                            ) {
+                                <span class="prelude-val">Ok</span>((<span class="kw-2">mut </span>handshake_channel, state)) =&gt; {
+                                    handshake_channel.step_state(state, index)
+                                }
+                                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; RetryResult::Retry(index),
+                            },
+                        )
                         .map_err(|e| TaskError::Fatal(RunError::retry(e)))
                     }
 
