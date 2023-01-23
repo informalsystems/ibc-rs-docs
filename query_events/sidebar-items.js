@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["attrs_to_map",""],["collect_events",""],["eval",""],["event_matches",""],["main",""],["run",""],["to_matching_operand",""]],"macro":[["eval_op",""]],"opaque":[["",""]],"static":[["CALLSITE",""],["META",""]],"struct":[["Opts",""]],"type":[["BoxError",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["attrs_to_map",""],["collect_events",""],["eval",""],["event_matches",""],["main",""],["run",""],["to_matching_operand",""]],"macro":[["eval_op",""]],"struct":[["Opts",""]],"type":[["BoxError",""]]};
