@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["bootstrap",""],["fee",""],["forward",""],["ica",""],["proposal",""],["transfer",""],["version",""],["wait_chain",""]]};
+window.SIDEBAR_ITEMS = {"mod":[["bootstrap",""],["crosschainquery",""],["fee",""],["forward",""],["ica",""],["proposal",""],["transfer",""],["version",""],["wait_chain",""]]};

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.6/src/sync/cache.rs`."><title>cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-505eba68f310f6bf.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-c8c85693c8a4f9db.css"><script id="default-settings" ></script><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.9.7/src/sync/cache.rs`."><title>cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -4091,6 +4091,13 @@
 <a href="#4091" id="4091">4091</a>
 <a href="#4092" id="4092">4092</a>
 <a href="#4093" id="4093">4093</a>
+<a href="#4094" id="4094">4094</a>
+<a href="#4095" id="4095">4095</a>
+<a href="#4096" id="4096">4096</a>
+<a href="#4097" id="4097">4097</a>
+<a href="#4098" id="4098">4098</a>
+<a href="#4099" id="4099">4099</a>
+<a href="#4100" id="4100">4100</a>
 </pre><pre class="rust"><code><span class="kw">use super</span>::{
     value_initializer::{InitResult, ValueInitializer},
     CacheBuilder, ConcurrentCacheExt,
@@ -4761,7 +4768,7 @@
 /// The hashing algorithm can be replaced on a per-`Cache` basis using the
 /// [`build_with_hasher`][build-with-hasher-method] method of the `CacheBuilder`.
 /// Many alternative algorithms are available on crates.io, such as the
-/// [aHash][ahash-crate] crate.
+/// [AHash][ahash-crate] crate.
 ///
 /// [build-with-hasher-method]: ./struct.CacheBuilder.html#method.build_with_hasher
 /// [ahash-crate]: https://crates.io/crates/ahash
@@ -7791,7 +7798,11 @@
     // should always be ordered. This is true even if multiple client threads
     // try to modify the entries for the key at the same time. (This test will
     // run three client threads)
+    //
+    // This test is ignored by default. It becomes unstable when run in parallel
+    // with other tests.
     </span><span class="attr">#[test]
+    #[ignore]
     </span><span class="kw">fn </span>test_key_lock_used_by_immediate_removal_notifications() {
         <span class="kw">use </span>std::thread::{sleep, spawn};
 
@@ -7811,21 +7822,21 @@
         </span><span class="kw">let </span>actual = Arc::new(Mutex::new(Vec::new()));
 
         <span class="comment">// Create an eviction listener.
-        // Note that this listener is slow and will take ~100 ms to complete.
+        // Note that this listener is slow and will take 300 ms to complete.
         </span><span class="kw">let </span>a0 = Arc::clone(<span class="kw-2">&amp;</span>actual);
         <span class="kw">let </span>listener = <span class="kw">move </span>|_k, v, cause| {
             a0.lock().push(Event::BeginNotify(v, cause));
-            sleep(Duration::from_millis(<span class="number">100</span>));
+            sleep(Duration::from_millis(<span class="number">300</span>));
             a0.lock().push(Event::EndNotify(v, cause));
         };
         <span class="kw">let </span>listener_conf = notification::Configuration::builder()
             .delivery_mode(DeliveryMode::Immediate)
             .build();
 
-        <span class="comment">// Create a cache with the eviction listener and also TTL.
+        <span class="comment">// Create a cache with the eviction listener and also TTL 500 ms.
         </span><span class="kw">let </span><span class="kw-2">mut </span>cache = Cache::builder()
             .eviction_listener_with_conf(listener, listener_conf)
-            .time_to_live(Duration::from_millis(<span class="number">200</span>))
+            .time_to_live(Duration::from_millis(<span class="number">500</span>))
             .build();
         cache.reconfigure_for_testing();
 
@@ -7837,15 +7848,15 @@
         // Time  Event
         // ----- -------------------------------------
         // 0000: Insert value a0
-        // 0200: a0 expired
-        // 0210: Insert value a1 -&gt; expired a0 (N-A0)
-        // 0220: Insert value a2 (waiting) (A-A2)
-        // 0310: N-A0 processed
+        // 0500: a0 expired
+        // 0600: Insert value a1 -&gt; expired a0 (N-A0)
+        // 0800: Insert value a2 (waiting) (A-A2)
+        // 0900: N-A0 processed
         //       A-A2 finished waiting -&gt; replace a1 (N-A1)
-        // 0320: Invalidate (waiting) (R-A2)
-        // 0410: N-A1 processed
+        // 1100: Invalidate (waiting) (R-A2)
+        // 1200: N-A1 processed
         //       R-A2 finished waiting -&gt; explicit a2 (N-A2)
-        // 0510: N-A2 processed
+        // 1500: N-A2 processed
 
         </span><span class="kw">let </span>expected = <span class="macro">vec!</span>[
             Event::Insert(<span class="string">&quot;a0&quot;</span>),
@@ -7864,37 +7875,37 @@
         </span>actual.lock().push(Event::Insert(<span class="string">&quot;a0&quot;</span>));
         cache.insert(KEY, <span class="string">&quot;a0&quot;</span>);
         <span class="comment">// Call `sync` to set the last modified for the KEY immediately so that
-        // this entry should expire in 200 ms from now.
+        // this entry should expire in 1000 ms from now.
         </span>cache.sync();
 
-        <span class="comment">// 0210: Insert value a1 -&gt; expired a0 (N-A0)
+        <span class="comment">// 0500: Insert value a1 -&gt; expired a0 (N-A0)
         </span><span class="kw">let </span>thread1 = {
             <span class="kw">let </span>a1 = Arc::clone(<span class="kw-2">&amp;</span>actual);
             <span class="kw">let </span>c1 = cache.clone();
             spawn(<span class="kw">move </span>|| {
-                sleep(Duration::from_millis(<span class="number">210</span>));
+                sleep(Duration::from_millis(<span class="number">600</span>));
                 a1.lock().push(Event::Insert(<span class="string">&quot;a1&quot;</span>));
                 c1.insert(KEY, <span class="string">&quot;a1&quot;</span>);
             })
         };
 
-        <span class="comment">// 0220: Insert value a2 (waiting) (A-A2)
+        <span class="comment">// 0800: Insert value a2 (waiting) (A-A2)
         </span><span class="kw">let </span>thread2 = {
             <span class="kw">let </span>a2 = Arc::clone(<span class="kw-2">&amp;</span>actual);
             <span class="kw">let </span>c2 = cache.clone();
             spawn(<span class="kw">move </span>|| {
-                sleep(Duration::from_millis(<span class="number">220</span>));
+                sleep(Duration::from_millis(<span class="number">800</span>));
                 a2.lock().push(Event::Insert(<span class="string">&quot;a2&quot;</span>));
                 c2.insert(KEY, <span class="string">&quot;a2&quot;</span>);
             })
         };
 
-        <span class="comment">// 0320: Invalidate (waiting) (R-A2)
+        <span class="comment">// 1100: Invalidate (waiting) (R-A2)
         </span><span class="kw">let </span>thread3 = {
             <span class="kw">let </span>a3 = Arc::clone(<span class="kw-2">&amp;</span>actual);
             <span class="kw">let </span>c3 = cache.clone();
             spawn(<span class="kw">move </span>|| {
-                sleep(Duration::from_millis(<span class="number">320</span>));
+                sleep(Duration::from_millis(<span class="number">1100</span>));
                 a3.lock().push(Event::Invalidate(<span class="string">&quot;a2&quot;</span>));
                 c3.invalidate(<span class="kw-2">&amp;</span>KEY);
             })
@@ -8001,7 +8012,10 @@
         cache.invalidate(key_s);
     }
 
-    <span class="attr">#[test]
+    <span class="comment">// Ignored by default. This test becomes unstable when run in parallel with
+    // other tests.
+    </span><span class="attr">#[test]
+    #[ignore]
     </span><span class="kw">fn </span>drop_value_immediately_after_eviction() {
         <span class="kw">use </span><span class="kw">crate</span>::common::test_utils::{Counters, Value};
 
@@ -8185,4 +8199,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (f3126500f 2023-02-02)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (ef934d9b6 2023-02-08)" data-search-js="search-28136cea55c34037.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

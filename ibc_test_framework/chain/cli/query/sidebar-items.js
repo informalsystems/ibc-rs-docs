@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_balance",""],["query_recipient_transactions","Query for the transactions related to a wallet on `Chain` receiving token transfer from others."]]};
+window.SIDEBAR_ITEMS = {"fn":[["query_balance",""],["query_cross_chain_query","Query pending Cross Chain Queries"],["query_recipient_transactions","Query for the transactions related to a wallet on `Chain` receiving token transfer from others."]]};
