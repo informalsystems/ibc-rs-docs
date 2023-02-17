@@ -1836,6 +1836,42 @@
 <a href="#1836" id="1836">1836</a>
 <a href="#1837" id="1837">1837</a>
 <a href="#1838" id="1838">1838</a>
+<a href="#1839" id="1839">1839</a>
+<a href="#1840" id="1840">1840</a>
+<a href="#1841" id="1841">1841</a>
+<a href="#1842" id="1842">1842</a>
+<a href="#1843" id="1843">1843</a>
+<a href="#1844" id="1844">1844</a>
+<a href="#1845" id="1845">1845</a>
+<a href="#1846" id="1846">1846</a>
+<a href="#1847" id="1847">1847</a>
+<a href="#1848" id="1848">1848</a>
+<a href="#1849" id="1849">1849</a>
+<a href="#1850" id="1850">1850</a>
+<a href="#1851" id="1851">1851</a>
+<a href="#1852" id="1852">1852</a>
+<a href="#1853" id="1853">1853</a>
+<a href="#1854" id="1854">1854</a>
+<a href="#1855" id="1855">1855</a>
+<a href="#1856" id="1856">1856</a>
+<a href="#1857" id="1857">1857</a>
+<a href="#1858" id="1858">1858</a>
+<a href="#1859" id="1859">1859</a>
+<a href="#1860" id="1860">1860</a>
+<a href="#1861" id="1861">1861</a>
+<a href="#1862" id="1862">1862</a>
+<a href="#1863" id="1863">1863</a>
+<a href="#1864" id="1864">1864</a>
+<a href="#1865" id="1865">1865</a>
+<a href="#1866" id="1866">1866</a>
+<a href="#1867" id="1867">1867</a>
+<a href="#1868" id="1868">1868</a>
+<a href="#1869" id="1869">1869</a>
+<a href="#1870" id="1870">1870</a>
+<a href="#1871" id="1871">1871</a>
+<a href="#1872" id="1872">1872</a>
+<a href="#1873" id="1873">1873</a>
+<a href="#1874" id="1874">1874</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::collections::VecDeque;
 <span class="kw">use </span>std::ops::Sub;
@@ -1854,7 +1890,7 @@
 };
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::{Packet, PacketMsgType};
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
-<span class="kw">use </span>ibc_relayer_types::events::{IbcEvent, WithBlockDataType};
+<span class="kw">use </span>ibc_relayer_types::events::{IbcEvent, IbcEventType, WithBlockDataType};
 <span class="kw">use </span>ibc_relayer_types::signer::Signer;
 <span class="kw">use </span>ibc_relayer_types::timestamp::Timestamp;
 <span class="kw">use </span>ibc_relayer_types::tx_msg::Msg;
@@ -2166,7 +2202,22 @@
     <span class="kw">fn </span>build_chan_close_confirm_from_event(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         event: <span class="kw-2">&amp;</span>IbcEventWithHeight,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Any, LinkError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Any&gt;, LinkError&gt; {
+        <span class="comment">// Build the `MsgChannelCloseConfirm` only from `Timeout` or `CloseInitChannel` event types
+        </span><span class="kw">if </span>event.event.event_type() != IbcEventType::Timeout
+            &amp;&amp; event.event.event_type() != IbcEventType::CloseInitChannel
+        {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
+
+        <span class="comment">// Nothing to do if channel on destination is already closed
+        </span><span class="kw">if </span><span class="self">self
+            </span>.dst_channel(QueryHeight::Latest)<span class="question-mark">?
+            </span>.state_matches(<span class="kw-2">&amp;</span>ChannelState::Closed)
+        {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
+
         <span class="kw">let </span>src_channel_id = <span class="self">self</span>.src_channel_id();
         <span class="kw">let </span>proofs = <span class="self">self
             </span>.src_chain()
@@ -2181,7 +2232,7 @@
             signer: <span class="self">self</span>.dst_signer()<span class="question-mark">?</span>,
         };
 
-        <span class="prelude-val">Ok</span>(new_msg.to_any())
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(new_msg.to_any()))
     }
 
     <span class="doccomment">/// Determines if the events received are relevant and should be processed.
@@ -2368,7 +2419,7 @@
 
             <span class="kw">let </span>(dst_msg, src_msg) = <span class="kw">match </span><span class="kw-2">&amp;</span>event_with_height.event {
                 IbcEvent::CloseInitChannel(<span class="kw">_</span>) =&gt; (
-                    <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_close_confirm_from_event(event_with_height)<span class="question-mark">?</span>),
+                    <span class="self">self</span>.build_chan_close_confirm_from_event(event_with_height)<span class="question-mark">?</span>,
                     <span class="prelude-val">None</span>,
                 ),
                 IbcEvent::TimeoutPacket(<span class="kw">_</span>) =&gt; {
@@ -2383,7 +2434,7 @@
                             </span>.state_matches(<span class="kw-2">&amp;</span>ChannelState::Closed)
                     {
                         (
-                            <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_close_confirm_from_event(event_with_height)<span class="question-mark">?</span>),
+                            <span class="self">self</span>.build_chan_close_confirm_from_event(event_with_height)<span class="question-mark">?</span>,
                             <span class="prelude-val">None</span>,
                         )
                     } <span class="kw">else </span>{
@@ -3122,13 +3173,34 @@
         packet: <span class="kw-2">&amp;</span>Packet,
         height: Height,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Any&gt;, LinkError&gt; {
+        <span class="kw">let </span>dst_channel_id = <span class="self">self</span>.dst_channel_id();
+
+        <span class="macro">trace!</span>(%packet, %height, <span class="string">&quot;build timeout on close for channel&quot;</span>);
+        <span class="kw">let </span>(packet_type, next_sequence_received) = <span class="kw">if </span><span class="self">self</span>.ordered_channel() {
+            <span class="kw">let </span>(next_seq, <span class="kw">_</span>) = <span class="self">self
+                </span>.dst_chain()
+                .query_next_sequence_receive(
+                    QueryNextSequenceReceiveRequest {
+                        port_id: <span class="self">self</span>.dst_port_id().clone(),
+                        channel_id: dst_channel_id.clone(),
+                        height: QueryHeight::Specific(height),
+                    },
+                    IncludeProof::No,
+                )
+                .map_err(|e| LinkError::query(<span class="self">self</span>.dst_chain().id(), e))<span class="question-mark">?</span>;
+
+            (PacketMsgType::TimeoutOnCloseOrdered, next_seq)
+        } <span class="kw">else </span>{
+            (PacketMsgType::TimeoutOnCloseUnordered, packet.sequence)
+        };
+
         <span class="kw">let </span>proofs = <span class="self">self
             </span>.dst_chain()
             .build_packet_proofs(
-                PacketMsgType::TimeoutOnClose,
+                packet_type,
                 <span class="kw-2">&amp;</span>packet.destination_port,
                 <span class="kw-2">&amp;</span>packet.destination_channel,
-                packet.sequence,
+                next_sequence_received,
                 height,
             )
             .map_err(|e| LinkError::packet_proofs_constructor(<span class="self">self</span>.dst_chain().id(), e))<span class="question-mark">?</span>;

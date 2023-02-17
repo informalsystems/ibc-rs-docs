@@ -1516,6 +1516,13 @@
 <a href="#1516" id="1516">1516</a>
 <a href="#1517" id="1517">1517</a>
 <a href="#1518" id="1518">1518</a>
+<a href="#1519" id="1519">1519</a>
+<a href="#1520" id="1520">1520</a>
+<a href="#1521" id="1521">1521</a>
+<a href="#1522" id="1522">1522</a>
+<a href="#1523" id="1523">1523</a>
+<a href="#1524" id="1524">1524</a>
+<a href="#1525" id="1525">1525</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>core::time::Duration;
 
@@ -2269,7 +2276,8 @@
         state: State,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;IbcEvent&gt;, Next), ChannelError&gt; {
         <span class="kw">let </span>event = <span class="kw">match </span>(state, <span class="self">self</span>.counterparty_state()<span class="question-mark">?</span>) {
-            (State::Init, State::Uninitialized) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_open_try_and_send()<span class="question-mark">?</span>),
+            <span class="comment">// Open handshake steps
+            </span>(State::Init, State::Uninitialized) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_open_try_and_send()<span class="question-mark">?</span>),
             (State::Init, State::Init) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_open_try_and_send()<span class="question-mark">?</span>),
             (State::TryOpen, State::Init) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_open_ack_and_send()<span class="question-mark">?</span>),
             (State::TryOpen, State::TryOpen) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_open_ack_and_send()<span class="question-mark">?</span>),
@@ -2280,14 +2288,19 @@
             // return anyway as the final step is to be done by the counterparty worker.
             </span>(State::TryOpen, State::Open) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, Next::Abort)),
 
+            <span class="comment">// Close handshake steps
+            </span>(State::Closed, State::Closed) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, Next::Abort)),
+            (State::Closed, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chan_close_confirm_and_send()<span class="question-mark">?</span>),
+
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         };
 
-        <span class="comment">// Abort if the channel is at OpenAck or OpenConfirm stage, as there is nothing more for the worker to do
+        <span class="comment">// Abort if the channel is at OpenAck, OpenConfirm or CloseConfirm stage, as there is
+        // nothing more for the worker to do
         </span><span class="kw">match </span>event {
-            <span class="prelude-val">Some</span>(IbcEvent::OpenConfirmChannel(<span class="kw">_</span>)) | <span class="prelude-val">Some</span>(IbcEvent::OpenAckChannel(<span class="kw">_</span>)) =&gt; {
-                <span class="prelude-val">Ok</span>((event, Next::Abort))
-            }
+            <span class="prelude-val">Some</span>(IbcEvent::OpenConfirmChannel(<span class="kw">_</span>))
+            | <span class="prelude-val">Some</span>(IbcEvent::OpenAckChannel(<span class="kw">_</span>))
+            | <span class="prelude-val">Some</span>(IbcEvent::CloseConfirmChannel(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Ok</span>((event, Next::Abort)),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>((event, Next::Continue)),
         }
     }
@@ -2320,6 +2333,7 @@
             IbcEvent::OpenTryChannel(<span class="kw">_</span>) =&gt; State::TryOpen,
             IbcEvent::OpenAckChannel(<span class="kw">_</span>) =&gt; State::Open,
             IbcEvent::OpenConfirmChannel(<span class="kw">_</span>) =&gt; State::Open,
+            IbcEvent::CloseInitChannel(<span class="kw">_</span>) =&gt; State::Closed,
             <span class="kw">_ </span>=&gt; State::Uninitialized,
         };
 

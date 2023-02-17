@@ -516,8 +516,6 @@
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
 <a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::cmp::Ordering;
 
@@ -598,12 +596,12 @@
 
     <span class="kw">pub fn </span>subscribe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Subscription&gt; {
         <span class="kw">let </span>(tx, rx) = crossbeam_channel::bounded(<span class="number">1</span>);
+
         <span class="self">self</span>.<span class="number">0
             </span>.send(MonitorCmd::Subscribe(tx))
             .map_err(|<span class="kw">_</span>| Error::channel_send_failed())<span class="question-mark">?</span>;
 
         <span class="kw">let </span>subscription = rx.recv().map_err(|<span class="kw">_</span>| Error::channel_recv_failed())<span class="question-mark">?</span>;
-
         <span class="prelude-val">Ok</span>(subscription)
     }
 }
@@ -898,7 +896,11 @@
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = <span class="self">self</span>.rx_cmd.try_recv() {
                 <span class="kw">match </span>cmd {
                     MonitorCmd::Shutdown =&gt; <span class="kw">return </span>Next::Abort,
-                    MonitorCmd::Subscribe(tx) =&gt; tx.send(<span class="self">self</span>.event_bus.subscribe()).unwrap(),
+                    MonitorCmd::Subscribe(tx) =&gt; {
+                        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = tx.send(<span class="self">self</span>.event_bus.subscribe()) {
+                            <span class="macro">error!</span>(<span class="string">&quot;failed to send back subscription: {e}&quot;</span>);
+                        }
+                    }
                 }
             }
 
@@ -908,12 +910,6 @@
                     <span class="prelude-val">Some</span>(e) = <span class="self">self</span>.rx_err.recv() =&gt; <span class="prelude-val">Err</span>(Error::web_socket_driver(e)),
                 }
             });
-
-            <span class="comment">// Repeat check of shutdown command here, as previous recv()
-            // may block for a long time.
-            </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(MonitorCmd::Shutdown) = <span class="self">self</span>.rx_cmd.try_recv() {
-                <span class="kw">return </span>Next::Abort;
-            }
 
             <span class="kw">match </span>result {
                 <span class="prelude-val">Ok</span>(batch) =&gt; <span class="self">self</span>.process_batch(batch),
