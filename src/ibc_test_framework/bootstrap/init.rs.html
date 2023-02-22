@@ -90,11 +90,6 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Functions for initializing each test at the beginning of a Rust test
    session.
@@ -107,8 +102,8 @@
 <span class="kw">use </span>std::sync::Once;
 <span class="kw">use </span>tracing_subscriber::{
     <span class="self">self </span><span class="kw">as </span>ts,
-    filter::EnvFilter,
-    layer::{Layer, SubscriberExt},
+    filter::{EnvFilter, LevelFilter},
+    layer::SubscriberExt,
     util::SubscriberInitExt,
 };
 
@@ -179,16 +174,11 @@
 */
 </span><span class="kw">pub fn </span>install_logger(with_color: bool) {
     <span class="comment">// Use log level INFO by default if RUST_LOG is not set.
-    </span><span class="kw">let </span>env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|<span class="kw">_</span>| EnvFilter::new(<span class="string">&quot;info&quot;</span>));
+    </span><span class="kw">let </span>env_filter = EnvFilter::builder()
+        .with_default_directive(LevelFilter::INFO.into())
+        .from_env_lossy();
 
-    <span class="kw">let </span>module_filter_fn = ts::filter::filter_fn(|metadata| <span class="kw">match </span>metadata.module_path() {
-        <span class="prelude-val">Some</span>(path) =&gt; path.starts_with(<span class="string">&quot;ibc&quot;</span>),
-        <span class="prelude-val">None </span>=&gt; <span class="bool-val">false</span>,
-    });
-
-    <span class="kw">let </span>layer = ts::fmt::layer()
-        .with_ansi(with_color)
-        .with_filter(module_filter_fn);
+    <span class="kw">let </span>layer = ts::fmt::layer().with_ansi(with_color);
 
     ts::registry().with(env_filter).with(layer).init();
 }
