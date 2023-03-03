@@ -833,6 +833,24 @@
 <a href="#833" id="833">833</a>
 <a href="#834" id="834">834</a>
 <a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>std::thread;
 
@@ -840,6 +858,9 @@
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
 <span class="kw">use </span>tracing::{error, Span};
 
+<span class="kw">use </span>ibc_proto::ibc::apps::fee::v1::{
+    QueryIncentivizedPacketRequest, QueryIncentivizedPacketResponse,
+};
 <span class="kw">use </span>ibc_relayer_types::{
     applications::ics31_icq::response::CrossChainQueryResponse,
     core::{
@@ -1172,11 +1193,15 @@
 
                         ChainRequest::MaybeRegisterCounterpartyPayee { channel_id, port_id, counterparty_payee, reply_to } =&gt; {
                             <span class="self">self</span>.maybe_register_counterparty_payee(<span class="kw-2">&amp;</span>channel_id, <span class="kw-2">&amp;</span>port_id, <span class="kw-2">&amp;</span>counterparty_payee, reply_to)<span class="question-mark">?
-                        </span>}
+                        </span>},
 
                         ChainRequest::CrossChainQuery { request, reply_to } =&gt; {
                             <span class="self">self</span>.cross_chain_query(request, reply_to)<span class="question-mark">?
-                        </span>}
+                        </span>},
+
+                        ChainRequest::QueryIncentivizedPacket { request, reply_to } =&gt; {
+                            <span class="self">self</span>.query_incentivized_packet(request, reply_to)<span class="question-mark">?
+                        </span>},
                     }
                 },
             }
@@ -1663,6 +1688,17 @@
         reply_to: ReplyTo&lt;Vec&lt;CrossChainQueryResponse&gt;&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">let </span>result = <span class="self">self</span>.chain.cross_chain_query(request);
+        reply_to.send(result).map_err(Error::send)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn </span>query_incentivized_packet(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        request: QueryIncentivizedPacketRequest,
+        reply_to: ReplyTo&lt;QueryIncentivizedPacketResponse&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>result = <span class="self">self</span>.chain.query_incentivized_packet(request);
         reply_to.send(result).map_err(Error::send)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())

@@ -367,6 +367,7 @@
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Contains functions to generate a relayer config for a given chain
 
 </span><span class="kw">use </span>ibc_chain_registry::{
@@ -384,7 +385,7 @@
 
 <span class="kw">use </span>ibc_relayer::{
     config::{
-        filter::{ChannelFilters, FilterPattern, PacketFilter},
+        filter::{FilterPattern, PacketFilter},
         gas_multiplier::GasMultiplier,
         types::{MaxMsgNum, MaxTxSize, Memo},
         {default, AddressType, ChainConfig, GasPrice},
@@ -426,7 +427,7 @@
 
     packet_filters
         .into_iter()
-        .map(|(k, v)| (k, PacketFilter::Allow(ChannelFilters::new(v))))
+        .map(|(k, v)| (k, PacketFilter::allow(v)))
         .collect()
 }
 
@@ -611,6 +612,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>ibc_relayer::config::filter::ChannelPolicy;
     <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChannelId, PortId};
     <span class="kw">use </span>std::str::FromStr;
 
@@ -618,8 +620,8 @@
     </span><span class="kw">async fn </span>should_have_no_filter(test_chains: <span class="kw-2">&amp;</span>[String]) -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
         <span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">for </span>config <span class="kw">in </span>configs {
-            <span class="kw">match </span>config.packet_filter {
-                PacketFilter::AllowAll =&gt; {}
+            <span class="kw">match </span>config.packet_filter.channel_policy {
+                ChannelPolicy::AllowAll =&gt; {}
                 <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;PacketFilter not allowed&quot;</span>),
             }
         }
@@ -639,8 +641,8 @@
         </span><span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">for </span>config <span class="kw">in </span>configs {
-            <span class="kw">match </span>config.packet_filter {
-                PacketFilter::Allow(channel_filter) =&gt; {
+            <span class="kw">match </span>config.packet_filter.channel_policy {
+                ChannelPolicy::Allow(channel_filter) =&gt; {
                     <span class="kw">if </span>config.id.as_str().contains(<span class="string">&quot;cosmoshub&quot;</span>) {
                         <span class="macro">assert!</span>(channel_filter.is_exact());
 
