@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.23.0/src/net/windows/named_pipe.rs`."><title>named_pipe.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../tokio/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-1.26.0/src/net/windows/named_pipe.rs`."><title>named_pipe.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../tokio/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2554,6 +2554,62 @@
 <a href="#2554" id="2554">2554</a>
 <a href="#2555" id="2555">2555</a>
 <a href="#2556" id="2556">2556</a>
+<a href="#2557" id="2557">2557</a>
+<a href="#2558" id="2558">2558</a>
+<a href="#2559" id="2559">2559</a>
+<a href="#2560" id="2560">2560</a>
+<a href="#2561" id="2561">2561</a>
+<a href="#2562" id="2562">2562</a>
+<a href="#2563" id="2563">2563</a>
+<a href="#2564" id="2564">2564</a>
+<a href="#2565" id="2565">2565</a>
+<a href="#2566" id="2566">2566</a>
+<a href="#2567" id="2567">2567</a>
+<a href="#2568" id="2568">2568</a>
+<a href="#2569" id="2569">2569</a>
+<a href="#2570" id="2570">2570</a>
+<a href="#2571" id="2571">2571</a>
+<a href="#2572" id="2572">2572</a>
+<a href="#2573" id="2573">2573</a>
+<a href="#2574" id="2574">2574</a>
+<a href="#2575" id="2575">2575</a>
+<a href="#2576" id="2576">2576</a>
+<a href="#2577" id="2577">2577</a>
+<a href="#2578" id="2578">2578</a>
+<a href="#2579" id="2579">2579</a>
+<a href="#2580" id="2580">2580</a>
+<a href="#2581" id="2581">2581</a>
+<a href="#2582" id="2582">2582</a>
+<a href="#2583" id="2583">2583</a>
+<a href="#2584" id="2584">2584</a>
+<a href="#2585" id="2585">2585</a>
+<a href="#2586" id="2586">2586</a>
+<a href="#2587" id="2587">2587</a>
+<a href="#2588" id="2588">2588</a>
+<a href="#2589" id="2589">2589</a>
+<a href="#2590" id="2590">2590</a>
+<a href="#2591" id="2591">2591</a>
+<a href="#2592" id="2592">2592</a>
+<a href="#2593" id="2593">2593</a>
+<a href="#2594" id="2594">2594</a>
+<a href="#2595" id="2595">2595</a>
+<a href="#2596" id="2596">2596</a>
+<a href="#2597" id="2597">2597</a>
+<a href="#2598" id="2598">2598</a>
+<a href="#2599" id="2599">2599</a>
+<a href="#2600" id="2600">2600</a>
+<a href="#2601" id="2601">2601</a>
+<a href="#2602" id="2602">2602</a>
+<a href="#2603" id="2603">2603</a>
+<a href="#2604" id="2604">2604</a>
+<a href="#2605" id="2605">2605</a>
+<a href="#2606" id="2606">2606</a>
+<a href="#2607" id="2607">2607</a>
+<a href="#2608" id="2608">2608</a>
+<a href="#2609" id="2609">2609</a>
+<a href="#2610" id="2610">2610</a>
+<a href="#2611" id="2611">2611</a>
+<a href="#2612" id="2612">2612</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Tokio support for [Windows named pipes].
 //!
 //! [Windows named pipes]: https://docs.microsoft.com/en-us/windows/win32/ipc/named-pipes
@@ -4201,19 +4257,6 @@
     }
 }
 
-<span class="comment">// Helper to set a boolean flag as a bitfield.
-</span><span class="macro">macro_rules! </span>bool_flag {
-    (<span class="macro-nonterminal">$f</span>:expr, <span class="macro-nonterminal">$t</span>:expr, <span class="macro-nonterminal">$flag</span>:expr) =&gt; {{
-        <span class="kw">let </span>current = <span class="macro-nonterminal">$f</span>;
-
-        <span class="kw">if </span><span class="macro-nonterminal">$t </span>{
-            <span class="macro-nonterminal">$f </span>= current | <span class="macro-nonterminal">$flag</span>;
-        } <span class="kw">else </span>{
-            <span class="macro-nonterminal">$f </span>= current &amp; !<span class="macro-nonterminal">$flag</span>;
-        };
-    }};
-}
-
 <span class="doccomment">/// A builder structure for construct a named pipe with named pipe-specific
 /// options. This is required to use for named pipe servers who wants to modify
 /// pipe-related options.
@@ -4221,9 +4264,18 @@
 /// See [`ServerOptions::create`].
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ServerOptions {
-    open_mode: u32,
-    pipe_mode: u32,
-    max_instances: u32,
+    <span class="comment">// dwOpenMode
+    </span>access_inbound: bool,
+    access_outbound: bool,
+    first_pipe_instance: bool,
+    write_dac: bool,
+    write_owner: bool,
+    access_system_security: bool,
+    <span class="comment">// dwPipeMode
+    </span>pipe_mode: PipeMode,
+    reject_remote_clients: bool,
+    <span class="comment">// other options
+    </span>max_instances: u32,
     out_buffer_size: u32,
     in_buffer_size: u32,
     default_timeout: u32,
@@ -4243,8 +4295,14 @@
     /// ```
     </span><span class="kw">pub fn </span>new() -&gt; ServerOptions {
         ServerOptions {
-            open_mode: windows_sys::PIPE_ACCESS_DUPLEX | windows_sys::FILE_FLAG_OVERLAPPED,
-            pipe_mode: windows_sys::PIPE_TYPE_BYTE | windows_sys::PIPE_REJECT_REMOTE_CLIENTS,
+            access_inbound: <span class="bool-val">true</span>,
+            access_outbound: <span class="bool-val">true</span>,
+            first_pipe_instance: <span class="bool-val">false</span>,
+            write_dac: <span class="bool-val">false</span>,
+            write_owner: <span class="bool-val">false</span>,
+            access_system_security: <span class="bool-val">false</span>,
+            pipe_mode: PipeMode::Byte,
+            reject_remote_clients: <span class="bool-val">true</span>,
             max_instances: windows_sys::PIPE_UNLIMITED_INSTANCES,
             out_buffer_size: <span class="number">65536</span>,
             in_buffer_size: <span class="number">65536</span>,
@@ -4257,15 +4315,11 @@
     /// The default pipe mode is [`PipeMode::Byte`]. See [`PipeMode`] for
     /// documentation of what each mode means.
     ///
-    /// This corresponding to specifying [`dwPipeMode`].
+    /// This corresponds to specifying `PIPE_TYPE_` and `PIPE_READMODE_` in  [`dwPipeMode`].
     ///
     /// [`dwPipeMode`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>pipe_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pipe_mode: PipeMode) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="self">self</span>.pipe_mode = <span class="kw">match </span>pipe_mode {
-            PipeMode::Byte =&gt; windows_sys::PIPE_TYPE_BYTE,
-            PipeMode::Message =&gt; windows_sys::PIPE_TYPE_MESSAGE,
-        };
-
+        <span class="self">self</span>.pipe_mode = pipe_mode;
         <span class="self">self
     </span>}
 
@@ -4361,7 +4415,7 @@
     /// # Ok(()) }
     /// ```
     </span><span class="kw">pub fn </span>access_inbound(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, allowed, windows_sys::PIPE_ACCESS_INBOUND);
+        <span class="self">self</span>.access_inbound = allowed;
         <span class="self">self
     </span>}
 
@@ -4459,7 +4513,7 @@
     /// # Ok(()) }
     /// ```
     </span><span class="kw">pub fn </span>access_outbound(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, allowed, windows_sys::PIPE_ACCESS_OUTBOUND);
+        <span class="self">self</span>.access_outbound = allowed;
         <span class="self">self
     </span>}
 
@@ -4527,11 +4581,7 @@
     /// [`create`]: ServerOptions::create
     /// [`FILE_FLAG_FIRST_PIPE_INSTANCE`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea#pipe_first_pipe_instance
     </span><span class="kw">pub fn </span>first_pipe_instance(<span class="kw-2">&amp;mut </span><span class="self">self</span>, first: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(
-            <span class="self">self</span>.open_mode,
-            first,
-            windows_sys::FILE_FLAG_FIRST_PIPE_INSTANCE
-        );
+        <span class="self">self</span>.first_pipe_instance = first;
         <span class="self">self
     </span>}
 
@@ -4613,7 +4663,7 @@
     ///
     /// [`WRITE_DAC`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>write_dac(<span class="kw-2">&amp;mut </span><span class="self">self</span>, requested: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, windows_sys::WRITE_DAC);
+        <span class="self">self</span>.write_dac = requested;
         <span class="self">self
     </span>}
 
@@ -4623,7 +4673,7 @@
     ///
     /// [`WRITE_OWNER`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>write_owner(<span class="kw-2">&amp;mut </span><span class="self">self</span>, requested: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.open_mode, requested, windows_sys::WRITE_OWNER);
+        <span class="self">self</span>.write_owner = requested;
         <span class="self">self
     </span>}
 
@@ -4633,11 +4683,7 @@
     ///
     /// [`ACCESS_SYSTEM_SECURITY`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea
     </span><span class="kw">pub fn </span>access_system_security(<span class="kw-2">&amp;mut </span><span class="self">self</span>, requested: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(
-            <span class="self">self</span>.open_mode,
-            requested,
-            windows_sys::ACCESS_SYSTEM_SECURITY
-        );
+        <span class="self">self</span>.access_system_security = requested;
         <span class="self">self
     </span>}
 
@@ -4648,11 +4694,7 @@
     ///
     /// [`PIPE_REJECT_REMOTE_CLIENTS`]: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createnamedpipea#pipe_reject_remote_clients
     </span><span class="kw">pub fn </span>reject_remote_clients(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reject: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(
-            <span class="self">self</span>.pipe_mode,
-            reject,
-            windows_sys::PIPE_REJECT_REMOTE_CLIENTS
-        );
+        <span class="self">self</span>.reject_remote_clients = reject;
         <span class="self">self
     </span>}
 
@@ -4798,10 +4840,46 @@
     ) -&gt; io::Result&lt;NamedPipeServer&gt; {
         <span class="kw">let </span>addr = encode_addr(addr);
 
+        <span class="kw">let </span>pipe_mode = {
+            <span class="kw">let </span><span class="kw-2">mut </span>mode = <span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.pipe_mode, PipeMode::Message) {
+                windows_sys::PIPE_TYPE_MESSAGE | windows_sys::PIPE_READMODE_MESSAGE
+            } <span class="kw">else </span>{
+                windows_sys::PIPE_TYPE_BYTE | windows_sys::PIPE_READMODE_BYTE
+            };
+            <span class="kw">if </span><span class="self">self</span>.reject_remote_clients {
+                mode |= windows_sys::PIPE_REJECT_REMOTE_CLIENTS;
+            } <span class="kw">else </span>{
+                mode |= windows_sys::PIPE_ACCEPT_REMOTE_CLIENTS;
+            }
+            mode
+        };
+        <span class="kw">let </span>open_mode = {
+            <span class="kw">let </span><span class="kw-2">mut </span>mode = windows_sys::FILE_FLAG_OVERLAPPED;
+            <span class="kw">if </span><span class="self">self</span>.access_inbound {
+                mode |= windows_sys::PIPE_ACCESS_INBOUND;
+            }
+            <span class="kw">if </span><span class="self">self</span>.access_outbound {
+                mode |= windows_sys::PIPE_ACCESS_OUTBOUND;
+            }
+            <span class="kw">if </span><span class="self">self</span>.first_pipe_instance {
+                mode |= windows_sys::FILE_FLAG_FIRST_PIPE_INSTANCE;
+            }
+            <span class="kw">if </span><span class="self">self</span>.write_dac {
+                mode |= windows_sys::WRITE_DAC;
+            }
+            <span class="kw">if </span><span class="self">self</span>.write_owner {
+                mode |= windows_sys::WRITE_OWNER;
+            }
+            <span class="kw">if </span><span class="self">self</span>.access_system_security {
+                mode |= windows_sys::ACCESS_SYSTEM_SECURITY;
+            }
+            mode
+        };
+
         <span class="kw">let </span>h = windows_sys::CreateNamedPipeW(
             addr.as_ptr(),
-            <span class="self">self</span>.open_mode,
-            <span class="self">self</span>.pipe_mode,
+            open_mode,
+            pipe_mode,
             <span class="self">self</span>.max_instances,
             <span class="self">self</span>.out_buffer_size,
             <span class="self">self</span>.in_buffer_size,
@@ -4823,8 +4901,10 @@
 /// See [`ClientOptions::open`].
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ClientOptions {
-    desired_access: u32,
+    generic_read: bool,
+    generic_write: bool,
     security_qos_flags: u32,
+    pipe_mode: PipeMode,
 }
 
 <span class="kw">impl </span>ClientOptions {
@@ -4843,9 +4923,11 @@
     /// ```
     </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            desired_access: windows_sys::GENERIC_READ | windows_sys::GENERIC_WRITE,
+            generic_read: <span class="bool-val">true</span>,
+            generic_write: <span class="bool-val">true</span>,
             security_qos_flags: windows_sys::SECURITY_IDENTIFICATION
                 | windows_sys::SECURITY_SQOS_PRESENT,
+            pipe_mode: PipeMode::Byte,
         }
     }
 
@@ -4856,7 +4938,7 @@
     /// [`GENERIC_READ`]: https://docs.microsoft.com/en-us/windows/win32/secauthz/generic-access-rights
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
     </span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.desired_access, allowed, windows_sys::GENERIC_READ);
+        <span class="self">self</span>.generic_read = allowed;
         <span class="self">self
     </span>}
 
@@ -4867,7 +4949,7 @@
     /// [`GENERIC_WRITE`]: https://docs.microsoft.com/en-us/windows/win32/secauthz/generic-access-rights
     /// [`CreateFile`]: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
     </span><span class="kw">pub fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, allowed: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
-        <span class="macro">bool_flag!</span>(<span class="self">self</span>.desired_access, allowed, windows_sys::GENERIC_WRITE);
+        <span class="self">self</span>.generic_write = allowed;
         <span class="self">self
     </span>}
 
@@ -4895,6 +4977,15 @@
     </span><span class="kw">pub fn </span>security_qos_flags(<span class="kw-2">&amp;mut </span><span class="self">self</span>, flags: u32) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="comment">// See: https://github.com/rust-lang/rust/pull/58216
         </span><span class="self">self</span>.security_qos_flags = flags | windows_sys::SECURITY_SQOS_PRESENT;
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// The pipe mode.
+    ///
+    /// The default pipe mode is [`PipeMode::Byte`]. See [`PipeMode`] for
+    /// documentation of what each mode means.
+    </span><span class="kw">pub fn </span>pipe_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pipe_mode: PipeMode) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.pipe_mode = pipe_mode;
         <span class="self">self
     </span>}
 
@@ -4976,13 +5067,24 @@
     ) -&gt; io::Result&lt;NamedPipeClient&gt; {
         <span class="kw">let </span>addr = encode_addr(addr);
 
+        <span class="kw">let </span>desired_access = {
+            <span class="kw">let </span><span class="kw-2">mut </span>access = <span class="number">0</span>;
+            <span class="kw">if </span><span class="self">self</span>.generic_read {
+                access |= windows_sys::GENERIC_READ;
+            }
+            <span class="kw">if </span><span class="self">self</span>.generic_write {
+                access |= windows_sys::GENERIC_WRITE;
+            }
+            access
+        };
+
         <span class="comment">// NB: We could use a platform specialized `OpenOptions` here, but since
         // we have access to windows_sys it ultimately doesn&#39;t hurt to use
         // `CreateFile` explicitly since it allows the use of our already
         // well-structured wide `addr` to pass into CreateFileW.
         </span><span class="kw">let </span>h = windows_sys::CreateFileW(
             addr.as_ptr(),
-            <span class="self">self</span>.desired_access,
+            desired_access,
             <span class="number">0</span>,
             attrs <span class="kw">as </span><span class="kw-2">*mut </span><span class="kw">_</span>,
             windows_sys::OPEN_EXISTING,
@@ -4992,6 +5094,16 @@
 
         <span class="kw">if </span>h == windows_sys::INVALID_HANDLE_VALUE {
             <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
+        }
+
+        <span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.pipe_mode, PipeMode::Message) {
+            <span class="kw">let </span>mode = windows_sys::PIPE_READMODE_MESSAGE;
+            <span class="kw">let </span>result =
+                windows_sys::SetNamedPipeHandleState(h, <span class="kw-2">&amp;</span>mode, ptr::null_mut(), ptr::null_mut());
+
+            <span class="kw">if </span>result == <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
+            }
         }
 
         NamedPipeClient::from_raw_handle(h <span class="kw">as _</span>)

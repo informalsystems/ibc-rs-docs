@@ -64,9 +64,14 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre><pre class="rust"><code><span class="kw">use </span>ibc_relayer_types::applications::ics29_fee::msgs::register_payee::build_register_counterparty_payee_message;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChannelId, PortId};
 <span class="kw">use </span>ibc_relayer_types::signer::Signer;
+<span class="kw">use </span>tendermint_rpc::HttpClient;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::account::get_or_fetch_account;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::fee::query_counterparty_payee;
@@ -78,7 +83,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::keyring::{Secp256k1KeyPair, SigningKeyPair};
 
-<span class="kw">pub async fn </span>maybe_register_counterparty_payee(
+<span class="comment">// FIXME: monster function, refactor
+</span><span class="kw">pub async fn </span>maybe_register_counterparty_payee(
+    rpc_client: <span class="kw-2">&amp;</span>HttpClient,
     tx_config: <span class="kw-2">&amp;</span>TxConfig,
     key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     m_account: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;Account&gt;,
@@ -110,6 +117,7 @@
             .map_err(Error::ics29)<span class="question-mark">?</span>;
 
             <span class="kw">let </span>response = send_tx_with_account_sequence_retry(
+                rpc_client,
                 tx_config,
                 key_pair,
                 account,
@@ -119,7 +127,7 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
             wait_tx_succeed(
-                <span class="kw-2">&amp;</span>tx_config.rpc_client,
+                rpc_client,
                 <span class="kw-2">&amp;</span>tx_config.rpc_address,
                 <span class="kw-2">&amp;</span>tx_config.rpc_timeout,
                 <span class="kw-2">&amp;</span>response.hash,

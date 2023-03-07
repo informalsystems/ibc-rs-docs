@@ -175,6 +175,34 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>http::uri::Uri;
 <span class="kw">use </span>ibc_relayer::chain::cosmos::query::fee::{
@@ -191,6 +219,7 @@
 };
 <span class="kw">use </span>ibc_relayer_types::applications::ics29_fee::packet_fee::IdentifiedPacketFees;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
+<span class="kw">use </span>tendermint_rpc::HttpClient;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::{handle_generic_error, Error};
 <span class="kw">use </span><span class="kw">crate</span>::ibc::token::{TaggedTokenExt, TaggedTokenRef};
@@ -200,6 +229,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::wallet::{Wallet, WalletAddress};
 
 <span class="kw">pub async fn </span>ibc_token_transfer_with_fee&lt;SrcChain, DstChain&gt;(
+    rpc_client: MonoTagged&lt;SrcChain, <span class="kw-2">&amp;</span>HttpClient&gt;,
     tx_config: <span class="kw-2">&amp;</span>MonoTagged&lt;SrcChain, <span class="kw-2">&amp;</span>TxConfig&gt;,
     port_id: <span class="kw-2">&amp;</span>TaggedPortIdRef&lt;<span class="lifetime">&#39;_</span>, SrcChain, DstChain&gt;,
     channel_id: <span class="kw-2">&amp;</span>TaggedChannelIdRef&lt;<span class="lifetime">&#39;_</span>, SrcChain, DstChain&gt;,
@@ -231,12 +261,19 @@
 
     <span class="kw">let </span>messages = <span class="macro">vec!</span>[pay_message, transfer_message];
 
-    <span class="kw">let </span>events = simple_send_tx(tx_config.value(), <span class="kw-2">&amp;</span>sender.value().key, messages).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>events = simple_send_tx(
+        rpc_client.value(),
+        tx_config.value(),
+        <span class="kw-2">&amp;</span>sender.value().key,
+        messages,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(events)
 }
 
 <span class="kw">pub async fn </span>pay_packet_fee&lt;Chain, Counterparty&gt;(
+    rpc_client: MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>HttpClient&gt;,
     tx_config: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>TxConfig&gt;,
     port_id: <span class="kw-2">&amp;</span>TaggedPortIdRef&lt;<span class="lifetime">&#39;_</span>, Chain, Counterparty&gt;,
     channel_id: <span class="kw-2">&amp;</span>TaggedChannelIdRef&lt;<span class="lifetime">&#39;_</span>, Chain, Counterparty&gt;,
@@ -262,14 +299,20 @@
     )
     .map_err(handle_generic_error)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>events = simple_send_tx(tx_config.value(), <span class="kw-2">&amp;</span>payer.value().key, <span class="macro">vec!</span>[message])
-        .<span class="kw">await
-        </span>.map_err(Error::relayer)<span class="question-mark">?</span>;
+    <span class="kw">let </span>events = simple_send_tx(
+        rpc_client.value(),
+        tx_config.value(),
+        <span class="kw-2">&amp;</span>payer.value().key,
+        <span class="macro">vec!</span>[message],
+    )
+    .<span class="kw">await
+    </span>.map_err(Error::relayer)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(events)
 }
 
 <span class="kw">pub async fn </span>register_counterparty_payee&lt;Chain, Counterparty&gt;(
+    rpc_client: MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>HttpClient&gt;,
     tx_config: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>TxConfig&gt;,
     wallet: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>Wallet&gt;,
     counterparty_payee: <span class="kw-2">&amp;</span>MonoTagged&lt;Counterparty, <span class="kw-2">&amp;</span>WalletAddress&gt;,
@@ -295,12 +338,19 @@
 
     <span class="kw">let </span>messages = <span class="macro">vec!</span>[message];
 
-    simple_send_tx(tx_config.value(), <span class="kw-2">&amp;</span>wallet.value().key, messages).<span class="kw">await</span><span class="question-mark">?</span>;
+    simple_send_tx(
+        rpc_client.value(),
+        tx_config.value(),
+        <span class="kw-2">&amp;</span>wallet.value().key,
+        messages,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">pub async fn </span>register_payee&lt;Chain, Counterparty&gt;(
+    rpc_client: MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>HttpClient&gt;,
     tx_config: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>TxConfig&gt;,
     wallet: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>Wallet&gt;,
     payee: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>WalletAddress&gt;,
@@ -322,7 +372,13 @@
 
     <span class="kw">let </span>messages = <span class="macro">vec!</span>[message];
 
-    simple_send_tx(tx_config.value(), <span class="kw-2">&amp;</span>wallet.value().key, messages).<span class="kw">await</span><span class="question-mark">?</span>;
+    simple_send_tx(
+        rpc_client.value(),
+        tx_config.value(),
+        <span class="kw-2">&amp;</span>wallet.value().key,
+        messages,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }

@@ -2,7 +2,6 @@
 "digest":[],
 "ed25519_dalek":[],
 "ripemd":[],
-"ripemd160":[],
 "sha1":[],
 "sha2":[],
 "sha3":[]

@@ -180,6 +180,12 @@
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
 <a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>std::thread;
 
@@ -188,6 +194,7 @@
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>tendermint::abci::Code;
 <span class="kw">use </span>tendermint_rpc::endpoint::broadcast::tx_sync::Response;
+<span class="kw">use </span>tendermint_rpc::HttpClient;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::account::refresh_account;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::tx::estimate_fee_and_send_tx;
@@ -227,6 +234,7 @@
     ),
 )]
 </span><span class="kw">pub async fn </span>send_tx_with_account_sequence_retry(
+    rpc_client: <span class="kw-2">&amp;</span>HttpClient,
     config: <span class="kw-2">&amp;</span>TxConfig,
     key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
@@ -237,8 +245,10 @@
 
     <span class="kw">let </span>_message_count = messages.len() <span class="kw">as </span>u64;
 
-    <span class="kw">let </span>response =
-        do_send_tx_with_account_sequence_retry(config, key_pair, account, tx_memo, messages).<span class="kw">await</span>;
+    <span class="kw">let </span>response = do_send_tx_with_account_sequence_retry(
+        rpc_client, config, key_pair, account, tx_memo, messages,
+    )
+    .<span class="kw">await</span>;
 
     <span class="kw">if </span>response.is_ok() {
         <span class="macro">telemetry!</span>(total_messages_submitted, <span class="kw-2">&amp;</span>config.chain_id, _message_count);
@@ -248,13 +258,14 @@
 }
 
 <span class="kw">async fn </span>do_send_tx_with_account_sequence_retry(
+    rpc_client: <span class="kw-2">&amp;</span>HttpClient,
     config: <span class="kw-2">&amp;</span>TxConfig,
     key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Response, Error&gt; {
-    <span class="kw">match </span>estimate_fee_and_send_tx(config, key_pair, account, tx_memo, messages).<span class="kw">await </span>{
+    <span class="kw">match </span>estimate_fee_and_send_tx(rpc_client, config, key_pair, account, tx_memo, messages).<span class="kw">await </span>{
         <span class="comment">// Gas estimation failed with account sequence mismatch during gas estimation.
         // It indicates that the account sequence cached by hermes is stale (got &lt; expected).
         // This can happen when the same account is used by another agent.
@@ -266,7 +277,7 @@
             );
 
             refresh_account_and_retry_send_tx_with_account_sequence(
-                config, key_pair, account, tx_memo, messages,
+                rpc_client, config, key_pair, account, tx_memo, messages,
             )
             .<span class="kw">await
         </span>}
@@ -280,7 +291,7 @@
             </span>);
 
             refresh_account_and_retry_send_tx_with_account_sequence(
-                config, key_pair, account, tx_memo, messages,
+                rpc_client, config, key_pair, account, tx_memo, messages,
             )
             .<span class="kw">await
         </span>}
@@ -334,6 +345,7 @@
 }
 
 <span class="kw">async fn </span>refresh_account_and_retry_send_tx_with_account_sequence(
+    rpc_client: <span class="kw-2">&amp;</span>HttpClient,
     config: <span class="kw-2">&amp;</span>TxConfig,
     key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;mut </span>Account,
@@ -347,7 +359,7 @@
     <span class="comment">// Retry after delay
     </span>thread::sleep(Duration::from_millis(ACCOUNT_SEQUENCE_RETRY_DELAY));
 
-    estimate_fee_and_send_tx(config, key_pair, account, tx_memo, messages).<span class="kw">await
+    estimate_fee_and_send_tx(rpc_client, config, key_pair, account, tx_memo, messages).<span class="kw">await
 </span>}
 
 <span class="doccomment">/// Determine whether the given error yielded by `tx_simulate`

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["ProdHasher","Default implementation of a hasher"]],"trait":[["Hasher","Hashing for headers and validator sets"]]};

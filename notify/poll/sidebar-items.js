@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["PollWatcher","Polling based `Watcher` implementation"]]};
+window.SIDEBAR_ITEMS = {"struct":[["PollWatcher","Polling based `Watcher` implementation."]]};

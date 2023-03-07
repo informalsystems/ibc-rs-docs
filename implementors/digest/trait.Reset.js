@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"ripemd160":[["impl <a class=\"trait\" href=\"digest/trait.Reset.html\" title=\"trait digest::Reset\">Reset</a> for <a class=\"struct\" href=\"ripemd160/struct.Ripemd160.html\" title=\"struct ripemd160::Ripemd160\">Ripemd160</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

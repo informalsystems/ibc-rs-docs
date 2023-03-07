@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ProdCommitValidator","Production-ready implementation of a commit validator"]],"trait":[["CommitValidator","Validates the commit associated with a header against a validator set"]]};
+window.SIDEBAR_ITEMS = {"struct":[["ProdCommitValidator","Production-ready implementation of a commit validator."]],"trait":[["CommitValidator","Validates the commit associated with a header against a validator set"]]};

@@ -170,7 +170,7 @@
 <span class="kw">use </span>tendermint_rpc::endpoint::tx::Response <span class="kw">as </span>TxResponse;
 <span class="kw">use </span>tendermint_rpc::{HttpClient, Url};
 <span class="kw">use </span>tokio::time::sleep;
-<span class="kw">use </span>tracing::{debug, trace};
+<span class="kw">use </span>tracing::{debug, debug_span, trace};
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::query::tx::query_tx_response;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::types::events::from_tx_response_event;
@@ -194,6 +194,8 @@
         <span class="kw">return </span><span class="prelude-val">Ok</span>(());
     }
 
+    <span class="kw">let </span>_span = <span class="macro">debug_span!</span>(<span class="string">&quot;wait_for_block_commits&quot;</span>, id = %chain_id).entered();
+
     <span class="kw">let </span>start_time = Instant::now();
 
     <span class="kw">let </span>hashes = tx_sync_results
@@ -201,33 +203,31 @@
         .map(|res| res.response.hash.to_string())
         .join(<span class="string">&quot;, &quot;</span>);
 
-    <span class="macro">debug!</span>(
-        id = %chain_id,
-        <span class="string">&quot;wait_for_block_commits: waiting for commit of tx hashes(s) {}&quot;</span>,
-        hashes
-    );
+    <span class="macro">debug!</span>(<span class="string">&quot;waiting for commit of tx hashes(s) {}&quot;</span>, hashes);
 
     <span class="kw">loop </span>{
         <span class="kw">let </span>elapsed = start_time.elapsed();
 
         <span class="kw">if </span>all_tx_results_found(tx_sync_results) {
             <span class="macro">trace!</span>(
-                id = %chain_id,
-                <span class="string">&quot;wait_for_block_commits: retrieved {} tx results after {}ms&quot;</span>,
+                <span class="string">&quot;retrieved {} tx results after {} ms&quot;</span>,
                 tx_sync_results.len(),
                 elapsed.as_millis(),
             );
 
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         } <span class="kw">else if </span><span class="kw-2">&amp;</span>elapsed &gt; rpc_timeout {
+            <span class="macro">debug!</span>(<span class="string">&quot;timed out after {} ms&quot;</span>, elapsed.as_millis());
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::tx_no_confirmation());
         } <span class="kw">else </span>{
             thread::sleep(WAIT_BACKOFF);
 
             <span class="kw">for </span>tx_sync_result <span class="kw">in </span>tx_sync_results.iter_mut() {
-                <span class="comment">// ignore error
-                </span><span class="kw">let _ </span>=
+                <span class="kw">let </span>res =
                     update_tx_sync_result(chain_id, rpc_client, rpc_address, tx_sync_result).<span class="kw">await</span>;
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = res {
+                    <span class="macro">debug!</span>(<span class="string">&quot;update_tx_sync_result failed: {e}&quot;</span>);
+                }
             }
         }
     }

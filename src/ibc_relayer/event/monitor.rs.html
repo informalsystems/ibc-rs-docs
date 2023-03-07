@@ -529,6 +529,7 @@
 <a href="#529" id="529">529</a>
 <a href="#530" id="530">530</a>
 <a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::cmp::Ordering;
 
@@ -543,8 +544,8 @@
 <span class="kw">use </span>tracing::{debug, error, info, instrument, trace};
 
 <span class="kw">use </span>tendermint_rpc::{
-    event::Event <span class="kw">as </span>RpcEvent, query::Query, Error <span class="kw">as </span>RpcError, SubscriptionClient, Url,
-    WebSocketClient, WebSocketClientDriver,
+    client::CompatMode, event::Event <span class="kw">as </span>RpcEvent, query::Query, Error <span class="kw">as </span>RpcError,
+    SubscriptionClient, WebSocketClient, WebSocketClientDriver, WebSocketClientUrl,
 };
 
 <span class="kw">use </span>ibc_relayer_types::{
@@ -647,7 +648,9 @@
     <span class="doccomment">/// Channel where to receive commands
     </span>rx_cmd: channel::Receiver&lt;MonitorCmd&gt;,
     <span class="doccomment">/// Node Address
-    </span>node_addr: Url,
+    </span>ws_url: WebSocketClientUrl,
+    <span class="doccomment">/// RPC compatibility mode
+    </span>rpc_compat: CompatMode,
     <span class="doccomment">/// Queries
     </span>event_queries: Vec&lt;Query&gt;,
     <span class="doccomment">/// All subscriptions combined in a single stream
@@ -700,20 +703,22 @@
         name = <span class="string">&quot;event_monitor.create&quot;</span>,
         level = <span class="string">&quot;error&quot;</span>,
         skip_all,
-        fields(chain = %chain_id, addr = %node_addr)
+        fields(chain = %chain_id, url = %ws_url)
     )]
     </span><span class="kw">pub fn </span>new(
         chain_id: ChainId,
-        node_addr: Url,
+        ws_url: WebSocketClientUrl,
+        rpc_compat: CompatMode,
         rt: Arc&lt;TokioRuntime&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, TxMonitorCmd)&gt; {
         <span class="kw">let </span>event_bus = EventBus::new();
         <span class="kw">let </span>(tx_cmd, rx_cmd) = channel::unbounded();
 
-        <span class="kw">let </span>ws_addr = node_addr.clone();
+        <span class="kw">let </span>builder = WebSocketClient::builder(ws_url.clone()).compat_mode(rpc_compat);
+
         <span class="kw">let </span>(client, driver) = rt
-            .block_on(<span class="kw">async move </span>{ WebSocketClient::new(ws_addr).<span class="kw">await </span>})
-            .map_err(|<span class="kw">_</span>| Error::client_creation_failed(chain_id.clone(), node_addr.clone()))<span class="question-mark">?</span>;
+            .block_on(builder.build())
+            .map_err(|<span class="kw">_</span>| Error::client_creation_failed(chain_id.clone(), ws_url.clone()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(tx_err, rx_err) = mpsc::unbounded_channel();
         <span class="kw">let </span>driver_handle = rt.spawn(run_driver(driver, tx_err.clone()));
@@ -731,7 +736,8 @@
             rx_err,
             tx_err,
             rx_cmd,
-            node_addr,
+            ws_url,
+            rpc_compat,
             subscriptions: Box::new(futures::stream::empty()),
         };
 
@@ -773,18 +779,14 @@
         fields(chain = %<span class="self">self</span>.chain_id)
     )]
     </span><span class="kw">fn </span>try_reconnect(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="macro">trace!</span>(
-            <span class="string">&quot;trying to reconnect to WebSocket endpoint {}&quot;</span>,
-            <span class="self">self</span>.node_addr
-        );
+        <span class="macro">trace!</span>(<span class="string">&quot;trying to reconnect to WebSocket endpoint {}&quot;</span>, <span class="self">self</span>.ws_url);
 
         <span class="comment">// Try to reconnect
-        </span><span class="kw">let </span>(<span class="kw-2">mut </span>client, driver) = <span class="self">self
-            </span>.rt
-            .block_on(WebSocketClient::new(<span class="self">self</span>.node_addr.clone()))
-            .map_err(|<span class="kw">_</span>| {
-                Error::client_creation_failed(<span class="self">self</span>.chain_id.clone(), <span class="self">self</span>.node_addr.clone())
-            })<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>builder = WebSocketClient::builder(<span class="self">self</span>.ws_url.clone()).compat_mode(<span class="self">self</span>.rpc_compat);
+
+        <span class="kw">let </span>(<span class="kw-2">mut </span>client, driver) = <span class="self">self</span>.rt.block_on(builder.build()).map_err(|<span class="kw">_</span>| {
+            Error::client_creation_failed(<span class="self">self</span>.chain_id.clone(), <span class="self">self</span>.ws_url.clone())
+        })<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>driver_handle = <span class="self">self</span>.rt.spawn(run_driver(driver, <span class="self">self</span>.tx_err.clone()));
 
@@ -793,7 +795,7 @@
         </span>core::mem::swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.client, <span class="kw-2">&amp;mut </span>client);
         core::mem::swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.driver_handle, <span class="kw-2">&amp;mut </span>driver_handle);
 
-        <span class="macro">trace!</span>(<span class="string">&quot;reconnected to WebSocket endpoint {}&quot;</span>, <span class="self">self</span>.node_addr);
+        <span class="macro">trace!</span>(<span class="string">&quot;reconnected to WebSocket endpoint {}&quot;</span>, <span class="self">self</span>.ws_url);
 
         <span class="comment">// Shut down previous client
         </span><span class="macro">trace!</span>(<span class="string">&quot;gracefully shutting down previous client&quot;</span>,);
@@ -851,11 +853,11 @@
         <span class="kw">match </span>result {
             <span class="prelude-val">Ok</span>(()) =&gt; <span class="macro">info!</span>(
                 <span class="string">&quot;successfully reconnected to WebSocket endpoint {}&quot;</span>,
-                <span class="self">self</span>.node_addr
+                <span class="self">self</span>.ws_url
             ),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(
                 <span class="string">&quot;failed to reconnect to {} after {} retries&quot;</span>,
-                <span class="self">self</span>.node_addr, e.tries
+                <span class="self">self</span>.ws_url, e.tries
             ),
         }
     }

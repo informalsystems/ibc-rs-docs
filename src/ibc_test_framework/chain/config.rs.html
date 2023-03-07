@@ -246,6 +246,33 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
 </pre><pre class="rust"><code><span class="doccomment">/*!
     Helper functions for modifying the Gaia chain config in TOML.
 
@@ -388,7 +415,7 @@
     <span class="kw">let </span>max_deposit_period = genesis
         .get_mut(<span class="string">&quot;app_state&quot;</span>)
         .and_then(|app_state| app_state.get_mut(<span class="string">&quot;gov&quot;</span>))
-        .and_then(|gov| gov.get_mut(<span class="string">&quot;deposit_params&quot;</span>))
+        .and_then(|gov| get_mut_with_fallback(gov, <span class="string">&quot;params&quot;</span>, <span class="string">&quot;deposit_params&quot;</span>))
         .and_then(|deposit_params| deposit_params.as_object_mut())
         .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to update max_deposit_period in genesis file&quot;</span>))<span class="question-mark">?</span>;
 
@@ -481,7 +508,7 @@
     <span class="kw">let </span>voting_period = genesis
         .get_mut(<span class="string">&quot;app_state&quot;</span>)
         .and_then(|app_state| app_state.get_mut(<span class="string">&quot;gov&quot;</span>))
-        .and_then(|gov| gov.get_mut(<span class="string">&quot;voting_params&quot;</span>))
+        .and_then(|gov| get_mut_with_fallback(gov, <span class="string">&quot;params&quot;</span>, <span class="string">&quot;voting_params&quot;</span>))
         .and_then(|voting_params| voting_params.as_object_mut())
         .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to update voting_period in genesis file&quot;</span>))<span class="question-mark">?</span>;
 
@@ -493,6 +520,33 @@
         .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to update voting_period in genesis file&quot;</span>))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="doccomment">/// Look up a key in a JSON object, falling back to the second key if the first one cannot be found.
+///
+/// This lets us support both Tendermint 0.34 and 0.37, which sometimes use different keys for the
+/// same configuration object in the genesis file.
+///
+/// Eg. in 0.34, the voting params are at `app_state.gov.voting_params`,
+/// but in 0.37 they are at `app_state.gov.params`.
+///
+/// Note: This function is needed to avoid having to inline its code every time we need it.
+/// The more obvious way to write it inline would be:
+///
+/// value.get_mut(key_034).or_else(|| value.get_mut(key_037))
+///
+/// but that does not work because of the first `get_mut` borrows `value` mutably, which
+/// prevents the second `get_mut` from borrowing it again.
+</span><span class="kw">fn </span>get_mut_with_fallback&lt;<span class="lifetime">&#39;a</span>&gt;(
+    value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>serde_json::Value,
+    key: <span class="kw-2">&amp;</span>str,
+    fallback_key: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>serde_json::Value&gt; {
+    <span class="kw">let </span>key = <span class="kw">match </span>value.get(key) {
+        <span class="prelude-val">Some</span>(value) <span class="kw">if </span>!value.is_null() =&gt; key,
+        <span class="kw">_ </span>=&gt; fallback_key,
+    };
+    value.get_mut(key)
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_test_framework" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (ef934d9b6 2023-02-08)" data-search-js="search-28136cea55c34037.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

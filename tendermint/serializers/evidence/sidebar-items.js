@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":[["EvidenceVariant","EvidenceVariant helper struct for evidence serialization This is a workaround until we figure a better way of JSON serializing evidence. It is a modified copy of the crate::tendermint::types::evidence::Sum struct."]]};

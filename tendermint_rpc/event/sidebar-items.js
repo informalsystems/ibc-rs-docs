@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["EventData",""]],"struct":[["Event","An incoming event produced by a `Subscription`."],["TxInfo","Transaction result info."],["TxResult","Transaction result."]],"type":[["WrappedEvent","A JSON-RPC-wrapped event."]]};
+window.SIDEBAR_ITEMS = {"enum":[["DialectEventData",""],["EventData",""]],"struct":[["DialectEvent",""],["DialectTxInfo",""],["DialectTxResult",""],["Event","An incoming event produced by a `Subscription`."],["TxInfo","Transaction result info."],["TxResult","Transaction result."]]};
