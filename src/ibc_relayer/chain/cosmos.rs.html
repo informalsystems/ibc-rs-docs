@@ -2143,6 +2143,18 @@
 <a href="#2143" id="2143">2143</a>
 <a href="#2144" id="2144">2144</a>
 <a href="#2145" id="2145">2145</a>
+<a href="#2146" id="2146">2146</a>
+<a href="#2147" id="2147">2147</a>
+<a href="#2148" id="2148">2148</a>
+<a href="#2149" id="2149">2149</a>
+<a href="#2150" id="2150">2150</a>
+<a href="#2151" id="2151">2151</a>
+<a href="#2152" id="2152">2152</a>
+<a href="#2153" id="2153">2153</a>
+<a href="#2154" id="2154">2154</a>
+<a href="#2155" id="2155">2155</a>
+<a href="#2156" id="2156">2156</a>
+<a href="#2157" id="2157">2157</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -4132,23 +4144,35 @@
 
     <span class="kw">let </span>relayer_gas_price = <span class="kw-2">&amp;</span>chain.config.gas_price;
     <span class="kw">let </span>node_min_gas_prices = chain.min_gas_price()<span class="question-mark">?</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>found_matching_denom = <span class="bool-val">false</span>;
 
-    <span class="kw">for </span>price <span class="kw">in </span>node_min_gas_prices {
-        <span class="kw">match </span>relayer_gas_price.partial_cmp(<span class="kw-2">&amp;</span>price) {
-            <span class="prelude-val">Some</span>(Ordering::Less) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::gas_price_too_low(chain_id.clone())),
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                found_matching_denom = <span class="bool-val">true</span>;
-                <span class="kw">break</span>;
+    <span class="kw">if </span>!node_min_gas_prices.is_empty() {
+        <span class="kw">let </span><span class="kw-2">mut </span>found_matching_denom = <span class="bool-val">false</span>;
+
+        <span class="kw">for </span>price <span class="kw">in </span>node_min_gas_prices {
+            <span class="kw">match </span>relayer_gas_price.partial_cmp(<span class="kw-2">&amp;</span>price) {
+                <span class="prelude-val">Some</span>(Ordering::Less) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::gas_price_too_low(chain_id.clone())),
+                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
+                    found_matching_denom = <span class="bool-val">true</span>;
+                    <span class="kw">break</span>;
+                }
+                <span class="prelude-val">None </span>=&gt; <span class="kw">continue</span>,
             }
-            <span class="prelude-val">None </span>=&gt; <span class="kw">continue</span>,
         }
-    }
 
-    <span class="kw">if </span>!found_matching_denom {
+        <span class="kw">if </span>!found_matching_denom {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;Chain &#39;{}&#39; has no minimum gas price of denomination &#39;{}&#39; 
+                that is strictly less than the `gas_price` specified for
+                that chain in the Hermes configuration.
+                This is usually a sign of misconfiguration, please check your chain and Hermes configurations&quot;</span>,
+                chain_id, relayer_gas_price.denom
+            );
+        }
+    } <span class="kw">else </span>{
         <span class="macro">warn!</span>(
             <span class="string">&quot;Chain &#39;{}&#39; has no minimum gas price value configured for denomination &#39;{}&#39;. \
-            This is usually a sign of misconfiguration, please check your config.toml&quot;</span>,
+            This is usually a sign of misconfiguration, please check your chain and 
+            relayer configurations&quot;</span>,
             chain_id, relayer_gas_price.denom
         );
     }

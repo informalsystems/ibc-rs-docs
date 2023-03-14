@@ -319,8 +319,24 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>core::convert::TryFrom;
+<span class="kw">use </span>ibc_relayer_types::applications::ics29_fee::events::DistributionType;
 
 <span class="kw">use </span>tendermint_rpc::{event::Event <span class="kw">as </span>RpcEvent, event::EventData <span class="kw">as </span>RpcEventData};
 
@@ -332,6 +348,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::types::events::channel::RawObject;
 <span class="kw">use </span><span class="kw">crate</span>::event::monitor::queries;
+<span class="kw">use </span><span class="kw">crate</span>::telemetry;
 
 <span class="kw">use super</span>::{ibc_event_try_from_abci_event, IbcEventWithHeight};
 
@@ -504,6 +521,15 @@
                         &amp;&amp; event_is_type_incentivized(<span class="kw-2">&amp;</span>ibc_event)
                     {
                         events_with_height.push(IbcEventWithHeight::new(ibc_event, height));
+                    } <span class="kw">else if </span>query == queries::ibc_channel().to_string()
+                        &amp;&amp; event_is_type_distribute_fee(<span class="kw-2">&amp;</span>ibc_event)
+                    {
+                        <span class="kw">if let </span>IbcEvent::DistributeFeePacket(dist) = ibc_event {
+                            <span class="comment">// Only record rewarded fees
+                            </span><span class="kw">if let </span>DistributionType::Reward = dist.distribution_type {
+                                <span class="macro">telemetry!</span>(fees_amount, chain_id, <span class="kw-2">&amp;</span>dist.receiver, dist.fee);
+                            }
+                        }
                     }
                 }
             }
@@ -558,6 +584,10 @@
 
 <span class="kw">fn </span>event_is_type_incentivized(ev: <span class="kw-2">&amp;</span>IbcEvent) -&gt; bool {
     <span class="macro">matches!</span>(ev, IbcEvent::IncentivizedPacket(<span class="kw">_</span>))
+}
+
+<span class="kw">fn </span>event_is_type_distribute_fee(ev: <span class="kw-2">&amp;</span>IbcEvent) -&gt; bool {
+    <span class="macro">matches!</span>(ev, IbcEvent::DistributeFeePacket(<span class="kw">_</span>))
 }
 
 <span class="kw">fn </span>extract_block_events(

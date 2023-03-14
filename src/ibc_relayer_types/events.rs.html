@@ -538,6 +538,17 @@
 <a href="#538" id="538">538</a>
 <a href="#539" id="539">539</a>
 <a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::utils::pretty::PrettySlice;
 
@@ -550,7 +561,7 @@
 <span class="kw">use </span>tendermint::abci;
 
 <span class="kw">use </span><span class="kw">crate</span>::applications::ics29_fee::error::Error <span class="kw">as </span>FeeError;
-<span class="kw">use </span><span class="kw">crate</span>::applications::ics29_fee::events::IncentivizedPacket;
+<span class="kw">use </span><span class="kw">crate</span>::applications::ics29_fee::events::{DistributeFeePacket, IncentivizedPacket};
 <span class="kw">use </span><span class="kw">crate</span>::applications::ics31_icq::error::Error <span class="kw">as </span>QueryPacketError;
 <span class="kw">use </span><span class="kw">crate</span>::applications::ics31_icq::events::CrossChainQueryPacket;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::error <span class="kw">as </span>client_error;
@@ -680,6 +691,8 @@
 <span class="kw">const </span>INCENTIVIZED_PACKET_EVENT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;incentivized_ibc_packet&quot;</span>;
 <span class="doccomment">/// CrossChainQuery event type
 </span><span class="kw">const </span>CROSS_CHAIN_QUERY_PACKET_EVENT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;cross_chain_query&quot;</span>;
+<span class="doccomment">/// Distribution fee event type
+</span><span class="kw">const </span>DISTRIBUTION_FEE_PACKET_EVENT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;distribute_fee&quot;</span>;
 
 <span class="doccomment">/// Events types
 </span><span class="attr">#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -710,6 +723,7 @@
     AppModule,
     Empty,
     ChainError,
+    DistributionFee,
 }
 
 <span class="kw">impl </span>IbcEventType {
@@ -741,6 +755,7 @@
             IbcEventType::AppModule =&gt; APP_MODULE_EVENT,
             IbcEventType::Empty =&gt; EMPTY_EVENT,
             IbcEventType::ChainError =&gt; CHAIN_ERROR_EVENT,
+            IbcEventType::DistributionFee =&gt; DISTRIBUTION_FEE_PACKET_EVENT,
         }
     }
 }
@@ -775,6 +790,7 @@
             CROSS_CHAIN_QUERY_PACKET_EVENT =&gt; <span class="prelude-val">Ok</span>(IbcEventType::CrossChainQuery),
             EMPTY_EVENT =&gt; <span class="prelude-val">Ok</span>(IbcEventType::Empty),
             CHAIN_ERROR_EVENT =&gt; <span class="prelude-val">Ok</span>(IbcEventType::ChainError),
+            DISTRIBUTION_FEE_PACKET_EVENT =&gt; <span class="prelude-val">Ok</span>(IbcEventType::DistributionFee),
             <span class="comment">// from_str() for `APP_MODULE_EVENT` MUST fail because a `ModuleEvent`&#39;s type isn&#39;t constant
             </span><span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::incorrect_event_type(s.to_string())),
         }
@@ -813,6 +829,8 @@
     IncentivizedPacket(IncentivizedPacket),
     CrossChainQueryPacket(CrossChainQueryPacket),
 
+    DistributeFeePacket(DistributeFeePacket),
+
     AppModule(ModuleEvent),
 
     ChainError(String), <span class="comment">// Special event, signifying an error on CheckTx or DeliverTx
@@ -850,6 +868,8 @@
             IbcEvent::IncentivizedPacket(ev) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;IncenvitizedPacket({ev:?}&quot;</span>),
             IbcEvent::CrossChainQueryPacket(ev) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;CrosschainPacket({ev:?})&quot;</span>),
 
+            IbcEvent::DistributeFeePacket(ev) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;DistributionFeePacket({ev:?})&quot;</span>),
+
             IbcEvent::AppModule(ev) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;AppModule({ev})&quot;</span>),
 
             IbcEvent::ChainError(ev) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;ChainError({ev})&quot;</span>),
@@ -884,6 +904,7 @@
             IbcEvent::TimeoutOnClosePacket(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
             IbcEvent::IncentivizedPacket(event) =&gt; event.into(),
             IbcEvent::CrossChainQueryPacket(event) =&gt; event.into(),
+            IbcEvent::DistributeFeePacket(event) =&gt; event.into(),
             IbcEvent::AppModule(event) =&gt; event.try_into()<span class="question-mark">?</span>,
             IbcEvent::NewBlock(<span class="kw">_</span>) | IbcEvent::ChainError(<span class="kw">_</span>) =&gt; {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(Error::incorrect_event_type(event.to_string()));
@@ -925,6 +946,7 @@
             IbcEvent::TimeoutOnClosePacket(<span class="kw">_</span>) =&gt; IbcEventType::TimeoutOnClose,
             IbcEvent::IncentivizedPacket(<span class="kw">_</span>) =&gt; IbcEventType::IncentivizedPacket,
             IbcEvent::CrossChainQueryPacket(<span class="kw">_</span>) =&gt; IbcEventType::CrossChainQuery,
+            IbcEvent::DistributeFeePacket(<span class="kw">_</span>) =&gt; IbcEventType::DistributionFee,
             IbcEvent::AppModule(<span class="kw">_</span>) =&gt; IbcEventType::AppModule,
             IbcEvent::ChainError(<span class="kw">_</span>) =&gt; IbcEventType::ChainError,
         }

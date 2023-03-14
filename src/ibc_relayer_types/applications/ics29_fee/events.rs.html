@@ -85,7 +85,81 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
-</pre><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+</pre><pre class="rust"><code><span class="kw">use </span>core::fmt::Display;
+<span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
 <span class="kw">use </span>tendermint::abci;
@@ -96,6 +170,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::core::ics24_host::identifier::{ChannelId, PortId};
 <span class="kw">use </span><span class="kw">crate</span>::events::IbcEventType;
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span><span class="kw">crate</span>::signer::Signer;
 
 <span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>IncentivizedPacket {
@@ -169,6 +244,77 @@
             total_recv_fee,
             total_ack_fee,
             total_timeout_fee,
+        })
+    }
+}
+
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+</span><span class="kw">pub enum </span>DistributionType {
+    Reward,
+    Refund,
+}
+
+<span class="kw">impl </span>Display <span class="kw">for </span>DistributionType {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            DistributionType::Reward =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;reward&quot;</span>),
+            DistributionType::Refund =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;refund&quot;</span>),
+        }
+    }
+}
+
+<span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>str&gt; <span class="kw">for </span>DistributionType {
+    <span class="kw">type </span>Error = Error;
+
+    <span class="kw">fn </span>try_from(value: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">match </span>value {
+            <span class="string">&quot;reward&quot; </span>=&gt; <span class="prelude-val">Ok</span>(DistributionType::Reward),
+            <span class="string">&quot;refund&quot; </span>=&gt; <span class="prelude-val">Ok</span>(DistributionType::Refund),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::empty_fee()),
+        }
+    }
+}
+
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+</span><span class="kw">pub struct </span>DistributeFeePacket {
+    <span class="kw">pub </span>receiver: Signer,
+    <span class="kw">pub </span>fee: RawCoin,
+    <span class="kw">pub </span>distribution_type: DistributionType,
+}
+
+<span class="kw">impl </span>From&lt;DistributeFeePacket&gt; <span class="kw">for </span>abci::Event {
+    <span class="kw">fn </span>from(event: DistributeFeePacket) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[
+            (<span class="string">&quot;receiver&quot;</span>, event.receiver.to_string()).into(),
+            (<span class="string">&quot;fee&quot;</span>, event.fee.denom.as_str()).into(),
+            (<span class="string">&quot;distribution_type&quot;</span>, event.distribution_type.to_string()).into(),
+        ];
+
+        <span class="self">Self </span>{
+            kind: IbcEventType::DistributionFee.as_str().to_owned(),
+            attributes,
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[abci::EventAttribute]&gt; <span class="kw">for </span>DistributeFeePacket {
+    <span class="kw">type </span>Error = Error;
+
+    <span class="kw">fn </span>try_from(entries: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[abci::EventAttribute]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span>receiver_str = find_value(<span class="string">&quot;receiver&quot;</span>, entries)<span class="question-mark">?</span>;
+        <span class="kw">let </span>fee_str = find_value(<span class="string">&quot;fee&quot;</span>, entries)<span class="question-mark">?</span>;
+        <span class="kw">let </span>distribution_type_str = find_value(<span class="string">&quot;distribution_type&quot;</span>, entries)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>receiver = Signer::from_str(receiver_str).map_err(Error::signer)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>fee = RawCoin::from_str(fee_str).map_err(Error::transfer)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>distribution_type = DistributionType::try_from(distribution_type_str)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(DistributeFeePacket {
+            receiver,
+            fee,
+            distribution_type,
         })
     }
 }
