@@ -2207,7 +2207,7 @@
         fields(client = %<span class="self">self</span>)
     )]
     </span><span class="kw">pub fn </span>upgrade(<span class="kw-2">&amp;</span><span class="self">self</span>, src_upgrade_height: Height) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;IbcEvent&gt;, ForeignClientError&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>msgs = <span class="self">self
+        <span class="kw">let </span>msgs = <span class="self">self
             </span>.build_update_client_with_trusted(src_upgrade_height, <span class="prelude-val">None</span>)
             .map_err(|<span class="kw">_</span>| {
                 ForeignClientError::client_upgrade_no_source(
@@ -2220,6 +2220,8 @@
                     ),
                 )
             })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>msgs: Vec&lt;Any&gt; = msgs.into_iter().map(Msg::to_any).collect();
 
         <span class="comment">// Query the host chain for the upgraded client state, consensus state &amp; their proofs.
         </span><span class="kw">let </span>(client_state, proof_upgrade_client) = <span class="self">self
@@ -2825,7 +2827,11 @@
             thread::sleep(Duration::from_millis(<span class="number">100</span>));
         }
 
-        <span class="self">self</span>.build_update_client_with_trusted(target_height, trusted_height)
+        <span class="kw">let </span>messages = <span class="self">self</span>.build_update_client_with_trusted(target_height, trusted_height)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>encoded_messages = messages.into_iter().map(Msg::to_any).collect();
+
+        <span class="prelude-val">Ok</span>(encoded_messages)
     }
 
     <span class="attr">#[instrument(
@@ -2838,7 +2844,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         target_height: Height,
         maybe_trusted_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Any&gt;, ForeignClientError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;MsgUpdateClient&gt;, ForeignClientError&gt; {
         <span class="comment">// Get the latest client state on destination.
         </span><span class="kw">let </span>(client_state, <span class="kw">_</span>) = <span class="self">self</span>.validated_client_state()<span class="question-mark">?</span>;
 
@@ -2912,14 +2918,11 @@
                 header.height(),
             );
 
-            msgs.push(
-                MsgUpdateClient {
-                    header: header.into(),
-                    client_id: <span class="self">self</span>.id.clone(),
-                    signer: signer.clone(),
-                }
-                .to_any(),
-            );
+            msgs.push(MsgUpdateClient {
+                header: header.into(),
+                client_id: <span class="self">self</span>.id.clone(),
+                signer: signer.clone(),
+            });
         }
 
         <span class="macro">debug!</span>(
@@ -2928,14 +2931,11 @@
             header.height(),
         );
 
-        msgs.push(
-            MsgUpdateClient {
-                header: header.into(),
-                signer,
-                client_id: <span class="self">self</span>.id.clone(),
-            }
-            .to_any(),
-        );
+        msgs.push(MsgUpdateClient {
+            header: header.into(),
+            signer,
+            client_id: <span class="self">self</span>.id.clone(),
+        });
 
         <span class="macro">telemetry!</span>(
             client_updates_submitted,

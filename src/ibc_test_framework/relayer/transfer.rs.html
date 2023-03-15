@@ -124,6 +124,39 @@
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Functions for performing IBC transfer that works similar to
    `hermes tx ft-transfer`.
@@ -131,6 +164,9 @@
 
 </span><span class="kw">use </span>core::ops::Add;
 <span class="kw">use </span>core::time::Duration;
+<span class="kw">use </span>eyre::eyre;
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Packet;
+<span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_relayer::chain::cosmos::tx::batched_send_tx;
@@ -213,6 +249,46 @@
     sender: <span class="kw-2">&amp;</span>MonoTagged&lt;SrcChain, <span class="kw-2">&amp;</span>Wallet&gt;,
     recipient: <span class="kw-2">&amp;</span>MonoTagged&lt;DstChain, <span class="kw-2">&amp;</span>WalletAddress&gt;,
     token: <span class="kw-2">&amp;</span>TaggedTokenRef&lt;<span class="lifetime">&#39;_</span>, SrcChain&gt;,
+    memo: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    timeout: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Packet, Error&gt; {
+    <span class="kw">let </span>message = build_transfer_message(
+        port_id,
+        channel_id,
+        sender,
+        recipient,
+        token,
+        timeout.unwrap_or(Duration::from_secs(<span class="number">60</span>)),
+        memo.clone(),
+    )<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>events = simple_send_tx(
+        rpc_client.into_value(),
+        tx_config.value(),
+        <span class="kw-2">&amp;</span>sender.value().key,
+        <span class="macro">vec!</span>[message],
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="kw">let </span>packet = events
+        .into_iter()
+        .find_map(|event| <span class="kw">match </span>event.event {
+            IbcEvent::SendPacket(ev) =&gt; <span class="prelude-val">Some</span>(ev.packet),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+        })
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to find send packet event&quot;</span>))<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(packet)
+}
+
+<span class="kw">pub async fn </span>batched_ibc_token_transfer&lt;SrcChain, DstChain&gt;(
+    rpc_client: MonoTagged&lt;SrcChain, <span class="kw-2">&amp;</span>HttpClient&gt;,
+    tx_config: <span class="kw-2">&amp;</span>MonoTagged&lt;SrcChain, <span class="kw-2">&amp;</span>TxConfig&gt;,
+    port_id: <span class="kw-2">&amp;</span>TaggedPortIdRef&lt;<span class="lifetime">&#39;_</span>, SrcChain, DstChain&gt;,
+    channel_id: <span class="kw-2">&amp;</span>TaggedChannelIdRef&lt;<span class="lifetime">&#39;_</span>, SrcChain, DstChain&gt;,
+    sender: <span class="kw-2">&amp;</span>MonoTagged&lt;SrcChain, <span class="kw-2">&amp;</span>Wallet&gt;,
+    recipient: <span class="kw-2">&amp;</span>MonoTagged&lt;DstChain, <span class="kw-2">&amp;</span>WalletAddress&gt;,
+    token: <span class="kw-2">&amp;</span>TaggedTokenRef&lt;<span class="lifetime">&#39;_</span>, SrcChain&gt;,
     num_msgs: usize,
     memo: <span class="prelude-ty">Option</span>&lt;String&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
@@ -230,23 +306,13 @@
     .take(num_msgs)
     .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>num_msgs &gt; <span class="number">1 </span>{
-        batched_send_tx(
-            rpc_client.value(),
-            tx_config.value(),
-            <span class="kw-2">&amp;</span>sender.value().key,
-            messages,
-        )
-        .<span class="kw">await</span><span class="question-mark">?</span>;
-    } <span class="kw">else </span>{
-        simple_send_tx(
-            rpc_client.value(),
-            tx_config.value(),
-            <span class="kw-2">&amp;</span>sender.value().key,
-            messages,
-        )
-        .<span class="kw">await</span><span class="question-mark">?</span>;
-    };
+    batched_send_tx(
+        rpc_client.value(),
+        tx_config.value(),
+        <span class="kw-2">&amp;</span>sender.value().key,
+        messages,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }

@@ -124,12 +124,53 @@
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
-</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::chain::cli::transfer::local_transfer_token;
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+</pre><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
+
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Packet;
+
+<span class="kw">use </span><span class="kw">crate</span>::chain::cli::transfer::local_transfer_token;
 <span class="kw">use </span><span class="kw">crate</span>::chain::driver::ChainDriver;
 <span class="kw">use </span><span class="kw">crate</span>::chain::tagged::TaggedChainDriverExt;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::ibc::token::TaggedTokenRef;
-<span class="kw">use </span><span class="kw">crate</span>::relayer::transfer::ibc_token_transfer;
+<span class="kw">use </span><span class="kw">crate</span>::relayer::transfer::{batched_ibc_token_transfer, ibc_token_transfer};
 <span class="kw">use </span><span class="kw">crate</span>::types::id::{TaggedChannelIdRef, TaggedPortIdRef};
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::types::wallet::{Wallet, WalletAddress};
@@ -162,8 +203,18 @@
         sender: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>Wallet&gt;,
         recipient: <span class="kw-2">&amp;</span>MonoTagged&lt;Counterparty, <span class="kw-2">&amp;</span>WalletAddress&gt;,
         token: <span class="kw-2">&amp;</span>TaggedTokenRef&lt;Chain&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Packet, Error&gt;;
+
+    <span class="kw">fn </span>ibc_transfer_token_with_memo_and_timeout&lt;Counterparty&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        port_id: <span class="kw-2">&amp;</span>TaggedPortIdRef&lt;Chain, Counterparty&gt;,
+        channel_id: <span class="kw-2">&amp;</span>TaggedChannelIdRef&lt;Chain, Counterparty&gt;,
+        sender: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>Wallet&gt;,
+        recipient: <span class="kw-2">&amp;</span>MonoTagged&lt;Counterparty, <span class="kw-2">&amp;</span>WalletAddress&gt;,
+        token: <span class="kw-2">&amp;</span>TaggedTokenRef&lt;Chain&gt;,
         memo: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
+        timeout: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Packet, Error&gt;;
 
     <span class="kw">fn </span>ibc_transfer_token_multiple&lt;Counterparty&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -192,8 +243,7 @@
         sender: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>Wallet&gt;,
         recipient: <span class="kw-2">&amp;</span>MonoTagged&lt;Counterparty, <span class="kw-2">&amp;</span>WalletAddress&gt;,
         token: <span class="kw-2">&amp;</span>TaggedTokenRef&lt;Chain&gt;,
-        memo: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Packet, Error&gt; {
         <span class="kw">let </span>rpc_client = <span class="self">self</span>.rpc_client()<span class="question-mark">?</span>;
         <span class="self">self</span>.value().runtime.block_on(ibc_token_transfer(
             rpc_client.as_ref(),
@@ -203,8 +253,32 @@
             sender,
             recipient,
             token,
-            <span class="number">1</span>,
+            <span class="prelude-val">None</span>,
+            <span class="prelude-val">None</span>,
+        ))
+    }
+
+    <span class="kw">fn </span>ibc_transfer_token_with_memo_and_timeout&lt;Counterparty&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        port_id: <span class="kw-2">&amp;</span>TaggedPortIdRef&lt;Chain, Counterparty&gt;,
+        channel_id: <span class="kw-2">&amp;</span>TaggedChannelIdRef&lt;Chain, Counterparty&gt;,
+        sender: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, <span class="kw-2">&amp;</span>Wallet&gt;,
+        recipient: <span class="kw-2">&amp;</span>MonoTagged&lt;Counterparty, <span class="kw-2">&amp;</span>WalletAddress&gt;,
+        token: <span class="kw-2">&amp;</span>TaggedTokenRef&lt;Chain&gt;,
+        memo: <span class="prelude-ty">Option</span>&lt;String&gt;,
+        timeout: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Packet, Error&gt; {
+        <span class="kw">let </span>rpc_client = <span class="self">self</span>.rpc_client()<span class="question-mark">?</span>;
+        <span class="self">self</span>.value().runtime.block_on(ibc_token_transfer(
+            rpc_client.as_ref(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.tx_config(),
+            port_id,
+            channel_id,
+            sender,
+            recipient,
+            token,
             memo,
+            timeout,
         ))
     }
 
@@ -219,7 +293,7 @@
         memo: <span class="prelude-ty">Option</span>&lt;String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">let </span>rpc_client = <span class="self">self</span>.rpc_client()<span class="question-mark">?</span>;
-        <span class="self">self</span>.value().runtime.block_on(ibc_token_transfer(
+        <span class="self">self</span>.value().runtime.block_on(batched_ibc_token_transfer(
             rpc_client.as_ref(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.tx_config(),
             port_id,
