@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.24.3/src/ecdsa/recovery.rs`."><title>recovery.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../secp256k1/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/secp256k1-0.27.0/src/ecdsa/recovery.rs`."><title>recovery.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../secp256k1/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -457,22 +457,6 @@
 <a href="#457" id="457">457</a>
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
 </pre><pre class="rust"><code><span class="comment">// Bitcoin secp256k1 bindings
 // Written in 2014 by
 //   Dawid Ciężarkiewicz
@@ -493,10 +477,12 @@
 //!
 
 </span><span class="kw">use </span>core::ptr;
-<span class="kw">use crate</span>::{key, Secp256k1, Message, Error, Verification, Signing, ecdsa::Signature};
-<span class="kw">use </span><span class="kw">super</span>::ffi <span class="kw">as </span>super_ffi;
+
 <span class="kw">use </span><span class="self">self</span>::super_ffi::CPtr;
+<span class="kw">use </span><span class="kw">super</span>::ffi <span class="kw">as </span>super_ffi;
+<span class="kw">use </span><span class="kw">crate</span>::ecdsa::Signature;
 <span class="kw">use </span><span class="kw">crate</span>::ffi::recovery <span class="kw">as </span>ffi;
+<span class="kw">use crate</span>::{key, Error, Message, Secp256k1, Signing, Verification};
 
 <span class="doccomment">/// A tag used for recovering the public key from a compact signature.
 </span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -507,20 +493,18 @@
 </span><span class="kw">pub struct </span>RecoverableSignature(ffi::RecoverableSignature);
 
 <span class="kw">impl </span>RecoveryId {
-<span class="attr">#[inline]
-</span><span class="doccomment">/// Allows library users to create valid recovery IDs from i32.
-</span><span class="kw">pub fn </span>from_i32(id: i32) -&gt; <span class="prelude-ty">Result</span>&lt;RecoveryId, Error&gt; {
-    <span class="kw">match </span>id {
-        <span class="number">0</span>..=<span class="number">3 </span>=&gt; <span class="prelude-val">Ok</span>(RecoveryId(id)),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidRecoveryId)
+    <span class="attr">#[inline]
+    </span><span class="doccomment">/// Allows library users to create valid recovery IDs from i32.
+    </span><span class="kw">pub fn </span>from_i32(id: i32) -&gt; <span class="prelude-ty">Result</span>&lt;RecoveryId, Error&gt; {
+        <span class="kw">match </span>id {
+            <span class="number">0</span>..=<span class="number">3 </span>=&gt; <span class="prelude-val">Ok</span>(RecoveryId(id)),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidRecoveryId),
+        }
     }
-}
 
-<span class="attr">#[inline]
-</span><span class="doccomment">/// Allows library users to convert recovery IDs to i32.
-</span><span class="kw">pub fn </span>to_i32(<span class="self">self</span>) -&gt; i32 {
-    <span class="self">self</span>.<span class="number">0
-</span>}
+    <span class="attr">#[inline]
+    </span><span class="doccomment">/// Allows library users to convert recovery IDs to i32.
+    </span><span class="kw">pub fn </span>to_i32(<span class="self">self</span>) -&gt; i32 { <span class="self">self</span>.<span class="number">0 </span>}
 }
 
 <span class="kw">impl </span>RecoverableSignature {
@@ -528,7 +512,9 @@
     </span><span class="doccomment">/// Converts a compact-encoded byte slice to a signature. This
     /// representation is nonstandard and defined by the libsecp256k1 library.
     </span><span class="kw">pub fn </span>from_compact(data: <span class="kw-2">&amp;</span>[u8], recid: RecoveryId) -&gt; <span class="prelude-ty">Result</span>&lt;RecoverableSignature, Error&gt; {
-        <span class="kw">if </span>data.is_empty() {<span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidSignature);}
+        <span class="kw">if </span>data.is_empty() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidSignature);
+        }
 
         <span class="kw">let </span><span class="kw-2">mut </span>ret = ffi::RecoverableSignature::new();
 
@@ -551,15 +537,16 @@
 
     <span class="doccomment">/// Obtains a raw pointer suitable for use with FFI functions.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>as_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>ffi::RecoverableSignature {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
-    </span>}
+    #[deprecated(since = <span class="string">&quot;0.25.0&quot;</span>, note = <span class="string">&quot;Use Self::as_c_ptr if you need to access the FFI layer&quot;</span>)]
+    </span><span class="kw">pub fn </span>as_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>ffi::RecoverableSignature { <span class="self">self</span>.as_c_ptr() }
 
     <span class="doccomment">/// Obtains a raw mutable pointer suitable for use with FFI functions.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>as_mut_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>ffi::RecoverableSignature {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0
-    </span>}
+    #[deprecated(
+        since = <span class="string">&quot;0.25.0&quot;</span>,
+        note = <span class="string">&quot;Use Self::as_mut_c_ptr if you need to access the FFI layer&quot;
+    </span>)]
+    </span><span class="kw">pub fn </span>as_mut_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>ffi::RecoverableSignature { <span class="self">self</span>.as_mut_c_ptr() }
 
     <span class="attr">#[inline]
     </span><span class="doccomment">/// Serializes the recoverable signature in compact format.
@@ -604,34 +591,20 @@
     }
 }
 
-
 <span class="kw">impl </span>CPtr <span class="kw">for </span>RecoverableSignature {
     <span class="kw">type </span>Target = ffi::RecoverableSignature;
-    <span class="kw">fn </span>as_c_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span><span class="self">Self</span>::Target {
-        <span class="self">self</span>.as_ptr()
-    }
+    <span class="kw">fn </span>as_c_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span><span class="self">Self</span>::Target { <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0 </span>}
 
-    <span class="kw">fn </span>as_mut_c_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span><span class="self">Self</span>::Target {
-        <span class="self">self</span>.as_mut_ptr()
-    }
+    <span class="kw">fn </span>as_mut_c_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span><span class="self">Self</span>::Target { <span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0 </span>}
 }
 
 <span class="doccomment">/// Creates a new recoverable signature from a FFI one.
 </span><span class="kw">impl </span>From&lt;ffi::RecoverableSignature&gt; <span class="kw">for </span>RecoverableSignature {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>from(sig: ffi::RecoverableSignature) -&gt; RecoverableSignature {
-        RecoverableSignature(sig)
-    }
+    </span><span class="kw">fn </span>from(sig: ffi::RecoverableSignature) -&gt; RecoverableSignature { RecoverableSignature(sig) }
 }
 
 <span class="kw">impl</span>&lt;C: Signing&gt; Secp256k1&lt;C&gt; {
-    <span class="doccomment">/// Constructs a signature for `msg` using the secret key `sk` and RFC6979 nonce.
-    /// Requires a signing-capable context.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.21.0&quot;</span>, note = <span class="string">&quot;Use sign_ecdsa_recoverable instead.&quot;</span>)]
-    </span><span class="kw">pub fn </span>sign_recoverable(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: <span class="kw-2">&amp;</span>Message, sk: <span class="kw-2">&amp;</span>key::SecretKey) -&gt; RecoverableSignature {
-        <span class="self">self</span>.sign_ecdsa_recoverable(msg, sk)
-    }
-
     <span class="kw">fn </span>sign_ecdsa_recoverable_with_noncedata_pointer(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         msg: <span class="kw-2">&amp;</span>Message,
@@ -644,7 +617,7 @@
             // an invalid signature from a valid `Message` and `SecretKey`
             </span><span class="macro">assert_eq!</span>(
                 ffi::secp256k1_ecdsa_sign_recoverable(
-                    <span class="self">self</span>.ctx,
+                    <span class="self">self</span>.ctx.as_ptr(),
                     <span class="kw-2">&amp;mut </span>ret,
                     msg.as_c_ptr(),
                     sk.as_c_ptr(),
@@ -660,7 +633,11 @@
 
     <span class="doccomment">/// Constructs a signature for `msg` using the secret key `sk` and RFC6979 nonce
     /// Requires a signing-capable context.
-    </span><span class="kw">pub fn </span>sign_ecdsa_recoverable(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: <span class="kw-2">&amp;</span>Message, sk: <span class="kw-2">&amp;</span>key::SecretKey) -&gt; RecoverableSignature {
+    </span><span class="kw">pub fn </span>sign_ecdsa_recoverable(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        msg: <span class="kw-2">&amp;</span>Message,
+        sk: <span class="kw-2">&amp;</span>key::SecretKey,
+    ) -&gt; RecoverableSignature {
         <span class="self">self</span>.sign_ecdsa_recoverable_with_noncedata_pointer(msg, sk, ptr::null())
     }
 
@@ -683,20 +660,20 @@
 <span class="kw">impl</span>&lt;C: Verification&gt; Secp256k1&lt;C&gt; {
     <span class="doccomment">/// Determines the public key for which `sig` is a valid signature for
     /// `msg`. Requires a verify-capable context.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.21.0&quot;</span>, note = <span class="string">&quot;Use recover_ecdsa instead.&quot;</span>)]
-    </span><span class="kw">pub fn </span>recover(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: <span class="kw-2">&amp;</span>Message, sig: <span class="kw-2">&amp;</span>RecoverableSignature) -&gt; <span class="prelude-ty">Result</span>&lt;key::PublicKey, Error&gt; {
-        <span class="self">self</span>.recover_ecdsa(msg, sig)
-    }
-
-    <span class="doccomment">/// Determines the public key for which `sig` is a valid signature for
-    /// `msg`. Requires a verify-capable context.
-    </span><span class="kw">pub fn </span>recover_ecdsa(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: <span class="kw-2">&amp;</span>Message, sig: <span class="kw-2">&amp;</span>RecoverableSignature)
-                   -&gt; <span class="prelude-ty">Result</span>&lt;key::PublicKey, Error&gt; {
-
+    </span><span class="kw">pub fn </span>recover_ecdsa(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        msg: <span class="kw-2">&amp;</span>Message,
+        sig: <span class="kw-2">&amp;</span>RecoverableSignature,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;key::PublicKey, Error&gt; {
         <span class="kw">unsafe </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>pk = super_ffi::PublicKey::new();
-            <span class="kw">if </span>ffi::secp256k1_ecdsa_recover(<span class="self">self</span>.ctx, <span class="kw-2">&amp;mut </span>pk,
-                                            sig.as_c_ptr(), msg.as_c_ptr()) != <span class="number">1 </span>{
+            <span class="kw">if </span>ffi::secp256k1_ecdsa_recover(
+                <span class="self">self</span>.ctx.as_ptr(),
+                <span class="kw-2">&amp;mut </span>pk,
+                sig.as_c_ptr(),
+                msg.as_c_ptr(),
+            ) != <span class="number">1
+            </span>{
                 <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidSignature);
             }
             <span class="prelude-val">Ok</span>(key::PublicKey::from(pk))
@@ -704,31 +681,28 @@
     }
 }
 
-
 <span class="attr">#[cfg(test)]
 #[allow(unused_imports)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>rand::{RngCore, thread_rng};
-
-    <span class="kw">use crate</span>::{Error, SecretKey, Secp256k1, Message};
-    <span class="kw">use super</span>::{RecoveryId, RecoverableSignature};
-
     <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
     </span><span class="kw">use </span>wasm_bindgen_test::wasm_bindgen_test <span class="kw">as </span>test;
 
+    <span class="kw">use super</span>::{RecoverableSignature, RecoveryId};
+    <span class="kw">use </span><span class="kw">crate</span>::constants::ONE;
+    <span class="kw">use crate</span>::{Error, Message, Secp256k1, SecretKey};
+
     <span class="attr">#[test]
-    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
     </span><span class="kw">fn </span>capabilities() {
         <span class="kw">let </span>sign = Secp256k1::signing_only();
         <span class="kw">let </span>vrfy = Secp256k1::verification_only();
         <span class="kw">let </span>full = Secp256k1::new();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>msg = [<span class="number">0u8</span>; <span class="number">32</span>];
-        thread_rng().fill_bytes(<span class="kw-2">&amp;mut </span>msg);
+        <span class="kw">let </span>msg = <span class="kw">crate</span>::random_32_bytes(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>msg).unwrap();
 
         <span class="comment">// Try key generation
-        </span><span class="kw">let </span>(sk, pk) = full.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        </span><span class="kw">let </span>(sk, pk) = full.generate_keypair(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
         <span class="comment">// Try signing
         </span><span class="macro">assert_eq!</span>(sign.sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk), full.sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk));
@@ -738,8 +712,7 @@
         </span><span class="macro">assert!</span>(vrfy.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr).is_ok());
         <span class="macro">assert!</span>(full.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr).is_ok());
 
-        <span class="macro">assert_eq!</span>(vrfy.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr),
-                   full.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr));
+        <span class="macro">assert_eq!</span>(vrfy.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr), full.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr));
         <span class="macro">assert_eq!</span>(full.recover_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigr), <span class="prelude-val">Ok</span>(pk));
     }
 
@@ -751,17 +724,17 @@
 
     <span class="attr">#[test]
     #[cfg(not(fuzzing))]  </span><span class="comment">// fixed sig vectors can&#39;t work with fuzz-sigs
-    </span><span class="attr">#[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[rustfmt::skip]
     </span><span class="kw">fn </span>sign() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
-        s.randomize(<span class="kw-2">&amp;mut </span>thread_rng());
-        <span class="kw">let </span>one: [u8; <span class="number">32</span>] = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
-                             <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>];
+        s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
-        <span class="kw">let </span>sk = SecretKey::from_slice(<span class="kw-2">&amp;</span>one).unwrap();
-        <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>one).unwrap();
+        <span class="kw">let </span>sk = SecretKey::from_slice(<span class="kw-2">&amp;</span>ONE).unwrap();
+        <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>ONE).unwrap();
 
         <span class="kw">let </span>sig = s.sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk);
+
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Ok</span>(sig), RecoverableSignature::from_compact(<span class="kw-2">&amp;</span>[
             <span class="number">0x66</span>, <span class="number">0x73</span>, <span class="number">0xff</span>, <span class="number">0xad</span>, <span class="number">0x21</span>, <span class="number">0x47</span>, <span class="number">0x74</span>, <span class="number">0x1f</span>,
             <span class="number">0x04</span>, <span class="number">0x77</span>, <span class="number">0x2b</span>, <span class="number">0x6f</span>, <span class="number">0x92</span>, <span class="number">0x1f</span>, <span class="number">0x0b</span>, <span class="number">0xa6</span>,
@@ -776,18 +749,18 @@
 
     <span class="attr">#[test]
     #[cfg(not(fuzzing))]  </span><span class="comment">// fixed sig vectors can&#39;t work with fuzz-sigs
-    </span><span class="attr">#[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[rustfmt::skip]
     </span><span class="kw">fn </span>sign_with_noncedata() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
-        s.randomize(<span class="kw-2">&amp;mut </span>thread_rng());
-        <span class="kw">let </span>one: [u8; <span class="number">32</span>] = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
-                             <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>];
+        s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
-        <span class="kw">let </span>sk = SecretKey::from_slice(<span class="kw-2">&amp;</span>one).unwrap();
-        <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>one).unwrap();
+        <span class="kw">let </span>sk = SecretKey::from_slice(<span class="kw-2">&amp;</span>ONE).unwrap();
+        <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>ONE).unwrap();
         <span class="kw">let </span>noncedata = [<span class="number">42u8</span>; <span class="number">32</span>];
 
         <span class="kw">let </span>sig = s.sign_ecdsa_recoverable_with_noncedata(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk, <span class="kw-2">&amp;</span>noncedata);
+
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Ok</span>(sig), RecoverableSignature::from_compact(<span class="kw-2">&amp;</span>[
             <span class="number">0xb5</span>, <span class="number">0x0b</span>, <span class="number">0xb6</span>, <span class="number">0x79</span>, <span class="number">0x5f</span>, <span class="number">0x31</span>, <span class="number">0x74</span>, <span class="number">0x8a</span>,
             <span class="number">0x4d</span>, <span class="number">0x37</span>, <span class="number">0xc3</span>, <span class="number">0xa9</span>, <span class="number">0x7e</span>, <span class="number">0xbd</span>, <span class="number">0x06</span>, <span class="number">0xa2</span>,
@@ -801,22 +774,20 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
     </span><span class="kw">fn </span>sign_and_verify_fail() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
-        s.randomize(<span class="kw-2">&amp;mut </span>thread_rng());
+        s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
-        <span class="kw">let </span><span class="kw-2">mut </span>msg = [<span class="number">0u8</span>; <span class="number">32</span>];
-        thread_rng().fill_bytes(<span class="kw-2">&amp;mut </span>msg);
+        <span class="kw">let </span>msg = <span class="kw">crate</span>::random_32_bytes(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>msg).unwrap();
 
-        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
         <span class="kw">let </span>sigr = s.sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk);
         <span class="kw">let </span>sig = sigr.to_standard();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>msg = [<span class="number">0u8</span>; <span class="number">32</span>];
-        thread_rng().fill_bytes(<span class="kw-2">&amp;mut </span>msg);
+        <span class="kw">let </span>msg = <span class="kw">crate</span>::random_32_bytes(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>msg).unwrap();
         <span class="macro">assert_eq!</span>(s.verify_ecdsa(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sig, <span class="kw-2">&amp;</span>pk), <span class="prelude-val">Err</span>(Error::IncorrectSignature));
 
@@ -825,16 +796,15 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
     </span><span class="kw">fn </span>sign_with_recovery() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
-        s.randomize(<span class="kw-2">&amp;mut </span>thread_rng());
+        s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
-        <span class="kw">let </span><span class="kw-2">mut </span>msg = [<span class="number">0u8</span>; <span class="number">32</span>];
-        thread_rng().fill_bytes(<span class="kw-2">&amp;mut </span>msg);
+        <span class="kw">let </span>msg = <span class="kw">crate</span>::random_32_bytes(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>msg).unwrap();
 
-        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
         <span class="kw">let </span>sig = s.sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk);
 
@@ -842,18 +812,17 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
     </span><span class="kw">fn </span>sign_with_recovery_and_noncedata() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
-        s.randomize(<span class="kw-2">&amp;mut </span>thread_rng());
+        s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
-        <span class="kw">let </span><span class="kw-2">mut </span>msg = [<span class="number">0u8</span>; <span class="number">32</span>];
-        thread_rng().fill_bytes(<span class="kw-2">&amp;mut </span>msg);
+        <span class="kw">let </span>msg = <span class="kw">crate</span>::random_32_bytes(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>msg).unwrap();
 
         <span class="kw">let </span>noncedata = [<span class="number">42u8</span>; <span class="number">32</span>];
 
-        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>(sk, pk) = s.generate_keypair(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
         <span class="kw">let </span>sig = s.sign_ecdsa_recoverable_with_noncedata(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk, <span class="kw-2">&amp;</span>noncedata);
 
@@ -861,10 +830,10 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(all(feature=<span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;rand-std&quot;</span>))]
+    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
     </span><span class="kw">fn </span>bad_recovery() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
-        s.randomize(<span class="kw-2">&amp;mut </span>thread_rng());
+        s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
 
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>[<span class="number">0x55</span>; <span class="number">32</span>]).unwrap();
 
@@ -878,7 +847,8 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_debug_output() {
-        <span class="kw">let </span>sig = RecoverableSignature::from_compact(<span class="kw-2">&amp;</span>[
+        <span class="attr">#[rustfmt::skip]
+        </span><span class="kw">let </span>sig = RecoverableSignature::from_compact(<span class="kw-2">&amp;</span>[
             <span class="number">0x66</span>, <span class="number">0x73</span>, <span class="number">0xff</span>, <span class="number">0xad</span>, <span class="number">0x21</span>, <span class="number">0x47</span>, <span class="number">0x74</span>, <span class="number">0x1f</span>,
             <span class="number">0x04</span>, <span class="number">0x77</span>, <span class="number">0x2b</span>, <span class="number">0x6f</span>, <span class="number">0x92</span>, <span class="number">0x1f</span>, <span class="number">0x0b</span>, <span class="number">0xa6</span>,
             <span class="number">0xaf</span>, <span class="number">0x0c</span>, <span class="number">0x1e</span>, <span class="number">0x77</span>, <span class="number">0xfc</span>, <span class="number">0x43</span>, <span class="number">0x9e</span>, <span class="number">0x65</span>,
@@ -894,7 +864,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_recov_sig_serialize_compact() {
         <span class="kw">let </span>recid_in = RecoveryId(<span class="number">1</span>);
-        <span class="kw">let </span>bytes_in = <span class="kw-2">&amp;</span>[
+        <span class="attr">#[rustfmt::skip]
+        </span><span class="kw">let </span>bytes_in = <span class="kw-2">&amp;</span>[
             <span class="number">0x66</span>, <span class="number">0x73</span>, <span class="number">0xff</span>, <span class="number">0xad</span>, <span class="number">0x21</span>, <span class="number">0x47</span>, <span class="number">0x74</span>, <span class="number">0x1f</span>,
             <span class="number">0x04</span>, <span class="number">0x77</span>, <span class="number">0x2b</span>, <span class="number">0x6f</span>, <span class="number">0x92</span>, <span class="number">0x1f</span>, <span class="number">0x0b</span>, <span class="number">0xa6</span>,
             <span class="number">0xaf</span>, <span class="number">0x0c</span>, <span class="number">0x1e</span>, <span class="number">0x77</span>, <span class="number">0xfc</span>, <span class="number">0x43</span>, <span class="number">0x9e</span>, <span class="number">0x65</span>,
@@ -903,10 +874,7 @@
             <span class="number">0x80</span>, <span class="number">0x12</span>, <span class="number">0x0e</span>, <span class="number">0xf8</span>, <span class="number">0x02</span>, <span class="number">0x5e</span>, <span class="number">0x70</span>, <span class="number">0x9f</span>,
             <span class="number">0xff</span>, <span class="number">0x20</span>, <span class="number">0x80</span>, <span class="number">0xc4</span>, <span class="number">0xa3</span>, <span class="number">0x9a</span>, <span class="number">0xae</span>, <span class="number">0x06</span>,
             <span class="number">0x8d</span>, <span class="number">0x12</span>, <span class="number">0xee</span>, <span class="number">0xd0</span>, <span class="number">0x09</span>, <span class="number">0xb6</span>, <span class="number">0x8c</span>, <span class="number">0x89</span>];
-        <span class="kw">let </span>sig = RecoverableSignature::from_compact(
-            bytes_in,
-            recid_in,
-        ).unwrap();
+        <span class="kw">let </span>sig = RecoverableSignature::from_compact(bytes_in, recid_in).unwrap();
         <span class="kw">let </span>(recid_out, bytes_out) = sig.serialize_compact();
         <span class="macro">assert_eq!</span>(recid_in, recid_out);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>bytes_in[..], <span class="kw-2">&amp;</span>bytes_out[..]);
@@ -928,18 +896,18 @@
 }
 
 <span class="attr">#[cfg(bench)]
+#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)] </span><span class="comment">// Currently only a single bench that requires &quot;rand-std&quot;.
 </span><span class="kw">mod </span>benches {
-    <span class="kw">use </span>rand::{thread_rng, RngCore};
-    <span class="kw">use </span>test::{Bencher, black_box};
+    <span class="kw">use </span>test::{black_box, Bencher};
+
     <span class="kw">use super</span>::{Message, Secp256k1};
 
     <span class="attr">#[bench]
     </span><span class="kw">pub fn </span>bench_recover(bh: <span class="kw-2">&amp;mut </span>Bencher) {
         <span class="kw">let </span>s = Secp256k1::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>msg = [<span class="number">0u8</span>; <span class="number">32</span>];
-        thread_rng().fill_bytes(<span class="kw-2">&amp;mut </span>msg);
+        <span class="kw">let </span>msg = <span class="kw">crate</span>::random_32_bytes(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>msg = Message::from_slice(<span class="kw-2">&amp;</span>msg).unwrap();
-        <span class="kw">let </span>(sk, <span class="kw">_</span>) = s.generate_keypair(<span class="kw-2">&amp;mut </span>thread_rng());
+        <span class="kw">let </span>(sk, <span class="kw">_</span>) = s.generate_keypair(<span class="kw-2">&amp;mut </span>rand::thread_rng());
         <span class="kw">let </span>sig = s.sign_ecdsa_recoverable(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sk);
 
         bh.iter(|| {

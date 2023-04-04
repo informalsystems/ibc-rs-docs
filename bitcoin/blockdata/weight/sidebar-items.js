@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Weight","Represents block weight - the weight of a transaction or block."]]};

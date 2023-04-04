@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ParseIntError","Error with rich context returned when a string can’t be parsed as an integer."]]};
+window.SIDEBAR_ITEMS = {"enum":[["Error","A general error code, other errors should implement conversions to/from this if appropriate."]],"struct":[["ParseIntError","Error with rich context returned when a string can’t be parsed as an integer."]]};

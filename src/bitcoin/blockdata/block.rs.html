@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.29.2/src/blockdata/block.rs`."><title>block.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../bitcoin/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bitcoin-0.30.0/src/blockdata/block.rs`."><title>block.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../bitcoin/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -586,6 +586,60 @@
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
 <a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
 </pre><pre class="rust"><code><span class="comment">// Written in 2014 by Andrew Poelstra &lt;apoelstra@wpsoftware.net&gt;
 // SPDX-License-Identifier: CC0-1.0
 
@@ -601,19 +655,20 @@
 
 <span class="kw">use </span>core::fmt;
 
-<span class="kw">use </span><span class="kw">crate</span>::util;
-<span class="kw">use </span><span class="kw">crate</span>::util::Error::{BlockBadTarget, BlockBadProofOfWork};
-<span class="kw">use </span><span class="kw">crate</span>::util::hash::bitcoin_merkle_root;
+<span class="kw">use </span><span class="kw">crate</span>::merkle_tree;
+<span class="kw">use </span><span class="kw">crate</span>::error::Error::{<span class="self">self</span>, BlockBadTarget, BlockBadProofOfWork};
 <span class="kw">use </span><span class="kw">crate</span>::hashes::{Hash, HashEngine};
-<span class="kw">use </span><span class="kw">crate</span>::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
-<span class="kw">use </span><span class="kw">crate</span>::util::uint::Uint256;
-<span class="kw">use </span><span class="kw">crate</span>::consensus::encode::Encodable;
-<span class="kw">use </span><span class="kw">crate</span>::network::constants::Network;
+<span class="kw">use </span><span class="kw">crate</span>::hash_types::{Wtxid, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
+<span class="kw">use </span><span class="kw">crate</span>::consensus::{encode, Encodable, Decodable};
 <span class="kw">use </span><span class="kw">crate</span>::blockdata::transaction::Transaction;
-<span class="kw">use </span><span class="kw">crate</span>::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 <span class="kw">use </span><span class="kw">crate</span>::blockdata::script;
+<span class="kw">use </span><span class="kw">crate</span>::pow::{CompactTarget, Target, Work};
 <span class="kw">use </span><span class="kw">crate</span>::VarInt;
 <span class="kw">use </span><span class="kw">crate</span>::internal_macros::impl_consensus_encoding;
+<span class="kw">use </span><span class="kw">crate</span>::io;
+<span class="kw">use </span><span class="kw">super</span>::Weight;
+
+<span class="kw">pub use </span><span class="kw">crate</span>::hash_types::BlockHash;
 
 <span class="doccomment">/// Bitcoin block header.
 ///
@@ -628,30 +683,24 @@
 </span><span class="attr">#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(Serialize, Deserialize))]
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde(<span class="kw">crate </span>= <span class="string">&quot;actual_serde&quot;</span>))]
-</span><span class="kw">pub struct </span>BlockHeader {
-    <span class="doccomment">/// Originally protocol version, but repurposed for soft-fork signaling.
-    ///
-    /// ### Relevant BIPs
-    ///
-    /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
-    /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
-    </span><span class="kw">pub </span>version: i32,
+</span><span class="kw">pub struct </span>Header {
+    <span class="doccomment">/// Block version, now repurposed for soft fork signalling.
+    </span><span class="kw">pub </span>version: Version,
     <span class="doccomment">/// Reference to the previous block in the chain.
     </span><span class="kw">pub </span>prev_blockhash: BlockHash,
     <span class="doccomment">/// The root hash of the merkle tree of transactions in the block.
     </span><span class="kw">pub </span>merkle_root: TxMerkleNode,
     <span class="doccomment">/// The timestamp of the block, as claimed by the miner.
     </span><span class="kw">pub </span>time: u32,
-    <span class="doccomment">/// The target value below which the blockhash must lie, encoded as a
-    /// a float (with well-defined rounding, of course).
-    </span><span class="kw">pub </span>bits: u32,
+    <span class="doccomment">/// The target value below which the blockhash must lie.
+    </span><span class="kw">pub </span>bits: CompactTarget,
     <span class="doccomment">/// The nonce, selected to obtain a low enough blockhash.
     </span><span class="kw">pub </span>nonce: u32,
 }
 
-<span class="macro">impl_consensus_encoding!</span>(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+<span class="macro">impl_consensus_encoding!</span>(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
-<span class="kw">impl </span>BlockHeader {
+<span class="kw">impl </span>Header {
     <span class="doccomment">/// Returns the block hash.
     </span><span class="kw">pub fn </span>block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BlockHash {
         <span class="kw">let </span><span class="kw-2">mut </span>engine = BlockHash::engine();
@@ -659,91 +708,126 @@
         BlockHash::from_engine(engine)
     }
 
-    <span class="doccomment">/// Computes the target [0, T] that a blockhash must land in to be valid.
-    </span><span class="kw">pub fn </span>target(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Uint256 {
-        <span class="self">Self</span>::u256_from_compact_target(<span class="self">self</span>.bits)
-    }
-
-    <span class="doccomment">/// Computes the target value in [`Uint256`] format, from a compact representation.
-    ///
-    /// [`Uint256`]: ../../util/uint/struct.Uint256.html
-    ///
-    /// ```
-    /// use bitcoin::blockdata::block::BlockHeader;
-    ///
-    /// assert_eq!(0x1d00ffff,
-    ///     BlockHeader::compact_target_from_u256(
-    ///         &amp;BlockHeader::u256_from_compact_target(0x1d00ffff)
-    ///     )
-    /// );
-    /// ```
-    </span><span class="kw">pub fn </span>u256_from_compact_target(bits: u32) -&gt; Uint256 {
-        <span class="comment">// This is a floating-point &quot;compact&quot; encoding originally used by
-        // OpenSSL, which satoshi put into consensus code, so we&#39;re stuck
-        // with it. The exponent needs to have 3 subtracted from it, hence
-        // this goofy decoding code:
-        </span><span class="kw">let </span>(mant, expt) = {
-            <span class="kw">let </span>unshifted_expt = bits &gt;&gt; <span class="number">24</span>;
-            <span class="kw">if </span>unshifted_expt &lt;= <span class="number">3 </span>{
-                ((bits &amp; <span class="number">0xFFFFFF</span>) &gt;&gt; (<span class="number">8 </span>* (<span class="number">3 </span>- unshifted_expt <span class="kw">as </span>usize)), <span class="number">0</span>)
-            } <span class="kw">else </span>{
-                (bits &amp; <span class="number">0xFFFFFF</span>, <span class="number">8 </span>* ((bits &gt;&gt; <span class="number">24</span>) - <span class="number">3</span>))
-            }
-        };
-
-        <span class="comment">// The mantissa is signed but may not be negative
-        </span><span class="kw">if </span>mant &gt; <span class="number">0x7FFFFF </span>{
-            Default::default()
-        } <span class="kw">else </span>{
-            Uint256::from_u64(mant <span class="kw">as </span>u64).unwrap() &lt;&lt; (expt <span class="kw">as </span>usize)
-        }
-    }
-
-    <span class="doccomment">/// Computes the target value in float format from Uint256 format.
-    </span><span class="kw">pub fn </span>compact_target_from_u256(value: <span class="kw-2">&amp;</span>Uint256) -&gt; u32 {
-        <span class="kw">let </span><span class="kw-2">mut </span>size = (value.bits() + <span class="number">7</span>) / <span class="number">8</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>compact = <span class="kw">if </span>size &lt;= <span class="number">3 </span>{
-            (value.low_u64() &lt;&lt; (<span class="number">8 </span>* (<span class="number">3 </span>- size))) <span class="kw">as </span>u32
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>bn = <span class="kw-2">*</span>value &gt;&gt; (<span class="number">8 </span>* (size - <span class="number">3</span>));
-            bn.low_u32()
-        };
-
-        <span class="kw">if </span>(compact &amp; <span class="number">0x00800000</span>) != <span class="number">0 </span>{
-            compact &gt;&gt;= <span class="number">8</span>;
-            size += <span class="number">1</span>;
-        }
-
-        compact | (size &lt;&lt; <span class="number">24</span>) <span class="kw">as </span>u32
+    <span class="doccomment">/// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
+    </span><span class="kw">pub fn </span>target(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Target {
+        <span class="self">self</span>.bits.into()
     }
 
     <span class="doccomment">/// Computes the popular &quot;difficulty&quot; measure for mining.
-    </span><span class="kw">pub fn </span>difficulty(<span class="kw-2">&amp;</span><span class="self">self</span>, network: Network) -&gt; u64 {
-        (max_target(network) / <span class="self">self</span>.target()).low_u64()
+    </span><span class="kw">pub fn </span>difficulty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u128 {
+        <span class="self">self</span>.target().difficulty()
+    }
+
+    <span class="doccomment">/// Computes the popular &quot;difficulty&quot; measure for mining and returns a float value of f64.
+    </span><span class="kw">pub fn </span>difficulty_float(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+        <span class="self">self</span>.target().difficulty_float()
     }
 
     <span class="doccomment">/// Checks that the proof-of-work for the block is valid, returning the block hash.
-    </span><span class="kw">pub fn </span>validate_pow(<span class="kw-2">&amp;</span><span class="self">self</span>, required_target: <span class="kw-2">&amp;</span>Uint256) -&gt; <span class="prelude-ty">Result</span>&lt;BlockHash, util::Error&gt; {
-        <span class="kw">let </span>target = <span class="kw-2">&amp;</span><span class="self">self</span>.target();
+    </span><span class="kw">pub fn </span>validate_pow(<span class="kw-2">&amp;</span><span class="self">self</span>, required_target: Target) -&gt; <span class="prelude-ty">Result</span>&lt;BlockHash, Error&gt; {
+        <span class="kw">let </span>target = <span class="self">self</span>.target();
         <span class="kw">if </span>target != required_target {
             <span class="kw">return </span><span class="prelude-val">Err</span>(BlockBadTarget);
         }
         <span class="kw">let </span>block_hash = <span class="self">self</span>.block_hash();
-        <span class="kw">let </span><span class="kw-2">mut </span>ret = [<span class="number">0u64</span>; <span class="number">4</span>];
-        util::endian::bytes_to_u64_slice_le(block_hash.as_inner(), <span class="kw-2">&amp;mut </span>ret);
-        <span class="kw">let </span>hash = <span class="kw-2">&amp;</span>Uint256(ret);
-        <span class="kw">if </span>hash &lt;= target { <span class="prelude-val">Ok</span>(block_hash) } <span class="kw">else </span>{ <span class="prelude-val">Err</span>(BlockBadProofOfWork) }
+        <span class="kw">if </span>target.is_met_by(block_hash) {
+            <span class="prelude-val">Ok</span>(block_hash)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(BlockBadProofOfWork)
+        }
     }
 
     <span class="doccomment">/// Returns the total work of the block.
-    </span><span class="kw">pub fn </span>work(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Uint256 {
-        <span class="comment">// 2**256 / (target + 1) == ~target / (target+1) + 1    (eqn shamelessly stolen from bitcoind)
-        </span><span class="kw">let </span><span class="kw-2">mut </span>ret = !<span class="self">self</span>.target();
-        <span class="kw">let </span><span class="kw-2">mut </span>ret1 = <span class="self">self</span>.target();
-        ret1.increment();
-        ret = ret / ret1;
-        ret.increment();
-        ret
+    </span><span class="kw">pub fn </span>work(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Work {
+        <span class="self">self</span>.target().to_work()
+    }
+}
+
+<span class="doccomment">/// Bitcoin block version number.
+///
+/// Originally used as a protocol version, but repurposed for soft-fork signaling.
+///
+/// The inner value is a signed integer in Bitcoin Core for historical reasons, if version bits is
+/// being used the top three bits must be 001, this gives us a useful range of [0x20000000...0x3FFFFFFF].
+///
+/// &gt; When a block nVersion does not have top bits 001, it is treated as if all bits are 0 for the purposes of deployments.
+///
+/// ### Relevant BIPs
+///
+/// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
+/// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
+</span><span class="attr">#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(Serialize, Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde(<span class="kw">crate </span>= <span class="string">&quot;actual_serde&quot;</span>))]
+</span><span class="kw">pub struct </span>Version(i32);
+
+<span class="kw">impl </span>Version {
+    <span class="doccomment">/// The original Bitcoin Block v1.
+    </span><span class="kw">pub const </span>ONE: <span class="self">Self </span>= <span class="self">Self</span>(<span class="number">1</span>);
+
+    <span class="doccomment">/// BIP-34 Block v2.
+    </span><span class="kw">pub const </span>TWO: <span class="self">Self </span>= <span class="self">Self</span>(<span class="number">2</span>);
+
+    <span class="doccomment">/// BIP-9 compatible version number that does not signal for any softforks.
+    </span><span class="kw">pub const </span>NO_SOFT_FORK_SIGNALLING: <span class="self">Self </span>= <span class="self">Self</span>(<span class="self">Self</span>::USE_VERSION_BITS <span class="kw">as </span>i32);
+
+    <span class="doccomment">/// BIP-9 soft fork signal bits mask.
+    </span><span class="kw">const </span>VERSION_BITS_MASK: u32 = <span class="number">0x1FFF_FFFF</span>;
+
+    <span class="doccomment">/// 32bit value starting with `001` to use version bits.
+    ///
+    /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
+    </span><span class="kw">const </span>USE_VERSION_BITS: u32 = <span class="number">0x2000_0000</span>;
+
+    <span class="doccomment">/// Creates a [`Version`] from a signed 32 bit integer value.
+    ///
+    /// This is the data type used in consensus code in Bitcoin Core.
+    </span><span class="kw">pub fn </span>from_consensus(v: i32) -&gt; <span class="self">Self </span>{
+        Version(v)
+    }
+
+    <span class="doccomment">/// Returns the inner `i32` value.
+    ///
+    /// This is the data type used in consensus code in Bitcoin Core.
+    </span><span class="kw">pub fn </span>to_consensus(<span class="self">self</span>) -&gt; i32 {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
+
+    <span class="doccomment">/// Checks whether the version number is signalling a soft fork at the given bit.
+    ///
+    /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
+    /// the version bit for the specific soft fork is toggled on.
+    </span><span class="kw">pub fn </span>is_signalling_soft_fork(<span class="kw-2">&amp;</span><span class="self">self</span>, bit: u8) -&gt; bool {
+        <span class="comment">// Only bits [0, 28] inclusive are used for signalling.
+        </span><span class="kw">if </span>bit &gt; <span class="number">28 </span>{
+            <span class="kw">return </span><span class="bool-val">false</span>;
+        }
+
+        <span class="comment">// To signal using version bits, the first three bits must be `001`.
+        </span><span class="kw">if </span>(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>u32) &amp; !<span class="self">Self</span>::VERSION_BITS_MASK != <span class="self">Self</span>::USE_VERSION_BITS {
+            <span class="kw">return </span><span class="bool-val">false</span>;
+        }
+
+        <span class="comment">// The bit is set if signalling a soft fork.
+        </span>(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>u32 &amp; <span class="self">Self</span>::VERSION_BITS_MASK) &amp; (<span class="number">1 </span>&lt;&lt; bit) &gt; <span class="number">0
+    </span>}
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>Version {
+    <span class="kw">fn </span>default() -&gt; Version {
+        <span class="self">Self</span>::NO_SOFT_FORK_SIGNALLING
+    }
+}
+
+<span class="kw">impl </span>Encodable <span class="kw">for </span>Version {
+    <span class="kw">fn </span>consensus_encode&lt;W: io::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>W) -&gt; <span class="prelude-ty">Result</span>&lt;usize, io::Error&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.consensus_encode(w)
+    }
+}
+
+<span class="kw">impl </span>Decodable <span class="kw">for </span>Version {
+    <span class="kw">fn </span>consensus_decode&lt;R: io::Read + <span class="question-mark">?</span>Sized&gt;(r: <span class="kw-2">&amp;mut </span>R) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, encode::Error&gt; {
+        Decodable::consensus_decode(r).map(Version)
     }
 }
 
@@ -763,7 +847,7 @@
 #[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde(<span class="kw">crate </span>= <span class="string">&quot;actual_serde&quot;</span>))]
 </span><span class="kw">pub struct </span>Block {
     <span class="doccomment">/// The block header
-    </span><span class="kw">pub </span>header: BlockHeader,
+    </span><span class="kw">pub </span>header: Header,
     <span class="doccomment">/// List of transactions contained in the block
     </span><span class="kw">pub </span>txdata: Vec&lt;Transaction&gt;
 }
@@ -776,7 +860,7 @@
         <span class="self">self</span>.header.block_hash()
     }
 
-    <span class="doccomment">/// check if merkle root of header matches merkle root of the transaction list
+    <span class="doccomment">/// Checks if merkle root of header matches merkle root of the transaction list.
     </span><span class="kw">pub fn </span>check_merkle_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">match </span><span class="self">self</span>.compute_merkle_root() {
             <span class="prelude-val">Some</span>(merkle_root) =&gt; <span class="self">self</span>.header.merkle_root == merkle_root,
@@ -803,7 +887,7 @@
 
         <span class="comment">// Commitment is in the last output that starts with magic bytes.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = coinbase.output.iter()
-            .rposition(|o| o.script_pubkey.len () &gt;= <span class="number">38 </span>&amp;&amp; o.script_pubkey[<span class="number">0</span>..<span class="number">6</span>] ==  MAGIC)
+            .rposition(|o| o.script_pubkey.len () &gt;= <span class="number">38 </span>&amp;&amp; o.script_pubkey.as_bytes()[<span class="number">0</span>..<span class="number">6</span>] ==  MAGIC)
         {
             <span class="kw">let </span>commitment = WitnessCommitment::from_slice(<span class="kw-2">&amp;</span>coinbase.output[pos].script_pubkey.as_bytes()[<span class="number">6</span>..<span class="number">38</span>]).unwrap();
             <span class="comment">// Witness reserved value is in coinbase input witness.
@@ -820,14 +904,8 @@
 
     <span class="doccomment">/// Computes the transaction merkle root.
     </span><span class="kw">pub fn </span>compute_merkle_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TxMerkleNode&gt; {
-        <span class="kw">let </span>hashes = <span class="self">self</span>.txdata.iter().map(|obj| obj.txid().as_hash());
-        bitcoin_merkle_root(hashes).map(|h| h.into())
-    }
-
-    <span class="doccomment">/// Calculate the transaction merkle root.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.28.0&quot;</span>, note = <span class="string">&quot;Please use `block::compute_merkle_root` instead.&quot;</span>)]
-    </span><span class="kw">pub fn </span>merkle_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TxMerkleNode&gt; {
-        <span class="self">self</span>.compute_merkle_root()
+        <span class="kw">let </span>hashes = <span class="self">self</span>.txdata.iter().map(|obj| obj.txid().to_raw_hash());
+        merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
     <span class="doccomment">/// Computes the witness commitment for the block&#39;s transaction list.
@@ -843,23 +921,17 @@
         <span class="kw">let </span>hashes = <span class="self">self</span>.txdata.iter().enumerate().map(|(i, t)| {
             <span class="kw">if </span>i == <span class="number">0 </span>{
                 <span class="comment">// Replace the first hash with zeroes.
-                </span>Wtxid::all_zeros().as_hash()
+                </span>Wtxid::all_zeros().to_raw_hash()
             } <span class="kw">else </span>{
-                t.wtxid().as_hash()
+                t.wtxid().to_raw_hash()
             }
         });
-        bitcoin_merkle_root(hashes).map(|h| h.into())
+        merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
     <span class="doccomment">/// base_size == size of header + size of encoded transaction count.
     </span><span class="kw">fn </span>base_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="number">80 </span>+ VarInt(<span class="self">self</span>.txdata.len() <span class="kw">as </span>u64).len()
-    }
-
-    <span class="doccomment">/// Returns the size of the block.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.28.0&quot;</span>, note = <span class="string">&quot;Please use `block::size` instead.&quot;</span>)]
-    </span><span class="kw">pub fn </span>get_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.size()
     }
 
     <span class="doccomment">/// Returns the size of the block.
@@ -871,27 +943,15 @@
     }
 
     <span class="doccomment">/// Returns the strippedsize of the block.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.28.0&quot;</span>, note = <span class="string">&quot;Please use `transaction::strippedsize` instead.&quot;</span>)]
-    </span><span class="kw">pub fn </span>get_strippedsize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.strippedsize()
-    }
-
-    <span class="doccomment">/// Returns the strippedsize of the block.
     </span><span class="kw">pub fn </span>strippedsize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="kw">let </span>txs_size: usize = <span class="self">self</span>.txdata.iter().map(Transaction::strippedsize).sum();
         <span class="self">self</span>.base_size() + txs_size
     }
 
     <span class="doccomment">/// Returns the weight of the block.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.28.0&quot;</span>, note = <span class="string">&quot;Please use `transaction::weight` instead.&quot;</span>)]
-    </span><span class="kw">pub fn </span>get_weight(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.weight()
-    }
-
-    <span class="doccomment">/// Returns the weight of the block.
-    </span><span class="kw">pub fn </span>weight(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="kw">let </span>base_weight = WITNESS_SCALE_FACTOR * <span class="self">self</span>.base_size();
-        <span class="kw">let </span>txs_weight: usize = <span class="self">self</span>.txdata.iter().map(Transaction::weight).sum();
+    </span><span class="kw">pub fn </span>weight(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Weight {
+        <span class="kw">let </span>base_weight = Weight::from_non_witness_data_size(<span class="self">self</span>.base_size() <span class="kw">as </span>u64);
+        <span class="kw">let </span>txs_weight: Weight = <span class="self">self</span>.txdata.iter().map(Transaction::weight).sum();
         base_weight + txs_weight
     }
 
@@ -905,13 +965,13 @@
         <span class="comment">// Citing the spec:
         // Add height as the first item in the coinbase transaction&#39;s scriptSig,
         // and increase block version to 2. The format of the height is
-        // &quot;serialized CScript&quot; -- first byte is number of bytes in the number
+        // &quot;minimally encoded serialized CScript&quot;&quot; -- first byte is number of bytes in the number
         // (will be 0x03 on main net for the next 150 or so years with 2^23-1
         // blocks), following bytes are little-endian representation of the
         // number (including a sign bit). Height is the height of the mined
         // block in the block chain, where the genesis block is height zero (0).
 
-        </span><span class="kw">if </span><span class="self">self</span>.header.version &lt; <span class="number">2 </span>{
+        </span><span class="kw">if </span><span class="self">self</span>.header.version &lt; Version::TWO {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Bip34Error::Unsupported);
         }
 
@@ -919,14 +979,14 @@
         <span class="kw">let </span>input = cb.input.first().ok_or(Bip34Error::NotPresent)<span class="question-mark">?</span>;
         <span class="kw">let </span>push = input.script_sig.instructions_minimal().next().ok_or(Bip34Error::NotPresent)<span class="question-mark">?</span>;
         <span class="kw">match </span>push.map_err(|<span class="kw">_</span>| Bip34Error::NotPresent)<span class="question-mark">? </span>{
-            script::Instruction::PushBytes(b) <span class="kw">if </span>b.len() &lt;= <span class="number">8 </span>=&gt; {
-                <span class="comment">// Expand the push to exactly 8 bytes (LE).
-                </span><span class="kw">let </span><span class="kw-2">mut </span>full = [<span class="number">0</span>; <span class="number">8</span>];
-                full[<span class="number">0</span>..b.len()].copy_from_slice(b);
-                <span class="prelude-val">Ok</span>(util::endian::slice_to_u64_le(<span class="kw-2">&amp;</span>full))
-            }
-            script::Instruction::PushBytes(b) <span class="kw">if </span>b.len() &gt; <span class="number">8 </span>=&gt; {
-                <span class="prelude-val">Err</span>(Bip34Error::UnexpectedPush(b.to_vec()))
+            script::Instruction::PushBytes(b) =&gt; {
+                <span class="comment">// Check that the number is encoded in the minimal way.
+                </span><span class="kw">let </span>h = script::read_scriptint(b.as_bytes()).map_err(|_e| Bip34Error::UnexpectedPush(b.as_bytes().to_vec()))<span class="question-mark">?</span>;
+                <span class="kw">if </span>h &lt; <span class="number">0 </span>{
+                    <span class="prelude-val">Err</span>(Bip34Error::NegativeHeight)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">Ok</span>(h <span class="kw">as </span>u64)
+                }
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Bip34Error::NotPresent),
         }
@@ -943,6 +1003,8 @@
     </span>NotPresent,
     <span class="doccomment">/// The BIP34 push was larger than 8 bytes.
     </span>UnexpectedPush(Vec&lt;u8&gt;),
+    <span class="doccomment">/// The BIP34 push was negative.
+    </span>NegativeHeight,
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>Bip34Error {
@@ -953,6 +1015,7 @@
             Bip34Error::UnexpectedPush(<span class="kw-2">ref </span>p) =&gt; {
                 <span class="macro">write!</span>(f, <span class="string">&quot;unexpected byte push of &gt; 8 bytes: {:?}&quot;</span>, p)
             }
+            Bip34Error::NegativeHeight =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;negative BIP34 height&quot;</span>),
         }
     }
 }
@@ -964,26 +1027,51 @@
         <span class="kw">use </span><span class="self">self</span>::Bip34Error::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self </span>{
-            Unsupported | NotPresent | UnexpectedPush(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Unsupported |
+            NotPresent |
+            UnexpectedPush(<span class="kw">_</span>) |
+            NegativeHeight =&gt; <span class="prelude-val">None</span>,
         }
+    }
+}
+
+<span class="kw">impl </span>From&lt;Header&gt; <span class="kw">for </span>BlockHash {
+    <span class="kw">fn </span>from(header: Header) -&gt; BlockHash {
+        header.block_hash()
+    }
+}
+
+<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>Header&gt; <span class="kw">for </span>BlockHash {
+    <span class="kw">fn </span>from(header: <span class="kw-2">&amp;</span>Header) -&gt; BlockHash {
+        header.block_hash()
+    }
+}
+
+<span class="kw">impl </span>From&lt;Block&gt; <span class="kw">for </span>BlockHash {
+    <span class="kw">fn </span>from(block: Block) -&gt; BlockHash {
+        block.block_hash()
+    }
+}
+
+<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>Block&gt; <span class="kw">for </span>BlockHash {
+    <span class="kw">fn </span>from(block: <span class="kw-2">&amp;</span>Block) -&gt; BlockHash {
+        block.block_hash()
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">crate</span>::hashes::hex::FromHex;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use </span><span class="kw">crate</span>::blockdata::block::{Block, BlockHeader};
+    <span class="kw">use </span><span class="kw">crate</span>::hashes::hex::FromHex;
     <span class="kw">use </span><span class="kw">crate</span>::consensus::encode::{deserialize, serialize};
-    <span class="kw">use </span><span class="kw">crate</span>::util::uint::Uint256;
-    <span class="kw">use </span><span class="kw">crate</span>::util::Error::{BlockBadTarget, BlockBadProofOfWork};
-    <span class="kw">use </span><span class="kw">crate</span>::network::constants::Network;
+    <span class="kw">use </span><span class="kw">crate</span>::internal_macros::hex;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_coinbase_and_bip34() {
         <span class="comment">// testnet block 100,000
-        </span><span class="kw">let </span>block_hex = <span class="string">&quot;0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703a08601000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000&quot;</span>;
-        <span class="kw">let </span>block: Block = deserialize(<span class="kw-2">&amp;</span>Vec::&lt;u8&gt;::from_hex(block_hex).unwrap()).unwrap();
+        </span><span class="kw">const </span>BLOCK_HEX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703a08601000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000&quot;</span>;
+        <span class="kw">let </span>block: Block = deserialize(<span class="kw-2">&amp;</span><span class="macro">hex!</span>(BLOCK_HEX)).unwrap();
 
         <span class="kw">let </span>cb_txid = <span class="string">&quot;d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38&quot;</span>;
         <span class="macro">assert_eq!</span>(block.coinbase().unwrap().txid().to_string(), cb_txid);
@@ -992,8 +1080,8 @@
 
 
         <span class="comment">// block with 9-byte bip34 push
-        </span><span class="kw">let </span>bad_hex = <span class="string">&quot;0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3d09a08601112233445566000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000&quot;</span>;
-        <span class="kw">let </span>bad: Block = deserialize(<span class="kw-2">&amp;</span>Vec::&lt;u8&gt;::from_hex(bad_hex).unwrap()).unwrap();
+        </span><span class="kw">const </span>BAD_HEX: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3d09a08601112233445566000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000&quot;</span>;
+        <span class="kw">let </span>bad: Block = deserialize(<span class="kw-2">&amp;</span><span class="macro">hex!</span>(BAD_HEX)).unwrap();
 
         <span class="kw">let </span>push = Vec::&lt;u8&gt;::from_hex(<span class="string">&quot;a08601112233445566&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(bad.bip34_block_height(), <span class="prelude-val">Err</span>(<span class="kw">super</span>::Bip34Error::UnexpectedPush(push)));
@@ -1002,12 +1090,12 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>block_test() {
         <span class="comment">// Mainnet block 00000000b0c5a240b2a61d2e75692224efd4cbecdf6eaf4cc2cf477ca7c270e7
-        </span><span class="kw">let </span>some_block = Vec::from_hex(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000&quot;</span>).unwrap();
-        <span class="kw">let </span>cutoff_block = Vec::from_hex(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac&quot;</span>).unwrap();
+        </span><span class="kw">let </span>some_block = <span class="macro">hex!</span>(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000&quot;</span>);
+        <span class="kw">let </span>cutoff_block = <span class="macro">hex!</span>(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac&quot;</span>);
 
-        <span class="kw">let </span>prevhash = Vec::from_hex(<span class="string">&quot;4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000&quot;</span>).unwrap();
-        <span class="kw">let </span>merkle = Vec::from_hex(<span class="string">&quot;bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c&quot;</span>).unwrap();
-        <span class="kw">let </span>work = Uint256([<span class="number">0x100010001u64</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
+        <span class="kw">let </span>prevhash = <span class="macro">hex!</span>(<span class="string">&quot;4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000&quot;</span>);
+        <span class="kw">let </span>merkle = <span class="macro">hex!</span>(<span class="string">&quot;bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c&quot;</span>);
+        <span class="kw">let </span>work = Work::from(<span class="number">0x100010001_u128</span>);
 
         <span class="kw">let </span>decode: <span class="prelude-ty">Result</span>&lt;Block, <span class="kw">_</span>&gt; = deserialize(<span class="kw-2">&amp;</span>some_block);
         <span class="kw">let </span>bad_decode: <span class="prelude-ty">Result</span>&lt;Block, <span class="kw">_</span>&gt; = deserialize(<span class="kw-2">&amp;</span>cutoff_block);
@@ -1015,21 +1103,22 @@
         <span class="macro">assert!</span>(decode.is_ok());
         <span class="macro">assert!</span>(bad_decode.is_err());
         <span class="kw">let </span>real_decode = decode.unwrap();
-        <span class="macro">assert_eq!</span>(real_decode.header.version, <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.version, Version(<span class="number">1</span>));
         <span class="macro">assert_eq!</span>(serialize(<span class="kw-2">&amp;</span>real_decode.header.prev_blockhash), prevhash);
         <span class="macro">assert_eq!</span>(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         <span class="macro">assert_eq!</span>(serialize(<span class="kw-2">&amp;</span>real_decode.header.merkle_root), merkle);
         <span class="macro">assert_eq!</span>(real_decode.header.time, <span class="number">1231965655</span>);
-        <span class="macro">assert_eq!</span>(real_decode.header.bits, <span class="number">486604799</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.bits, CompactTarget::from_consensus(<span class="number">486604799</span>));
         <span class="macro">assert_eq!</span>(real_decode.header.nonce, <span class="number">2067413810</span>);
         <span class="macro">assert_eq!</span>(real_decode.header.work(), work);
-        <span class="macro">assert_eq!</span>(real_decode.header.validate_pow(<span class="kw-2">&amp;</span>real_decode.header.target()).unwrap(), real_decode.block_hash());
-        <span class="macro">assert_eq!</span>(real_decode.header.difficulty(Network::Bitcoin), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.validate_pow(real_decode.header.target()).unwrap(), real_decode.block_hash());
+        <span class="macro">assert_eq!</span>(real_decode.header.difficulty(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.difficulty_float(), <span class="number">1.0</span>);
         <span class="comment">// [test] TODO: check the transaction data
 
         </span><span class="macro">assert_eq!</span>(real_decode.size(), some_block.len());
         <span class="macro">assert_eq!</span>(real_decode.strippedsize(), some_block.len());
-        <span class="macro">assert_eq!</span>(real_decode.weight(), some_block.len() * <span class="number">4</span>);
+        <span class="macro">assert_eq!</span>(real_decode.weight(), Weight::from_non_witness_data_size(some_block.len() <span class="kw">as </span>u64));
 
         <span class="comment">// should be also ok for a non-witness block as commitment is optional in that case
         </span><span class="macro">assert!</span>(real_decode.check_witness_commitment());
@@ -1040,31 +1129,32 @@
     <span class="comment">// Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>segwit_block_test() {
-        <span class="kw">let </span>segwit_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../test_data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw&quot;</span>).to_vec();
+        <span class="kw">let </span>segwit_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw&quot;</span>).to_vec();
 
         <span class="kw">let </span>decode: <span class="prelude-ty">Result</span>&lt;Block, <span class="kw">_</span>&gt; = deserialize(<span class="kw-2">&amp;</span>segwit_block);
 
-        <span class="kw">let </span>prevhash = Vec::from_hex(<span class="string">&quot;2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000&quot;</span>).unwrap();
-        <span class="kw">let </span>merkle = Vec::from_hex(<span class="string">&quot;10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e&quot;</span>).unwrap();
-        <span class="kw">let </span>work = Uint256([<span class="number">0x257c3becdacc64u64</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
+        <span class="kw">let </span>prevhash = <span class="macro">hex!</span>(<span class="string">&quot;2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000&quot;</span>);
+        <span class="kw">let </span>merkle = <span class="macro">hex!</span>(<span class="string">&quot;10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e&quot;</span>);
+        <span class="kw">let </span>work = Work::from(<span class="number">0x257c3becdacc64_u64</span>);
 
         <span class="macro">assert!</span>(decode.is_ok());
         <span class="kw">let </span>real_decode = decode.unwrap();
-        <span class="macro">assert_eq!</span>(real_decode.header.version, <span class="number">0x20000000</span>);  <span class="comment">// VERSIONBITS but no bits set
+        <span class="macro">assert_eq!</span>(real_decode.header.version, Version(Version::USE_VERSION_BITS <span class="kw">as </span>i32));  <span class="comment">// VERSIONBITS but no bits set
         </span><span class="macro">assert_eq!</span>(serialize(<span class="kw-2">&amp;</span>real_decode.header.prev_blockhash), prevhash);
         <span class="macro">assert_eq!</span>(serialize(<span class="kw-2">&amp;</span>real_decode.header.merkle_root), merkle);
         <span class="macro">assert_eq!</span>(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         <span class="macro">assert_eq!</span>(real_decode.header.time, <span class="number">1472004949</span>);
-        <span class="macro">assert_eq!</span>(real_decode.header.bits, <span class="number">0x1a06d450</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.bits, CompactTarget::from_consensus(<span class="number">0x1a06d450</span>));
         <span class="macro">assert_eq!</span>(real_decode.header.nonce, <span class="number">1879759182</span>);
         <span class="macro">assert_eq!</span>(real_decode.header.work(), work);
-        <span class="macro">assert_eq!</span>(real_decode.header.validate_pow(<span class="kw-2">&amp;</span>real_decode.header.target()).unwrap(), real_decode.block_hash());
-        <span class="macro">assert_eq!</span>(real_decode.header.difficulty(Network::Testnet), <span class="number">2456598</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.validate_pow(real_decode.header.target()).unwrap(), real_decode.block_hash());
+        <span class="macro">assert_eq!</span>(real_decode.header.difficulty(), <span class="number">2456598</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.difficulty_float(), <span class="number">2456598.4399242126</span>);
         <span class="comment">// [test] TODO: check the transaction data
 
         </span><span class="macro">assert_eq!</span>(real_decode.size(), segwit_block.len());
         <span class="macro">assert_eq!</span>(real_decode.strippedsize(), <span class="number">4283</span>);
-        <span class="macro">assert_eq!</span>(real_decode.weight(), <span class="number">17168</span>);
+        <span class="macro">assert_eq!</span>(real_decode.weight(), Weight::from_wu(<span class="number">17168</span>));
 
         <span class="macro">assert!</span>(real_decode.check_witness_commitment());
 
@@ -1073,35 +1163,35 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>block_version_test() {
-        <span class="kw">let </span>block = Vec::from_hex(<span class="string">&quot;ffffff7f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000&quot;</span>).unwrap();
+        <span class="kw">let </span>block = <span class="macro">hex!</span>(<span class="string">&quot;ffffff7f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000&quot;</span>);
         <span class="kw">let </span>decode: <span class="prelude-ty">Result</span>&lt;Block, <span class="kw">_</span>&gt; = deserialize(<span class="kw-2">&amp;</span>block);
         <span class="macro">assert!</span>(decode.is_ok());
         <span class="kw">let </span>real_decode = decode.unwrap();
-        <span class="macro">assert_eq!</span>(real_decode.header.version, <span class="number">2147483647</span>);
+        <span class="macro">assert_eq!</span>(real_decode.header.version, Version(<span class="number">2147483647</span>));
 
-        <span class="kw">let </span>block2 = Vec::from_hex(<span class="string">&quot;000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000&quot;</span>).unwrap();
+        <span class="kw">let </span>block2 = <span class="macro">hex!</span>(<span class="string">&quot;000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000&quot;</span>);
         <span class="kw">let </span>decode2: <span class="prelude-ty">Result</span>&lt;Block, <span class="kw">_</span>&gt; = deserialize(<span class="kw-2">&amp;</span>block2);
         <span class="macro">assert!</span>(decode2.is_ok());
         <span class="kw">let </span>real_decode2 = decode2.unwrap();
-        <span class="macro">assert_eq!</span>(real_decode2.header.version, -<span class="number">2147483648</span>);
+        <span class="macro">assert_eq!</span>(real_decode2.header.version, Version(-<span class="number">2147483648</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>validate_pow_test() {
-        <span class="kw">let </span>some_header = Vec::from_hex(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b&quot;</span>).unwrap();
-        <span class="kw">let </span>some_header: BlockHeader = deserialize(<span class="kw-2">&amp;</span>some_header).expect(<span class="string">&quot;Can&#39;t deserialize correct block header&quot;</span>);
-        <span class="macro">assert_eq!</span>(some_header.validate_pow(<span class="kw-2">&amp;</span>some_header.target()).unwrap(), some_header.block_hash());
+        <span class="kw">let </span>some_header = <span class="macro">hex!</span>(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b&quot;</span>);
+        <span class="kw">let </span>some_header: Header = deserialize(<span class="kw-2">&amp;</span>some_header).expect(<span class="string">&quot;Can&#39;t deserialize correct block header&quot;</span>);
+        <span class="macro">assert_eq!</span>(some_header.validate_pow(some_header.target()).unwrap(), some_header.block_hash());
 
         <span class="comment">// test with zero target
-        </span><span class="kw">match </span>some_header.validate_pow(<span class="kw-2">&amp;</span>Uint256::default()) {
+        </span><span class="kw">match </span>some_header.validate_pow(Target::ZERO) {
             <span class="prelude-val">Err</span>(BlockBadTarget) =&gt; (),
             <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected result from validate_pow&quot;</span>),
         }
 
         <span class="comment">// test with modified header
-        </span><span class="kw">let </span><span class="kw-2">mut </span>invalid_header: BlockHeader = some_header;
-        invalid_header.version += <span class="number">1</span>;
-        <span class="kw">match </span>invalid_header.validate_pow(<span class="kw-2">&amp;</span>invalid_header.target()) {
+        </span><span class="kw">let </span><span class="kw-2">mut </span>invalid_header: Header = some_header;
+        invalid_header.version.<span class="number">0 </span>+= <span class="number">1</span>;
+        <span class="kw">match </span>invalid_header.validate_pow(invalid_header.target()) {
             <span class="prelude-val">Err</span>(BlockBadProofOfWork) =&gt; (),
             <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected result from validate_pow&quot;</span>),
         }
@@ -1109,11 +1199,29 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>compact_roundrtip_test() {
-        <span class="kw">let </span>some_header = Vec::from_hex(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b&quot;</span>).unwrap();
+        <span class="kw">let </span>some_header = <span class="macro">hex!</span>(<span class="string">&quot;010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b&quot;</span>);
 
-        <span class="kw">let </span>header: BlockHeader = deserialize(<span class="kw-2">&amp;</span>some_header).expect(<span class="string">&quot;Can&#39;t deserialize correct block header&quot;</span>);
+        <span class="kw">let </span>header: Header = deserialize(<span class="kw-2">&amp;</span>some_header).expect(<span class="string">&quot;Can&#39;t deserialize correct block header&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(header.bits, BlockHeader::compact_target_from_u256(<span class="kw-2">&amp;</span>header.target()));
+        <span class="macro">assert_eq!</span>(header.bits, header.target().to_compact_lossy());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>soft_fork_signalling() {
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">31 </span>{
+            <span class="kw">let </span>version_int = (<span class="number">0x20000000u32 </span>^ <span class="number">1</span>&lt;&lt;i) <span class="kw">as </span>i32;
+            <span class="kw">let </span>version = Version(version_int);
+            <span class="kw">if </span>i &lt; <span class="number">29 </span>{
+                <span class="macro">assert!</span>(version.is_signalling_soft_fork(i));
+            } <span class="kw">else </span>{
+                <span class="macro">assert!</span>(!version.is_signalling_soft_fork(i));
+            }
+        }
+
+        <span class="kw">let </span>segwit_signal = Version(<span class="number">0x20000000 </span>^ <span class="number">1</span>&lt;&lt;<span class="number">1</span>);
+        <span class="macro">assert!</span>(!segwit_signal.is_signalling_soft_fork(<span class="number">0</span>));
+        <span class="macro">assert!</span>(segwit_signal.is_signalling_soft_fork(<span class="number">1</span>));
+        <span class="macro">assert!</span>(!segwit_signal.is_signalling_soft_fork(<span class="number">2</span>));
     }
 }
 
@@ -1126,7 +1234,7 @@
 
     <span class="attr">#[bench]
     </span><span class="kw">pub fn </span>bench_stream_reader(bh: <span class="kw-2">&amp;mut </span>Bencher) {
-        <span class="kw">let </span>big_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
+        <span class="kw">let </span>big_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
         <span class="macro">assert_eq!</span>(big_block.len(), <span class="number">1_381_836</span>);
         <span class="kw">let </span>big_block = black_box(big_block);
 
@@ -1139,7 +1247,7 @@
 
     <span class="attr">#[bench]
     </span><span class="kw">pub fn </span>bench_block_serialize(bh: <span class="kw-2">&amp;mut </span>Bencher) {
-        <span class="kw">let </span>raw_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
+        <span class="kw">let </span>raw_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
 
         <span class="kw">let </span>block: Block = deserialize(<span class="kw-2">&amp;</span>raw_block[..]).unwrap();
 
@@ -1154,7 +1262,7 @@
 
     <span class="attr">#[bench]
     </span><span class="kw">pub fn </span>bench_block_serialize_logic(bh: <span class="kw-2">&amp;mut </span>Bencher) {
-        <span class="kw">let </span>raw_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
+        <span class="kw">let </span>raw_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
 
         <span class="kw">let </span>block: Block = deserialize(<span class="kw-2">&amp;</span>raw_block[..]).unwrap();
 
@@ -1166,7 +1274,7 @@
 
     <span class="attr">#[bench]
     </span><span class="kw">pub fn </span>bench_block_deserialize(bh: <span class="kw-2">&amp;mut </span>Bencher) {
-        <span class="kw">let </span>raw_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
+        <span class="kw">let </span>raw_block = <span class="macro">include_bytes!</span>(<span class="string">&quot;../../tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw&quot;</span>);
 
         bh.iter(|| {
             <span class="kw">let </span>block: Block = deserialize(<span class="kw-2">&amp;</span>raw_block[..]).unwrap();

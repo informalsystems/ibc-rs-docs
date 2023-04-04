@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Hash","Output of the SHA256 hash function."],["HashEngine","Engine to compute SHA512 hash function."]]};
+window.SIDEBAR_ITEMS = {"struct":[["Hash","Output of the SHA512 hash function."],["HashEngine","Engine to compute SHA512 hash function."]]};

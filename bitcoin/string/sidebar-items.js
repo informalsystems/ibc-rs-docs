@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["FromHexError","Hex parsing error"]],"trait":[["FromHexStr","Trait that allows types to be initialized from hex strings"]]};

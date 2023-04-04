@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["hex","Creates a byte array const value from hex &str const value."]]};
