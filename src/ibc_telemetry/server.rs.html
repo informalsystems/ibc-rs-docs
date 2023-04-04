@@ -66,93 +66,73 @@
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-</pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
-<span class="kw">use </span>std::error::Error;
-<span class="kw">use </span>std::net::ToSocketAddrs;
+</pre><pre class="rust"><code><span class="kw">use </span>std::error::Error;
+<span class="kw">use </span>std::net::SocketAddr;
+<span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">use </span>axum::extract::Query;
+<span class="kw">use </span>axum::response::IntoResponse;
+<span class="kw">use </span>axum::routing::get;
+<span class="kw">use </span>axum::{Extension, Router};
 
 <span class="kw">use </span>prometheus::{Encoder, TextEncoder};
-<span class="kw">use </span>rouille::{Request, Response, Server};
 
 <span class="kw">use </span><span class="kw">crate</span>::encoder::JsonEncoder;
 <span class="kw">use </span><span class="kw">crate</span>::state::TelemetryState;
 
-<span class="kw">enum </span>Format {
-    Text,
-    Json,
+<span class="attr">#[derive(Copy, Clone, Debug, Default, serde::Deserialize)]
+</span><span class="kw">enum </span>Format {
+    <span class="attr">#[serde(rename = <span class="string">&quot;text&quot;</span>)]
+    #[default]
+    </span>Text,
+
+    <span class="attr">#[serde(rename = <span class="string">&quot;json&quot;</span>)]
+    </span>Json,
 }
 
-<span class="kw">enum </span>Route {
-    Metrics(Format),
-    Other,
+<span class="attr">#[derive(Copy, Clone, Debug, serde::Deserialize)]
+</span><span class="kw">struct </span>Metrics {
+    format: <span class="prelude-ty">Option</span>&lt;Format&gt;,
 }
 
-<span class="kw">impl </span>Route {
-    <span class="kw">fn </span>from_request(request: <span class="kw-2">&amp;</span>Request) -&gt; Route {
-        <span class="kw">if </span>request.url() == <span class="string">&quot;/metrics&quot; </span>{
-            <span class="kw">let </span>format = request
-                .get_param(<span class="string">&quot;format&quot;</span>)
-                .and_then(|f| <span class="kw">match </span>f.as_str() {
-                    <span class="string">&quot;json&quot; </span>=&gt; <span class="prelude-val">Some</span>(Format::Json),
-                    <span class="string">&quot;text&quot; </span>=&gt; <span class="prelude-val">Some</span>(Format::Text),
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-                })
-                .unwrap_or(Format::Text);
+<span class="kw">pub async fn </span>listen(
+    addr: SocketAddr,
+    state: Arc&lt;TelemetryState&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
+    <span class="kw">let </span>app = Router::new()
+        .route(<span class="string">&quot;/metrics&quot;</span>, get(get_metrics))
+        .layer(Extension(state));
 
-            Route::Metrics(format)
-        } <span class="kw">else </span>{
-            Route::Other
+    axum::Server::bind(<span class="kw-2">&amp;</span>addr)
+        .serve(app.into_make_service())
+        .<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">async fn </span>get_metrics(
+    Extension(state): Extension&lt;Arc&lt;TelemetryState&gt;&gt;,
+    Query(query): Query&lt;Metrics&gt;,
+) -&gt; <span class="kw">impl </span>IntoResponse {
+    <span class="kw">match </span>query.format.unwrap_or_default() {
+        Format::Text =&gt; {
+            <span class="kw">let </span>encoder = TextEncoder::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>buffer = Vec::new();
+            encoder.encode(<span class="kw-2">&amp;</span>state.gather(), <span class="kw-2">&amp;mut </span>buffer).unwrap();
+
+            ([(<span class="string">&quot;content-type&quot;</span>, <span class="string">&quot;text/plain; charset=utf-8&quot;</span>)], buffer)
+        }
+        Format::Json =&gt; {
+            <span class="kw">let </span>encoder = JsonEncoder::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>buffer = Vec::new();
+            encoder.encode(<span class="kw-2">&amp;</span>state.gather(), <span class="kw-2">&amp;mut </span>buffer).unwrap();
+
+            (
+                [(<span class="string">&quot;content-type&quot;</span>, <span class="string">&quot;application/javascript; charset=utf-8&quot;</span>)],
+                buffer,
+            )
         }
     }
-}
-
-<span class="kw">pub fn </span>listen(
-    address: <span class="kw">impl </span>ToSocketAddrs,
-    telemetry_state: Arc&lt;TelemetryState&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Server&lt;<span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>Request) -&gt; Response&gt;, Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
-    <span class="kw">let </span>server = Server::new(address, <span class="kw">move </span>|request| {
-        <span class="kw">match </span>Route::from_request(request) {
-            <span class="comment">// The prometheus endpoint
-            </span>Route::Metrics(format) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>buffer = <span class="macro">vec!</span>[];
-
-                <span class="kw">match </span>format {
-                    Format::Json =&gt; {
-                        <span class="kw">let </span>encoder = JsonEncoder::new();
-                        encoder
-                            .encode(<span class="kw-2">&amp;</span>telemetry_state.gather(), <span class="kw-2">&amp;mut </span>buffer)
-                            .unwrap();
-
-                        rouille::Response::from_data(encoder.format_type().to_string(), buffer)
-                    }
-
-                    Format::Text =&gt; {
-                        <span class="kw">let </span>encoder = TextEncoder::new();
-                        encoder
-                            .encode(<span class="kw-2">&amp;</span>telemetry_state.gather(), <span class="kw-2">&amp;mut </span>buffer)
-                            .unwrap();
-
-                        rouille::Response::from_data(encoder.format_type().to_string(), buffer)
-                    }
-                }
-            }
-
-            <span class="comment">// Any other route
-            // Return an empty response with a 404 status code.
-            </span>Route::Other =&gt; rouille::Response::empty_404(),
-        }
-    })<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(server)
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_telemetry" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (ef934d9b6 2023-02-08)" data-search-js="search-28136cea55c34037.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

@@ -212,6 +212,29 @@
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
 <a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
 </pre><pre class="rust"><code><span class="kw">use </span>ibc_relayer::supervisor::SupervisorOptions;
 <span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::io;
@@ -243,7 +266,12 @@
     <span class="kw">fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let </span>config = (<span class="kw-2">*</span>app_config()).clone();
 
-        <span class="kw">let </span>supervisor_handle = make_supervisor::&lt;CachingChainHandle&gt;(config, <span class="self">self</span>.full_scan)
+        <span class="kw">let </span>options = SupervisorOptions {
+            force_full_scan: <span class="self">self</span>.full_scan,
+            health_check: <span class="bool-val">true</span>,
+        };
+
+        <span class="kw">let </span>supervisor_handle = make_supervisor::&lt;CachingChainHandle&gt;(config, options)
             .unwrap_or_else(|e| {
                 Output::error(<span class="macro">format!</span>(<span class="string">&quot;Hermes failed to start, last error: {e}&quot;</span>)).exit()
             });
@@ -317,18 +345,40 @@
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;rest-server&quot;</span>)]
 </span><span class="kw">fn </span>spawn_rest_server(config: <span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Option</span>&lt;rest::Receiver&gt; {
+    <span class="kw">use </span>ibc_relayer::util::spawn_blocking;
+
     <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">&quot;rest&quot;</span>).entered();
 
     <span class="kw">let </span>rest = config.rest.clone();
 
-    <span class="kw">if </span>rest.enabled {
-        <span class="kw">let </span>rest_config = ibc_relayer_rest::Config::new(rest.host, rest.port);
-        <span class="kw">let </span>(<span class="kw">_</span>, rest_receiver) = ibc_relayer_rest::server::spawn(rest_config);
-        <span class="prelude-val">Some</span>(rest_receiver)
-    } <span class="kw">else </span>{
+    <span class="kw">if </span>!rest.enabled {
         <span class="macro">info!</span>(<span class="string">&quot;REST server disabled&quot;</span>);
-        <span class="prelude-val">None
-    </span>}
+        <span class="kw">return </span><span class="prelude-val">None</span>;
+    }
+
+    <span class="kw">let </span>(tx, rx) = crossbeam_channel::unbounded();
+
+    spawn_blocking(<span class="kw">async move </span>{
+        <span class="kw">let </span>result = ibc_relayer_rest::spawn((rest.host.as_str(), rest.port), tx);
+
+        <span class="kw">match </span>result {
+            <span class="prelude-val">Ok</span>(handle) =&gt; {
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;REST service running, exposing REST API at http://{}:{}&quot;</span>,
+                    rest.host, rest.port
+                );
+
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = handle.<span class="kw">await </span>{
+                    <span class="macro">error!</span>(<span class="string">&quot;REST service crashed with errror: {e}&quot;</span>);
+                }
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(<span class="string">&quot;REST service failed to start: {e}&quot;</span>);
+            }
+        }
+    });
+
+    <span class="prelude-val">Some</span>(rx)
 }
 
 <span class="attr">#[cfg(not(feature = <span class="string">&quot;rest-server&quot;</span>))]
@@ -348,60 +398,56 @@
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;telemetry&quot;</span>)]
-</span><span class="kw">fn </span>spawn_telemetry_server(config: <span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
+</span><span class="kw">fn </span>spawn_telemetry_server(config: <span class="kw-2">&amp;</span>Config) {
+    <span class="kw">use </span>ibc_relayer::util::spawn_blocking;
+
     <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">&quot;telemetry&quot;</span>).entered();
 
     <span class="kw">let </span>state = ibc_telemetry::global();
-
     <span class="kw">let </span>telemetry = config.telemetry.clone();
-    <span class="kw">if </span>telemetry.enabled {
-        <span class="kw">match </span>ibc_telemetry::spawn((telemetry.host, telemetry.port), state.clone()) {
-            <span class="prelude-val">Ok</span>((addr, <span class="kw">_</span>)) =&gt; {
-                <span class="macro">info!</span>(
-                    <span class="string">&quot;telemetry service running, exposing metrics at http://{}/metrics&quot;</span>,
-                    addr
-                );
-            }
-            <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">error!</span>(<span class="string">&quot;telemetry service failed to start: {}&quot;</span>, e);
-                <span class="kw">return </span><span class="prelude-val">Err</span>(e);
-            }
-        }
+
+    <span class="kw">if </span>!telemetry.enabled {
+        <span class="macro">info!</span>(<span class="string">&quot;telemetry disabled&quot;</span>);
+        <span class="kw">return</span>;
     }
 
-    <span class="prelude-val">Ok</span>(())
+    spawn_blocking(<span class="kw">async move </span>{
+        <span class="kw">let </span>result = ibc_telemetry::spawn((telemetry.host, telemetry.port), state.clone());
+
+        <span class="kw">match </span>result {
+            <span class="prelude-val">Ok</span>((addr, handle)) =&gt; {
+                <span class="macro">info!</span>(<span class="string">&quot;telemetry service running, exposing metrics at http://{addr}/metrics&quot;</span>);
+
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = handle.<span class="kw">await </span>{
+                    <span class="macro">error!</span>(<span class="string">&quot;telemetry service crashed with errror: {e}&quot;</span>);
+                }
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(<span class="string">&quot;telemetry service failed to start: {e}&quot;</span>),
+        }
+    });
 }
 
 <span class="attr">#[cfg(not(feature = <span class="string">&quot;telemetry&quot;</span>))]
-</span><span class="kw">fn </span>spawn_telemetry_server(config: <span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
+</span><span class="kw">fn </span>spawn_telemetry_server(config: <span class="kw-2">&amp;</span>Config) {
     <span class="kw">if </span>config.telemetry.enabled {
         <span class="macro">warn!</span>(
             <span class="string">&quot;telemetry enabled in the config but Hermes was built without telemetry support, \
              build Hermes with --features=telemetry to enable telemetry support.&quot;
         </span>);
     }
-
-    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">fn </span>make_supervisor&lt;Chain: ChainHandle&gt;(
     config: Config,
-    force_full_scan: bool,
+    options: SupervisorOptions,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;SupervisorHandle, Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
     <span class="kw">let </span>registry = SharedRegistry::&lt;Chain&gt;::new(config.clone());
-    spawn_telemetry_server(<span class="kw-2">&amp;</span>config)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>rest = spawn_rest_server(<span class="kw-2">&amp;</span>config);
+    spawn_telemetry_server(<span class="kw-2">&amp;</span>config);
 
-    <span class="prelude-val">Ok</span>(spawn_supervisor(
-        config,
-        registry,
-        rest,
-        SupervisorOptions {
-            health_check: <span class="bool-val">true</span>,
-            force_full_scan,
-        },
-    )<span class="question-mark">?</span>)
+    <span class="kw">let </span>rest_rx = spawn_rest_server(<span class="kw-2">&amp;</span>config);
+
+    <span class="prelude-val">Ok</span>(spawn_supervisor(config, registry, rest_rx, options)<span class="question-mark">?</span>)
 }
 
 <span class="attr">#[cfg(test)]

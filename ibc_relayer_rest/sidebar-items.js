@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["server",""]],"struct":[["Config","REST server configuration"]]};
+window.SIDEBAR_ITEMS = {"fn":[["spawn",""]]};

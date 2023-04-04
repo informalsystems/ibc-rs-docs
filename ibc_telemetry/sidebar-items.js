@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["global",""],["new_state",""],["spawn",""]],"mod":[["encoder",""],["server",""],["state",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["global",""],["new_state",""],["spawn",""]],"mod":[["encoder",""],["server",""],["state",""]],"type":[["BoxError",""]]};

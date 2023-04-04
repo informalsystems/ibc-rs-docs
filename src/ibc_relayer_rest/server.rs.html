@@ -83,52 +83,32 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::thread;
-
-<span class="kw">use </span>crossbeam_channel <span class="kw">as </span>channel;
-<span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>tracing::{info, trace};
-
-<span class="kw">use </span>ibc_relayer::rest::request::Request;
-
-<span class="kw">use crate</span>::{
-    handle::{all_chain_ids, assemble_version_info, chain_config, supervisor_state},
-    Config,
+</pre><pre class="rust"><code><span class="kw">use </span>std::{
+    error::Error,
+    net::{SocketAddr, ToSocketAddrs},
 };
 
-<span class="kw">pub struct </span>ServerHandle {
-    join_handle: thread::JoinHandle&lt;()&gt;,
-    tx_stop: std::sync::mpsc::Sender&lt;()&gt;,
-}
+<span class="kw">use </span>axum::{extract::Path, response::IntoResponse, routing::get, Extension, Json, Router, Server};
+<span class="kw">use </span>crossbeam_channel <span class="kw">as </span>channel;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>tokio::task::JoinHandle;
 
-<span class="kw">impl </span>ServerHandle {
-    <span class="kw">pub fn </span>join(<span class="self">self</span>) -&gt; std::thread::Result&lt;()&gt; {
-        <span class="self">self</span>.join_handle.join()
-    }
+<span class="kw">use </span>ibc_relayer::{
+    rest::{request::Request, RestApiError},
+    supervisor::dump_state::SupervisorState,
+};
 
-    <span class="kw">pub fn </span>stop(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="self">self</span>.tx_stop.send(()).unwrap();
-    }
-}
+<span class="kw">use </span><span class="kw">crate</span>::handle::{all_chain_ids, assemble_version_info, chain_config, supervisor_state};
 
-<span class="kw">pub fn </span>spawn(config: Config) -&gt; (ServerHandle, channel::Receiver&lt;Request&gt;) {
-    <span class="kw">let </span>(req_tx, req_rx) = channel::unbounded::&lt;Request&gt;();
+<span class="kw">pub type </span>BoxError = Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;;
 
-    <span class="macro">info!</span>(<span class="string">&quot;starting REST API server listening at http://{}&quot;</span>, config);
-    <span class="kw">let </span>handle = run(config, req_tx);
-
-    (handle, req_rx)
+<span class="kw">pub fn </span>spawn(
+    addr: <span class="kw">impl </span>ToSocketAddrs,
+    sender: channel::Sender&lt;Request&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;JoinHandle&lt;()&gt;, BoxError&gt; {
+    <span class="kw">let </span>addr = addr.to_socket_addrs()<span class="question-mark">?</span>.next().unwrap();
+    <span class="kw">let </span>handle = tokio::spawn(run(addr, sender));
+    <span class="prelude-val">Ok</span>(handle)
 }
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize)]
@@ -148,47 +128,45 @@
     }
 }
 
-<span class="attr">#[allow(clippy::manual_strip)]
-</span><span class="kw">fn </span>run(config: Config, sender: channel::Sender&lt;Request&gt;) -&gt; ServerHandle {
-    <span class="kw">let </span>server = rouille::Server::new(config.address(), <span class="kw">move </span>|request| {
-        <span class="macro">router!</span>(request,
-            (GET) (/version) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;[rest/server] GET /version&quot;</span>);
-                <span class="kw">let </span>result = assemble_version_info(<span class="kw-2">&amp;</span>sender);
-                rouille::Response::json(<span class="kw-2">&amp;</span>result)
-            },
+<span class="kw">async fn </span>get_version(Extension(sender): Extension&lt;Sender&gt;) -&gt; <span class="kw">impl </span>IntoResponse {
+    <span class="kw">let </span>version: <span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, RestApiError&gt; = <span class="prelude-val">Ok</span>(assemble_version_info(<span class="kw-2">&amp;</span>sender));
+    Json(JsonResult::from(version))
+}
 
-            (GET) (/chains) =&gt; {
-                <span class="comment">// TODO(Soares): Add a `into_detail` to consume the error and obtain
-                //   the underlying detail, so that we avoid doing `e.0`
-                </span><span class="macro">trace!</span>(<span class="string">&quot;[rest] GET /chains&quot;</span>);
-                <span class="kw">let </span>result = all_chain_ids(<span class="kw-2">&amp;</span>sender);
-                rouille::Response::json(<span class="kw-2">&amp;</span>JsonResult::from(result))
-            },
+<span class="kw">async fn </span>get_chains(Extension(sender): Extension&lt;Sender&gt;) -&gt; <span class="kw">impl </span>IntoResponse {
+    <span class="kw">let </span>chain_ids = all_chain_ids(<span class="kw-2">&amp;</span>sender);
+    Json(JsonResult::from(chain_ids))
+}
 
-            (GET) (/chain/{id: String}) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;[rest] GET /chain/{}&quot;</span>, id);
-                <span class="kw">let </span>result = chain_config(<span class="kw-2">&amp;</span>sender, <span class="kw-2">&amp;</span>id);
-                rouille::Response::json(<span class="kw-2">&amp;</span>JsonResult::from(result))
-            },
+<span class="kw">async fn </span>get_chain(
+    Path(id): Path&lt;String&gt;,
+    Extension(sender): Extension&lt;Sender&gt;,
+) -&gt; <span class="kw">impl </span>IntoResponse {
+    <span class="kw">let </span>chain = chain_config(<span class="kw-2">&amp;</span>sender, <span class="kw-2">&amp;</span>id);
+    Json(JsonResult::from(chain))
+}
 
-            (GET) (/state) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;[rest] GET /state&quot;</span>);
-                <span class="kw">let </span>result = supervisor_state(<span class="kw-2">&amp;</span>sender);
-                rouille::Response::json(<span class="kw-2">&amp;</span>JsonResult::from(result))
-            },
+<span class="kw">async fn </span>get_state(
+    Extension(sender): Extension&lt;Sender&gt;,
+) -&gt; Json&lt;JsonResult&lt;SupervisorState, RestApiError&gt;&gt; {
+    <span class="kw">let </span>state = supervisor_state(<span class="kw-2">&amp;</span>sender);
+    Json(JsonResult::from(state))
+}
 
-            <span class="kw">_ </span>=&gt; rouille::Response::empty_404(),
-        )
-    })
-    .unwrap();
+<span class="kw">type </span>Sender = channel::Sender&lt;Request&gt;;
 
-    <span class="kw">let </span>(join_handle, tx_stop) = server.stoppable();
+<span class="kw">async fn </span>run(addr: SocketAddr, sender: Sender) {
+    <span class="kw">let </span>app = Router::new()
+        .route(<span class="string">&quot;/version&quot;</span>, get(get_version))
+        .route(<span class="string">&quot;/chains&quot;</span>, get(get_chains))
+        .route(<span class="string">&quot;/chain/:id&quot;</span>, get(get_chain))
+        .route(<span class="string">&quot;/state&quot;</span>, get(get_state))
+        .layer(Extension(sender));
 
-    ServerHandle {
-        join_handle,
-        tx_stop,
-    }
+    Server::bind(<span class="kw-2">&amp;</span>addr)
+        .serve(app.into_make_service())
+        .<span class="kw">await
+        </span>.unwrap();
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer_rest" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (ef934d9b6 2023-02-08)" data-search-js="search-28136cea55c34037.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
