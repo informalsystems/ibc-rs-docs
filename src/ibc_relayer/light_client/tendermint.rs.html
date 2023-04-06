@@ -290,10 +290,56 @@
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
-</pre><pre class="rust"><code><span class="kw">use </span>itertools::Itertools;
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::time::Duration;
+
+<span class="kw">use </span>itertools::Itertools;
 
 <span class="kw">use </span>tendermint_light_client::{
-    components::{<span class="self">self</span>, io::AtHeight},
+    components::{
+        <span class="self">self</span>,
+        io::{AtHeight, Io, ProdIo},
+    },
     light_client::LightClient <span class="kw">as </span>TmLightClient,
     state::State <span class="kw">as </span>LightClientState,
     store::{memory::MemoryStore, LightStore},
@@ -321,12 +367,27 @@
     misbehaviour::MisbehaviourEvidence,
 };
 
-<span class="kw">use </span><span class="kw">super</span>::Verified;
+<span class="kw">use super</span>::{genesis_restart::RestartAwareIo, Verified};
+
+<span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">enum </span>AnyIo {
+    Prod(ProdIo),
+    RestartAware(RestartAwareIo),
+}
+
+<span class="kw">impl </span>Io <span class="kw">for </span>AnyIo {
+    <span class="kw">fn </span>fetch_light_block(<span class="kw-2">&amp;</span><span class="self">self</span>, height: AtHeight) -&gt; <span class="prelude-ty">Result</span>&lt;LightBlock, components::io::IoError&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            AnyIo::Prod(io) =&gt; io.fetch_light_block(height),
+            AnyIo::RestartAware(io) =&gt; io.fetch_light_block(height),
+        }
+    }
+}
 
 <span class="kw">pub struct </span>LightClient {
     chain_id: ChainId,
     peer_id: PeerId,
-    io: components::io::ProdIo,
+    io: AnyIo,
 }
 
 <span class="kw">impl </span><span class="kw">super</span>::LightClient&lt;CosmosSdkChain&gt; <span class="kw">for </span>LightClient {
@@ -338,6 +399,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Verified&lt;TmHeader&gt;, Error&gt; {
         <span class="kw">let </span>Verified { target, supporting } = <span class="self">self</span>.verify(trusted, target, client_state)<span class="question-mark">?</span>;
         <span class="kw">let </span>(target, supporting) = <span class="self">self</span>.adjust_headers(trusted, target, supporting)<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(Verified { target, supporting })
     }
 
@@ -378,7 +440,6 @@
         <span class="macro">trace!</span>(%height, <span class="string">&quot;fetching header&quot;</span>);
 
         <span class="kw">let </span>height = TMHeight::try_from(height.revision_height()).map_err(Error::invalid_height)<span class="question-mark">?</span>;
-
         <span class="self">self</span>.fetch_light_block(AtHeight::At(height))
     }
 
@@ -454,12 +515,35 @@
     }
 }
 
+<span class="kw">fn </span>io_for_addr(
+    addr: <span class="kw-2">&amp;</span>rpc::Url,
+    peer_id: PeerId,
+    timeout: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;ProdIo, Error&gt; {
+    <span class="kw">let </span>rpc_client = rpc::HttpClient::new(addr.clone()).map_err(|e| Error::rpc(addr.clone(), e))<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(ProdIo::new(peer_id, rpc_client, timeout))
+}
+
 <span class="kw">impl </span>LightClient {
     <span class="kw">pub fn </span>from_config(config: <span class="kw-2">&amp;</span>ChainConfig, peer_id: PeerId) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
-        <span class="kw">let </span>rpc_client = rpc::HttpClient::new(config.rpc_addr.clone())
-            .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
+        <span class="kw">let </span>live_io = io_for_addr(<span class="kw-2">&amp;</span>config.rpc_addr, peer_id, <span class="prelude-val">Some</span>(config.rpc_timeout))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>io = components::io::ProdIo::new(peer_id, rpc_client, <span class="prelude-val">Some</span>(config.rpc_timeout));
+        <span class="kw">let </span>io = <span class="kw">match </span><span class="kw-2">&amp;</span>config.genesis_restart {
+            <span class="prelude-val">None </span>=&gt; AnyIo::Prod(live_io),
+            <span class="prelude-val">Some</span>(genesis_restart) =&gt; {
+                <span class="kw">let </span>archive_io = io_for_addr(
+                    <span class="kw-2">&amp;</span>genesis_restart.archive_addr,
+                    peer_id,
+                    <span class="prelude-val">Some</span>(config.rpc_timeout),
+                )<span class="question-mark">?</span>;
+
+                AnyIo::RestartAware(RestartAwareIo::new(
+                    genesis_restart.restart_height,
+                    live_io,
+                    archive_io,
+                ))
+            }
+        };
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             chain_id: config.id.clone(),
@@ -510,8 +594,6 @@
     }
 
     <span class="kw">fn </span>fetch_light_block(<span class="kw-2">&amp;</span><span class="self">self</span>, height: AtHeight) -&gt; <span class="prelude-ty">Result</span>&lt;LightBlock, Error&gt; {
-        <span class="kw">use </span>tendermint_light_client::components::io::Io;
-
         <span class="self">self</span>.io
             .fetch_light_block(height)
             .map_err(|e| Error::light_client_io(<span class="self">self</span>.chain_id.to_string(), e))
