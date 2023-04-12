@@ -2150,6 +2150,18 @@
 <a href="#2150" id="2150">2150</a>
 <a href="#2151" id="2151">2151</a>
 <a href="#2152" id="2152">2152</a>
+<a href="#2153" id="2153">2153</a>
+<a href="#2154" id="2154">2154</a>
+<a href="#2155" id="2155">2155</a>
+<a href="#2156" id="2156">2156</a>
+<a href="#2157" id="2157">2157</a>
+<a href="#2158" id="2158">2158</a>
+<a href="#2159" id="2159">2159</a>
+<a href="#2160" id="2160">2160</a>
+<a href="#2161" id="2161">2161</a>
+<a href="#2162" id="2162">2162</a>
+<a href="#2163" id="2163">2163</a>
+<a href="#2164" id="2164">2164</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2169,6 +2181,9 @@
 <span class="kw">use </span>ibc_proto::cosmos::{
     base::node::v1beta1::ConfigResponse, staking::v1beta1::Params <span class="kw">as </span>StakingParams,
 };
+
+<span class="kw">use </span>ibc_proto::interchain_security::ccv::consumer::v1::Params <span class="kw">as </span>CcvConsumerParams;
+
 <span class="kw">use </span>ibc_proto::ibc::apps::fee::v1::{
     QueryIncentivizedPacketRequest, QueryIncentivizedPacketResponse,
 };
@@ -2455,6 +2470,35 @@
     }
 
     <span class="doccomment">/// Query the chain staking parameters
+    </span><span class="kw">pub fn </span>query_ccv_consumer_chain_params(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CcvConsumerParams, Error&gt; {
+        <span class="macro">crate::time!</span>(<span class="string">&quot;query_ccv_consumer_chain_params&quot;</span>);
+        <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;query_ccv_consumer_chain_params&quot;</span>);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self
+            </span>.block_on(
+                ibc_proto::interchain_security::ccv::consumer::v1::query_client::QueryClient::connect(
+                    <span class="self">self</span>.grpc_addr.clone()
+                ),
+            )
+            .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>request = tonic::Request::new(
+            ibc_proto::interchain_security::ccv::consumer::v1::QueryParamsRequest {},
+        );
+
+        <span class="kw">let </span>response = <span class="self">self
+            </span>.block_on(client.query_params(request))
+            .map_err(Error::grpc_status)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>params = response
+            .into_inner()
+            .params
+            .ok_or_else(|| Error::grpc_response_param(<span class="string">&quot;no staking params&quot;</span>.to_string()))<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(params)
+    }
+
+    <span class="doccomment">/// Query the chain staking parameters
     </span><span class="kw">pub fn </span>query_staking_params(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;StakingParams, Error&gt; {
         <span class="macro">crate::time!</span>(<span class="string">&quot;query_staking_params&quot;</span>);
         <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;query_staking_params&quot;</span>);
@@ -2548,13 +2592,17 @@
     </span><span class="kw">pub fn </span>unbonding_period(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Duration, Error&gt; {
         <span class="macro">crate::time!</span>(<span class="string">&quot;unbonding_period&quot;</span>);
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(unbonding_period) = <span class="self">self</span>.config.unbonding_period {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(unbonding_period);
-        }
-
-        <span class="kw">let </span>unbonding_time = <span class="self">self</span>.query_staking_params()<span class="question-mark">?</span>.unbonding_time.ok_or_else(|| {
-            Error::grpc_response_param(<span class="string">&quot;no unbonding time in staking params&quot;</span>.to_string())
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>unbonding_time = <span class="kw">if </span><span class="self">self</span>.config.ccv_consumer_chain {
+            <span class="self">self</span>.query_ccv_consumer_chain_params()<span class="question-mark">?
+                </span>.unbonding_period
+                .ok_or_else(|| {
+                    Error::grpc_response_param(<span class="string">&quot;no unbonding time in staking params&quot;</span>.to_string())
+                })<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.query_staking_params()<span class="question-mark">?</span>.unbonding_time.ok_or_else(|| {
+                Error::grpc_response_param(<span class="string">&quot;no unbonding time in staking params&quot;</span>.to_string())
+            })<span class="question-mark">?
+        </span>};
 
         <span class="prelude-val">Ok</span>(Duration::new(
             unbonding_time.seconds <span class="kw">as </span>u64,
@@ -2565,8 +2613,17 @@
     <span class="doccomment">/// The number of historical entries kept by this chain
     </span><span class="kw">pub fn </span>historical_entries(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Error&gt; {
         <span class="macro">crate::time!</span>(<span class="string">&quot;historical_entries&quot;</span>);
-
-        <span class="self">self</span>.query_staking_params().map(|p| p.historical_entries)
+        <span class="kw">if </span><span class="self">self</span>.config.ccv_consumer_chain {
+            <span class="kw">let </span>ccv_parameters = <span class="self">self</span>.query_ccv_consumer_chain_params()<span class="question-mark">?</span>;
+            ccv_parameters.historical_entries.try_into().map_err(|<span class="kw">_</span>| {
+                Error::invalid_historical_entries(
+                    <span class="self">self</span>.id().clone(),
+                    ccv_parameters.historical_entries,
+                )
+            })
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.query_staking_params().map(|p| p.historical_entries)
+        }
     }
 
     <span class="doccomment">/// Run a future to completion on the Tokio runtime.
@@ -4175,39 +4232,6 @@
             grpc_address,
             diagnostic.to_string(),
         ));
-    }
-
-    <span class="kw">let </span>unbonding_period = chain
-        .query_staking_params()
-        .map(|params| params.unbonding_time);
-
-    <span class="kw">match </span>unbonding_period {
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(unbonding_period)) <span class="kw">if </span>chain.config.unbonding_period.is_some() =&gt; {
-            <span class="macro">warn!</span>(
-                <span class="string">&quot;Chain &#39;{}&#39; has an unbonding period configured in the config.toml, \
-                but this is not required as this information can be fetched from the staking parameters. \
-                Please remove the `unbonding_period` setting from the chain configuration. \
-                Unbonding period in configuration: {:?}, unbonding period in staking parameters: {:?}&quot;</span>,
-                chain_id, chain.config.unbonding_period.unwrap(), unbonding_period
-            );
-        }
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="kw">if </span>chain.config.unbonding_period.is_none() =&gt; {
-            <span class="macro">warn!</span>(
-                <span class="string">&quot;Hermes was unable to fetch the unbonding period from the staking parameters for chain &#39;{}&#39;. \
-                If this is an ICS customer chain, please add the `unbonding_period` setting \
-                to the chain configuration.&quot;</span>,
-                chain_id,
-            );
-        }
-        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>chain.config.unbonding_period.is_none() =&gt; {
-            <span class="macro">warn!</span>(
-                <span class="string">&quot;Hermes was unable to fetch the unbonding period from the staking parameters for chain &#39;{}&#39;. \
-                If this is an ICS customer chain, please add the `unbonding_period` setting \
-                to the chain configuration. Otherwise, inspect the following error for more information: {}&quot;</span>,
-                chain_id, e
-            );
-        }
-        <span class="kw">_ </span>=&gt; (),
     }
 
     <span class="kw">if </span>chain.historical_entries()<span class="question-mark">? </span>== <span class="number">0 </span>{

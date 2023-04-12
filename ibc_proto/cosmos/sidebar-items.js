@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["auth",""],["bank",""],["base",""],["crypto",""],["gov",""],["staking",""],["tx",""],["upgrade",""]]};
+window.SIDEBAR_ITEMS = {"mod":[["auth",""],["bank",""],["base",""],["crypto",""],["evidence",""],["gov",""],["staking",""],["tx",""],["upgrade",""]]};
