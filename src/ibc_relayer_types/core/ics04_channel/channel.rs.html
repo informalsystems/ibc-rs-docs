@@ -602,13 +602,6 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::utils::pretty::PrettySlice;
 
@@ -687,7 +680,7 @@
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>ChannelEnd {
     <span class="kw">pub </span>state: State,
-    <span class="kw">pub </span>ordering: Order,
+    <span class="kw">pub </span>ordering: Ordering,
     <span class="kw">pub </span>remote: Counterparty,
     <span class="kw">pub </span>connection_hops: Vec&lt;ConnectionId&gt;,
     <span class="kw">pub </span>version: Version,
@@ -727,7 +720,7 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(ChannelEnd::default());
         }
 
-        <span class="kw">let </span>chan_ordering = Order::from_i32(value.ordering)<span class="question-mark">?</span>;
+        <span class="kw">let </span>chan_ordering = Ordering::from_i32(value.ordering)<span class="question-mark">?</span>;
 
         <span class="comment">// Assemble the &#39;remote&#39; attribute of the Channel, which represents the Counterparty.
         </span><span class="kw">let </span>remote = value
@@ -775,7 +768,7 @@
     <span class="doccomment">/// Creates a new ChannelEnd in state Uninitialized and other fields parametrized.
     </span><span class="kw">pub fn </span>new(
         state: State,
-        ordering: Order,
+        ordering: Ordering,
         remote: Counterparty,
         connection_hops: Vec&lt;ConnectionId&gt;,
         version: Version,
@@ -811,7 +804,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.state
     }
 
-    <span class="kw">pub fn </span>ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Order {
+    <span class="kw">pub fn </span>ordering(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Ordering {
         <span class="kw-2">&amp;</span><span class="self">self</span>.ordering
     }
 
@@ -843,7 +836,7 @@
     }
 
     <span class="doccomment">/// Helper function to compare the order of this end with another order.
-    </span><span class="kw">pub fn </span>order_matches(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Order) -&gt; bool {
+    </span><span class="kw">pub fn </span>order_matches(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Ordering) -&gt; bool {
         <span class="self">self</span>.ordering.eq(other)
     }
 
@@ -935,24 +928,24 @@
 }
 
 <span class="attr">#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
-</span><span class="kw">pub enum </span>Order {
-    <span class="prelude-val">None </span>= <span class="number">0</span>,
+</span><span class="kw">pub enum </span>Ordering {
+    Uninitialized = <span class="number">0</span>,
     <span class="attr">#[default]
     </span>Unordered = <span class="number">1</span>,
     Ordered = <span class="number">2</span>,
 }
 
-<span class="kw">impl </span>Display <span class="kw">for </span>Order {
+<span class="kw">impl </span>Display <span class="kw">for </span>Ordering {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
         <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.as_str())
     }
 }
 
-<span class="kw">impl </span>Order {
+<span class="kw">impl </span>Ordering {
     <span class="doccomment">/// Yields the Order as a string
     </span><span class="kw">pub fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::None =&gt; <span class="string">&quot;UNINITIALIZED&quot;</span>,
+            <span class="self">Self</span>::Uninitialized =&gt; <span class="string">&quot;UNINITIALIZED&quot;</span>,
             <span class="self">Self</span>::Unordered =&gt; <span class="string">&quot;ORDER_UNORDERED&quot;</span>,
             <span class="self">Self</span>::Ordered =&gt; <span class="string">&quot;ORDER_ORDERED&quot;</span>,
         }
@@ -961,20 +954,21 @@
     <span class="comment">// Parses the Order out from a i32.
     </span><span class="kw">pub fn </span>from_i32(nr: i32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">match </span>nr {
-            <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
+            <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Uninitialized),
             <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Unordered),
             <span class="number">2 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Ordered),
+
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::unknown_order_type(nr.to_string())),
         }
     }
 }
 
-<span class="kw">impl </span>FromStr <span class="kw">for </span>Order {
+<span class="kw">impl </span>FromStr <span class="kw">for </span>Ordering {
     <span class="kw">type </span><span class="prelude-val">Err </span>= Error;
 
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="kw">match </span>s.to_lowercase().trim_start_matches(<span class="string">&quot;order_&quot;</span>) {
-            <span class="string">&quot;uninitialized&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
+            <span class="string">&quot;uninitialized&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Uninitialized),
             <span class="string">&quot;unordered&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Unordered),
             <span class="string">&quot;ordered&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Ordered),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::unknown_order_type(s.to_string())),
@@ -1177,45 +1171,37 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_channel_ordering_type() {
-        <span class="kw">use </span><span class="kw">super</span>::Order;
+        <span class="kw">use </span><span class="kw">super</span>::Ordering;
 
         <span class="kw">struct </span>Test {
             ordering: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
-            want_res: Order,
-            want_err: bool,
+            want_res: <span class="prelude-ty">Option</span>&lt;Ordering&gt;,
         }
         <span class="kw">let </span>tests: Vec&lt;Test&gt; = <span class="macro">vec!</span>[
             Test {
                 ordering: <span class="string">&quot;UNINITIALIZED&quot;</span>,
-                want_res: Order::None,
-                want_err: <span class="bool-val">false</span>,
+                want_res: <span class="prelude-val">Some</span>(Ordering::Uninitialized),
             },
             Test {
                 ordering: <span class="string">&quot;UNORDERED&quot;</span>,
-                want_res: Order::Unordered,
-                want_err: <span class="bool-val">false</span>,
+                want_res: <span class="prelude-val">Some</span>(Ordering::Unordered),
             },
             Test {
                 ordering: <span class="string">&quot;ORDERED&quot;</span>,
-                want_res: Order::Ordered,
-                want_err: <span class="bool-val">false</span>,
+                want_res: <span class="prelude-val">Some</span>(Ordering::Ordered),
             },
             Test {
                 ordering: <span class="string">&quot;UNKNOWN_ORDER&quot;</span>,
-                want_res: Order::None,
-                want_err: <span class="bool-val">true</span>,
+                want_res: <span class="prelude-val">None</span>,
             },
         ]
         .into_iter()
         .collect();
 
         <span class="kw">for </span>test <span class="kw">in </span>tests {
-            <span class="kw">match </span>Order::from_str(test.ordering) {
-                <span class="prelude-val">Ok</span>(res) =&gt; {
-                    <span class="macro">assert!</span>(!test.want_err);
-                    <span class="macro">assert_eq!</span>(test.want_res, res);
-                }
-                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">assert!</span>(test.want_err, <span class="string">&quot;parse failed&quot;</span>),
+            <span class="kw">match </span>Ordering::from_str(test.ordering) {
+                <span class="prelude-val">Ok</span>(res) =&gt; <span class="macro">assert_eq!</span>(test.want_res, <span class="prelude-val">Some</span>(res)),
+                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">assert!</span>(test.want_res.is_none(), <span class="string">&quot;parse failed&quot;</span>),
             }
         }
     }
