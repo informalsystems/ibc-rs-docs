@@ -187,6 +187,10 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Type definition for a single running full node.
 */
@@ -207,6 +211,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::chain::chain_type::ChainType <span class="kw">as </span>TestedChainType;
 <span class="kw">use </span><span class="kw">crate</span>::chain::driver::ChainDriver;
 <span class="kw">use </span><span class="kw">crate</span>::ibc::denom::Denom;
+<span class="kw">use </span><span class="kw">crate</span>::prelude::TestConfig;
 <span class="kw">use </span><span class="kw">crate</span>::types::env::{prefix_writer, EnvWriter, ExportEnv};
 <span class="kw">use </span><span class="kw">crate</span>::types::process::ChildProcess;
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
@@ -313,7 +318,14 @@
     </span><span class="kw">pub fn </span>generate_chain_config(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         chain_type: <span class="kw-2">&amp;</span>TestedChainType,
+        test_config: <span class="kw-2">&amp;</span>TestConfig,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;config::ChainConfig, Error&gt; {
+        <span class="kw">let </span>hermes_keystore_dir = test_config
+            .chain_store_dir
+            .join(<span class="string">&quot;hermes_keyring&quot;</span>)
+            .as_path()
+            .display()
+            .to_string();
         <span class="prelude-val">Ok</span>(config::ChainConfig {
             id: <span class="self">self</span>.chain_driver.chain_id.clone(),
             r#type: ChainType::CosmosSdk,
@@ -324,12 +336,8 @@
             genesis_restart: <span class="prelude-val">None</span>,
             account_prefix: <span class="self">self</span>.chain_driver.account_prefix.clone(),
             key_name: <span class="self">self</span>.wallets.relayer.id.<span class="number">0</span>.clone(),
-
-            <span class="comment">// By default we use in-memory key store to avoid polluting
-            // ~/.hermes/keys. See
-            // https://github.com/informalsystems/hermes/issues/1541
-            </span>key_store_type: Store::Memory,
-
+            key_store_type: Store::Test,
+            key_store_folder: <span class="prelude-val">Some</span>(hermes_keystore_dir.into()),
             store_prefix: <span class="string">&quot;ibc&quot;</span>.to_string(),
             default_gas: <span class="prelude-val">None</span>,
             max_gas: <span class="prelude-val">Some</span>(<span class="number">3000000</span>),
