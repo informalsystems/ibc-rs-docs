@@ -228,6 +228,10 @@
 <a href="#228" id="228">228</a>
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Utilities for extracting and parsing versioning information
 //! of Cosmos-SDK networks. The extracted version specification
 //! is captured in a domain-type semver format in [`Specs`].
@@ -255,6 +259,7 @@
 </span><span class="kw">const </span>SDK_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;cosmos/cosmos-sdk&quot;</span>;
 <span class="kw">const </span>IBC_GO_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;cosmos/ibc-go&quot;</span>;
 <span class="kw">const </span>TENDERMINT_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;tendermint/tendermint&quot;</span>;
+<span class="kw">const </span>COMET_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;cometbft/cometbft&quot;</span>;
 
 <span class="doccomment">/// Captures the version(s) specification of different
 /// modules of a network.
@@ -266,7 +271,8 @@
 </span><span class="kw">pub struct </span>Specs {
     <span class="kw">pub </span>cosmos_sdk: semver::Version,
     <span class="kw">pub </span>ibc_go: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
-    <span class="kw">pub </span>tendermint: semver::Version,
+    <span class="kw">pub </span>tendermint: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
+    <span class="kw">pub </span>comet: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>Specs {
@@ -277,10 +283,22 @@
             .map(|v| v.to_string())
             .unwrap_or_else(|| <span class="string">&quot;UNKNOWN&quot;</span>.to_string());
 
+        <span class="kw">let </span>tendermint = <span class="self">self
+            </span>.tendermint
+            .as_ref()
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| <span class="string">&quot;UNKNOWN&quot;</span>.to_string());
+
+        <span class="kw">let </span>comet = <span class="self">self
+            </span>.comet
+            .as_ref()
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| <span class="string">&quot;UNKNOWN&quot;</span>.to_string());
+
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Cosmos SDK {}, IBC-Go {}, Tendermint {}&quot;</span>,
-            <span class="self">self</span>.cosmos_sdk, ibc_go, <span class="self">self</span>.tendermint
+            <span class="string">&quot;Cosmos SDK {}, IBC-Go {}, Tendermint {}, CometBFT {}&quot;</span>,
+            <span class="self">self</span>.cosmos_sdk, ibc_go, tendermint, comet
         )
     }
 }
@@ -294,12 +312,13 @@
             }
             |e| { <span class="macro">format!</span>(<span class="string">&quot;failed to find the SDK module dependency (&#39;{}&#39;) for application {}&quot;</span>, e.address, e.app) },
 
-        TendermintModuleNotFound
+        ConsensusModuleNotFound
             {
-                address: String,
+                tendermint: String,
+                comet: String,
                 app: AppInfo,
             }
-            |e| { <span class="macro">format!</span>(<span class="string">&quot;failed to find the Tendermint dependency (&#39;{}&#39;) for application {}&quot;</span>, e.address, e.app) },
+            |e| { <span class="macro">format!</span>(<span class="string">&quot;failed to find the Tendermint (&#39;{}&#39;) or CometBFT (&#39;{}&#39;) dependency for application {}&quot;</span>, e.tendermint, e.comet, e.app) },
 
         VersionParsingFailed
             {
@@ -321,6 +340,16 @@
         </span><span class="kw">let </span>sdk_version = parse_sdk_version(<span class="kw-2">&amp;</span>raw_version)<span class="question-mark">?</span>;
         <span class="kw">let </span>ibc_go_version = parse_ibc_go_version(<span class="kw-2">&amp;</span>raw_version)<span class="question-mark">?</span>;
         <span class="kw">let </span>tendermint_version = parse_tendermint_version(<span class="kw-2">&amp;</span>raw_version)<span class="question-mark">?</span>;
+        <span class="kw">let </span>comet_version = parse_comet_version(<span class="kw-2">&amp;</span>raw_version)<span class="question-mark">?</span>;
+
+        <span class="comment">// Ensure that either Tendermint or CometBFT are being used.
+        </span><span class="kw">if </span>tendermint_version.is_none() &amp;&amp; comet_version.is_none() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::consensus_module_not_found(
+                TENDERMINT_MODULE_NAME.to_string(),
+                COMET_MODULE_NAME.to_string(),
+                AppInfo::from(<span class="kw-2">&amp;</span>raw_version),
+            ));
+        };
 
         <span class="macro">trace!</span>(
             application = %raw_version.app_name,
@@ -328,7 +357,8 @@
             git_commit = %raw_version.git_commit,
             sdk_version = %sdk_version,
             ibc_go_status = <span class="question-mark">?</span>ibc_go_version,
-            tendermint_version = %tendermint_version,
+            tendermint_version = <span class="question-mark">?</span>tendermint_version,
+            comet_version = <span class="question-mark">?</span>comet_version,
             <span class="string">&quot;parsed version specification&quot;
         </span>);
 
@@ -336,6 +366,7 @@
             cosmos_sdk: sdk_version,
             ibc_go: ibc_go_version,
             tendermint: tendermint_version,
+            comet: comet_version,
         })
     }
 }
@@ -370,68 +401,45 @@
 }
 
 <span class="kw">fn </span>parse_ibc_go_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
-    <span class="comment">// Find the Ibc-Go module
-    </span><span class="kw">match </span>version_info
+    parse_optional_version(version_info, IBC_GO_MODULE_NAME)
+}
+
+<span class="kw">fn </span>parse_tendermint_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
+    parse_optional_version(version_info, TENDERMINT_MODULE_NAME)
+}
+
+<span class="kw">fn </span>parse_comet_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
+    parse_optional_version(version_info, COMET_MODULE_NAME)
+}
+
+<span class="kw">fn </span>parse_optional_version(
+    version_info: <span class="kw-2">&amp;</span>VersionInfo,
+    module_name: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
+    <span class="kw">match </span>version_info
         .build_deps
         .iter()
-        .find(|<span class="kw-2">&amp;</span>m| m.path.contains(IBC_GO_MODULE_NAME))
+        .find(|<span class="kw-2">&amp;</span>m| m.path.contains(module_name))
     {
-        <span class="comment">// If binary lacks the ibc-go dependency it is _not_ an error,
-        // we support networks without the standalone ibc-go module; typically these
-        // are SDK 0.42-based networks, which will eventually no longer be supported.
-        </span><span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-        <span class="prelude-val">Some</span>(ibc_module) =&gt; {
-            <span class="comment">// The raw version number has a leading &#39;v&#39;, trim it out;
-            </span><span class="kw">let </span>plain_version = ibc_module.version.trim_start_matches(<span class="string">&#39;v&#39;</span>);
+        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+        <span class="prelude-val">Some</span>(module) =&gt; {
+            <span class="kw">let </span>plain_version = module.version.trim_start_matches(<span class="string">&#39;v&#39;</span>);
 
-            <span class="comment">// Parse the Ibc-Go module version
-            </span>semver::Version::parse(plain_version)
+            semver::Version::parse(plain_version)
                 .map(|<span class="kw-2">mut </span>version| {
-                    <span class="comment">// Remove the pre-release identifier from the semver
-                    </span>version.pre = semver::Prerelease::EMPTY;
+                    version.pre = semver::Prerelease::EMPTY;
                     <span class="prelude-val">Some</span>(version)
                 })
                 .map_err(|e| {
                     Error::version_parsing_failed(
-                        ibc_module.path.clone(),
-                        ibc_module.version.clone(),
+                        module.path.clone(),
+                        module.version.clone(),
                         e.to_string(),
                         AppInfo::from(version_info),
                     )
                 })
         }
     }
-}
-
-<span class="kw">fn </span>parse_tendermint_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;semver::Version, Error&gt; {
-    <span class="kw">let </span>module = version_info
-        .build_deps
-        .iter()
-        .find(|<span class="kw-2">&amp;</span>m| m.path.contains(TENDERMINT_MODULE_NAME))
-        .ok_or_else(|| {
-            Error::tendermint_module_not_found(
-                TENDERMINT_MODULE_NAME.to_string(),
-                AppInfo::from(version_info),
-            )
-        })<span class="question-mark">?</span>;
-
-    <span class="comment">// The raw version number has a leading &#39;v&#39;, trim it out;
-    </span><span class="kw">let </span>plain_version = module.version.trim_start_matches(<span class="string">&#39;v&#39;</span>);
-
-    <span class="comment">// Parse the module version
-    </span><span class="kw">let </span><span class="kw-2">mut </span>version = semver::Version::parse(plain_version).map_err(|e| {
-        Error::version_parsing_failed(
-            module.path.clone(),
-            module.version.clone(),
-            e.to_string(),
-            AppInfo::from(version_info),
-        )
-    })<span class="question-mark">?</span>;
-
-    <span class="comment">// Remove the pre-release version to ensure we don&#39;t give special treatment to pre-releases.
-    </span>version.pre = semver::Prerelease::EMPTY;
-
-    <span class="prelude-val">Ok</span>(version)
 }
 
 <span class="doccomment">/// Helper struct to capture all the reported information of an
