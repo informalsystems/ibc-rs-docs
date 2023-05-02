@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.10.2/src/common/concurrent.rs`."><title>concurrent.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.11.0/src/common/concurrent.rs`."><title>concurrent.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -310,20 +310,6 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::common::{deque::DeqNode, time::Instant};
 
 <span class="kw">use </span>parking_lot::Mutex;
@@ -357,6 +343,8 @@
 
 <span class="kw">use </span><span class="self">self</span>::entry_info::EntryInfo;
 
+<span class="kw">use </span><span class="kw">super</span>::timer_wheel::TimerNode;
+
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>Weigher&lt;K, V&gt; = Arc&lt;<span class="kw">dyn </span>Fn(<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>V) -&gt; u32 + Send + Sync + <span class="lifetime">&#39;static</span>&gt;;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>AccessTime {
@@ -366,7 +354,8 @@
     <span class="kw">fn </span>set_last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>, timestamp: Instant);
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyHash&lt;K&gt; {
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyHash&lt;K&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) key: Arc&lt;K&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) hash: u64,
 }
@@ -386,59 +375,35 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyDate&lt;K&gt; {
-    key: Arc&lt;K&gt;,
-    entry_info: TrioArc&lt;EntryInfo&gt;,
-}
-
-<span class="kw">impl</span>&lt;K&gt; KeyDate&lt;K&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(key: Arc&lt;K&gt;, entry_info: <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            key,
-            entry_info: TrioArc::clone(entry_info),
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;K&gt; {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.key
-    }
-
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
-        <span class="self">self</span>.entry_info.last_modified()
-    }
-
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_dirty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.entry_info.is_dirty()
-    }
-}
-
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyHashDate&lt;K&gt; {
-    key: Arc&lt;K&gt;,
-    hash: u64,
-    entry_info: TrioArc&lt;EntryInfo&gt;,
+    entry_info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;K&gt; KeyHashDate&lt;K&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(kh: KeyHash&lt;K&gt;, entry_info: <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(entry_info: <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&lt;K&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            key: kh.key,
-            hash: kh.hash,
             entry_info: TrioArc::clone(entry_info),
         }
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;K&gt; {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.key
+        <span class="kw-2">&amp;</span><span class="self">self</span>.entry_info.key_hash().key
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
-        <span class="self">self</span>.hash
+        <span class="self">self</span>.entry_info.key_hash().hash
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>EntryInfo {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>EntryInfo&lt;K&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.entry_info
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
+        <span class="self">self</span>.entry_info.last_modified()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_dirty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.entry_info.is_dirty()
     }
 }
 
@@ -450,28 +415,6 @@
 <span class="kw">impl</span>&lt;K, V&gt; KvEntry&lt;K, V&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(key: Arc&lt;K&gt;, entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ key, entry }
-    }
-}
-
-<span class="kw">impl</span>&lt;K&gt; AccessTime <span class="kw">for </span>DeqNode&lt;KeyDate&lt;K&gt;&gt; {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
-        <span class="prelude-val">None
-    </span>}
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>set_last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>, _timestamp: Instant) {
-        <span class="macro">unreachable!</span>();
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
-        <span class="self">self</span>.element.entry_info.last_modified()
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>set_last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>, timestamp: Instant) {
-        <span class="self">self</span>.element.entry_info.set_last_modified(timestamp);
     }
 }
 
@@ -488,12 +431,12 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
-        <span class="prelude-val">None
-    </span>}
+        <span class="self">self</span>.element.entry_info.last_modified()
+    }
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>set_last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>, _timestamp: Instant) {
-        <span class="macro">unreachable!</span>();
+    </span><span class="kw">fn </span>set_last_modified(<span class="kw-2">&amp;</span><span class="self">self</span>, timestamp: Instant) {
+        <span class="self">self</span>.element.entry_info.set_last_modified(timestamp);
     }
 }
 
@@ -501,56 +444,65 @@
 </span><span class="kw">type </span>KeyDeqNodeAo&lt;K&gt; = TagNonNull&lt;DeqNode&lt;KeyHashDate&lt;K&gt;&gt;, <span class="number">2</span>&gt;;
 
 <span class="comment">// DeqNode for the write order queue.
-</span><span class="kw">type </span>KeyDeqNodeWo&lt;K&gt; = NonNull&lt;DeqNode&lt;KeyDate&lt;K&gt;&gt;&gt;;
+</span><span class="kw">type </span>KeyDeqNodeWo&lt;K&gt; = NonNull&lt;DeqNode&lt;KeyHashDate&lt;K&gt;&gt;&gt;;
+
+<span class="comment">// DeqNode for the timer wheel.
+</span><span class="kw">type </span>DeqNodeTimer&lt;K&gt; = NonNull&lt;DeqNode&lt;TimerNode&lt;K&gt;&gt;&gt;;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>DeqNodes&lt;K&gt; {
     access_order_q_node: <span class="prelude-ty">Option</span>&lt;KeyDeqNodeAo&lt;K&gt;&gt;,
     write_order_q_node: <span class="prelude-ty">Option</span>&lt;KeyDeqNodeWo&lt;K&gt;&gt;,
+    timer_node: <span class="prelude-ty">Option</span>&lt;DeqNodeTimer&lt;K&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;K&gt; Default <span class="kw">for </span>DeqNodes&lt;K&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            access_order_q_node: <span class="prelude-val">None</span>,
+            write_order_q_node: <span class="prelude-val">None</span>,
+            timer_node: <span class="prelude-val">None</span>,
+        }
+    }
 }
 
 <span class="comment">// We need this `unsafe impl` as DeqNodes have NonNull pointers.
 </span><span class="kw">unsafe impl</span>&lt;K&gt; Send <span class="kw">for </span>DeqNodes&lt;K&gt; {}
 
+<span class="kw">impl</span>&lt;K&gt; DeqNodes&lt;K&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_timer_node(<span class="kw-2">&amp;mut </span><span class="self">self</span>, timer_node: <span class="prelude-ty">Option</span>&lt;DeqNodeTimer&lt;K&gt;&gt;) {
+        <span class="self">self</span>.timer_node = timer_node;
+    }
+}
+
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ValueEntry&lt;K, V&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) value: V,
-    info: TrioArc&lt;EntryInfo&gt;,
-    nodes: Mutex&lt;DeqNodes&lt;K&gt;&gt;,
+    info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;,
+    nodes: TrioArc&lt;Mutex&lt;DeqNodes&lt;K&gt;&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;K, V&gt; ValueEntry&lt;K, V&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(value: V, entry_info: TrioArc&lt;EntryInfo&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(value: V, entry_info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="attr">#[cfg(feature = <span class="string">&quot;unstable-debug-counters&quot;</span>)]
         </span><span class="self">self</span>::debug_counters::InternalGlobalDebugCounters::value_entry_created();
 
         <span class="self">Self </span>{
             value,
             info: entry_info,
-            nodes: Mutex::new(DeqNodes {
-                access_order_q_node: <span class="prelude-val">None</span>,
-                write_order_q_node: <span class="prelude-val">None</span>,
-            }),
+            nodes: TrioArc::new(Mutex::new(DeqNodes::default())),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_from(value: V, entry_info: TrioArc&lt;EntryInfo&gt;, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_from(value: V, entry_info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         <span class="attr">#[cfg(feature = <span class="string">&quot;unstable-debug-counters&quot;</span>)]
         </span><span class="self">self</span>::debug_counters::InternalGlobalDebugCounters::value_entry_created();
-
-        <span class="kw">let </span>nodes = {
-            <span class="kw">let </span>other_nodes = other.nodes.lock();
-            DeqNodes {
-                access_order_q_node: other_nodes.access_order_q_node,
-                write_order_q_node: other_nodes.write_order_q_node,
-            }
-        };
         <span class="self">Self </span>{
             value,
             info: entry_info,
-            nodes: Mutex::new(nodes),
+            nodes: TrioArc::clone(<span class="kw-2">&amp;</span>other.nodes),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&lt;K&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.info
     }
 
@@ -575,6 +527,10 @@
         <span class="self">self</span>.info.policy_weight()
     }
 
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>deq_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TrioArc&lt;Mutex&lt;DeqNodes&lt;K&gt;&gt;&gt; {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.nodes
+    }
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>access_order_q_node(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;KeyDeqNodeAo&lt;K&gt;&gt; {
         <span class="self">self</span>.nodes.lock().access_order_q_node
     }
@@ -597,6 +553,18 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>take_write_order_q_node(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;KeyDeqNodeWo&lt;K&gt;&gt; {
         <span class="self">self</span>.nodes.lock().write_order_q_node.take()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>timer_node(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;DeqNodeTimer&lt;K&gt;&gt; {
+        <span class="self">self</span>.nodes.lock().timer_node
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_timer_node(<span class="kw-2">&amp;</span><span class="self">self</span>, node: <span class="prelude-ty">Option</span>&lt;DeqNodeTimer&lt;K&gt;&gt;) {
+        <span class="self">self</span>.nodes.lock().timer_node = node;
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>take_timer_node(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;DeqNodeTimer&lt;K&gt;&gt; {
+        <span class="self">self</span>.nodes.lock().timer_node.take()
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unset_q_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) {
@@ -636,9 +604,13 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ReadOp&lt;K, V&gt; {
+    Hit {
+        value_entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
+        timestamp: Instant,
+        is_expiry_modified: bool,
+    },
     <span class="comment">// u64 is the hash of the key.
-    </span>Hit(u64, TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;, Instant),
-    Miss(u64),
+    </span>Miss(u64),
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>WriteOp&lt;K, V&gt; {

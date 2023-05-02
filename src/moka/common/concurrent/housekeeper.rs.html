@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.10.2/src/common/concurrent/housekeeper.rs`."><title>housekeeper.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../moka/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/moka-0.11.0/src/common/concurrent/housekeeper.rs`."><title>housekeeper.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-0ef3deca4ed45ad8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../../static.files/light-f501212b8b071243.css"><link rel="stylesheet" disabled href="../../../../static.files/dark-e92fc12c34ff89d3.css"><link rel="stylesheet" disabled href="../../../../static.files/ayu-a0090c8b1ced384f.css"><script src="../../../../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../../../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-364b95f387bc3166.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../moka/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -341,25 +341,6 @@
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::constants::{
     MAX_SYNC_REPEATS, PERIODICAL_SYNC_FAST_PACE_NANOS, PERIODICAL_SYNC_INITIAL_DELAY_MILLIS,
     PERIODICAL_SYNC_NORMAL_PACE_MILLIS,
@@ -369,15 +350,11 @@
     unsafe_weak_pointer::UnsafeWeakPointer,
 };
 
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-</span><span class="kw">use </span><span class="kw">super</span>::atomic_time::AtomicInstant;
-
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-</span><span class="kw">use </span><span class="kw">crate</span>::common::time::{CheckedTimeOps, Instant};
-
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-</span><span class="kw">use </span><span class="kw">super</span>::constants::{READ_LOG_FLUSH_POINT, WRITE_LOG_FLUSH_POINT};
-
+<span class="kw">use super</span>::{
+    atomic_time::AtomicInstant,
+    constants::{READ_LOG_FLUSH_POINT, WRITE_LOG_FLUSH_POINT},
+};
+<span class="kw">use </span><span class="kw">crate</span>::common::time::{CheckedTimeOps, Instant};
 <span class="kw">use </span>parking_lot::Mutex;
 <span class="kw">use </span>scheduled_thread_pool::JobHandle;
 <span class="kw">use </span>std::{
@@ -392,8 +369,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>InnerSync {
     <span class="kw">fn </span>sync(<span class="kw-2">&amp;</span><span class="self">self</span>, max_sync_repeats: usize) -&gt; <span class="prelude-ty">Option</span>&lt;SyncPace&gt;;
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">fn </span>now(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instant;
+    <span class="kw">fn </span>now(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instant;
 }
 
 <span class="attr">#[derive(Clone, Debug)]
@@ -403,8 +379,7 @@
 }
 
 <span class="kw">impl </span>Configuration {
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_blocking() -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_blocking() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             is_blocking: <span class="bool-val">true</span>,
             periodical_sync_enabled: <span class="bool-val">false</span>,
@@ -439,16 +414,14 @@
         }
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
         <span class="kw">match </span><span class="self">self </span>{
             Housekeeper::Blocking(h) =&gt; h.should_apply_reads(ch_len, now),
             Housekeeper::ThreadPool(h) =&gt; h.should_apply_reads(ch_len, now),
         }
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
         <span class="kw">match </span><span class="self">self </span>{
             Housekeeper::Blocking(h) =&gt; h.should_apply_writes(ch_len, now),
             Housekeeper::ThreadPool(h) =&gt; h.should_apply_writes(ch_len, now),
@@ -473,33 +446,28 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>BlockingHousekeeper {
     is_sync_running: AtomicBool,
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span>sync_after: AtomicInstant,
+    sync_after: AtomicInstant,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>BlockingHousekeeper {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             is_sync_running: Default::default(),
-            <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-            </span>sync_after: AtomicInstant::new(<span class="self">Self</span>::sync_after(Instant::now())),
+            sync_after: AtomicInstant::new(<span class="self">Self</span>::sync_after(Instant::now())),
         }
     }
 }
 
 <span class="kw">impl </span>BlockingHousekeeper {
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
+    <span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
         <span class="self">self</span>.should_apply(ch_len, READ_LOG_FLUSH_POINT / <span class="number">8</span>, now)
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
+    <span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
         <span class="self">self</span>.should_apply(ch_len, WRITE_LOG_FLUSH_POINT / <span class="number">8</span>, now)
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    #[inline]
+    <span class="attr">#[inline]
     </span><span class="kw">fn </span>should_apply(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, ch_flush_point: usize, now: Instant) -&gt; bool {
         ch_len &gt;= ch_flush_point || <span class="self">self</span>.sync_after.instant().unwrap() &gt;= now
     }
@@ -513,11 +481,8 @@
             Ordering::Relaxed,
         ) {
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-                </span>{
-                    <span class="kw">let </span>now = cache.now();
-                    <span class="self">self</span>.sync_after.set_instant(<span class="self">Self</span>::sync_after(now));
-                }
+                <span class="kw">let </span>now = cache.now();
+                <span class="self">self</span>.sync_after.set_instant(<span class="self">Self</span>::sync_after(now));
 
                 cache.sync(MAX_SYNC_REPEATS);
 
@@ -528,8 +493,7 @@
         }
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">fn </span>sync_after(now: Instant) -&gt; Instant {
+    <span class="kw">fn </span>sync_after(now: Instant) -&gt; Instant {
         <span class="kw">let </span>dur = Duration::from_millis(PERIODICAL_SYNC_INITIAL_DELAY_MILLIS);
         <span class="kw">let </span>ts = now.checked_add(dur);
         <span class="comment">// Assuming that `now` is current wall clock time, this should never fail at
@@ -659,13 +623,11 @@
             .execute_with_dynamic_delay(initial_delay, housekeeper_closure)
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, _now: Instant) -&gt; bool {
+    <span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, _now: Instant) -&gt; bool {
         ch_len &gt;= READ_LOG_FLUSH_POINT
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;sync&quot;</span>, feature = <span class="string">&quot;future&quot;</span>))]
-    </span><span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, _now: Instant) -&gt; bool {
+    <span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, _now: Instant) -&gt; bool {
         ch_len &gt;= WRITE_LOG_FLUSH_POINT
     }
 
