@@ -374,37 +374,91 @@
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Contains functions to generate a relayer config for a given chain
 
-</span><span class="kw">use </span>ibc_chain_registry::{
-    asset_list::AssetList,
-    chain::ChainData,
-    error::RegistryError,
-    fetchable::Fetchable,
-    formatter::{SimpleGrpcFormatter, UriFormatter},
-    paths::IBCPath,
-    querier::<span class="kw-2">*</span>,
-};
-
-<span class="kw">use </span>futures::future::join_all;
+</span><span class="kw">use </span>futures::future::join_all;
 <span class="kw">use </span>http::Uri;
-
-<span class="kw">use </span>ibc_relayer::{
-    config::{
-        filter::{FilterPattern, PacketFilter},
-        gas_multiplier::GasMultiplier,
-        types::{MaxMsgNum, MaxTxSize, Memo},
-        {default, AddressType, ChainConfig, GasPrice},
-    },
-    keyring::Store,
-};
-
-<span class="kw">use </span>std::{collections::HashMap, marker::Send};
+<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::fmt::Display;
+<span class="kw">use </span>std::marker::Send;
+<span class="kw">use </span>tokio::task::{JoinError, JoinHandle};
+<span class="kw">use </span>tracing::trace;
 
 <span class="kw">use </span>tendermint_light_client_verifier::types::TrustThreshold;
 <span class="kw">use </span>tendermint_rpc::Url;
 
-<span class="kw">use </span>tokio::task::{JoinError, JoinHandle};
+<span class="kw">use </span>ibc_chain_registry::asset_list::AssetList;
+<span class="kw">use </span>ibc_chain_registry::chain::ChainData;
+<span class="kw">use </span>ibc_chain_registry::error::RegistryError;
+<span class="kw">use </span>ibc_chain_registry::fetchable::Fetchable;
+<span class="kw">use </span>ibc_chain_registry::formatter::{SimpleGrpcFormatter, UriFormatter};
+<span class="kw">use </span>ibc_chain_registry::paths::IBCPath;
+<span class="kw">use </span>ibc_chain_registry::querier::GrpcHealthCheckQuerier;
+<span class="kw">use </span>ibc_chain_registry::querier::HermesConfigData;
+<span class="kw">use </span>ibc_chain_registry::querier::QueryContext;
+<span class="kw">use </span>ibc_chain_registry::querier::SimpleHermesRpcQuerier;
+<span class="kw">use </span>ibc_relayer::config::filter::{FilterPattern, PacketFilter};
+<span class="kw">use </span>ibc_relayer::config::gas_multiplier::GasMultiplier;
+<span class="kw">use </span>ibc_relayer::config::types::{MaxMsgNum, MaxTxSize, Memo};
+<span class="kw">use </span>ibc_relayer::config::{default, AddressType, ChainConfig, GasPrice};
+<span class="kw">use </span>ibc_relayer::keyring::Store;
+
+<span class="kw">const </span>MAX_HEALTHY_QUERY_RETRIES: u8 = <span class="number">5</span>;
 
 <span class="doccomment">/// Generate packet filters from Vec&lt;IBCPath&gt; and load them in a Map(chain_name -&gt; filter).
 </span><span class="kw">fn </span>construct_packet_filters(ibc_paths: Vec&lt;IBCPath&gt;) -&gt; HashMap&lt;String, PacketFilter&gt; {
@@ -474,8 +528,18 @@
         .map(|rpc| rpc.address.to_owned())
         .collect();
 
-    <span class="kw">let </span>rpc_data = RpcQuerier::query_healthy(chain_name.to_string(), rpc_endpoints).<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="kw">let </span>grpc_address = GrpcQuerier::query_healthy(chain_name.to_string(), grpc_endpoints).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>rpc_data = query_healthy_retry::&lt;RpcQuerier&gt;(
+        chain_name.to_string(),
+        rpc_endpoints,
+        MAX_HEALTHY_QUERY_RETRIES,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>grpc_address = query_healthy_retry::&lt;GrpcQuerier&gt;(
+        chain_name.to_string(),
+        grpc_endpoints,
+        MAX_HEALTHY_QUERY_RETRIES,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>websocket_address =
         rpc_data.websocket.clone().try_into().map_err(|e| {
             RegistryError::websocket_url_parse_error(rpc_data.websocket.to_string(), e)
@@ -517,6 +581,39 @@
         sequential_batch_tx: <span class="bool-val">false</span>,
         extension_options: Vec::new(),
     })
+}
+
+<span class="doccomment">/// Concurrent `query_healthy` might fail, this is a helper function which will retry a failed query a fixed
+/// amount of times in order to avoid failure with healthy endpoints.
+</span><span class="kw">async fn </span>query_healthy_retry&lt;QuerierType&gt;(
+    chain_name: String,
+    endpoints: Vec&lt;QuerierType::QueryInput&gt;,
+    retries: u8,
+) -&gt; <span class="prelude-ty">Result</span>&lt;QuerierType::QueryOutput, RegistryError&gt;
+<span class="kw">where
+    </span>QuerierType: QueryContext + Send,
+    QuerierType::QueryInput: Clone + Display,
+    QuerierType: QueryContext&lt;QueryError = RegistryError&gt;,
+{
+    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..retries {
+        <span class="kw">let </span>query_response =
+            QuerierType::query_healthy(chain_name.to_string(), endpoints.clone()).<span class="kw">await</span>;
+        <span class="kw">match </span>query_response {
+            <span class="prelude-val">Ok</span>(r) =&gt; {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(r);
+            }
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">trace!</span>(<span class="string">&quot;Retry {i} failed to query all endpoints&quot;</span>);
+            }
+        }
+    }
+    <span class="prelude-val">Err</span>(RegistryError::unhealthy_endpoints(
+        endpoints
+            .iter()
+            .map(|endpoint| endpoint.to_string())
+            .collect(),
+        retries,
+    ))
 }
 
 <span class="kw">async fn </span>get_handles&lt;T: Fetchable + Send + <span class="lifetime">&#39;static</span>&gt;(
@@ -621,16 +718,26 @@
     get_data_from_handles::&lt;ChainConfig&gt;(config_handles, <span class="string">&quot;config_handle_join&quot;</span>).<span class="kw">await
 </span>}
 
-<span class="attr">#[cfg(test)]
+<span class="doccomment">/// Concurrent RPC and GRPC queries are likely to fail.
+/// Since the RPC and GRPC endpoints are queried to confirm they are healthy,
+/// before generating the ChainConfig, the tests must not all run concurrently or
+/// else they will fail due to the amount of concurrent queries.
+</span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>ibc_relayer::config::filter::ChannelPolicy;
     <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChannelId, PortId};
+    <span class="kw">use </span>serial_test::serial;
     <span class="kw">use </span>std::str::FromStr;
 
-    <span class="comment">// Helper function for configs without filter
+    <span class="comment">// Use commit from 28.04.23 for tests
+    </span><span class="kw">const </span>TEST_COMMIT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;95b99457e828402bde994816ce57e548d7e1a76d&quot;</span>;
+
+    <span class="comment">// Helper function for configs without filter. The configuration doesn&#39;t have a packet filter
+    // if there is no `{chain-a}-{chain-b}.json` file in the `_IBC/` directory of the
+    // chain-registry repository: https://github.com/cosmos/chain-registry/tree/master/_IBC
     </span><span class="kw">async fn </span>should_have_no_filter(test_chains: <span class="kw-2">&amp;</span>[String]) -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
-        <span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">Some</span>(TEST_COMMIT.to_owned())).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">for </span>config <span class="kw">in </span>configs {
             <span class="kw">match </span>config.packet_filter.channel_policy {
                 ChannelPolicy::AllowAll =&gt; {}
@@ -642,7 +749,7 @@
     }
 
     <span class="attr">#[tokio::test]
-    #[ignore]
+    #[serial]
     </span><span class="kw">async fn </span>fetch_chain_config_with_packet_filters() -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
         <span class="kw">let </span>test_chains: <span class="kw-2">&amp;</span>[String] = <span class="kw-2">&amp;</span>[
             <span class="string">&quot;cosmoshub&quot;</span>.to_string(),
@@ -650,7 +757,7 @@
             <span class="string">&quot;osmosis&quot;</span>.to_string(),
         ]; <span class="comment">// Must be sorted
 
-        </span><span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        </span><span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">Some</span>(TEST_COMMIT.to_owned())).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">for </span>config <span class="kw">in </span>configs {
             <span class="kw">match </span>config.packet_filter.channel_policy {
@@ -727,23 +834,26 @@
     }
 
     <span class="attr">#[tokio::test]
-    #[ignore]
+    #[serial]
     </span><span class="kw">async fn </span>fetch_chain_config_without_packet_filters() -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
-        <span class="kw">let </span>test_chains: <span class="kw-2">&amp;</span>[String] = <span class="kw-2">&amp;</span>[<span class="string">&quot;cosmoshub&quot;</span>.to_string(), <span class="string">&quot;evmos&quot;</span>.to_string()]; <span class="comment">// Must be sorted
+        <span class="comment">// The commit from 28.04.23 does not have `evmos-juno.json` nor `juno-evmos.json` file:
+        // https://github.com/cosmos/chain-registry/tree/master/_IBC
+        </span><span class="kw">let </span>test_chains: <span class="kw-2">&amp;</span>[String] = <span class="kw-2">&amp;</span>[<span class="string">&quot;evmos&quot;</span>.to_string(), <span class="string">&quot;juno&quot;</span>.to_string()]; <span class="comment">// Must be sorted
         </span>should_have_no_filter(test_chains).<span class="kw">await
     </span>}
 
     <span class="attr">#[tokio::test]
-    #[ignore]
+    #[serial]
     </span><span class="kw">async fn </span>fetch_one_chain() -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
         <span class="kw">let </span>test_chains: <span class="kw-2">&amp;</span>[String] = <span class="kw-2">&amp;</span>[<span class="string">&quot;cosmoshub&quot;</span>.to_string()]; <span class="comment">// Must be sorted
         </span>should_have_no_filter(test_chains).<span class="kw">await
     </span>}
 
     <span class="attr">#[tokio::test]
+    #[serial]
     </span><span class="kw">async fn </span>fetch_no_chain() -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
         <span class="kw">let </span>test_chains: <span class="kw-2">&amp;</span>[String] = <span class="kw-2">&amp;</span>[];
-        <span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">Some</span>(TEST_COMMIT.to_owned())).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="macro">assert_eq!</span>(configs.len(), <span class="number">0</span>);
 
