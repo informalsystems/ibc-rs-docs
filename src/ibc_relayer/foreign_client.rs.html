@@ -1794,6 +1794,41 @@
 <a href="#1794" id="1794">1794</a>
 <a href="#1795" id="1795">1795</a>
 <a href="#1796" id="1796">1796</a>
+<a href="#1797" id="1797">1797</a>
+<a href="#1798" id="1798">1798</a>
+<a href="#1799" id="1799">1799</a>
+<a href="#1800" id="1800">1800</a>
+<a href="#1801" id="1801">1801</a>
+<a href="#1802" id="1802">1802</a>
+<a href="#1803" id="1803">1803</a>
+<a href="#1804" id="1804">1804</a>
+<a href="#1805" id="1805">1805</a>
+<a href="#1806" id="1806">1806</a>
+<a href="#1807" id="1807">1807</a>
+<a href="#1808" id="1808">1808</a>
+<a href="#1809" id="1809">1809</a>
+<a href="#1810" id="1810">1810</a>
+<a href="#1811" id="1811">1811</a>
+<a href="#1812" id="1812">1812</a>
+<a href="#1813" id="1813">1813</a>
+<a href="#1814" id="1814">1814</a>
+<a href="#1815" id="1815">1815</a>
+<a href="#1816" id="1816">1816</a>
+<a href="#1817" id="1817">1817</a>
+<a href="#1818" id="1818">1818</a>
+<a href="#1819" id="1819">1819</a>
+<a href="#1820" id="1820">1820</a>
+<a href="#1821" id="1821">1821</a>
+<a href="#1822" id="1822">1822</a>
+<a href="#1823" id="1823">1823</a>
+<a href="#1824" id="1824">1824</a>
+<a href="#1825" id="1825">1825</a>
+<a href="#1826" id="1826">1826</a>
+<a href="#1827" id="1827">1827</a>
+<a href="#1828" id="1828">1828</a>
+<a href="#1829" id="1829">1829</a>
+<a href="#1830" id="1830">1830</a>
+<a href="#1831" id="1831">1831</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,
@@ -2759,6 +2794,16 @@
         client_state: <span class="kw-2">&amp;</span>AnyClientState,
         header: <span class="kw-2">&amp;</span>AnyHeader,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ForeignClientError&gt; {
+        <span class="macro">crate::time!</span>(
+            <span class="string">&quot;wait_for_header_validation_delay&quot;</span>,
+            {
+                <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.src_chain().id(),
+                <span class="string">&quot;dst_chain&quot;</span>: <span class="self">self</span>.dst_chain().id(),
+                <span class="string">&quot;header_height&quot;</span>: header.height(),
+                <span class="string">&quot;header_timestamp&quot;</span>: header.timestamp()
+            }
+        );
+
         <span class="comment">// Get latest height and time on destination chain
         </span><span class="kw">let </span><span class="kw-2">mut </span>status = <span class="self">self</span>.dst_chain().query_application_status().map_err(|e| {
             ForeignClientError::client_update(
@@ -2849,6 +2894,14 @@
         target_height: Height,
         trusted_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Any&gt;, ForeignClientError&gt; {
+        <span class="macro">crate::time!</span>(
+            <span class="string">&quot;wait_and_build_update_client_with_trusted&quot;</span>,
+            {
+                <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.src_chain().id(),
+                <span class="string">&quot;dst_chain&quot;</span>: <span class="self">self</span>.dst_chain().id(),
+            }
+        );
+
         <span class="kw">let </span>src_application_latest_height = || {
             <span class="self">self</span>.src_chain().query_latest_height().map_err(|e| {
                 ForeignClientError::client_create(
@@ -2859,9 +2912,18 @@
             })
         };
 
-        <span class="comment">// Wait for the source network to produce block(s) &amp; reach `target_height`.
-        </span><span class="kw">while </span>src_application_latest_height()<span class="question-mark">? </span>&lt; target_height {
-            thread::sleep(Duration::from_millis(<span class="number">100</span>));
+        {
+            <span class="macro">crate::time!</span>(
+                <span class="string">&quot;wait_and_build_update_client_with_trusted_sleep&quot;</span>,
+                {
+                    <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.src_chain().id(),
+                    <span class="string">&quot;dst_chain&quot;</span>: <span class="self">self</span>.dst_chain().id(),
+                }
+            );
+            <span class="comment">// Wait for the source network to produce block(s) &amp; reach `target_height`.
+            </span><span class="kw">while </span>src_application_latest_height()<span class="question-mark">? </span>&lt; target_height {
+                thread::sleep(Duration::from_millis(<span class="number">100</span>));
+            }
         }
 
         <span class="kw">let </span>messages = <span class="self">self</span>.build_update_client_with_trusted(target_height, trusted_height)<span class="question-mark">?</span>;
@@ -3067,6 +3129,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         consensus_height: Height,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;UpdateClient&gt;, ForeignClientError&gt; {
+        <span class="macro">crate::time!</span>(
+            <span class="string">&quot;fetch_update_client_event&quot;</span>,
+            {
+                <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.src_chain().id(),
+                <span class="string">&quot;dst_chain&quot;</span>: <span class="self">self</span>.dst_chain().id(),
+            }
+        );
+
         <span class="kw">let </span><span class="kw-2">mut </span>events_with_heights = <span class="macro">vec!</span>[];
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..MAX_RETRIES {
             thread::sleep(Duration::from_millis(<span class="number">200</span>));

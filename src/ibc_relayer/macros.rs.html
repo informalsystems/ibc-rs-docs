@@ -67,25 +67,98 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
 </pre><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;profiling&quot;</span>)]
 </span><span class="kw">pub mod </span>profiling {
 
     <span class="kw">use </span>core::sync::atomic::AtomicUsize;
     <span class="kw">use </span>core::sync::atomic::Ordering::Relaxed;
+    <span class="kw">use </span>once_cell::sync::OnceCell;
+    <span class="kw">use </span>serde_derive::Serialize;
+    <span class="kw">use </span>serde_json::Value;
+    <span class="kw">use </span>std::fs::File;
+    <span class="kw">use </span>std::fs::OpenOptions;
+    <span class="kw">use </span>std::path::Path;
 
     <span class="macro">std::thread_local! </span>{
         <span class="kw">pub static </span>DEPTH: AtomicUsize = AtomicUsize::new(<span class="number">0</span>);
     }
+    <span class="kw">static </span>FILE: OnceCell&lt;File&gt; = OnceCell::new();
 
     <span class="doccomment">/// Measure the time between when this value is allocated
     /// and when it is dropped.
     </span><span class="kw">pub struct </span>Timer {
-        name: String,
+        name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        info: Value,
         start: std::time::Instant,
     }
 
+    <span class="attr">#[derive(Debug, Serialize)]
+    </span><span class="kw">struct </span>TimerInfo&lt;<span class="lifetime">&#39;a</span>&gt; {
+        name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        <span class="attr">#[serde(flatten)]
+        </span>info: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Value,
+        elapsed: u128,
+    }
+
     <span class="kw">impl </span>Timer {
-        <span class="kw">pub fn </span>new(name: String) -&gt; <span class="self">Self </span>{
+        <span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, info: Value) -&gt; <span class="self">Self </span>{
             <span class="kw">let </span>depth = DEPTH.with(|d| d.fetch_add(<span class="number">1</span>, Relaxed));
             <span class="kw">let </span>pad = <span class="string">&quot;   &quot;</span>.repeat(depth);
 
@@ -93,6 +166,7 @@
 
             <span class="self">Self </span>{
                 name,
+                info,
                 start: std::time::Instant::now(),
             }
         }
@@ -106,6 +180,39 @@
             <span class="kw">let </span>pad = <span class="string">&quot;   &quot;</span>.repeat(depth - <span class="number">1</span>);
 
             <span class="macro">tracing::info!</span>(<span class="string">&quot;{}⏳ {} - elapsed: {}ms&quot;</span>, pad, <span class="self">self</span>.name, elapsed);
+
+            <span class="kw">let </span>info = TimerInfo {
+                name: <span class="self">self</span>.name,
+                info: <span class="kw-2">&amp;</span><span class="self">self</span>.info,
+                elapsed,
+            };
+
+            to_json_format(<span class="kw-2">&amp;</span>info);
+        }
+    }
+
+    <span class="kw">pub fn </span>open_or_create_profile_file(file_name: <span class="kw-2">&amp;</span>Path) {
+        <span class="kw">let </span>file = OpenOptions::new()
+            .write(<span class="bool-val">true</span>)
+            .append(<span class="bool-val">true</span>)
+            .create(<span class="bool-val">true</span>)
+            .open(file_name)
+            .unwrap();
+
+        <span class="kw">match </span>FILE.set(file) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="macro">tracing::trace!</span>(<span class="string">&quot;profile file created at: {file_name:#?}&quot;</span>),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">tracing::error!</span>(<span class="string">&quot;profile file was already set with: {:#?}&quot;</span>, e.metadata()),
+        }
+    }
+
+    <span class="kw">fn </span>to_json_format(info: <span class="kw-2">&amp;</span>TimerInfo&lt;<span class="lifetime">&#39;_</span>&gt;) {
+        <span class="kw">match </span>FILE.get() {
+            <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>f) =&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = serde_json::to_writer(<span class="kw-2">&amp;mut </span>f, <span class="kw-2">&amp;</span>info) {
+                    <span class="macro">tracing::error!</span>(<span class="string">&quot;Couldn&#39;t write to file: {e}&quot;</span>);
+                }
+            }
+            <span class="prelude-val">None </span>=&gt; <span class="macro">tracing::debug!</span>(<span class="string">&quot;File for profiling is not set&quot;</span>),
         }
     }
 }
@@ -119,10 +226,12 @@
 /// ```rust
 /// use ibc_relayer::time;
 ///
-/// time!(&quot;full scope&quot;);
+/// let val1 = 1;
+/// let val2 = 2;
+/// time!(&quot;full scope&quot;, {&quot;id1&quot;: val1, &quot;id2&quot;: val2});
 ///
 /// let x = {
-///   time!(&quot;inner {}&quot;, &quot;scope&quot;);
+///   time!(&quot;inner scope&quot;, {});
 ///
 ///   42
 ///   // &quot;inner scope&quot; timer ends here
@@ -131,9 +240,14 @@
 /// ```
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>time {
-    ($(<span class="macro-nonterminal">$arg</span>:tt)<span class="kw-2">*</span>) =&gt; {
+    (<span class="macro-nonterminal">$name</span>:expr, <span class="macro-nonterminal">$info</span>:tt) =&gt; {
         <span class="attr">#[cfg(feature = <span class="string">&quot;profiling&quot;</span>)]
-        </span><span class="kw">let </span>_timer = <span class="macro-nonterminal">$crate::macros::profiling::Timer::new</span>(<span class="macro">format!</span>($(<span class="macro-nonterminal">$arg</span>)<span class="kw-2">*</span>));
+        </span><span class="kw">let </span>_timer = <span class="macro-nonterminal">$crate::macros::profiling::Timer::new</span>(<span class="macro-nonterminal">$name</span>, <span class="macro">::serde_json::json!</span>(<span class="macro-nonterminal">$info</span>));
+    };
+
+    (<span class="macro-nonterminal">$name</span>:expr) =&gt; {
+        <span class="attr">#[cfg(feature = <span class="string">&quot;profiling&quot;</span>)]
+        </span><span class="kw">let </span>_timer = <span class="macro-nonterminal">$crate::macros::profiling::Timer::new</span>(<span class="macro-nonterminal">$name</span>, <span class="macro">::serde_json::json!</span>({}));
     };
 }
 </code></pre></div>
