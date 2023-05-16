@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["auto_register_counterparty_payee",""],["ccv_consumer_chain",""],["chain_type",""],["clear_on_start",""],["clear_packets_interval",""],["clock_drift",""],["connection_delay",""],["max_block_time",""],["rpc_timeout",""],["tx_confirmation",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["auto_register_counterparty_payee",""],["ccv_consumer_chain",""],["chain_type",""],["clear_on_start",""],["clear_packets_interval",""],["clock_drift",""],["connection_delay",""],["max_block_time",""],["max_grpc_decoding_size",""],["rpc_timeout",""],["tx_confirmation",""]]};

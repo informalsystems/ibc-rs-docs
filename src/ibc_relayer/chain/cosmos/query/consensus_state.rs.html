@@ -128,17 +128,21 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre><pre class="rust"><code><span class="kw">use </span>http::Uri;
 <span class="kw">use </span>tracing::{debug, warn};
 
 <span class="kw">use </span>ibc_relayer_types::{core::ics24_host::identifier::ChainId, Height};
 
-<span class="kw">use crate</span>::{
-    chain::requests::{QueryConsensusStateHeightsRequest, QueryConsensusStatesRequest},
-    consensus_state::AnyConsensusStateWithHeight,
-    error::Error,
-    util::pretty::{PrettyConsensusStateWithHeight, PrettyHeight},
-};
+<span class="kw">use </span><span class="kw">crate</span>::chain::requests::{QueryConsensusStateHeightsRequest, QueryConsensusStatesRequest};
+<span class="kw">use </span><span class="kw">crate</span>::config::default::max_grpc_decoding_size;
+<span class="kw">use </span><span class="kw">crate</span>::consensus_state::AnyConsensusStateWithHeight;
+<span class="kw">use </span><span class="kw">crate</span>::error::Error;
+<span class="kw">use </span><span class="kw">crate</span>::util::pretty::{PrettyConsensusStateWithHeight, PrettyHeight};
 
 <span class="kw">pub async fn </span>query_consensus_state_heights(
     chain_id: <span class="kw-2">&amp;</span>ChainId,
@@ -170,6 +174,8 @@
             .<span class="kw">await
             </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>grpc_request = tonic::Request::new(request.clone().into());
     <span class="kw">let </span>grpc_response = client.consensus_state_heights(grpc_request).<span class="kw">await</span>;
 
@@ -191,7 +197,9 @@
         }
     }
 
-    <span class="kw">let </span>response = grpc_response.map_err(Error::grpc_status)<span class="question-mark">?</span>.into_inner();
+    <span class="kw">let </span>response = grpc_response
+        .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_consensus_state_heights&quot;</span>.to_owned()))<span class="question-mark">?
+        </span>.into_inner();
 
     <span class="kw">let </span><span class="kw-2">mut </span>heights: Vec&lt;<span class="kw">_</span>&gt; = response
         .consensus_state_heights
@@ -232,10 +240,12 @@
             .<span class="kw">await
             </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>response = client
         .consensus_states(tonic::Request::new(request.into()))
         .<span class="kw">await
-        </span>.map_err(Error::grpc_status)<span class="question-mark">?
+        </span>.map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_consensus_states&quot;</span>.to_owned()))<span class="question-mark">?
         </span>.into_inner();
 
     <span class="kw">let </span><span class="kw-2">mut </span>consensus_states: Vec&lt;<span class="kw">_</span>&gt; = response

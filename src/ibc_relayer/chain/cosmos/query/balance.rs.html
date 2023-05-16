@@ -69,13 +69,21 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
 </pre><pre class="rust"><code><span class="kw">use </span>http::uri::Uri;
 
 <span class="kw">use </span>ibc_proto::cosmos::bank::v1beta1::{
     query_client::QueryClient, QueryAllBalancesRequest, QueryBalanceRequest,
 };
 
-<span class="kw">use crate</span>::{account::Balance, error::Error};
+<span class="kw">use </span><span class="kw">crate</span>::account::Balance;
+<span class="kw">use </span><span class="kw">crate</span>::config::default::max_grpc_decoding_size;
+<span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="doccomment">/// Uses the GRPC client to retrieve the account balance for a specific denom
 </span><span class="kw">pub async fn </span>query_balance(
@@ -87,6 +95,8 @@
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>request = tonic::Request::new(QueryBalanceRequest {
         address: account_address.to_string(),
         denom: denom.to_string(),
@@ -96,7 +106,7 @@
         .balance(request)
         .<span class="kw">await
         </span>.map(|r| r.into_inner())
-        .map_err(Error::grpc_status)<span class="question-mark">?</span>;
+        .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_balance&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="comment">// Querying for a balance might fail, i.e. if the account doesn&#39;t actually exist
     </span><span class="kw">let </span>balance = response
@@ -118,6 +128,8 @@
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>request = tonic::Request::new(QueryAllBalancesRequest {
         address: account_address.to_string(),
         pagination: <span class="prelude-val">None</span>,
@@ -127,7 +139,7 @@
         .all_balances(request)
         .<span class="kw">await
         </span>.map(|r| r.into_inner())
-        .map_err(Error::grpc_status)<span class="question-mark">?</span>;
+        .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_all_balances&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>balances = response
         .balances

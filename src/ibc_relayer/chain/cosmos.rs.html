@@ -2362,6 +2362,54 @@
 <a href="#2362" id="2362">2362</a>
 <a href="#2363" id="2363">2363</a>
 <a href="#2364" id="2364">2364</a>
+<a href="#2365" id="2365">2365</a>
+<a href="#2366" id="2366">2366</a>
+<a href="#2367" id="2367">2367</a>
+<a href="#2368" id="2368">2368</a>
+<a href="#2369" id="2369">2369</a>
+<a href="#2370" id="2370">2370</a>
+<a href="#2371" id="2371">2371</a>
+<a href="#2372" id="2372">2372</a>
+<a href="#2373" id="2373">2373</a>
+<a href="#2374" id="2374">2374</a>
+<a href="#2375" id="2375">2375</a>
+<a href="#2376" id="2376">2376</a>
+<a href="#2377" id="2377">2377</a>
+<a href="#2378" id="2378">2378</a>
+<a href="#2379" id="2379">2379</a>
+<a href="#2380" id="2380">2380</a>
+<a href="#2381" id="2381">2381</a>
+<a href="#2382" id="2382">2382</a>
+<a href="#2383" id="2383">2383</a>
+<a href="#2384" id="2384">2384</a>
+<a href="#2385" id="2385">2385</a>
+<a href="#2386" id="2386">2386</a>
+<a href="#2387" id="2387">2387</a>
+<a href="#2388" id="2388">2388</a>
+<a href="#2389" id="2389">2389</a>
+<a href="#2390" id="2390">2390</a>
+<a href="#2391" id="2391">2391</a>
+<a href="#2392" id="2392">2392</a>
+<a href="#2393" id="2393">2393</a>
+<a href="#2394" id="2394">2394</a>
+<a href="#2395" id="2395">2395</a>
+<a href="#2396" id="2396">2396</a>
+<a href="#2397" id="2397">2397</a>
+<a href="#2398" id="2398">2398</a>
+<a href="#2399" id="2399">2399</a>
+<a href="#2400" id="2400">2400</a>
+<a href="#2401" id="2401">2401</a>
+<a href="#2402" id="2402">2402</a>
+<a href="#2403" id="2403">2403</a>
+<a href="#2404" id="2404">2404</a>
+<a href="#2405" id="2405">2405</a>
+<a href="#2406" id="2406">2406</a>
+<a href="#2407" id="2407">2407</a>
+<a href="#2408" id="2408">2408</a>
+<a href="#2409" id="2409">2409</a>
+<a href="#2410" id="2410">2410</a>
+<a href="#2411" id="2411">2411</a>
+<a href="#2412" id="2412">2412</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2375,7 +2423,8 @@
 <span class="kw">use </span>std::{cmp::Ordering, thread};
 
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
-<span class="kw">use </span>tonic::{codegen::http::Uri, metadata::AsciiMetadataValue};
+<span class="kw">use </span>tonic::codegen::http::Uri;
+<span class="kw">use </span>tonic::metadata::AsciiMetadataValue;
 <span class="kw">use </span>tracing::{error, instrument, trace, warn};
 
 <span class="kw">use </span>ibc_proto::cosmos::{
@@ -2692,13 +2741,16 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(
             ibc_proto::interchain_security::ccv::consumer::v1::QueryParamsRequest {},
         );
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.query_params(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?</span>;
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_ccv_consumer_chain_params&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>params = response
             .into_inner()
@@ -2726,12 +2778,15 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request =
             tonic::Request::new(ibc_proto::cosmos::staking::v1beta1::QueryParamsRequest {});
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.params(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?</span>;
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_staking_params&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>params = response
             .into_inner()
@@ -2778,6 +2833,9 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(ibc_proto::cosmos::base::node::v1beta1::ConfigRequest {});
 
         <span class="kw">match </span><span class="self">self</span>.block_on(client.config(request)) {
@@ -2790,7 +2848,7 @@
                 <span class="kw">if </span>is_unimplemented_node_query(<span class="kw-2">&amp;</span>e) {
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
                 } <span class="kw">else </span>{
-                    <span class="prelude-val">Err</span>(Error::grpc_status(e))
+                    <span class="prelude-val">Err</span>(Error::grpc_status(e, <span class="string">&quot;query_config_params&quot;</span>.to_owned()))
                 }
             }
         }
@@ -3484,10 +3542,13 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.client_states(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_clients&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="comment">// Deserialize into domain type
@@ -3672,12 +3733,15 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="kw">match </span><span class="self">self</span>.block_on(client.client_connections(request)) {
             <span class="prelude-val">Ok</span>(res) =&gt; res.into_inner(),
             <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.code() == tonic::Code::NotFound =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]),
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::grpc_status(e)),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::grpc_status(e, <span class="string">&quot;query_client_connections&quot;</span>.to_owned())),
         };
 
         <span class="kw">let </span>ids = response
@@ -3713,11 +3777,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.connections(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_connections&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="kw">let </span>connections = response
@@ -3765,6 +3832,10 @@
                     .<span class="kw">await
                     </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+            client = client.max_decoding_message_size(
+                chain.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize,
+            );
+
             <span class="kw">let </span><span class="kw-2">mut </span>request = connection::QueryConnectionRequest {
                 connection_id: connection_id.to_string(),
             }
@@ -3780,7 +3851,7 @@
                 <span class="kw">if </span>e.code() == tonic::Code::NotFound {
                     Error::connection_not_found(connection_id.clone())
                 } <span class="kw">else </span>{
-                    Error::grpc_status(e)
+                    Error::grpc_status(e, <span class="string">&quot;query_connection&quot;</span>.to_owned())
                 }
             })<span class="question-mark">?</span>;
 
@@ -3843,11 +3914,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.connection_channels(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_connection_channels&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="kw">let </span>channels = response
@@ -3888,11 +3962,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.channels(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_channels&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="kw">let </span>channels = response
@@ -3963,11 +4040,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.channel_client_state(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_channel_client_state&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="kw">let </span>client_state: <span class="prelude-ty">Option</span>&lt;IdentifiedAnyClientState&gt; = response
@@ -4023,11 +4103,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.packet_commitments(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_packet_commitments&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="kw">let </span><span class="kw-2">mut </span>commitment_sequences: Vec&lt;Sequence&gt; = response
@@ -4091,11 +4174,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span><span class="kw-2">mut </span>response = <span class="self">self
             </span>.block_on(client.unreceived_packets(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_unreceived_packets&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         response.sequences.sort_unstable();
@@ -4152,11 +4238,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span>response = <span class="self">self
             </span>.block_on(client.packet_acknowledgements(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_packet_acknowledgements&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         <span class="kw">let </span>acks_sequences = response
@@ -4194,11 +4283,14 @@
             )
             .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+        client = client
+            .max_decoding_message_size(<span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize);
+
         <span class="kw">let </span>request = tonic::Request::new(request.into());
 
         <span class="kw">let </span><span class="kw-2">mut </span>response = <span class="self">self
             </span>.block_on(client.unreceived_acks(request))
-            .map_err(Error::grpc_status)<span class="question-mark">?
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_unreceived_acknowledgements&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.into_inner();
 
         response.sequences.sort_unstable();
@@ -4250,11 +4342,15 @@
                     )
                     .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+                client = client.max_decoding_message_size(
+                    <span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize,
+                );
+
                 <span class="kw">let </span>request = tonic::Request::new(request.into());
 
                 <span class="kw">let </span>response = <span class="self">self
                     </span>.block_on(client.next_sequence_receive(request))
-                    .map_err(Error::grpc_status)<span class="question-mark">?
+                    .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_next_sequence_receive&quot;</span>.to_owned()))<span class="question-mark">?
                     </span>.into_inner();
 
                 <span class="prelude-val">Ok</span>((Sequence::from(response.next_sequence_receive), <span class="prelude-val">None</span>))

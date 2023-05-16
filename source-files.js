@@ -31,6 +31,7 @@ var sourcesIndex = JSON.parse('{\
 "block_buffer":["",[],["lib.rs","sealed.rs"]],\
 "bs58":["",[],["alphabet.rs","decode.rs","encode.rs","lib.rs"]],\
 "bstr":["",[["byteset",[],["mod.rs","scalar.rs"]],["unicode",[["fsm",[],["grapheme_break_fwd.rs","grapheme_break_rev.rs","mod.rs","regional_indicator_rev.rs","sentence_break_fwd.rs","simple_word_fwd.rs","whitespace_anchored_fwd.rs","whitespace_anchored_rev.rs","word_break_fwd.rs"]]],["grapheme.rs","mod.rs","sentence.rs","whitespace.rs","word.rs"]]],["ascii.rs","bstr.rs","bstring.rs","escape_bytes.rs","ext_slice.rs","ext_vec.rs","impls.rs","io.rs","lib.rs","utf8.rs"]],\
+"byte_unit":["",[["u64",[],["constants.rs","mod.rs"]]],["adjusted_byte.rs","byte.rs","byte_error.rs","byte_unit.rs","lib.rs","macros.rs"]],\
 "byteorder":["",[],["io.rs","lib.rs"]],\
 "bytes":["",[["buf",[],["buf_impl.rs","buf_mut.rs","chain.rs","iter.rs","limit.rs","mod.rs","reader.rs","take.rs","uninit_slice.rs","vec_deque.rs","writer.rs"]],["fmt",[],["debug.rs","hex.rs","mod.rs"]]],["bytes.rs","bytes_mut.rs","lib.rs","loom.rs","serde.rs"]],\
 "canonical_path":["",[],["lib.rs"]],\
@@ -357,6 +358,7 @@ var sourcesIndex = JSON.parse('{\
 "url":["",[],["host.rs","lib.rs","origin.rs","parser.rs","path_segments.rs","quirks.rs","slicing.rs"]],\
 "urlencoding":["",[],["dec.rs","enc.rs","lib.rs"]],\
 "utf8":["",[],["lib.rs","lossy.rs","read.rs"]],\
+"utf8_width":["",[],["lib.rs"]],\
 "utf8parse":["",[],["lib.rs","types.rs"]],\
 "uuid":["",[],["builder.rs","error.rs","external.rs","fmt.rs","lib.rs","macros.rs","parser.rs","rng.rs","timestamp.rs","v4.rs"]],\
 "wait_timeout":["",[],["lib.rs","unix.rs"]],\

@@ -91,8 +91,12 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
 </pre><pre class="rust"><code><span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>http::Uri;
+<span class="kw">use </span>ibc_relayer::config::default::max_grpc_decoding_size;
 <span class="kw">use </span>prost::Message;
 
 <span class="kw">use </span>ibc_proto::cosmos::gov::v1beta1::{query_client::QueryClient, QueryProposalRequest};
@@ -152,13 +156,15 @@
         }
     };
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>request = tonic::Request::new(QueryProposalRequest { proposal_id });
 
     <span class="kw">let </span>response = client
         .proposal(request)
         .<span class="kw">await
         </span>.map(|r| r.into_inner())
-        .map_err(RelayerError::grpc_status)<span class="question-mark">?</span>;
+        .map_err(|e| RelayerError::grpc_status(e, <span class="string">&quot;query_upgrade_proposal_height&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="comment">// Querying for a balance might fail, i.e. if the account doesn&#39;t actually exist
     </span><span class="kw">let </span>proposal = response

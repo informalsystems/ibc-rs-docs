@@ -27,10 +27,14 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
 </pre><pre class="rust"><code><span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::service_client::ServiceClient;
 <span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::{SimulateRequest, SimulateResponse, Tx};
 <span class="kw">use </span>tonic::codegen::http::Uri;
 
+<span class="kw">use </span><span class="kw">crate</span>::config::default::max_grpc_decoding_size;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="kw">pub async fn </span>send_tx_simulate(grpc_address: <span class="kw-2">&amp;</span>Uri, tx: Tx) -&gt; <span class="prelude-ty">Result</span>&lt;SimulateResponse, Error&gt; {
@@ -47,11 +51,13 @@
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>request = tonic::Request::new(req);
     <span class="kw">let </span>response = client
         .simulate(request)
         .<span class="kw">await
-        </span>.map_err(Error::grpc_status)<span class="question-mark">?
+        </span>.map_err(|e| Error::grpc_status(e, <span class="string">&quot;send_tx_simulate&quot;</span>.to_owned()))<span class="question-mark">?
         </span>.into_inner();
 
     <span class="prelude-val">Ok</span>(response)

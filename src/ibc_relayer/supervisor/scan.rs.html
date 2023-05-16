@@ -931,6 +931,24 @@
 <a href="#931" id="931">931</a>
 <a href="#932" id="932">932</a>
 <a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::collections::BTreeMap;
 
@@ -1292,14 +1310,18 @@
                     client,
                 }) =&gt; {
                     <span class="kw">let </span>counterparty_chain_id = client.client_state.chain_id();
-                    init_telemetry(
-                        <span class="kw-2">&amp;</span>chain.id(),
-                        <span class="kw-2">&amp;</span>client.client_id,
-                        <span class="kw-2">&amp;</span>counterparty_chain_id,
-                        channel_id,
-                        port_id,
-                        <span class="self">self</span>.config,
-                    );
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(counterparty_channel) = <span class="kw-2">&amp;</span>counterparty_channel {
+                        init_telemetry(
+                            <span class="kw-2">&amp;</span>chain.id(),
+                            <span class="kw-2">&amp;</span>client.client_id,
+                            <span class="kw-2">&amp;</span>counterparty_chain_id,
+                            channel_id,
+                            <span class="kw-2">&amp;</span>counterparty_channel.channel_id,
+                            port_id,
+                            <span class="kw-2">&amp;</span>counterparty_channel.port_id,
+                            <span class="self">self</span>.config,
+                        );
+                    }
 
                     <span class="kw">let </span>client_scan = scan
                         .clients
@@ -1338,14 +1360,18 @@
 
                     <span class="kw">for </span>connection_scan <span class="kw">in </span>connection_scans {
                         <span class="kw">for </span>channel <span class="kw">in </span>connection_scan.channels.values() {
-                            init_telemetry(
-                                <span class="kw-2">&amp;</span>chain.id(),
-                                client_scan.id(),
-                                <span class="kw-2">&amp;</span>client_scan.counterparty_chain_id(),
-                                channel.id(),
-                                channel.port(),
-                                <span class="self">self</span>.config,
-                            );
+                            <span class="kw">if let </span><span class="prelude-val">Some</span>(counterparty_channel) = <span class="kw-2">&amp;</span>channel.counterparty {
+                                init_telemetry(
+                                    <span class="kw-2">&amp;</span>chain.id(),
+                                    client_scan.id(),
+                                    <span class="kw-2">&amp;</span>client_scan.counterparty_chain_id(),
+                                    channel.id(),
+                                    <span class="kw-2">&amp;</span>counterparty_channel.channel_id,
+                                    channel.port(),
+                                    <span class="kw-2">&amp;</span>counterparty_channel.port_id,
+                                    <span class="self">self</span>.config,
+                                );
+                            }
                         }
                     }
                 }
@@ -1808,7 +1834,9 @@
     client: <span class="kw-2">&amp;</span>ClientId,
     counterparty_chain_id: <span class="kw-2">&amp;</span>ChainId,
     channel_id: <span class="kw-2">&amp;</span>ChannelId,
+    counterparty_channel: <span class="kw-2">&amp;</span>ChannelId,
     port_id: <span class="kw-2">&amp;</span>PortId,
+    counterparty_port: <span class="kw-2">&amp;</span>PortId,
     config: <span class="kw-2">&amp;</span>Config,
 ) {
     <span class="comment">// Boolean flag that is toggled if any of the tx workers are enabled
@@ -1832,7 +1860,15 @@
         <span class="macro">telemetry!</span>(init_worker_by_type, WorkerType::Packet);
 
         <span class="kw">if </span>config.mode.packets.tx_confirmation {
-            <span class="macro">telemetry!</span>(init_per_channel, chain_id, channel_id, port_id);
+            <span class="macro">telemetry!</span>(
+                init_per_channel,
+                chain_id,
+                counterparty_chain_id,
+                channel_id,
+                counterparty_channel,
+                port_id,
+                counterparty_port
+            );
         }
     }
 

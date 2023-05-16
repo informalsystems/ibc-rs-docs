@@ -31,19 +31,27 @@
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
 </pre><pre class="rust"><code><span class="kw">use </span>http::uri::Uri;
 
 <span class="kw">use </span>ibc_proto::ibc::applications::transfer::v1::{
     query_client::QueryClient, QueryDenomTraceRequest,
 };
 
-<span class="kw">use crate</span>::{denom::DenomTrace, error::Error};
+<span class="kw">use </span><span class="kw">crate</span>::config::default::max_grpc_decoding_size;
+<span class="kw">use </span><span class="kw">crate</span>::denom::DenomTrace;
+<span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="comment">// Uses the GRPC client to retrieve the denom trace for a specific hash
 </span><span class="kw">pub async fn </span>query_denom_trace(grpc_address: <span class="kw-2">&amp;</span>Uri, hash: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;DenomTrace, Error&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>client = QueryClient::connect(grpc_address.clone())
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
+
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
 
     <span class="kw">let </span>request = tonic::Request::new(QueryDenomTraceRequest {
         hash: hash.to_owned(),
@@ -53,7 +61,7 @@
         .denom_trace(request)
         .<span class="kw">await
         </span>.map(|r| r.into_inner())
-        .map_err(Error::grpc_status)<span class="question-mark">?</span>;
+        .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_denom_trace&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>denom_trace = response
         .denom_trace

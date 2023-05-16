@@ -93,6 +93,13 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre><pre class="rust"><code><span class="kw">use </span>http::uri::Uri;
 <span class="kw">use </span>ibc_proto::ibc::applications::fee::v1::query_client::QueryClient;
 <span class="kw">use </span>ibc_proto::ibc::applications::fee::v1::{
@@ -106,6 +113,7 @@
 <span class="kw">use </span>ibc_relayer_types::signer::Signer;
 <span class="kw">use </span>tonic::Code;
 
+<span class="kw">use </span><span class="kw">crate</span>::config::default::max_grpc_decoding_size;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="kw">pub async fn </span>query_counterparty_payee(
@@ -116,6 +124,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>client = QueryClient::connect(grpc_address.clone())
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
+
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
 
     <span class="kw">let </span>request = QueryCounterpartyPayeeRequest {
         channel_id: channel_id.to_string(),
@@ -134,7 +144,7 @@
             <span class="kw">if </span>e.code() == Code::NotFound {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             } <span class="kw">else </span>{
-                <span class="prelude-val">Err</span>(Error::grpc_status(e))
+                <span class="prelude-val">Err</span>(Error::grpc_status(e, <span class="string">&quot;query_counterparty_payee&quot;</span>.to_owned()))
             }
         }
     }
@@ -149,6 +159,8 @@
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>request = QueryIncentivizedPacketsForChannelRequest {
         channel_id: channel_id.to_string(),
         port_id: port_id.to_string(),
@@ -159,7 +171,7 @@
     <span class="kw">let </span>response = client
         .incentivized_packets_for_channel(request)
         .<span class="kw">await
-        </span>.map_err(Error::grpc_status)<span class="question-mark">?</span>;
+        </span>.map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_incentivized_packets&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>raw_packets = response.into_inner().incentivized_packets;
 
@@ -181,10 +193,12 @@
         .<span class="kw">await
         </span>.map_err(Error::grpc_transport)<span class="question-mark">?</span>;
 
+    client = client.max_decoding_message_size(max_grpc_decoding_size().get_bytes() <span class="kw">as </span>usize);
+
     <span class="kw">let </span>response = client
         .incentivized_packet(tonic::Request::new(request))
         .<span class="kw">await
-        </span>.map_err(Error::grpc_status)<span class="question-mark">?</span>;
+        </span>.map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_incentivized_packet&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(response.into_inner())
 }
