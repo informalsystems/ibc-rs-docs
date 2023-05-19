@@ -150,15 +150,43 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::convert::Infallible;
 <span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>crossbeam_channel::Receiver;
-<span class="kw">use </span>std::time::Instant;
-<span class="kw">use </span>tracing::{debug, span, trace, warn};
-
-<span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
 <span class="kw">use </span>retry::delay::Fibonacci;
 <span class="kw">use </span>retry::retry_with_index;
+<span class="kw">use </span>std::time::Instant;
+<span class="kw">use </span>tracing::{debug, debug_span, error_span, trace, warn};
+
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
+<span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
 
 <span class="kw">use </span><span class="kw">crate</span>::util::retry::clamp_total;
 <span class="kw">use </span><span class="kw">crate</span>::util::task::{spawn_background_task, Next, TaskError, TaskHandle};
@@ -169,10 +197,10 @@
 
 <span class="kw">use </span><span class="kw">super</span>::WorkerCmd;
 
-<span class="kw">const </span>REFRESH_INTERVAL_SECONDS: u64 = <span class="number">2</span>;
-<span class="kw">const </span>INITIAL_FIBONACCI_VALUE: u64 = <span class="number">1</span>;
-<span class="kw">const </span>MAX_REFRESH_DELAY_SECONDS: u64 = <span class="number">60 </span>* <span class="number">60</span>; <span class="comment">// 1 hour
-</span><span class="kw">const </span>MAX_REFRESH_TOTAL_DELAY_SECONDS: u64 = <span class="number">60 </span>* <span class="number">60 </span>* <span class="number">24</span>; <span class="comment">// 1 day
+<span class="kw">const </span>REFRESH_INTERVAL: Duration = Duration::from_secs(<span class="number">2</span>); <span class="comment">// 2 seconds
+</span><span class="kw">const </span>INITIAL_BACKOFF: Duration = Duration::from_secs(<span class="number">1</span>); <span class="comment">// 1 second
+</span><span class="kw">const </span>MAX_REFRESH_DELAY: Duration = Duration::from_secs(<span class="number">60 </span>* <span class="number">60</span>); <span class="comment">// 1 hour
+</span><span class="kw">const </span>MAX_REFRESH_TOTAL_DELAY: Duration = Duration::from_secs(<span class="number">60 </span>* <span class="number">60 </span>* <span class="number">24</span>); <span class="comment">// 1 day
 
 </span><span class="kw">pub fn </span>spawn_refresh_client&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
     <span class="kw-2">mut </span>client: ForeignClient&lt;ChainA, ChainB&gt;,
@@ -182,51 +210,44 @@
             client = %client.id,
             <span class="string">&quot;skipping refresh client task on frozen client&quot;</span>,
         );
-        <span class="prelude-val">None
-    </span>} <span class="kw">else </span>{
-        <span class="comment">// Compute the refresh interval as a fraction of the client&#39;s trusting period
-        // If the trusting period or the client state is not retrieved, fallback to a default value.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>next_refresh = Instant::now() + Duration::from_secs(REFRESH_INTERVAL_SECONDS);
-        <span class="prelude-val">Some</span>(spawn_background_task(
-            <span class="macro">span!</span>(
-                tracing::Level::ERROR,
-                <span class="string">&quot;worker.client.refresh&quot;</span>,
-                client = %client.id,
-                src_chain = %client.src_chain.id(),
-                dst_chain = %client.dst_chain.id(),
-            ),
-            <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">1</span>)),
-            <span class="kw">move </span>|| {
-                <span class="comment">// This is used for integration tests until `spawn_background_task`
-                // uses async instead of threads
-                </span><span class="kw">if </span>Instant::now() &lt; next_refresh {
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(Next::Continue);
-                }
 
-                <span class="comment">// Use retry mechanism only if `client.refresh()` fails.
-                </span><span class="kw">let </span>res = retry_with_index(
-                    clamp_total(
-                        Fibonacci::from(Duration::from_secs(INITIAL_FIBONACCI_VALUE)),
-                        Duration::from_secs(MAX_REFRESH_DELAY_SECONDS),
-                        Duration::from_secs(MAX_REFRESH_TOTAL_DELAY_SECONDS),
-                    ),
-                    |<span class="kw">_</span>| client.refresh(),
-                );
-
-                <span class="kw">match </span>res {
-                    <span class="comment">// If `client.refresh()` was successful, update the `next_refresh` call.
-                    </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                        next_refresh =
-                            Instant::now() + Duration::from_secs(REFRESH_INTERVAL_SECONDS);
-                        <span class="prelude-val">Ok</span>(Next::Continue)
-                    }
-                    <span class="comment">// If `client.refresh()` failed and the retry mechanism
-                    // exceeded the maximum delay, return a fatal error.
-                    </span><span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(TaskError::Fatal(e)),
-                }
-            },
-        ))
+        <span class="kw">return </span><span class="prelude-val">None</span>;
     }
+
+    <span class="comment">// Compute the refresh interval as a fraction of the client&#39;s trusting period
+    // If the trusting period or the client state is not retrieved, fallback to a default value.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>next_refresh = Instant::now() + REFRESH_INTERVAL;
+    <span class="prelude-val">Some</span>(spawn_background_task(
+        <span class="macro">error_span!</span>(
+            <span class="string">&quot;worker.client.refresh&quot;</span>,
+            client = %client.id,
+            src_chain = %client.src_chain.id(),
+            dst_chain = %client.dst_chain.id(),
+        ),
+        <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">1</span>)),
+        <span class="kw">move </span>|| {
+            <span class="comment">// This is used for integration tests until `spawn_background_task`
+            // uses async instead of threads
+            </span><span class="kw">if </span>Instant::now() &lt; next_refresh {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(Next::Continue);
+            }
+
+            <span class="comment">// Use retry mechanism only if `client.refresh()` fails.
+            </span><span class="kw">let </span>res = retry_with_index(refresh_strategy(), |<span class="kw">_</span>| client.refresh());
+
+            <span class="kw">match </span>res {
+                <span class="comment">// If `client.refresh()` was successful, update the `next_refresh` call.
+                </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                    next_refresh = Instant::now() + REFRESH_INTERVAL;
+
+                    <span class="prelude-val">Ok</span>(Next::Continue)
+                }
+                <span class="comment">// If `client.refresh()` failed and the retry mechanism
+                // exceeded the maximum delay, return a fatal error.
+                </span><span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(TaskError::Fatal(e)),
+            }
+        },
+    ))
 }
 
 <span class="kw">pub fn </span>detect_misbehavior_task&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
@@ -236,16 +257,18 @@
     <span class="kw">if </span>client.is_expired_or_frozen() {
         <span class="macro">warn!</span>(
             client = %client.id(),
+            src_chain = %client.src_chain.id(),
+            dst_chain = %client.dst_chain.id(),
             <span class="string">&quot;skipping detect misbehavior task on frozen client&quot;</span>,
         );
+
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>first_check_done = <span class="bool-val">false</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>initial_check_done = <span class="bool-val">false</span>;
 
     <span class="kw">let </span>handle = spawn_background_task(
-        <span class="macro">span!</span>(
-            tracing::Level::ERROR,
+        <span class="macro">error_span!</span>(
             <span class="string">&quot;worker.client.misbehaviour&quot;</span>,
             client = %client.id,
             src_chain = %client.src_chain.id(),
@@ -253,46 +276,24 @@
         ),
         <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">600</span>)),
         <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
-            <span class="kw">if </span>!first_check_done {
-                first_check_done = <span class="bool-val">true</span>;
-                <span class="macro">debug!</span>(<span class="string">&quot;doing first check&quot;</span>);
-                <span class="kw">let </span>misbehavior_result = client.detect_misbehaviour_and_submit_evidence(<span class="prelude-val">None</span>);
-                <span class="macro">trace!</span>(<span class="string">&quot;detect misbehavior result: {:?}&quot;</span>, misbehavior_result);
+            <span class="kw">if </span>!initial_check_done {
+                initial_check_done = <span class="bool-val">true</span>;
+
+                <span class="macro">debug!</span>(<span class="string">&quot;doing initial misbehavior check&quot;</span>);
+                <span class="kw">let </span>result = client.detect_misbehaviour_and_submit_evidence(<span class="prelude-val">None</span>);
+                <span class="macro">debug!</span>(<span class="string">&quot;misbehavior detection result: {:?}&quot;</span>, result);
             }
 
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = receiver.try_recv() {
-                <span class="kw">match </span>cmd {
-                    WorkerCmd::IbcEvents { batch } =&gt; {
-                        <span class="macro">trace!</span>(<span class="string">&quot;received batch: {:?}&quot;</span>, batch);
+            <span class="kw">if let </span><span class="prelude-val">Ok</span>(WorkerCmd::IbcEvents { batch }) = receiver.try_recv() {
+                <span class="macro">trace!</span>(<span class="string">&quot;received batch: {:?}&quot;</span>, batch);
 
-                        <span class="kw">for </span>event_with_height <span class="kw">in </span>batch.events {
-                            <span class="kw">if let </span>IbcEvent::UpdateClient(<span class="kw-2">ref </span>update) = event_with_height.event {
-                                <span class="macro">debug!</span>(<span class="string">&quot;checking misbehavior for updated client&quot;</span>);
-                                <span class="kw">let </span>misbehavior_result =
-                                    client.detect_misbehaviour_and_submit_evidence(<span class="prelude-val">Some</span>(update));
-                                <span class="macro">trace!</span>(<span class="string">&quot;detect misbehavior result: {:?}&quot;</span>, misbehavior_result);
-
-                                <span class="kw">match </span>misbehavior_result {
-                                    MisbehaviourResults::ValidClient =&gt; {}
-                                    MisbehaviourResults::VerificationError =&gt; {
-                                        <span class="comment">// can retry in next call
-                                    </span>}
-                                    MisbehaviourResults::EvidenceSubmitted(<span class="kw">_</span>) =&gt; {
-                                        <span class="comment">// if evidence was submitted successfully then exit
-                                        </span><span class="kw">return </span><span class="prelude-val">Ok</span>(Next::Abort);
-                                    }
-                                    MisbehaviourResults::CannotExecute =&gt; {
-                                        <span class="comment">// skip misbehaviour checking if chain does not have support for it (i.e. client
-                                        // update event does not include the header)
-                                        </span><span class="kw">return </span><span class="prelude-val">Ok</span>(Next::Abort);
-                                    }
-                                }
-                            }
+                <span class="kw">for </span>event_with_height <span class="kw">in </span>batch.events {
+                    <span class="kw">if let </span>IbcEvent::UpdateClient(update) = event_with_height.event {
+                        <span class="kw">match </span>on_client_update(<span class="kw-2">&amp;</span>client, update) {
+                            Next::Continue =&gt; <span class="kw">continue</span>,
+                            Next::Abort =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(Next::Abort),
                         }
                     }
-
-                    WorkerCmd::NewBlock { .. } =&gt; {}
-                    WorkerCmd::ClearPendingPackets =&gt; {}
                 }
             }
 
@@ -301,6 +302,59 @@
     );
 
     <span class="prelude-val">Some</span>(handle)
+}
+
+<span class="kw">fn </span>on_client_update&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
+    client: <span class="kw-2">&amp;</span>ForeignClient&lt;ChainB, ChainA&gt;,
+    update: UpdateClient,
+) -&gt; Next {
+    <span class="kw">let </span>_span = <span class="macro">debug_span!</span>(
+        <span class="string">&quot;on_client_update&quot;</span>,
+        client = %update.client_id(),
+        client_type = %update.client_type(),
+        height = %update.consensus_height(),
+    );
+
+    <span class="macro">debug!</span>(<span class="string">&quot;checking misbehavior for updated client&quot;</span>);
+
+    <span class="kw">let </span>result = client.detect_misbehaviour_and_submit_evidence(<span class="prelude-val">Some</span>(update));
+
+    <span class="macro">trace!</span>(<span class="string">&quot;misbehavior detection result: {:?}&quot;</span>, result);
+
+    <span class="kw">match </span>result {
+        MisbehaviourResults::ValidClient =&gt; {
+            <span class="macro">debug!</span>(<span class="string">&quot;client is valid&quot;</span>);
+
+            Next::Continue
+        }
+        MisbehaviourResults::VerificationError =&gt; {
+            <span class="comment">// can retry in next call
+            </span><span class="macro">debug!</span>(<span class="string">&quot;client verification error, will retry in next call&quot;</span>);
+
+            Next::Continue
+        }
+        MisbehaviourResults::EvidenceSubmitted(<span class="kw">_</span>) =&gt; {
+            <span class="comment">// if evidence was submitted successfully then exit
+            </span><span class="macro">debug!</span>(<span class="string">&quot;misbehavior detected! Evidence successfully submitted, exiting&quot;</span>);
+
+            Next::Abort
+        }
+        MisbehaviourResults::CannotExecute =&gt; {
+            <span class="comment">// skip misbehaviour checking if chain does not have support for it (i.e. client
+            // update event does not include the header)
+            </span><span class="macro">debug!</span>(<span class="string">&quot;cannot execute misbehavior detection, exiting&quot;</span>);
+
+            Next::Abort
+        }
+    }
+}
+
+<span class="kw">fn </span>refresh_strategy() -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
+    clamp_total(
+        Fibonacci::from(INITIAL_BACKOFF),
+        MAX_REFRESH_DELAY,
+        MAX_REFRESH_TOTAL_DELAY,
+    )
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (ef934d9b6 2023-02-08)" data-search-js="search-28136cea55c34037.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

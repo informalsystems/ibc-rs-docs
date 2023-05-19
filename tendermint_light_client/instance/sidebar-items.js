@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Instance","A light client `Instance` packages a `LightClient` together with its `State`."]]};

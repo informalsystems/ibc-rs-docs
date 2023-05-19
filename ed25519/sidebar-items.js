@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["SIGNATURE_LENGTH","Length of an Ed25519 signature in bytes."]],"struct":[["Error","Signature errors."],["Signature","Ed25519 signature."]]};
+window.SIDEBAR_ITEMS = {"struct":[["Error","Signature errors."],["Signature","Ed25519 signature."]],"trait":[["SignatureEncoding","Support for decoding/encoding signatures as bytes."]],"type":[["ComponentBytes","Size of an `R` or `s` component of an Ed25519 signature when serialized as bytes."],["SignatureBytes","Ed25519 signature serialized as a byte array."]]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":[["PeerList","A generic container mapping `PeerId`s to some type `T`, which keeps track of the primary peer, witnesses, full nodes, and faulty nodes. Provides lifecycle methods to swap the primary, mark witnesses as faulty, and maintains an `invariant` for correctness."],["PeerListBuilder","A builder of `PeerList` with a fluent API."]]};

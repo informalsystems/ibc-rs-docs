@@ -704,14 +704,6 @@
 <a href="#704" id="704">704</a>
 <a href="#705" id="705">705</a>
 <a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
-<a href="#708" id="708">708</a>
-<a href="#709" id="709">709</a>
-<a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::convert::{TryFrom, TryInto};
 <span class="kw">use </span>core::time::Duration;
 
@@ -724,7 +716,6 @@
 <span class="kw">use </span>ibc_proto::protobuf::Protobuf;
 
 <span class="kw">use </span>tendermint_light_client_verifier::options::Options;
-<span class="kw">use </span>tendermint_light_client_verifier::ProdVerifier;
 
 <span class="kw">use </span><span class="kw">crate</span>::clients::ics07_tendermint::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::clients::ics07_tendermint::header::Header <span class="kw">as </span>TmHeader;
@@ -742,7 +733,7 @@
 
 <span class="kw">pub const </span>TENDERMINT_CLIENT_STATE_TYPE_URL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/ibc.lightclients.tendermint.v1.ClientState&quot;</span>;
 
-<span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+<span class="attr">#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>ClientState {
     <span class="kw">pub </span>chain_id: ChainId,
     <span class="kw">pub </span>trust_threshold: TrustThreshold,
@@ -754,8 +745,6 @@
     <span class="kw">pub </span>upgrade_path: Vec&lt;String&gt;,
     <span class="kw">pub </span>allow_update: AllowUpdate,
     <span class="kw">pub </span>frozen_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
-    <span class="attr">#[serde(skip)]
-    </span><span class="kw">pub </span>verifier: ProdVerifier,
 }
 
 <span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -831,7 +820,6 @@
             upgrade_path,
             allow_update,
             frozen_height: <span class="prelude-val">None</span>,
-            verifier: ProdVerifier::default(),
         })
     }
 
@@ -864,15 +852,12 @@
 
     <span class="doccomment">/// Helper method to produce a [`Options`] struct for use in
     /// Tendermint-specific light client verification.
-    </span><span class="kw">pub fn </span>as_light_client_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Options, Error&gt; {
-        <span class="prelude-val">Ok</span>(Options {
-            trust_threshold: <span class="self">self
-                </span>.trust_threshold
-                .try_into()
-                .map_err(|e: Ics02Error| Error::invalid_trust_threshold(e.to_string()))<span class="question-mark">?</span>,
+    </span><span class="kw">pub fn </span>as_light_client_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Options {
+        Options {
+            trust_threshold: <span class="self">self</span>.trust_threshold.into(),
             trusting_period: <span class="self">self</span>.trusting_period,
             clock_drift: <span class="self">self</span>.max_clock_drift,
-        })
+        }
     }
 
     <span class="doccomment">/// Verify the time and height delays
@@ -1026,7 +1011,6 @@
                 after_misbehaviour: raw.allow_update_after_misbehaviour,
             },
             proof_specs: raw.proof_specs.into(),
-            verifier: ProdVerifier::default(),
         })
     }
 }

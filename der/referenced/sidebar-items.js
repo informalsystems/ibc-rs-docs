@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["OwnedToRef","A trait for borrowing data from an owned struct"],["RefToOwned","A trait for cloning a referenced structure and getting owned objects"]]};

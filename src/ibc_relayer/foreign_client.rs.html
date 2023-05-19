@@ -1822,13 +1822,6 @@
 <a href="#1822" id="1822">1822</a>
 <a href="#1823" id="1823">1823</a>
 <a href="#1824" id="1824">1824</a>
-<a href="#1825" id="1825">1825</a>
-<a href="#1826" id="1826">1826</a>
-<a href="#1827" id="1827">1827</a>
-<a href="#1828" id="1828">1828</a>
-<a href="#1829" id="1829">1829</a>
-<a href="#1830" id="1830">1830</a>
-<a href="#1831" id="1831">1831</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,
@@ -3309,7 +3302,8 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut </span>update: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>UpdateClient&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;MisbehaviourEvidence&gt;, ForeignClientError&gt; {
-        thread::sleep(Duration::from_millis(<span class="number">200</span>));
+        <span class="comment">// FIXME(romac): Why do we need this, and shouldn&#39;t we wait somewhere else up the call stack?
+        </span>thread::sleep(Duration::from_millis(<span class="number">200</span>));
 
         <span class="comment">// Get the latest client state on destination.
         </span><span class="kw">let </span>(client_state, <span class="kw">_</span>) = {
@@ -3347,6 +3341,7 @@
         );
 
         <span class="kw">let </span>start_time = Instant::now();
+
         <span class="kw">for </span>target_height <span class="kw">in </span>consensus_state_heights {
             <span class="comment">// Start with specified update event or the one for latest consensus height
             </span><span class="kw">let </span>update_event = <span class="kw">if let </span><span class="prelude-val">Some</span>(event) = update {
@@ -3391,10 +3386,11 @@
             <span class="comment">// Check for misbehaviour according to the specific source chain type.
             // In case of Tendermint client, this will also check the BFT time violation if
             // a header for the event height cannot be retrieved from the witness.
-            </span><span class="kw">let </span>misbehavior = <span class="kw">match </span><span class="self">self
+            </span><span class="kw">let </span>result = <span class="self">self
                 </span>.src_chain
-                .check_misbehaviour(update_event.clone(), client_state.clone())
-            {
+                .check_misbehaviour(update_event.clone(), client_state.clone());
+
+            <span class="kw">let </span>misbehavior = <span class="kw">match </span>result {
                 <span class="comment">// Misbehavior check passed.
                 </span><span class="prelude-val">Ok</span>(evidence_opt) =&gt; evidence_opt,
 
@@ -3428,7 +3424,7 @@
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(misbehavior);
             }
 
-            <span class="comment">// Exit the loop if more than MAX_MISBEHAVIOUR_CHECK_TIME was spent here.
+            <span class="comment">// Exit the loop if more than MAX_MISBEHAVIOUR_CHECK_DURATION was spent here.
             </span><span class="kw">if </span>start_time.elapsed() &gt; MAX_MISBEHAVIOUR_CHECK_DURATION {
                 <span class="macro">trace!</span>(
                     <span class="string">&quot;finished misbehaviour verification after {:?}&quot;</span>,
@@ -3554,10 +3550,10 @@
     )]
     </span><span class="kw">pub fn </span>detect_misbehaviour_and_submit_evidence(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        update_event: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>UpdateClient&gt;,
+        update_event: <span class="prelude-ty">Option</span>&lt;UpdateClient&gt;,
     ) -&gt; MisbehaviourResults {
         <span class="comment">// check evidence of misbehaviour for all updates or one
-        </span><span class="kw">let </span>result = <span class="kw">match </span><span class="self">self</span>.detect_misbehaviour(update_event) {
+        </span><span class="kw">let </span>result = <span class="kw">match </span><span class="self">self</span>.detect_misbehaviour(update_event.as_ref()) {
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]), <span class="comment">// no evidence found
             </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(detected)) =&gt; {
@@ -3582,26 +3578,13 @@
         // Even if some states may have failed to verify, e.g. if they were expired, just
         // warn the user and continue.
         </span><span class="kw">match </span>result {
-            <span class="prelude-val">Err</span>(ForeignClientError(ForeignClientErrorDetail::MisbehaviourExit(s), <span class="kw">_</span>)) =&gt; {
-                <span class="macro">warn!</span>(<span class="string">&quot;misbehaviour checking is being disabled, reason: {}&quot;</span>, s);
+            <span class="prelude-val">Ok</span>(events) =&gt; {
+                <span class="kw">if </span>!events.is_empty() {
+                    <span class="macro">info!</span>(<span class="string">&quot;evidence submission result: {}&quot;</span>, PrettySlice(<span class="kw-2">&amp;</span>events));
 
-                MisbehaviourResults::CannotExecute
-            }
-
-            <span class="prelude-val">Ok</span>(misbehaviour_detection_result) =&gt; {
-                <span class="macro">info!</span>(
-                    <span class="string">&quot;evidence submission result: {}&quot;</span>,
-                    PrettySlice(<span class="kw-2">&amp;</span>misbehaviour_detection_result)
-                );
-                <span class="kw">if </span>!misbehaviour_detection_result.is_empty() {
-                    <span class="macro">info!</span>(
-                        <span class="string">&quot;evidence submission result: {}&quot;</span>,
-                        PrettySlice(<span class="kw-2">&amp;</span>misbehaviour_detection_result)
-                    );
-
-                    MisbehaviourResults::EvidenceSubmitted(misbehaviour_detection_result)
+                    MisbehaviourResults::EvidenceSubmitted(events)
                 } <span class="kw">else </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot;client is valid&quot;</span>,);
+                    <span class="macro">info!</span>(<span class="string">&quot;client is valid&quot;</span>);
 
                     MisbehaviourResults::ValidClient
                 }
@@ -3613,15 +3596,18 @@
 
                     MisbehaviourResults::CannotExecute
                 }
+
                 ForeignClientErrorDetail::ExpiredOrFrozen(<span class="kw">_</span>) =&gt; {
                     <span class="macro">error!</span>(<span class="string">&quot;cannot check misbehavior on frozen or expired client&quot;</span>,);
 
                     MisbehaviourResults::CannotExecute
                 }
 
-                <span class="kw">_ if </span>update_event.is_some() =&gt; MisbehaviourResults::CannotExecute,
+                <span class="comment">// FIXME: This is fishy
+                </span><span class="kw">_ if </span>update_event.is_some() =&gt; MisbehaviourResults::CannotExecute,
 
-                <span class="kw">_ </span>=&gt; {
+                <span class="comment">// FIXME: This is fishy
+                </span><span class="kw">_ </span>=&gt; {
                     <span class="macro">warn!</span>(<span class="string">&quot;misbehaviour checking result: {}&quot;</span>, e);
 
                     MisbehaviourResults::ValidClient

@@ -2411,6 +2411,9 @@
 <a href="#2411" id="2411">2411</a>
 <a href="#2412" id="2412">2412</a>
 <a href="#2413" id="2413">2413</a>
+<a href="#2414" id="2414">2414</a>
+<a href="#2415" id="2415">2415</a>
+<a href="#2416" id="2416">2416</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2442,7 +2445,7 @@
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::client_state::{
     AllowUpdate, ClientState <span class="kw">as </span>TmClientState,
 };
-<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::consensus_state::ConsensusState <span class="kw">as </span>TMConsensusState;
+<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::consensus_state::ConsensusState <span class="kw">as </span>TmConsensusState;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::header::Header <span class="kw">as </span>TmHeader;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_type::ClientType;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::error::Error <span class="kw">as </span>ClientError;
@@ -2469,7 +2472,8 @@
 
 <span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>TmHeight;
 <span class="kw">use </span>tendermint::node::{<span class="self">self</span>, info::TxIndexStatus};
-<span class="kw">use </span>tendermint_light_client_verifier::types::LightBlock <span class="kw">as </span>TmLightBlock;
+<span class="kw">use </span>tendermint::time::Time <span class="kw">as </span>TmTime;
+<span class="kw">use </span>tendermint_light_client::verifier::types::LightBlock <span class="kw">as </span>TmLightBlock;
 <span class="kw">use </span>tendermint_rpc::client::CompatMode;
 <span class="kw">use </span>tendermint_rpc::endpoint::broadcast::tx_sync::Response;
 <span class="kw">use </span>tendermint_rpc::endpoint::status;
@@ -2639,9 +2643,8 @@
             ));
         }
 
-        <span class="comment">// Get the latest height and convert to tendermint Height
-        </span><span class="kw">let </span>latest_height = TmHeight::try_from(<span class="self">self</span>.query_chain_latest_height()<span class="question-mark">?</span>.revision_height())
-            .map_err(Error::invalid_height)<span class="question-mark">?</span>;
+        <span class="comment">// Get the latest height
+        </span><span class="kw">let </span>latest_height = <span class="self">self</span>.query_chain_latest_height()<span class="question-mark">?</span>;
 
         <span class="comment">// Check on the configured max_tx_size against the consensus parameters at latest height
         </span><span class="kw">let </span>result = <span class="self">self
@@ -2937,10 +2940,6 @@
             <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.config().id.to_string(),
         });
 
-        <span class="kw">let </span>path = IBC_QUERY_PATH.into();
-
-        <span class="kw">let </span>height = TmHeight::try_from(height_query)<span class="question-mark">?</span>;
-
         <span class="kw">let </span>data = data.into();
         <span class="kw">if </span>!data.is_provable() &amp; prove {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::private_store());
@@ -2949,9 +2948,9 @@
         <span class="kw">let </span>response = <span class="self">self</span>.block_on(abci_query(
             <span class="kw-2">&amp;</span><span class="self">self</span>.rpc_client,
             <span class="kw-2">&amp;</span><span class="self">self</span>.config.rpc_addr,
-            path,
+            IBC_QUERY_PATH.to_string(),
             data.to_string(),
-            height,
+            height_query.into(),
             prove,
         ))<span class="question-mark">?</span>;
 
@@ -2990,7 +2989,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.config.rpc_addr,
             path,
             Path::Upgrade(query_data).to_string(),
-            TmHeight::try_from(query_height.revision_height()).map_err(Error::invalid_height)<span class="question-mark">?</span>,
+            query_height.into(),
             <span class="bool-val">true</span>,
         ))<span class="question-mark">?</span>;
 
@@ -3250,8 +3249,9 @@
 <span class="kw">impl </span>ChainEndpoint <span class="kw">for </span>CosmosSdkChain {
     <span class="kw">type </span>LightBlock = TmLightBlock;
     <span class="kw">type </span>Header = TmHeader;
-    <span class="kw">type </span>ConsensusState = TMConsensusState;
+    <span class="kw">type </span>ConsensusState = TmConsensusState;
     <span class="kw">type </span>ClientState = TmClientState;
+    <span class="kw">type </span>Time = TmTime;
     <span class="kw">type </span>SigningKeyPair = Secp256k1KeyPair;
 
     <span class="kw">fn </span>bootstrap(config: ChainConfig, rt: Arc&lt;TokioRuntime&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
@@ -3373,13 +3373,14 @@
             }
         );
 
+        <span class="kw">let </span>now = <span class="self">self</span>.chain_status()<span class="question-mark">?</span>.sync_info.latest_block_time;
+
         <span class="self">self</span>.light_client
-            .verify(trusted, target, client_state)
+            .verify(trusted, target, client_state, now)
             .map(|v| v.target)
     }
 
-    <span class="doccomment">/// Given a client update event that includes the header used in a client update,
-    /// look for misbehaviour by fetching a header at same or latest height.
+    <span class="doccomment">/// Perform misbehavior detection for the given client state and update event.
     </span><span class="kw">fn </span>check_misbehaviour(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         update: <span class="kw-2">&amp;</span>UpdateClient,
@@ -3392,7 +3393,10 @@
             }
         );
 
-        <span class="self">self</span>.light_client.check_misbehaviour(update, client_state)
+        <span class="kw">let </span>now = <span class="self">self</span>.chain_status()<span class="question-mark">?</span>.sync_info.latest_block_time;
+
+        <span class="self">self</span>.light_client
+            .detect_misbehaviour(update, client_state, now)
     }
 
     <span class="comment">// Queries
@@ -3989,6 +3993,7 @@
                     .ok()
             })
             .collect();
+
         <span class="prelude-val">Ok</span>(channels)
     }
 
@@ -4465,9 +4470,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::ConsensusState, Error&gt; {
         <span class="kw">let </span>height = <span class="kw">match </span>request.height {
             QueryHeight::Latest =&gt; TmHeight::from(<span class="number">0u32</span>),
-            QueryHeight::Specific(ibc_height) =&gt; {
-                TmHeight::try_from(ibc_height.revision_height()).map_err(Error::invalid_height)<span class="question-mark">?
-            </span>}
+            QueryHeight::Specific(ibc_height) =&gt; TmHeight::from(ibc_height),
         };
 
         <span class="kw">let </span>header = <span class="kw">if </span>height.value() == <span class="number">0 </span>{
@@ -4532,7 +4535,7 @@
             }
         );
 
-        <span class="prelude-val">Ok</span>(TMConsensusState::from(light_block.signed_header.header))
+        <span class="prelude-val">Ok</span>(TmConsensusState::from(light_block.signed_header.header))
     }
 
     <span class="kw">fn </span>build_header(
@@ -4548,11 +4551,14 @@
             }
         );
 
+        <span class="kw">let </span>now = <span class="self">self</span>.chain_status()<span class="question-mark">?</span>.sync_info.latest_block_time;
+
         <span class="comment">// Get the light block at target_height from chain.
         </span><span class="kw">let </span>Verified { target, supporting } = <span class="self">self</span>.light_client.header_and_minimal_set(
             trusted_height,
             target_height,
             client_state,
+            now,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((target, supporting))

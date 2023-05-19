@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["HeightErrorDetail",""]],"struct":[["Height",""],["HeightConversionSubdetail",""],["HeightError",""],["ZeroHeightSubdetail",""]]};
+window.SIDEBAR_ITEMS = {"enum":[["HeightErrorDetail",""]],"struct":[["Height",""],["HeightConversionSubdetail",""],["HeightError",""],["InvalidHeightSubdetail",""],["ZeroHeightSubdetail",""]]};
