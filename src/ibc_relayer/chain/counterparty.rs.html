@@ -633,6 +633,21 @@
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashSet;
 
 <span class="kw">use </span>ibc_relayer_types::{
@@ -1055,7 +1070,14 @@
     port_id: <span class="kw-2">&amp;</span>PortId,
     channel_id: <span class="kw-2">&amp;</span>ChannelId,
     commit_sequences: Vec&lt;Sequence&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;Sequence&gt;, Height), Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;Sequence&gt;, Height)&gt;, Error&gt; {
+    <span class="comment">// If there aren&#39;t any sequences to query for, return early.
+    // Otherwise we end up with the full list of acknowledgements on chain,
+    // which is potentially huge and extremely costly.
+    </span><span class="kw">if </span>commit_sequences.is_empty() {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+    }
+
     <span class="kw">let </span>commit_set = commit_sequences.iter().cloned().collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
 
     <span class="comment">// Get the packet acknowledgments on counterparty/source chain
@@ -1071,7 +1093,7 @@
     acked_sequences.retain(|s| commit_set.contains(s));
     acked_sequences.sort_unstable();
 
-    <span class="prelude-val">Ok</span>((acked_sequences, response_height))
+    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((acked_sequences, response_height)))
 }
 
 <span class="doccomment">/// Returns the sequences of the packets that were sent on the chain and for which:
@@ -1141,7 +1163,7 @@
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     counterparty_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     channel: <span class="kw-2">&amp;</span>IdentifiedChannelEnd,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;Sequence&gt;, Height), Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;Sequence&gt;, Height)&gt;, Error&gt; {
     <span class="kw">let </span>counterparty = channel.channel_end.counterparty();
     <span class="kw">let </span>counterparty_channel_id = counterparty
         .channel_id
@@ -1154,14 +1176,14 @@
         counterparty_channel_id,
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>(sequences, height) = packet_acknowledgements(
+    <span class="kw">let </span>sequences_and_height = packet_acknowledgements(
         chain,
         <span class="kw-2">&amp;</span>channel.port_id,
         <span class="kw-2">&amp;</span>channel.channel_id,
         commitments_on_counterparty,
     )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>((sequences, height))
+    <span class="prelude-val">Ok</span>(sequences_and_height)
 }
 
 <span class="doccomment">/// Given a channel, this method returns:
@@ -1197,24 +1219,28 @@
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     counterparty_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     path: <span class="kw-2">&amp;</span>PathIdentifiers,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;Sequence&gt;, Height), Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;Sequence&gt;, Height)&gt;, Error&gt; {
     <span class="kw">let </span>(commitments_on_src, <span class="kw">_</span>) = commitments_on_chain(chain, <span class="kw-2">&amp;</span>path.port_id, <span class="kw-2">&amp;</span>path.channel_id)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>(acks_on_counterparty, src_response_height) = packet_acknowledgements(
+    <span class="kw">let </span>acks_and_height_on_counterparty = packet_acknowledgements(
         counterparty_chain,
         <span class="kw-2">&amp;</span>path.counterparty_port_id,
         <span class="kw-2">&amp;</span>path.counterparty_channel_id,
         commitments_on_src,
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>sns = unreceived_acknowledgements_sequences(
-        chain,
-        <span class="kw-2">&amp;</span>path.port_id,
-        <span class="kw-2">&amp;</span>path.channel_id,
-        acks_on_counterparty,
-    )<span class="question-mark">?</span>;
+    <span class="kw">if let </span><span class="prelude-val">Some</span>((acks_on_counterparty, height)) = acks_and_height_on_counterparty {
+        <span class="kw">let </span>unreceived_acks = unreceived_acknowledgements_sequences(
+            chain,
+            <span class="kw-2">&amp;</span>path.port_id,
+            <span class="kw-2">&amp;</span>path.channel_id,
+            acks_on_counterparty,
+        )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>((sns, src_response_height))
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((unreceived_acks, height)))
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+    }
 }
 
 <span class="doccomment">/// A structure to display pending packet commitment IDs
@@ -1249,19 +1275,23 @@
         commitments_on_src.clone(),
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>(acks_on_counterparty, <span class="kw">_</span>) = packet_acknowledgements(
+    <span class="kw">let </span>acks_on_counterparty = packet_acknowledgements(
         counterparty_chain,
         <span class="kw-2">&amp;</span>counterparty.port_id,
         counterparty_channel_id,
         commitments_on_src,
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>pending_acks = unreceived_acknowledgements_sequences(
-        chain,
-        <span class="kw-2">&amp;</span>channel.port_id,
-        <span class="kw-2">&amp;</span>channel.channel_id,
-        acks_on_counterparty,
-    )<span class="question-mark">?</span>;
+    <span class="kw">let </span>pending_acks = <span class="kw">if let </span><span class="prelude-val">Some</span>((acks_on_counterparty, <span class="kw">_</span>)) = acks_on_counterparty {
+        unreceived_acknowledgements_sequences(
+            chain,
+            <span class="kw-2">&amp;</span>channel.port_id,
+            <span class="kw-2">&amp;</span>channel.channel_id,
+            acks_on_counterparty,
+        )<span class="question-mark">?
+    </span>} <span class="kw">else </span>{
+        Vec::new()
+    };
 
     <span class="prelude-val">Ok</span>(PendingPackets {
         unreceived_packets: unreceived,

@@ -949,6 +949,8 @@
 <a href="#949" id="949">949</a>
 <a href="#950" id="950">950</a>
 <a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::collections::BTreeMap;
 
@@ -1199,14 +1201,16 @@
         chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
         counterparty_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;Sequence&gt;&gt; {
-        <span class="self">self</span>.counterparty
+        <span class="kw">let </span>ids = <span class="self">self
+            </span>.counterparty
             .as_ref()
-            .and_then(|c| PathIdentifiers::from_channel_end(c.clone()))
-            .map(|ids| {
-                unreceived_acknowledgements(counterparty_chain, chain, <span class="kw-2">&amp;</span>ids)
-                    .map(|(sns, <span class="kw">_</span>)| sns)
-                    .unwrap_or_default()
-            })
+            .and_then(|c| PathIdentifiers::from_channel_end(c.clone()))<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>acks = unreceived_acknowledgements(counterparty_chain, chain, <span class="kw-2">&amp;</span>ids)
+            .map(|sns| sns.map_or(<span class="macro">vec!</span>[], |(sns, <span class="kw">_</span>)| sns))
+            .unwrap_or_default();
+
+        <span class="prelude-val">Some</span>(acks)
     }
 }
 

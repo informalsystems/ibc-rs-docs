@@ -156,6 +156,10 @@
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
 </pre><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 
@@ -202,7 +206,7 @@
 }
 
 <span class="kw">impl </span>QueryPacketAcknowledgementsCmd {
-    <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PacketSeqs, Error&gt; {
+    <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PacketSeqs&gt;, Error&gt; {
         <span class="kw">let </span>config = app_config();
 
         <span class="kw">let </span>(chains, chan_conn_cli) = spawn_chain_counterparty::&lt;BaseChainHandle&gt;(
@@ -212,11 +216,14 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.channel_id,
         )<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>(seqs, height) =
+        <span class="kw">if let </span><span class="prelude-val">Some</span>((seqs, height)) =
             acknowledgements_on_chain(<span class="kw-2">&amp;</span>chains.src, <span class="kw-2">&amp;</span>chains.dst, <span class="kw-2">&amp;</span>chan_conn_cli.channel)
-                .map_err(Error::supervisor)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(PacketSeqs { seqs, height })
+                .map_err(Error::supervisor)<span class="question-mark">?
+        </span>{
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(PacketSeqs { seqs, height }))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+        }
     }
 }
 
@@ -227,7 +234,8 @@
 
         <span class="kw">match </span><span class="self">self</span>.execute() {
             <span class="prelude-val">Ok</span>(p) <span class="kw">if </span>json() =&gt; Output::success(p).exit(),
-            <span class="prelude-val">Ok</span>(p) =&gt; Output::success(p.collated()).exit(),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(p)) =&gt; Output::success(p.collated()).exit(),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; Output::error(<span class="string">&quot;No acknowledgments found&quot;</span>).exit(),
             <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }
