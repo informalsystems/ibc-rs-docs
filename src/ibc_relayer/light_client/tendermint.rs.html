@@ -390,6 +390,23 @@
 <a href="#390" id="390">390</a>
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
 </pre><pre class="rust"><code><span class="kw">mod </span>detector;
 
 <span class="kw">use </span>std::time::Duration;
@@ -441,6 +458,7 @@
     chain_id: ChainId,
     peer_id: PeerId,
     io: AnyIo,
+    enable_verification: bool,
 }
 
 <span class="kw">impl </span><span class="kw">super</span>::LightClient&lt;CosmosSdkChain&gt; <span class="kw">for </span>LightClient {
@@ -478,6 +496,15 @@
         now: Time,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Verified&lt;LightBlock&gt;, Error&gt; {
         <span class="macro">trace!</span>(%trusted_height, %target_height, <span class="string">&quot;light client verification&quot;</span>);
+
+        <span class="kw">if </span>!<span class="self">self</span>.enable_verification {
+            <span class="kw">let </span>target = <span class="self">self</span>.fetch(target_height)<span class="question-mark">?</span>;
+
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(Verified {
+                target,
+                supporting: <span class="macro">vec!</span>[],
+            });
+        }
 
         <span class="kw">let </span>client = <span class="self">self</span>.prepare_client(client_state, now)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>state = <span class="self">self</span>.prepare_state(trusted_height)<span class="question-mark">?</span>;
@@ -671,10 +698,17 @@
             }
         };
 
+        <span class="comment">// If the full node is configured as trusted then, in addition to headers not being verified,
+        // the verification traces will not be provided. This may cause failure in client
+        // updates after significant change in validator sets.
+        </span><span class="kw">let </span>enable_verification = !config.trusted_node;
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             chain_id: config.id.clone(),
             peer_id,
             io,
+
+            enable_verification,
         })
     }
 
