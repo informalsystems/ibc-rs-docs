@@ -190,6 +190,28 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the application, based on the Abscissa framework
 
 </span><span class="kw">use </span>std::path::PathBuf;
@@ -202,7 +224,7 @@
     terminal::ColorChoice,
     Application, Configurable, FrameworkError, FrameworkErrorKind, StandardPaths,
 };
-<span class="kw">use </span>ibc_relayer::config::Config;
+<span class="kw">use </span>ibc_relayer::{config::Config, util::debug_section::DebugSection};
 
 <span class="kw">use crate</span>::{
     components::{JsonTracing, PrettyTracing},
@@ -239,6 +261,9 @@
     <span class="doccomment">/// Toggle json output on/off. Changed with the global config option `-j` / `--json`.
     </span>json_output: bool,
 
+    <span class="doccomment">/// Enable the given debug sections.
+    </span>debug_sections: Vec&lt;DebugSection&gt;,
+
     <span class="doccomment">/// Path to the config file.
     </span>config_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 }
@@ -253,6 +278,7 @@
             config: CfgCell::default(),
             state: application::State::default(),
             json_output: <span class="bool-val">false</span>,
+            debug_sections: Vec::default(),
             config_path: <span class="prelude-val">None</span>,
         }
     }
@@ -262,6 +288,16 @@
     <span class="doccomment">/// Whether or not JSON output is enabled
     </span><span class="kw">pub fn </span>json_output(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.json_output
+    }
+
+    <span class="doccomment">/// Returns the enabled debug sections
+    </span><span class="kw">pub fn </span>debug_sections(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[DebugSection] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.debug_sections
+    }
+
+    <span class="doccomment">/// Returns `true` if the given debug section is enabled
+    </span><span class="kw">pub fn </span>debug_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, section: DebugSection) -&gt; bool {
+        <span class="self">self</span>.debug_sections.contains(<span class="kw-2">&amp;</span>section)
     }
 
     <span class="doccomment">/// Returns the path to the configuration file
@@ -365,13 +401,21 @@
         <span class="comment">// Update the `json_output` flag used by `conclude::Output`
         </span><span class="self">self</span>.json_output = command.json;
 
+        <span class="comment">// Update the `debug_sections` flag
+        </span><span class="self">self</span>.debug_sections = command.debug.iter().copied().map(Into::into).collect();
+
+        <span class="comment">// Enable profiling if requested
+        </span><span class="kw">let </span>enable_console = <span class="self">self</span>.debug_enabled(DebugSection::Profiling);
+        <span class="kw">let </span>enable_json = <span class="self">self</span>.debug_enabled(DebugSection::ProfilingJson);
+        ibc_relayer::util::profiling::enable(enable_console, enable_json);
+
         <span class="kw">if </span>command.json {
             <span class="comment">// Enable JSON by using the crate-level `Tracing`
-            </span><span class="kw">let </span>tracing = JsonTracing::new(config.global)<span class="question-mark">?</span>;
+            </span><span class="kw">let </span>tracing = JsonTracing::new(config.global, <span class="kw-2">&amp;</span><span class="self">self</span>.debug_sections)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[Box::new(terminal), Box::new(tracing)])
         } <span class="kw">else </span>{
             <span class="comment">// Use abscissa&#39;s tracing, which pretty-prints to the terminal obeying log levels
-            </span><span class="kw">let </span>tracing = PrettyTracing::new(config.global)<span class="question-mark">?</span>;
+            </span><span class="kw">let </span>tracing = PrettyTracing::new(config.global, <span class="kw-2">&amp;</span><span class="self">self</span>.debug_sections)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[Box::new(terminal), Box::new(tracing)])
         }
     }

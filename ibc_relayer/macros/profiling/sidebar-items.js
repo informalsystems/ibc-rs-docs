@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":[["DEPTH",""]],"fn":[["open_or_create_profile_file",""]],"struct":[["Timer","Measure the time between when this value is allocated and when it is dropped."]]};
