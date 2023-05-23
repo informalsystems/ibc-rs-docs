@@ -285,6 +285,11 @@
 <a href="#285" id="285">285</a>
 <a href="#286" id="286">286</a>
 <a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
 </pre><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::config::Override;
 <span class="kw">use </span>abscissa_core::{Command, FrameworkErrorKind, Runnable};
@@ -299,7 +304,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::application::app_config;
 <span class="kw">use </span><span class="kw">crate</span>::cli_utils::spawn_chain_counterparty;
 <span class="kw">use </span><span class="kw">crate</span>::conclude::Output;
-<span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="doccomment">/// `clear` subcommands
 </span><span class="attr">#[derive(Command, Debug, Parser, Runnable)]
@@ -402,11 +406,13 @@
             src_port_id: <span class="self">self</span>.port_id.clone(),
             src_channel_id: <span class="self">self</span>.channel_id.clone(),
         };
+
         <span class="kw">let </span>fwd_link = <span class="kw">match </span>Link::new_from_opts(chains.src.clone(), chains.dst, opts, <span class="bool-val">false</span>, <span class="bool-val">false</span>)
         {
             <span class="prelude-val">Ok</span>(link) =&gt; link,
             <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         };
+
         <span class="kw">let </span>rev_link = <span class="kw">match </span>fwd_link.reverse(<span class="bool-val">false</span>, <span class="bool-val">false</span>) {
             <span class="prelude-val">Ok</span>(link) =&gt; link,
             <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
@@ -414,28 +420,32 @@
 
         <span class="comment">// Schedule RecvPacket messages for pending packets in both directions.
         // This may produce pending acks which will be processed in the next phase.
-        </span>run_and_collect_events(<span class="kw-2">&amp;mut </span>ev_list, || {
+        </span>run_and_collect_events(<span class="string">&quot;forward recv and timeout&quot;</span>, <span class="kw-2">&amp;mut </span>ev_list, || {
             fwd_link.relay_recv_packet_and_timeout_messages()
         });
-        run_and_collect_events(<span class="kw-2">&amp;mut </span>ev_list, || {
+        run_and_collect_events(<span class="string">&quot;reverse recv and timeout&quot;</span>, <span class="kw-2">&amp;mut </span>ev_list, || {
             rev_link.relay_recv_packet_and_timeout_messages()
         });
 
         <span class="comment">// Schedule AckPacket messages in both directions.
-        </span>run_and_collect_events(<span class="kw-2">&amp;mut </span>ev_list, || fwd_link.relay_ack_packet_messages());
-        run_and_collect_events(<span class="kw-2">&amp;mut </span>ev_list, || rev_link.relay_ack_packet_messages());
+        </span>run_and_collect_events(<span class="string">&quot;forward ack&quot;</span>, <span class="kw-2">&amp;mut </span>ev_list, || {
+            fwd_link.relay_ack_packet_messages()
+        });
+        run_and_collect_events(<span class="string">&quot;reverse ack&quot;</span>, <span class="kw-2">&amp;mut </span>ev_list, || {
+            rev_link.relay_ack_packet_messages()
+        });
 
         Output::success(ev_list).exit()
     }
 }
 
-<span class="kw">fn </span>run_and_collect_events&lt;F&gt;(ev_list: <span class="kw-2">&amp;mut </span>Vec&lt;IbcEvent&gt;, f: F)
+<span class="kw">fn </span>run_and_collect_events&lt;F&gt;(desc: <span class="kw-2">&amp;</span>str, ev_list: <span class="kw-2">&amp;mut </span>Vec&lt;IbcEvent&gt;, f: F)
 <span class="kw">where
     </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;IbcEvent&gt;, LinkError&gt;,
 {
     <span class="kw">match </span>f() {
         <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>ev) =&gt; ev_list.append(<span class="kw-2">&amp;mut </span>ev),
-        <span class="prelude-val">Err</span>(e) =&gt; Output::error(Error::link(e)).exit(),
+        <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">tracing::error!</span>(<span class="string">&quot;Failed to relay {desc} packets: {e:?}&quot;</span>),
     };
 }
 
