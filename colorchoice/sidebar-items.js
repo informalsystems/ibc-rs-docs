@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":[["ColorChoice","Selection for overriding color output"]]};
