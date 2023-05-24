@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":[["ICS_MISBEHAVIOR_TYPE_URL",""]],"struct":[["MsgSubmitIcsConsumerMisbehaviour",""]]};
