@@ -310,18 +310,10 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
 <span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
-<span class="kw">use </span>core::hash::{Hash, Hasher};
+<span class="kw">use </span>core::hash::Hash;
 <span class="kw">use </span>core::num::ParseIntError;
 <span class="kw">use </span>core::ops::{Add, Sub};
 <span class="kw">use </span>core::str::FromStr;
@@ -341,19 +333,11 @@
 /// a `u64` value and a raw timestamp. In protocol buffer, the timestamp is
 /// represented as a `u64` Unix timestamp in nanoseconds, with 0 representing the absence
 /// of timestamp.
-</span><span class="attr">#[derive(PartialEq, Eq, Copy, Clone, Debug, Default, Deserialize, Serialize, PartialOrd, Ord)]
+</span><span class="attr">#[derive(
+    Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
 </span><span class="kw">pub struct </span>Timestamp {
     time: <span class="prelude-ty">Option</span>&lt;Time&gt;,
-}
-
-<span class="comment">// TODO: derive when tendermint::Time supports it:
-// https://github.com/informalsystems/tendermint-rs/pull/1054
-</span><span class="attr">#[allow(clippy::derived_hash_with_manual_eq)]
-</span><span class="kw">impl </span>Hash <span class="kw">for </span>Timestamp {
-    <span class="kw">fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
-        <span class="kw">let </span>odt: <span class="prelude-ty">Option</span>&lt;OffsetDateTime&gt; = <span class="self">self</span>.time.map(Into::into);
-        odt.hash(state);
-    }
 }
 
 <span class="doccomment">/// The expiry result when comparing two timestamps.
@@ -363,7 +347,7 @@
 ///
 /// User of this result may want to determine whether error should be raised,
 /// when either of the timestamp being compared is invalid.
-</span><span class="attr">#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
+</span><span class="attr">#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 </span><span class="kw">pub enum </span>Expiry {
     Expired,
     NotExpired,
@@ -489,9 +473,9 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Timestamp({})&quot;</span>,
+            <span class="string">&quot;{}&quot;</span>,
             <span class="self">self</span>.time
-                .map_or(<span class="string">&quot;NoTimestamp&quot;</span>.to_string(), |time| time.to_rfc3339())
+                .map_or_else(|| <span class="string">&quot;NoTimestamp&quot;</span>.to_string(), |time| time.to_rfc3339())
         )
     }
 }
