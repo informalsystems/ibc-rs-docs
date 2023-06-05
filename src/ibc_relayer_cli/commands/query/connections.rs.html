@@ -144,13 +144,6 @@
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
 </pre><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::Runnable;
 
@@ -198,44 +191,37 @@
         <span class="kw">let </span>chain = spawn_chain_runtime(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.chain_id)
             .unwrap_or_else(exit_with_unrecoverable_error);
 
-        <span class="kw">let </span>res = chain.query_connections(QueryConnectionsRequest {
-            pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
-        });
+        <span class="kw">let </span><span class="kw-2">mut </span>connections = chain
+            .query_connections(QueryConnectionsRequest {
+                pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
+            })
+            .unwrap_or_else(|e| {
+                Output::error(<span class="macro">format!</span>(
+                    <span class="string">&quot;An error occurred trying to query connections: {e}&quot;
+                </span>))
+                .exit()
+            });
 
-        <span class="kw">let </span>connections = <span class="kw">match </span>res {
-            <span class="prelude-val">Ok</span>(connections) =&gt; {
-                <span class="comment">// Check the counterparty chain id only if filtering is required.
-                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(counterparty_filter_id) = <span class="self">self</span>.counterparty_chain_id.clone() {
-                    <span class="kw">let </span><span class="kw-2">mut </span>output = connections.clone();
+        <span class="comment">// Check the counterparty chain id only if filtering is required.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(counterparty_filter_id) = <span class="self">self</span>.counterparty_chain_id.clone() {
+            connections.retain(|connection| {
+                <span class="kw">let </span>client_id = connection.end().client_id().to_owned();
+                <span class="kw">let </span>chain_height = chain.query_latest_height();
+                <span class="kw">let </span>(client_state, <span class="kw">_</span>) = chain
+                    .query_client_state(
+                        QueryClientStateRequest {
+                            client_id,
+                            height: QueryHeight::Specific(chain_height.unwrap()),
+                        },
+                        IncludeProof::No,
+                    )
+                    .unwrap();
 
-                    <span class="kw">for </span>(id, connection) <span class="kw">in </span>connections.into_iter().enumerate() {
-                        <span class="kw">let </span>client_id = connection.end().client_id().to_owned();
-                        <span class="kw">let </span>chain_height = chain.query_latest_height();
-                        <span class="kw">let </span>(client_state, <span class="kw">_</span>) = chain
-                            .query_client_state(
-                                QueryClientStateRequest {
-                                    client_id,
-                                    height: QueryHeight::Specific(chain_height.unwrap()),
-                                },
-                                IncludeProof::No,
-                            )
-                            .unwrap();
-                        <span class="kw">let </span>counterparty_chain_id = client_state.chain_id();
+                <span class="kw">let </span>counterparty_chain_id = client_state.chain_id();
 
-                        <span class="kw">if </span>counterparty_chain_id != counterparty_filter_id {
-                            output.remove(id);
-                        }
-                    }
-                    output
-                } <span class="kw">else </span>{
-                    connections
-                }
-            }
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
-                <span class="string">&quot;An error occurred trying to query connections: {e}&quot;
-            </span>))
-            .exit(),
-        };
+                counterparty_chain_id == counterparty_filter_id
+            });
+        }
 
         <span class="kw">if </span><span class="self">self</span>.verbose {
             Output::success(connections).exit()
