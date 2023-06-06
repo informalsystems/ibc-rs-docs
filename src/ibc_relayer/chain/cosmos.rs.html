@@ -2418,6 +2418,12 @@
 <a href="#2418" id="2418">2418</a>
 <a href="#2419" id="2419">2419</a>
 <a href="#2420" id="2420">2420</a>
+<a href="#2421" id="2421">2421</a>
+<a href="#2422" id="2422">2422</a>
+<a href="#2423" id="2423">2423</a>
+<a href="#2424" id="2424">2424</a>
+<a href="#2425" id="2425">2425</a>
+<a href="#2426" id="2426">2426</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2517,7 +2523,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::consensus_state::AnyConsensusState;
 <span class="kw">use </span><span class="kw">crate</span>::denom::DenomTrace;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
-<span class="kw">use </span><span class="kw">crate</span>::event::monitor::{EventMonitor, TxMonitorCmd};
+<span class="kw">use </span><span class="kw">crate</span>::event::source::{EventSource, TxEventSourceCmd};
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
 <span class="kw">use </span><span class="kw">crate</span>::keyring::{KeyRing, Secp256k1KeyPair, SigningKeyPair};
 <span class="kw">use </span><span class="kw">crate</span>::light_client::tendermint::LightClient <span class="kw">as </span>TmLightClient;
@@ -2570,7 +2576,7 @@
     <span class="doccomment">/// A cached copy of the account information
     </span>account: <span class="prelude-ty">Option</span>&lt;Account&gt;,
 
-    tx_monitor_cmd: <span class="prelude-ty">Option</span>&lt;TxMonitorCmd&gt;,
+    tx_monitor_cmd: <span class="prelude-ty">Option</span>&lt;TxEventSourceCmd&gt;,
 }
 
 <span class="kw">impl </span>CosmosSdkChain {
@@ -2706,28 +2712,34 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn </span>init_event_monitor(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TxMonitorCmd, Error&gt; {
+    <span class="kw">fn </span>init_event_source(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TxEventSourceCmd, Error&gt; {
         <span class="macro">crate::time!</span>(
-            <span class="string">&quot;init_event_monitor&quot;</span>,
+            <span class="string">&quot;init_event_source&quot;</span>,
             {
                 <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.config().id.to_string(),
             }
         );
 
-        <span class="kw">let </span>(<span class="kw-2">mut </span>event_monitor, monitor_tx) = EventMonitor::new(
-            <span class="self">self</span>.config.id.clone(),
-            <span class="self">self</span>.config.websocket_addr.clone(),
-            <span class="self">self</span>.compat_mode,
-            <span class="self">self</span>.config.batch_delay,
-            <span class="self">self</span>.rt.clone(),
-        )
-        .map_err(Error::event_monitor)<span class="question-mark">?</span>;
+        <span class="kw">use </span><span class="kw">crate</span>::config::EventSourceMode <span class="kw">as </span>Mode;
 
-        event_monitor
-            .init_subscriptions()
-            .map_err(Error::event_monitor)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(event_source, monitor_tx) = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.config.event_source {
+            Mode::Push { url, batch_delay } =&gt; EventSource::websocket(
+                <span class="self">self</span>.config.id.clone(),
+                url.clone(),
+                <span class="self">self</span>.compat_mode,
+                <span class="kw-2">*</span>batch_delay,
+                <span class="self">self</span>.rt.clone(),
+            ),
+            Mode::Pull { interval } =&gt; EventSource::rpc(
+                <span class="self">self</span>.config.id.clone(),
+                <span class="self">self</span>.rpc_client.clone(),
+                <span class="kw-2">*</span>interval,
+                <span class="self">self</span>.rt.clone(),
+            ),
+        }
+        .map_err(Error::event_source)<span class="question-mark">?</span>;
 
-        thread::spawn(<span class="kw">move </span>|| event_monitor.run());
+        thread::spawn(<span class="kw">move </span>|| event_source.run());
 
         <span class="prelude-val">Ok</span>(monitor_tx)
     }
@@ -3304,7 +3316,7 @@
 
     <span class="kw">fn </span>shutdown(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(monitor_tx) = <span class="self">self</span>.tx_monitor_cmd {
-            monitor_tx.shutdown().map_err(Error::event_monitor)<span class="question-mark">?</span>;
+            monitor_tx.shutdown().map_err(Error::event_source)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -3322,13 +3334,13 @@
         <span class="kw">let </span>tx_monitor_cmd = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.tx_monitor_cmd {
             <span class="prelude-val">Some</span>(tx_monitor_cmd) =&gt; tx_monitor_cmd,
             <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span>tx_monitor_cmd = <span class="self">self</span>.init_event_monitor()<span class="question-mark">?</span>;
+                <span class="kw">let </span>tx_monitor_cmd = <span class="self">self</span>.init_event_source()<span class="question-mark">?</span>;
                 <span class="self">self</span>.tx_monitor_cmd = <span class="prelude-val">Some</span>(tx_monitor_cmd);
                 <span class="self">self</span>.tx_monitor_cmd.as_ref().unwrap()
             }
         };
 
-        <span class="kw">let </span>subscription = tx_monitor_cmd.subscribe().map_err(Error::event_monitor)<span class="question-mark">?</span>;
+        <span class="kw">let </span>subscription = tx_monitor_cmd.subscribe().map_err(Error::event_source)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(subscription)
     }
 

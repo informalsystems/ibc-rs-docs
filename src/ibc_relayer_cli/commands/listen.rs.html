@@ -250,6 +250,14 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
@@ -266,7 +274,11 @@
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
 <span class="kw">use </span>tracing::{error, info, instrument};
 
-<span class="kw">use </span>ibc_relayer::{chain::handle::Subscription, config::ChainConfig, event::monitor::EventMonitor};
+<span class="kw">use </span>ibc_relayer::{
+    chain::handle::Subscription,
+    config::{ChainConfig, EventSourceMode},
+    event::source::websocket::EventSource,
+};
 <span class="kw">use </span>ibc_relayer_types::{core::ics24_host::identifier::ChainId, events::IbcEvent};
 
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
@@ -392,23 +404,27 @@
     compat_mode: CompatMode,
     rt: Arc&lt;TokioRuntime&gt;,
 ) -&gt; eyre::Result&lt;Subscription&gt; {
-    <span class="kw">let </span>(<span class="kw-2">mut </span>event_monitor, tx_cmd) = EventMonitor::new(
+    <span class="kw">let </span>EventSourceMode::Push { url, batch_delay } = <span class="kw-2">&amp;</span>chain_config.event_source <span class="kw">else </span>{
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">eyre!</span>(<span class="string">&quot;unsupported event source mode, only &#39;push&#39; is supported for listening to events&quot;</span>));
+    };
+
+    <span class="kw">let </span>(<span class="kw-2">mut </span>event_source, tx_cmd) = EventSource::new(
         chain_config.id.clone(),
-        chain_config.websocket_addr.clone(),
+        url.clone(),
         compat_mode,
-        chain_config.batch_delay,
+        <span class="kw-2">*</span>batch_delay,
         rt,
     )
-    .map_err(|e| <span class="macro">eyre!</span>(<span class="string">&quot;could not initialize event monitor: {}&quot;</span>, e))<span class="question-mark">?</span>;
+    .map_err(|e| <span class="macro">eyre!</span>(<span class="string">&quot;could not initialize event source: {}&quot;</span>, e))<span class="question-mark">?</span>;
 
-    event_monitor
+    event_source
         .init_subscriptions()
         .map_err(|e| <span class="macro">eyre!</span>(<span class="string">&quot;could not initialize subscriptions: {}&quot;</span>, e))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>queries = event_monitor.queries();
+    <span class="kw">let </span>queries = event_source.queries();
     <span class="macro">info!</span>(<span class="string">&quot;listening for queries: {}&quot;</span>, queries.iter().format(<span class="string">&quot;, &quot;</span>),);
 
-    thread::spawn(|| event_monitor.run());
+    thread::spawn(|| event_source.run());
 
     <span class="kw">let </span>subscription = tx_cmd.subscribe()<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(subscription)

@@ -434,6 +434,9 @@
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Contains functions to generate a relayer config for a given chain
 
 </span><span class="kw">use </span>std::collections::HashMap;
@@ -455,7 +458,7 @@
 <span class="kw">use </span>ibc_relayer::config::filter::{FilterPattern, PacketFilter};
 <span class="kw">use </span>ibc_relayer::config::gas_multiplier::GasMultiplier;
 <span class="kw">use </span>ibc_relayer::config::types::{MaxMsgNum, MaxTxSize, Memo};
-<span class="kw">use </span>ibc_relayer::config::{default, AddressType, ChainConfig, GasPrice};
+<span class="kw">use </span>ibc_relayer::config::{default, AddressType, ChainConfig, EventSourceMode, GasPrice};
 <span class="kw">use </span>ibc_relayer::keyring::Store;
 
 <span class="kw">use </span>tendermint_light_client_verifier::types::TrustThreshold;
@@ -543,6 +546,7 @@
         MAX_HEALTHY_QUERY_RETRIES,
     )
     .<span class="kw">await</span><span class="question-mark">?</span>;
+
     <span class="kw">let </span>websocket_address =
         rpc_data.websocket.clone().try_into().map_err(|e| {
             RegistryError::websocket_url_parse_error(rpc_data.websocket.to_string(), e)
@@ -552,10 +556,12 @@
         id: chain_data.chain_id,
         r#type: default::chain_type(),
         rpc_addr: rpc_data.rpc_address,
-        websocket_addr: websocket_address,
         grpc_addr: grpc_address,
+        event_source: EventSourceMode::Push {
+            url: websocket_address,
+            batch_delay: default::batch_delay(),
+        },
         rpc_timeout: default::rpc_timeout(),
-        batch_delay: default::batch_delay(),
         trusted_node: default::trusted_node(),
         genesis_restart: <span class="prelude-val">None</span>,
         account_prefix: chain_data.bech32_prefix,

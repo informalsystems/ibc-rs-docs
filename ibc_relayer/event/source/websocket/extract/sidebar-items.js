@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["extract_events","Extract IBC events from Tendermint RPC events"]]};
