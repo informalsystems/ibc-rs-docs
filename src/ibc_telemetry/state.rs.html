@@ -1065,8 +1065,58 @@
 <a href="#1065" id="1065">1065</a>
 <a href="#1066" id="1066">1066</a>
 <a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::{
+    ops::Range,
     sync::Mutex,
     time::{Duration, Instant},
 };
@@ -1262,6 +1312,175 @@
 }
 
 <span class="kw">impl </span>TelemetryState {
+    <span class="kw">pub fn </span>new(
+        tx_latency_submitted_range: Range&lt;u64&gt;,
+        tx_latency_submitted_buckets: u64,
+        tx_latency_confirmed_range: Range&lt;u64&gt;,
+        tx_latency_confirmed_buckets: u64,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="kw">use </span>opentelemetry::sdk::export::metrics::aggregation;
+        <span class="kw">use </span>opentelemetry::sdk::metrics::{controllers, processors};
+
+        <span class="kw">let </span>controller = controllers::basic(processors::factory(
+            CustomAggregatorSelector::new(
+                tx_latency_submitted_range,
+                tx_latency_submitted_buckets,
+                tx_latency_confirmed_range,
+                tx_latency_confirmed_buckets,
+            ),
+            aggregation::cumulative_temporality_selector(),
+        ))
+        .build();
+
+        <span class="kw">let </span>exporter = opentelemetry_prometheus::ExporterBuilder::new(controller).init();
+
+        <span class="kw">let </span>meter = global::meter(<span class="string">&quot;hermes&quot;</span>);
+
+        <span class="self">Self </span>{
+            exporter,
+
+            workers: meter
+                .i64_up_down_counter(<span class="string">&quot;workers&quot;</span>)
+                .with_description(<span class="string">&quot;Number of workers&quot;</span>)
+                .init(),
+
+            client_updates_submitted: meter
+                .u64_counter(<span class="string">&quot;client_updates_submitted&quot;</span>)
+                .with_description(<span class="string">&quot;Number of client update messages submitted&quot;</span>)
+                .init(),
+
+            client_misbehaviours_submitted: meter
+                .u64_counter(<span class="string">&quot;client_misbehaviours_submitted&quot;</span>)
+                .with_description(<span class="string">&quot;Number of misbehaviours detected and submitted&quot;</span>)
+                .init(),
+
+            receive_packets_confirmed: meter
+                .u64_counter(<span class="string">&quot;receive_packets_confirmed&quot;</span>)
+                .with_description(<span class="string">&quot;Number of confirmed receive packets. Available if relayer runs with Tx confirmation enabled&quot;</span>)
+                .init(),
+
+            acknowledgment_packets_confirmed: meter
+                .u64_counter(<span class="string">&quot;acknowledgment_packets_confirmed&quot;</span>)
+                .with_description(<span class="string">&quot;Number of confirmed acknowledgment packets. Available if relayer runs with Tx confirmation enabled&quot;</span>)
+                .init(),
+
+            timeout_packets_confirmed: meter
+                .u64_counter(<span class="string">&quot;timeout_packets_confirmed&quot;</span>)
+                .with_description(<span class="string">&quot;Number of confirmed timeout packets. Available if relayer runs with Tx confirmation enabled&quot;</span>)
+                .init(),
+
+            queries: meter
+                .u64_counter(<span class="string">&quot;queries&quot;</span>)
+                .with_description(
+                    <span class="string">&quot;Number of queries submitted by Hermes&quot;</span>,
+                )
+                .init(),
+
+            queries_cache_hits: meter
+                .u64_counter(<span class="string">&quot;queries_cache_hits&quot;</span>)
+                .with_description(<span class="string">&quot;Number of cache hits for queries submitted by Hermes&quot;</span>)
+                .init(),
+
+            ws_reconnect: meter
+                .u64_counter(<span class="string">&quot;ws_reconnect&quot;</span>)
+                .with_description(<span class="string">&quot;Number of times Hermes reconnected to the websocket endpoint&quot;</span>)
+                .init(),
+
+            ws_events: meter
+                .u64_counter(<span class="string">&quot;ws_events&quot;</span>)
+                .with_description(<span class="string">&quot;How many IBC events did Hermes receive via the websocket subscription&quot;</span>)
+                .init(),
+
+            messages_submitted: meter
+                .u64_counter(<span class="string">&quot;messages_submitted&quot;</span>)
+                .with_description(<span class="string">&quot;Number of messages submitted to a specific chain&quot;</span>)
+                .init(),
+
+            wallet_balance: meter
+                .f64_observable_gauge(<span class="string">&quot;wallet_balance&quot;</span>)
+                .with_description(<span class="string">&quot;The balance of each wallet Hermes uses per chain. Please note that when converting the balance to f64 a loss in precision might be introduced in the displayed value&quot;</span>)
+                .init(),
+
+            send_packet_events: meter
+                .u64_counter(<span class="string">&quot;send_packet_events&quot;</span>)
+                .with_description(<span class="string">&quot;Number of SendPacket events received&quot;</span>)
+                .init(),
+
+            acknowledgement_events: meter
+                .u64_counter(<span class="string">&quot;acknowledgement_events&quot;</span>)
+                .with_description(<span class="string">&quot;Number of WriteAcknowledgement events received&quot;</span>)
+                .init(),
+
+            timeout_events: meter
+                .u64_counter(<span class="string">&quot;timeout_events&quot;</span>)
+                .with_description(<span class="string">&quot;Number of TimeoutPacket events received&quot;</span>)
+                .init(),
+
+            cleared_send_packet_events: meter
+                .u64_counter(<span class="string">&quot;cleared_send_packet_events&quot;</span>)
+                .with_description(<span class="string">&quot;Number of SendPacket events received during the initial and periodic clearing&quot;</span>)
+                .init(),
+
+            cleared_acknowledgment_events: meter
+                .u64_counter(<span class="string">&quot;cleared_acknowledgment_events&quot;</span>)
+                .with_description(<span class="string">&quot;Number of WriteAcknowledgement events received during the initial and periodic clearing&quot;</span>)
+                .init(),
+
+            tx_latency_submitted: meter
+                .u64_observable_gauge(<span class="string">&quot;tx_latency_submitted&quot;</span>)
+                .with_unit(Unit::new(<span class="string">&quot;milliseconds&quot;</span>))
+                .with_description(<span class="string">&quot;The latency for all transactions submitted to a specific chain, \
+                    i.e. the difference between the moment when Hermes received a batch of events \
+                    and when it submitted the corresponding transaction(s). Milliseconds.&quot;</span>)
+                .init(),
+
+            tx_latency_confirmed: meter
+                .u64_observable_gauge(<span class="string">&quot;tx_latency_confirmed&quot;</span>)
+                .with_unit(Unit::new(<span class="string">&quot;milliseconds&quot;</span>))
+                .with_description(<span class="string">&quot;The latency for all transactions submitted &amp; confirmed to a specific chain, \
+                    i.e. the difference between the moment when Hermes received a batch of events \
+                    until the corresponding transaction(s) were confirmed. Milliseconds.&quot;</span>)
+                .init(),
+
+            in_flight_events: moka::sync::Cache::builder()
+                .time_to_live(Duration::from_secs(<span class="number">60 </span>* <span class="number">60</span>)) <span class="comment">// Remove entries after 1 hour
+                </span>.time_to_idle(Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>)) <span class="comment">// Remove entries if they have been idle for 30 minutes
+                </span>.build(),
+
+            backlogs: DashMap::new(),
+
+            backlog_oldest_sequence: meter
+                .u64_observable_gauge(<span class="string">&quot;backlog_oldest_sequence&quot;</span>)
+                .with_description(<span class="string">&quot;Sequence number of the oldest SendPacket event in the backlog&quot;</span>)
+                .init(),
+
+            backlog_oldest_timestamp: meter
+                .u64_observable_gauge(<span class="string">&quot;backlog_oldest_timestamp&quot;</span>)
+                .with_unit(Unit::new(<span class="string">&quot;seconds&quot;</span>))
+                .with_description(<span class="string">&quot;Local timestamp for the oldest SendPacket event in the backlog&quot;</span>)
+                .init(),
+
+            backlog_size: meter
+                .u64_observable_gauge(<span class="string">&quot;backlog_size&quot;</span>)
+                .with_description(<span class="string">&quot;Total number of SendPacket events in the backlog&quot;</span>)
+                .init(),
+
+            fee_amounts: meter
+                .u64_counter(<span class="string">&quot;ics29_fee_amounts&quot;</span>)
+                .with_description(<span class="string">&quot;Total amount received from ICS29 fees&quot;</span>)
+                .init(),
+
+            visible_fee_addresses: DashSet::new(),
+
+            cached_fees: Mutex::new(Vec::new()),
+
+            period_fees: meter
+                .u64_observable_gauge(<span class="string">&quot;ics29_period_fees&quot;</span>)
+                .with_description(<span class="string">&quot;Amount of ICS29 fees rewarded over the past 7 days&quot;</span>)
+                .init(),
+        }
+    }
+
     <span class="doccomment">/// Gather the metrics for export
     </span><span class="kw">pub fn </span>gather(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;MetricFamily&gt; {
         <span class="self">self</span>.exporter.registry().gather()
@@ -1948,7 +2167,51 @@
 <span class="kw">use </span>opentelemetry::sdk::metrics::sdk_api::Descriptor;
 
 <span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>CustomAggregatorSelector;
+</span><span class="kw">struct </span>CustomAggregatorSelector {
+    tx_latency_submitted_range: Range&lt;u64&gt;,
+    tx_latency_submitted_buckets: u64,
+    tx_latency_confirmed_range: Range&lt;u64&gt;,
+    tx_latency_confirmed_buckets: u64,
+}
+
+<span class="kw">impl </span>CustomAggregatorSelector {
+    <span class="kw">pub fn </span>new(
+        tx_latency_submitted_range: Range&lt;u64&gt;,
+        tx_latency_submitted_buckets: u64,
+        tx_latency_confirmed_range: Range&lt;u64&gt;,
+        tx_latency_confirmed_buckets: u64,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            tx_latency_submitted_range,
+            tx_latency_submitted_buckets,
+            tx_latency_confirmed_range,
+            tx_latency_confirmed_buckets,
+        }
+    }
+
+    <span class="kw">pub fn </span>get_submitted_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;f64&gt; {
+        build_histogram_buckets(
+            <span class="self">self</span>.tx_latency_submitted_range.start,
+            <span class="self">self</span>.tx_latency_submitted_range.end,
+            <span class="self">self</span>.tx_latency_submitted_buckets,
+        )
+    }
+
+    <span class="kw">pub fn </span>get_confirmed_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;f64&gt; {
+        build_histogram_buckets(
+            <span class="self">self</span>.tx_latency_confirmed_range.start,
+            <span class="self">self</span>.tx_latency_confirmed_range.end,
+            <span class="self">self</span>.tx_latency_confirmed_buckets,
+        )
+    }
+}
+
+<span class="kw">fn </span>build_histogram_buckets(start: u64, end: u64, buckets: u64) -&gt; Vec&lt;f64&gt; {
+    <span class="kw">let </span>step = (end - start) / buckets;
+    (<span class="number">0</span>..=buckets)
+        .map(|i| (start + i * step) <span class="kw">as </span>f64)
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+}
 
 <span class="kw">impl </span>AggregatorSelector <span class="kw">for </span>CustomAggregatorSelector {
     <span class="kw">fn </span>aggregator_for(<span class="kw-2">&amp;</span><span class="self">self</span>, descriptor: <span class="kw-2">&amp;</span>Descriptor) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Aggregator + Send + Sync&gt;&gt; {
@@ -1960,175 +2223,10 @@
             <span class="comment">// Prometheus&#39; supports only collector for histogram, sum, and last value aggregators.
             // https://docs.rs/opentelemetry-prometheus/0.10.0/src/opentelemetry_prometheus/lib.rs.html#411-418
             // TODO: Once quantile sketches are supported, replace histograms with that.
-            </span><span class="string">&quot;tx_latency_submitted&quot; </span>=&gt; <span class="prelude-val">Some</span>(Arc::new(histogram(<span class="kw-2">&amp;</span>[
-                <span class="number">200.0</span>, <span class="number">500.0</span>, <span class="number">1000.0</span>, <span class="number">2000.0</span>, <span class="number">5000.0</span>, <span class="number">10000.0</span>,
-            ]))),
-            <span class="string">&quot;tx_latency_confirmed&quot; </span>=&gt; <span class="prelude-val">Some</span>(Arc::new(histogram(<span class="kw-2">&amp;</span>[
-                <span class="number">1000.0</span>, <span class="number">5000.0</span>, <span class="number">9000.0</span>, <span class="number">13000.0</span>, <span class="number">17000.0</span>, <span class="number">20000.0</span>,
-            ]))),
+            </span><span class="string">&quot;tx_latency_submitted&quot; </span>=&gt; <span class="prelude-val">Some</span>(Arc::new(histogram(<span class="kw-2">&amp;</span><span class="self">self</span>.get_submitted_range()))),
+            <span class="string">&quot;tx_latency_confirmed&quot; </span>=&gt; <span class="prelude-val">Some</span>(Arc::new(histogram(<span class="kw-2">&amp;</span><span class="self">self</span>.get_confirmed_range()))),
             <span class="string">&quot;ics29_period_fees&quot; </span>=&gt; <span class="prelude-val">Some</span>(Arc::new(last_value())),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Some</span>(Arc::new(sum())),
-        }
-    }
-}
-
-<span class="kw">impl </span>Default <span class="kw">for </span>TelemetryState {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="kw">use </span>opentelemetry::sdk::export::metrics::aggregation;
-        <span class="kw">use </span>opentelemetry::sdk::metrics::{controllers, processors};
-
-        <span class="kw">let </span>controller = controllers::basic(processors::factory(
-            CustomAggregatorSelector,
-            aggregation::cumulative_temporality_selector(),
-        ))
-        .build();
-
-        <span class="kw">let </span>exporter = opentelemetry_prometheus::ExporterBuilder::new(controller).init();
-
-        <span class="kw">let </span>meter = global::meter(<span class="string">&quot;hermes&quot;</span>);
-
-        <span class="self">Self </span>{
-            exporter,
-
-            workers: meter
-                .i64_up_down_counter(<span class="string">&quot;workers&quot;</span>)
-                .with_description(<span class="string">&quot;Number of workers&quot;</span>)
-                .init(),
-
-            client_updates_submitted: meter
-                .u64_counter(<span class="string">&quot;client_updates_submitted&quot;</span>)
-                .with_description(<span class="string">&quot;Number of client update messages submitted&quot;</span>)
-                .init(),
-
-            client_misbehaviours_submitted: meter
-                .u64_counter(<span class="string">&quot;client_misbehaviours_submitted&quot;</span>)
-                .with_description(<span class="string">&quot;Number of misbehaviours detected and submitted&quot;</span>)
-                .init(),
-
-            receive_packets_confirmed: meter
-                .u64_counter(<span class="string">&quot;receive_packets_confirmed&quot;</span>)
-                .with_description(<span class="string">&quot;Number of confirmed receive packets. Available if relayer runs with Tx confirmation enabled&quot;</span>)
-                .init(),
-
-            acknowledgment_packets_confirmed: meter
-                .u64_counter(<span class="string">&quot;acknowledgment_packets_confirmed&quot;</span>)
-                .with_description(<span class="string">&quot;Number of confirmed acknowledgment packets. Available if relayer runs with Tx confirmation enabled&quot;</span>)
-                .init(),
-
-            timeout_packets_confirmed: meter
-                .u64_counter(<span class="string">&quot;timeout_packets_confirmed&quot;</span>)
-                .with_description(<span class="string">&quot;Number of confirmed timeout packets. Available if relayer runs with Tx confirmation enabled&quot;</span>)
-                .init(),
-
-            queries: meter
-                .u64_counter(<span class="string">&quot;queries&quot;</span>)
-                .with_description(
-                    <span class="string">&quot;Number of queries submitted by Hermes&quot;</span>,
-                )
-                .init(),
-
-            queries_cache_hits: meter
-                .u64_counter(<span class="string">&quot;queries_cache_hits&quot;</span>)
-                .with_description(<span class="string">&quot;Number of cache hits for queries submitted by Hermes&quot;</span>)
-                .init(),
-
-            ws_reconnect: meter
-                .u64_counter(<span class="string">&quot;ws_reconnect&quot;</span>)
-                .with_description(<span class="string">&quot;Number of times Hermes reconnected to the websocket endpoint&quot;</span>)
-                .init(),
-
-            ws_events: meter
-                .u64_counter(<span class="string">&quot;ws_events&quot;</span>)
-                .with_description(<span class="string">&quot;How many IBC events did Hermes receive via the websocket subscription&quot;</span>)
-                .init(),
-
-            messages_submitted: meter
-                .u64_counter(<span class="string">&quot;messages_submitted&quot;</span>)
-                .with_description(<span class="string">&quot;Number of messages submitted to a specific chain&quot;</span>)
-                .init(),
-
-            wallet_balance: meter
-                .f64_observable_gauge(<span class="string">&quot;wallet_balance&quot;</span>)
-                .with_description(<span class="string">&quot;The balance of each wallet Hermes uses per chain. Please note that when converting the balance to f64 a loss in precision might be introduced in the displayed value&quot;</span>)
-                .init(),
-
-            send_packet_events: meter
-                .u64_counter(<span class="string">&quot;send_packet_events&quot;</span>)
-                .with_description(<span class="string">&quot;Number of SendPacket events received&quot;</span>)
-                .init(),
-
-            acknowledgement_events: meter
-                .u64_counter(<span class="string">&quot;acknowledgement_events&quot;</span>)
-                .with_description(<span class="string">&quot;Number of WriteAcknowledgement events received&quot;</span>)
-                .init(),
-
-            timeout_events: meter
-                .u64_counter(<span class="string">&quot;timeout_events&quot;</span>)
-                .with_description(<span class="string">&quot;Number of TimeoutPacket events received&quot;</span>)
-                .init(),
-
-            cleared_send_packet_events: meter
-                .u64_counter(<span class="string">&quot;cleared_send_packet_events&quot;</span>)
-                .with_description(<span class="string">&quot;Number of SendPacket events received during the initial and periodic clearing&quot;</span>)
-                .init(),
-
-            cleared_acknowledgment_events: meter
-                .u64_counter(<span class="string">&quot;cleared_acknowledgment_events&quot;</span>)
-                .with_description(<span class="string">&quot;Number of WriteAcknowledgement events received during the initial and periodic clearing&quot;</span>)
-                .init(),
-
-            tx_latency_submitted: meter
-                .u64_observable_gauge(<span class="string">&quot;tx_latency_submitted&quot;</span>)
-                .with_unit(Unit::new(<span class="string">&quot;milliseconds&quot;</span>))
-                .with_description(<span class="string">&quot;The latency for all transactions submitted to a specific chain, \
-                    i.e. the difference between the moment when Hermes received a batch of events \
-                    and when it submitted the corresponding transaction(s). Milliseconds.&quot;</span>)
-                .init(),
-
-            tx_latency_confirmed: meter
-                .u64_observable_gauge(<span class="string">&quot;tx_latency_confirmed&quot;</span>)
-                .with_unit(Unit::new(<span class="string">&quot;milliseconds&quot;</span>))
-                .with_description(<span class="string">&quot;The latency for all transactions submitted &amp; confirmed to a specific chain, \
-                    i.e. the difference between the moment when Hermes received a batch of events \
-                    until the corresponding transaction(s) were confirmed. Milliseconds.&quot;</span>)
-                .init(),
-
-            in_flight_events: moka::sync::Cache::builder()
-                .time_to_live(Duration::from_secs(<span class="number">60 </span>* <span class="number">60</span>)) <span class="comment">// Remove entries after 1 hour
-                </span>.time_to_idle(Duration::from_secs(<span class="number">30 </span>* <span class="number">60</span>)) <span class="comment">// Remove entries if they have been idle for 30 minutes
-                </span>.build(),
-
-            backlogs: DashMap::new(),
-
-            backlog_oldest_sequence: meter
-                .u64_observable_gauge(<span class="string">&quot;backlog_oldest_sequence&quot;</span>)
-                .with_description(<span class="string">&quot;Sequence number of the oldest SendPacket event in the backlog&quot;</span>)
-                .init(),
-
-            backlog_oldest_timestamp: meter
-                .u64_observable_gauge(<span class="string">&quot;backlog_oldest_timestamp&quot;</span>)
-                .with_unit(Unit::new(<span class="string">&quot;seconds&quot;</span>))
-                .with_description(<span class="string">&quot;Local timestamp for the oldest SendPacket event in the backlog&quot;</span>)
-                .init(),
-
-            backlog_size: meter
-                .u64_observable_gauge(<span class="string">&quot;backlog_size&quot;</span>)
-                .with_description(<span class="string">&quot;Total number of SendPacket events in the backlog&quot;</span>)
-                .init(),
-
-            fee_amounts: meter
-                .u64_counter(<span class="string">&quot;ics29_fee_amounts&quot;</span>)
-                .with_description(<span class="string">&quot;Total amount received from ICS29 fees&quot;</span>)
-                .init(),
-
-            visible_fee_addresses: DashSet::new(),
-
-            cached_fees: Mutex::new(Vec::new()),
-
-            period_fees: meter
-                .u64_observable_gauge(<span class="string">&quot;ics29_period_fees&quot;</span>)
-                .with_description(<span class="string">&quot;Amount of ICS29 fees rewarded over the past 7 days&quot;</span>)
-                .init(),
         }
     }
 }
