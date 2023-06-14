@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["local_transfer_token",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["local_transfer_token",""],["transfer_from_chain",""]]};
