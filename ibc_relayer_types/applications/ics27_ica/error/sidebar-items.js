@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["ErrorDetail",""]],"struct":[["Error",""],["InvalidConnectionIdentifierSubdetail",""],["InvalidPacketDataSubdetail",""],["InvalidRelativeTimeoutSubdetail",""],["OwnerSubdetail",""]]};
