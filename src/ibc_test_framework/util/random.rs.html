@@ -63,13 +63,23 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre><pre class="rust"><code><span class="doccomment">/*!
    Utilities for random value generation.
 */
 
 </span><span class="kw">use </span>ibc_relayer_types::applications::transfer::amount::Amount;
+<span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>rand::Rng;
-<span class="kw">use </span>std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
+<span class="kw">use </span>std::{
+    collections::HashSet,
+    net::{Ipv4Addr, SocketAddrV4, TcpListener},
+    sync::Mutex,
+};
 
 <span class="doccomment">/// Generates a random `u32` value.
 </span><span class="kw">pub fn </span>random_u32() -&gt; u32 {
@@ -113,19 +123,19 @@
 <span class="doccomment">/// Generates a random non-privileged port that is greater than 1024.
 </span><span class="kw">fn </span>random_port() -&gt; u16 {
     <span class="kw">let </span><span class="kw-2">mut </span>rng = rand::thread_rng();
-    rng.gen::&lt;u16&gt;()
-        .checked_add(<span class="number">1024</span>)
-        .unwrap_or_else(random_port)
+    rng.gen_range(<span class="number">1024</span>..=u16::MAX)
 }
 
 <span class="doccomment">/// Find a random unused non-privileged TCP port.
 </span><span class="kw">pub fn </span>random_unused_tcp_port() -&gt; u16 {
+    <span class="kw">static </span>ALLOCATED_PORTS: Lazy&lt;Mutex&lt;HashSet&lt;u16&gt;&gt;&gt; = Lazy::new(|| Mutex::new(HashSet::new()));
+
     <span class="kw">let </span>port = random_port();
     <span class="kw">let </span>loopback = Ipv4Addr::new(<span class="number">127</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>);
     <span class="kw">let </span>address = SocketAddrV4::new(loopback, port);
     <span class="kw">match </span>TcpListener::bind(address) {
-        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; port,
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; random_unused_tcp_port(),
+        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="kw">if </span>ALLOCATED_PORTS.lock().unwrap().insert(port) =&gt; port,
+        <span class="kw">_ </span>=&gt; random_unused_tcp_port(),
     }
 }
 </code></pre></div>
