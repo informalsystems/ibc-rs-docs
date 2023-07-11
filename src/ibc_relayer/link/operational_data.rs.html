@@ -413,8 +413,6 @@
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::ops::Add;
 <span class="kw">use </span>std::time::{Duration, Instant};
@@ -575,7 +573,7 @@
         relay_path: <span class="kw-2">&amp;</span>RelayPath&lt;ChainA, ChainB&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;TrackedMsgs, LinkError&gt; {
         <span class="comment">// For zero delay we prepend the client update msgs.
-        </span><span class="kw">let </span>client_update_msg = <span class="kw">if </span>!<span class="self">self</span>.conn_delay_needed() {
+        </span><span class="kw">let </span>client_update_msgs = <span class="kw">if </span>!<span class="self">self</span>.conn_delay_needed() {
             <span class="kw">let </span>update_height = <span class="self">self</span>.proofs_height.increment();
 
             <span class="macro">debug!</span>(
@@ -583,18 +581,16 @@
                 <span class="self">self</span>.target, update_height
             );
 
-            <span class="comment">// Fetch the client update message. Vector may be empty if the client already has the header
-            // for the requested height.
-            </span><span class="kw">let </span><span class="kw-2">mut </span>client_update_opt = <span class="kw">match </span><span class="self">self</span>.target {
+            <span class="comment">// Fetch the client update messages.
+            // Vector may be empty if the client already has the header for the requested height.
+            </span><span class="kw">match </span><span class="self">self</span>.target {
                 OperationalDataTarget::Source =&gt; {
                     relay_path.build_update_client_on_src(update_height)<span class="question-mark">?
                 </span>}
                 OperationalDataTarget::Destination =&gt; {
                     relay_path.build_update_client_on_dst(update_height)<span class="question-mark">?
                 </span>}
-            };
-
-            client_update_opt.pop()
+            }
         } <span class="kw">else </span>{
             <span class="kw">let </span>(client_state, <span class="kw">_</span>) = <span class="kw">match </span><span class="self">self</span>.target {
                 OperationalDataTarget::Source =&gt; relay_path
@@ -622,12 +618,12 @@
 
             <span class="kw">if </span>client_state.is_frozen() {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(TrackedMsgs::new(<span class="macro">vec!</span>[], <span class="self">self</span>.tracking_id));
-            } <span class="kw">else </span>{
-                <span class="prelude-val">None
-            </span>}
+            }
+
+            <span class="macro">vec!</span>[]
         };
 
-        <span class="kw">let </span>msgs = client_update_msg
+        <span class="kw">let </span>msgs = client_update_msgs
             .into_iter()
             .chain(<span class="self">self</span>.batch.iter().map(|gm| gm.msg.clone()))
             .collect();

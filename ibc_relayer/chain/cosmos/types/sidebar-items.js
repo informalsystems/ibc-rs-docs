@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["account",""],["config",""],["events",""],["gas",""],["tx",""]]};
+window.SIDEBAR_ITEMS = {"mod":[["account",""],["app_state","Structure used to parse queried Genesis state using /genesis RPC endpoint."],["config",""],["events",""],["gas",""],["tx",""]]};
