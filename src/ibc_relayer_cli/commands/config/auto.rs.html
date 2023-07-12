@@ -178,6 +178,50 @@
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::chain_registry::get_configs;
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
@@ -187,6 +231,7 @@
 <span class="kw">use </span>ibc_relayer::config::{store, ChainConfig, Config};
 <span class="kw">use </span>ibc_relayer::keyring::list_keys;
 
+<span class="kw">use </span>std::collections::HashSet;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>tracing::{info, warn};
 
@@ -255,59 +300,102 @@
         <span class="comment">// Assert that for every chain, a key name is provided
         </span><span class="kw">let </span>runtime = tokio::runtime::Runtime::new().unwrap();
 
-        <span class="kw">let </span>names_and_keys = extract_chains_and_keys(<span class="kw-2">&amp;</span><span class="self">self</span>.chain_names);
+        <span class="comment">// Extract keys and sort chains by name
+        </span><span class="kw">let </span>names_and_keys = extract_chains_and_keys(<span class="kw-2">&amp;</span><span class="self">self</span>.chain_names);
         <span class="kw">let </span>sorted_names = names_and_keys
             .iter()
             .map(|n| <span class="kw-2">&amp;</span>n.<span class="number">0</span>)
             .cloned()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
+        <span class="kw">let </span>sorted_names_set: HashSet&lt;String&gt; = HashSet::from_iter(sorted_names.iter().cloned());
+
         <span class="kw">let </span>commit = <span class="self">self</span>.commit.clone();
 
-        <span class="comment">// Extract keys and sort chains by name
-        // Fetch chain configs from the chain registry
-        </span><span class="macro">info!</span>(<span class="string">&quot;Fetching configuration for chains: {sorted_names:?}&quot;</span>);
+        <span class="comment">// Fetch chain configs from the chain registry
+        </span><span class="kw">let </span>config_results = runtime.block_on(get_configs(<span class="kw-2">&amp;</span>sorted_names, commit));
 
-        <span class="kw">match </span>runtime.block_on(get_configs(<span class="kw-2">&amp;</span>sorted_names, commit)) {
-            <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>chain_configs) =&gt; {
-                <span class="kw">let </span>configs_and_keys = chain_configs
-                    .iter_mut()
-                    .zip(names_and_keys.iter().map(|n| <span class="kw-2">&amp;</span>n.<span class="number">1</span>).cloned());
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = config_results {
+            <span class="kw">let </span>config = Config::default();
 
-                <span class="kw">for </span>(chain_config, key_option) <span class="kw">in </span>configs_and_keys {
-                    <span class="comment">// If a key is provided, use it
-                    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_option {
-                        <span class="macro">info!</span>(<span class="string">&quot;{}: uses key \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span>chain_config.id, <span class="kw-2">&amp;</span>key_name);
-                        chain_config.key_name = key_name;
-                    } <span class="kw">else </span>{
-                        <span class="comment">// Otherwise, find the key in the keystore
-                        </span><span class="kw">let </span>chain_id = <span class="kw-2">&amp;</span>chain_config.id;
-                        <span class="kw">let </span>key = find_key(chain_config);
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = key {
-                            <span class="macro">info!</span>(<span class="string">&quot;{}: uses key &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>chain_id, <span class="kw-2">&amp;</span>key);
-                            chain_config.key_name = key;
-                        } <span class="kw">else </span>{
-                            <span class="comment">// If no key is found, warn the user and continue
-                            </span><span class="macro">warn!</span>(<span class="string">&quot;No key found for chain: {}&quot;</span>, chain_id);
-                        }
-                    }
+            <span class="kw">match </span>store(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.path) {
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; Output::error(<span class="macro">format!</span>(
+                    <span class="string">&quot;An error occurred while generating the chain config file: {}
+                    A default config file has been written at &#39;{}&#39;&quot;</span>,
+                    e,
+                    <span class="self">self</span>.path.display(),
+                ))
+                .exit(),
+                <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
+                    <span class="string">&quot;An error occurred while attempting to write the config file: {}&quot;</span>,
+                    e
+                ))
+                .exit(),
+            }
+        };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>chain_configs: Vec&lt;ChainConfig&gt; = config_results
+            .unwrap()
+            .into_iter()
+            .filter_map(|r| r.ok())
+            .collect();
+
+        <span class="comment">// Determine which chains were not fetched
+        </span><span class="kw">let </span>fetched_chains_set = HashSet::from_iter(chain_configs.iter().map(|c| c.id.name()));
+        <span class="kw">let </span>missing_chains_set: HashSet&lt;<span class="kw">_</span>&gt; =
+            sorted_names_set.difference(<span class="kw-2">&amp;</span>fetched_chains_set).collect();
+
+        <span class="kw">let </span>configs_and_keys = chain_configs
+            .iter_mut()
+            .zip(names_and_keys.iter().map(|n| <span class="kw-2">&amp;</span>n.<span class="number">1</span>).cloned());
+
+        <span class="kw">for </span>(chain_config, key_option) <span class="kw">in </span>configs_and_keys {
+            <span class="comment">// If a key is provided, use it
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_option {
+                <span class="macro">info!</span>(<span class="string">&quot;{}: uses key \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span>chain_config.id, <span class="kw-2">&amp;</span>key_name);
+                chain_config.key_name = key_name;
+            } <span class="kw">else </span>{
+                <span class="comment">// Otherwise, find the key in the keystore
+                </span><span class="kw">let </span>chain_id = <span class="kw-2">&amp;</span>chain_config.id;
+                <span class="kw">let </span>key = find_key(chain_config);
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = key {
+                    <span class="macro">info!</span>(<span class="string">&quot;{}: uses key &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>chain_id, <span class="kw-2">&amp;</span>key);
+                    chain_config.key_name = key;
+                } <span class="kw">else </span>{
+                    <span class="comment">// If no key is found, warn the user and continue
+                    </span><span class="macro">warn!</span>(<span class="string">&quot;No key found for chain: {}&quot;</span>, chain_id);
                 }
+            }
+        }
 
-                <span class="kw">let </span>config = Config {
-                    chains: chain_configs,
-                    ..Config::default()
-                };
+        <span class="kw">let </span>config = Config {
+            chains: chain_configs,
+            ..Config::default()
+        };
 
-                <span class="kw">match </span>store(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.path) {
-                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; Output::success_msg(<span class="macro">format!</span>(
+        <span class="kw">match </span>store(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.path) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                <span class="kw">if </span>missing_chains_set.is_empty() {
+                    Output::success_msg(<span class="macro">format!</span>(
                         <span class="string">&quot;Config file written successfully at &#39;{}&#39;&quot;</span>,
                         <span class="self">self</span>.path.display()
                     ))
-                    .exit(),
-                    <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
+                    .exit()
+                } <span class="kw">else </span>{
+                    Output::success_msg(<span class="macro">format!</span>(
+                        <span class="string">&quot;Config file written successfully at &#39;{}&#39;.
+                        However, configurations for the following chains were not able to be generated: {:?}&quot;</span>,
+                        <span class="self">self</span>.path.display(),
+                        missing_chains_set,
+                    ))
+                    .exit()
                 }
             }
-            <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
+            <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
+                <span class="string">&quot;An error occurred while attempting to write the config file: {}&quot;</span>,
+                e
+            ))
+            .exit(),
         }
     }
 }
