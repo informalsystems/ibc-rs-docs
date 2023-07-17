@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["applications",""],["apps",""],["core",""],["lightclients",""],["mock",""]]};
+window.SIDEBAR_ITEMS = {"mod":["applications","apps","core","lightclients","mock"]};

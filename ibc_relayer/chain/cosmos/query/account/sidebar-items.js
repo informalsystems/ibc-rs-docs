@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["get_or_fetch_account","Get a `&mut Account` from an `&mut Option<Account>` if it is `Some(Account)`. Otherwise query for the account information, update the `Option` to `Some`, and return the underlying `&mut` reference."],["query_account","Uses the GRPC client to retrieve the account sequence"],["refresh_account","Refresh the account sequence behind the `&mut Account` by refetching the account and updating the `&mut` reference."]]};
+window.SIDEBAR_ITEMS = {"fn":["get_or_fetch_account","query_account","refresh_account"]};

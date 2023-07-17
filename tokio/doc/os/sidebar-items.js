@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["windows","Platform-specific extensions to `std` for Windows."]]};
+window.SIDEBAR_ITEMS = {"mod":["windows"]};

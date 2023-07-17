@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["encode","Bitcoin consensus-encodable types."],["params","Bitcoin consensus parameters."],["serde","Serde serialization via consensus encoding"]]};
+window.SIDEBAR_ITEMS = {"mod":["encode","params","serde"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MsgClient","Msg defines the ICS29 Msg service."]]};
+window.SIDEBAR_ITEMS = {"struct":["MsgClient"]};

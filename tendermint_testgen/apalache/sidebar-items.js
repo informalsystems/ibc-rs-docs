@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ApalacheRun",""]],"fn":[["run_apalache_test",""]],"struct":[["ApalacheTestBatch",""],["ApalacheTestCase",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ApalacheRun"],"fn":["run_apalache_test"],"struct":["ApalacheTestBatch","ApalacheTestCase"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["TaggedDenomExt",""],["TaggedTokenExt",""]],"type":[["TaggedToken",""],["TaggedTokenRef",""],["Token",""]]};
+window.SIDEBAR_ITEMS = {"trait":["TaggedDenomExt","TaggedTokenExt"],"type":["TaggedToken","TaggedTokenRef","Token"]};

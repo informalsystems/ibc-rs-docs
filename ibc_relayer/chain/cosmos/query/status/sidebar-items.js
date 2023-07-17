@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_status","Query the chain status via an RPC query."]]};
+window.SIDEBAR_ITEMS = {"fn":["query_status"]};

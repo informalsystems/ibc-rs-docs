@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["hazmat","Low-level ECDSA primitives."]],"struct":[["Error","Signature errors."],["RecoveryId","Recovery IDs, a.k.a. “recid”."]],"type":[["DerSignature","ECDSA/secp256k1 signature (ASN.1 DER encoded)"],["Signature","ECDSA/secp256k1 signature (fixed-size)"],["SigningKey","ECDSA/secp256k1 signing key"],["VerifyingKey","ECDSA/secp256k1 verification key (i.e. public key)"]]};
+window.SIDEBAR_ITEMS = {"mod":["hazmat"],"struct":["Error","RecoveryId"],"type":["DerSignature","Signature","SigningKey","VerifyingKey"]};

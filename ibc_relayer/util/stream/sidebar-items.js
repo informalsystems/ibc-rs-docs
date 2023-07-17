@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["try_group_while","Example"],["try_group_while_timeout",""]]};
+window.SIDEBAR_ITEMS = {"fn":["try_group_while","try_group_while_timeout"]};

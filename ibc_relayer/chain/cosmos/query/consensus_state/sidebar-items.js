@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_consensus_state_heights",""],["query_consensus_states",""]]};
+window.SIDEBAR_ITEMS = {"fn":["query_consensus_state_heights","query_consensus_states"]};

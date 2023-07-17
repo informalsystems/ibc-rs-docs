@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["TrackingId","Identifier used to track an `EventBatch` along the relaying pipeline until the corresponding transactions are submitted and/or confirmed."]],"struct":[["TrackedMsgs","A wrapper over a vector of proto-encoded messages (`Vec<Any>`), which has an associated tracking number."]]};
+window.SIDEBAR_ITEMS = {"enum":["TrackingId"],"struct":["TrackedMsgs"]};

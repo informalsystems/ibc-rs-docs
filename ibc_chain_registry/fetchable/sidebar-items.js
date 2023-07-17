@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["Fetchable","`Fetchable` represents the basic expectations for external data or resources that can be fetched."]]};
+window.SIDEBAR_ITEMS = {"trait":["Fetchable"]};

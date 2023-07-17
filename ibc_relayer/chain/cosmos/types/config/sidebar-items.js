@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["TxConfig",""]]};
+window.SIDEBAR_ITEMS = {"struct":["TxConfig"]};

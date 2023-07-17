@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ErrorDetail",""]],"struct":[["EmptyWitnessListSubdetail",""],["Error",""],["HashMismatchSubdetail",""],["HeightMismatchSubdetail",""],["InvalidLightBlockSubdetail",""],["IoSubdetail",""],["NoTrustedStateInStoreSubdetail",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["EmptyWitnessListSubdetail","Error","HashMismatchSubdetail","HeightMismatchSubdetail","InvalidLightBlockSubdetail","IoSubdetail","NoTrustedStateInStoreSubdetail"]};

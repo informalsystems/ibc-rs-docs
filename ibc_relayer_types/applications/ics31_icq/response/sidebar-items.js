@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["CrossChainQueryResponse",""]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["CrossChainQueryResponse"]};

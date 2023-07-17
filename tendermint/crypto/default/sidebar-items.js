@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["ecdsa_secp256k1","Types implementing the ECDSA algorithm using the Secp256k1 elliptic curve."],["signature","The pure Rust implementation of signature verification functions."]],"type":[["Sha256","The default implementation of the `Sha256` trait."]]};
+window.SIDEBAR_ITEMS = {"mod":["ecdsa_secp256k1","signature"],"type":["Sha256"]};

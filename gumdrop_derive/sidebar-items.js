@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"derive":[["Options","Derives the `gumdrop::Options` trait for `struct` and `enum` items."]]};
+window.SIDEBAR_ITEMS = {"derive":["Options"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["error",""],["msgs",""]]};
+window.SIDEBAR_ITEMS = {"mod":["error","msgs"]};

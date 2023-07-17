@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["MsgChannelOpenTry","Message definition for the second step in the channel open handshake (`ChanOpenTry` datagram)."]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["MsgChannelOpenTry"]};

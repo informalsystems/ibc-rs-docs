@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["DialectResponse","RPC dialect helper for serialization of the response."],["Request","Get ABCI results at a given height."],["Response","ABCI result response."]]};
+window.SIDEBAR_ITEMS = {"struct":["DialectResponse","Request","Response"]};

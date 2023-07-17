@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Size","Lifts a const generic `usize` into a type."]],"type":[["NthChainHandle","Tag a `Handle: ChainHandle` type with a const generic `TAG: usize`."]]};
+window.SIDEBAR_ITEMS = {"enum":["Size"],"type":["NthChainHandle"]};

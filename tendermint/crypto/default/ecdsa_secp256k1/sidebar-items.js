@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"type":[["Signature","ECDSA/secp256k1 signature (fixed-size)"],["SigningKey","ECDSA/secp256k1 signing key"],["VerifyingKey","ECDSA/secp256k1 verification key (i.e. public key)"]]};
+window.SIDEBAR_ITEMS = {"type":["Signature","SigningKey","VerifyingKey"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Manager","Thread manager that tracks threads spawned by the application and handles shutting them down."]],"type":[["Reader","Reader guard for the thread manager."],["Writer","Writer guard for the thread manager."]]};
+window.SIDEBAR_ITEMS = {"struct":["Manager"],"type":["Reader","Writer"]};

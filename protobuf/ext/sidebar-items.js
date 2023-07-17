@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ExtFieldOptional","Optional ext field"],["ExtFieldRepeated","Repeated ext field"]]};
+window.SIDEBAR_ITEMS = {"struct":["ExtFieldOptional","ExtFieldRepeated"]};

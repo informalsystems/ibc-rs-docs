@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize array into `Vec<Vec<u8>>`"],["serialize","Serialize from `Vec<T>` into `Vec<base64string>`"]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

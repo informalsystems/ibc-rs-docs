@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["spawn_connection_worker",""]]};
+window.SIDEBAR_ITEMS = {"fn":["spawn_connection_worker"]};

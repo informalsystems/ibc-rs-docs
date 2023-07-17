@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["walkthroughs","Walkthroughs of integration tests that are used to test the Hermes relayer in production. Use these walkthroughs as references for writing your own integration tests using the framework."]]};
+window.SIDEBAR_ITEMS = {"mod":["walkthroughs"]};

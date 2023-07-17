@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["HandlerOutput",""],["HandlerOutputBuilder",""]],"type":[["HandlerResult",""]]};
+window.SIDEBAR_ITEMS = {"struct":["HandlerOutput","HandlerOutputBuilder"],"type":["HandlerResult"]};

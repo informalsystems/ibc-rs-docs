@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CFCheckpt","cfcheckpt message"],["CFHeaders","cfheaders message"],["CFilter","cfilter message"],["GetCFCheckpt","getcfcheckpt message"],["GetCFHeaders","getcfheaders message"],["GetCFilters","getcfilters message"]]};
+window.SIDEBAR_ITEMS = {"struct":["CFCheckpt","CFHeaders","CFilter","GetCFCheckpt","GetCFHeaders","GetCFilters"]};

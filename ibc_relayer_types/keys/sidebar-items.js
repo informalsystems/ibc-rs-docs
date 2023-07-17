@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["MODULE_NAME",""],["QUERIER_ROUTE",""],["ROUTER_KEY",""],["STORE_KEY",""]]};
+window.SIDEBAR_ITEMS = {"constant":["MODULE_NAME","QUERIER_ROUTE","ROUTER_KEY","STORE_KEY"]};

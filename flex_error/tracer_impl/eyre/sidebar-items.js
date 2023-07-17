@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"type":[["EyreTracer","Type alias to [`eyre::Report`]."]]};
+window.SIDEBAR_ITEMS = {"type":["EyreTracer"]};

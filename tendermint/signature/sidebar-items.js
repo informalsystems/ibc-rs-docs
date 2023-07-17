@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["SIGNATURE_LENGTH","The expected length of all currently supported signatures, in bytes."]],"struct":[["Ed25519Signature","Ed25519 signature."],["Signature","Signatures"]],"type":[["Secp256k1Signature","ECDSA/secp256k1 signature (fixed-size)"]]};
+window.SIDEBAR_ITEMS = {"constant":["SIGNATURE_LENGTH"],"struct":["Ed25519Signature","Signature"],"type":["Secp256k1Signature"]};

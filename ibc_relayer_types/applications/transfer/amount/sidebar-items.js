@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Amount","A type for representing token transfer amounts."]]};
+window.SIDEBAR_ITEMS = {"struct":["Amount"]};

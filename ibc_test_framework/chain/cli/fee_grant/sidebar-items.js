@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["feegrant_grant",""]]};
+window.SIDEBAR_ITEMS = {"fn":["feegrant_grant"]};

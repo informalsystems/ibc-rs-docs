@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["MsgChannelCloseConfirm","Message definition for the second step in the channel close handshake (the `ChanCloseConfirm` datagram)."]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["MsgChannelCloseConfirm"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["AnyConsensusState",""]],"struct":[["AnyConsensusStateWithHeight",""]]};
+window.SIDEBAR_ITEMS = {"enum":["AnyConsensusState"],"struct":["AnyConsensusStateWithHeight"]};

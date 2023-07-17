@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["CrossChainQueryMethodsExt",""]]};
+window.SIDEBAR_ITEMS = {"trait":["CrossChainQueryMethodsExt"]};

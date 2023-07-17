@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ConnectionMsg","Enumeration of all possible messages that the ICS3 protocol processes."]],"mod":[["conn_open_ack",""],["conn_open_confirm",""],["conn_open_init",""],["conn_open_try",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ConnectionMsg"],"mod":["conn_open_ack","conn_open_confirm","conn_open_init","conn_open_try"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"type":[["Telemetry",""]]};
+window.SIDEBAR_ITEMS = {"type":["Telemetry"]};

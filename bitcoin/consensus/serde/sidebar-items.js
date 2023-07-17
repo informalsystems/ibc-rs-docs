@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["hex","Implements hex encoding."]],"struct":[["Hex","Hex-encoding strategy"],["With","Helper for `#[serde(with = \"\")]`."]],"trait":[["ByteDecoder","Provides an instance of string-to-byte decoder."],["ByteEncoder","Provides an instance of byte-to-string encoder."],["EncodeBytes","Transforms given bytes and writes to the writer."],["IntoDeError","Converts error into a type implementing `serde::de::Error`"]]};
+window.SIDEBAR_ITEMS = {"mod":["hex"],"struct":["Hex","With"],"trait":["ByteDecoder","ByteEncoder","EncodeBytes","IntoDeError"]};

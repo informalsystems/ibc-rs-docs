@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["FeeRate","Represents fee rate."]]};
+window.SIDEBAR_ITEMS = {"struct":["FeeRate"]};

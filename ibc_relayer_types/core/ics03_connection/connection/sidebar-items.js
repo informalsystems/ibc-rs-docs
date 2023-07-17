@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["State",""]],"struct":[["ConnectionEnd",""],["Counterparty",""],["IdentifiedConnectionEnd",""]]};
+window.SIDEBAR_ITEMS = {"enum":["State"],"struct":["ConnectionEnd","Counterparty","IdentifiedConnectionEnd"]};

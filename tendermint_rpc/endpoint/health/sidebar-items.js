@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Request","Perform a basic healthceck of the backend"],["Response","Healthcheck responses"]]};
+window.SIDEBAR_ITEMS = {"struct":["Request","Response"]};

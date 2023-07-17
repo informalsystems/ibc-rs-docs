@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["decode","Decode the given data from Base64, returning a `Vec<u8>`"],["encode","Encode the given data as Base64, returning a `Vec<u8>`"],["encoder","Return a `Base64` encoder"]],"struct":[["Base64","Base64 `Encoding` (traditional non-URL-safe RFC 4648 version)"]]};
+window.SIDEBAR_ITEMS = {"fn":["decode","encode","encoder"],"struct":["Base64"]};

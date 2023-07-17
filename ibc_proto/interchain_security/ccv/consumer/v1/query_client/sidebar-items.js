@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["QueryClient",""]]};
+window.SIDEBAR_ITEMS = {"struct":["QueryClient"]};

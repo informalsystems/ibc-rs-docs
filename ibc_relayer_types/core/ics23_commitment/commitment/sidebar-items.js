@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CommitmentPath",""],["CommitmentPrefix",""],["CommitmentProofBytes",""],["CommitmentRoot",""]]};
+window.SIDEBAR_ITEMS = {"struct":["CommitmentPath","CommitmentPrefix","CommitmentProofBytes","CommitmentRoot"]};

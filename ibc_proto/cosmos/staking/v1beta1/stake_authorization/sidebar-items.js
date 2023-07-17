@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Validators","validators is the oneof that represents either allow_list or deny_list"]],"struct":[["ValidatorsVec","Validators defines list of validator addresses."]]};
+window.SIDEBAR_ITEMS = {"enum":["Validators"],"struct":["ValidatorsVec"]};

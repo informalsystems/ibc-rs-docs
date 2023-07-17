@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Proof","Merkle proof of the presence of a transaction in the Merkle tree."]]};
+window.SIDEBAR_ITEMS = {"struct":["Proof"]};

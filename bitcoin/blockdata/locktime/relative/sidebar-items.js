@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Error","Errors related to relative lock times."],["LockTime","A relative lock time value, representing either a block height or time (512 second intervals)."]],"struct":[["Height","A relative lock time lock-by-blockheight value."],["Time","A relative lock time lock-by-blocktime value."]]};
+window.SIDEBAR_ITEMS = {"enum":["Error","LockTime"],"struct":["Height","Time"]};

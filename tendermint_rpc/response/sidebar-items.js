@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Wrapper","JSON-RPC response wrapper (i.e. message envelope)"]],"trait":[["Response","JSON-RPC responses"]]};
+window.SIDEBAR_ITEMS = {"struct":["Wrapper"],"trait":["Response"]};

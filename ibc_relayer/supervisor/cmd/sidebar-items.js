@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["SupervisorCmd",""]]};
+window.SIDEBAR_ITEMS = {"enum":["SupervisorCmd"]};

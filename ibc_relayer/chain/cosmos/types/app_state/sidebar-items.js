@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["GenesisAppState",""]]};
+window.SIDEBAR_ITEMS = {"struct":["GenesisAppState"]};

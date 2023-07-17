@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["ACK_ERR_STR","A string constant included in error acknowledgements. NOTE: Changing this const is state machine breaking as acknowledgements are written into state"],["ACK_SUCCESS_B64","A successful acknowledgement, equivalent to `base64::encode(0x01)`."]],"enum":[["Acknowledgement",""],["ConstAckSuccess",""]]};
+window.SIDEBAR_ITEMS = {"constant":["ACK_ERR_STR","ACK_SUCCESS_B64"],"enum":["Acknowledgement","ConstAckSuccess"]};

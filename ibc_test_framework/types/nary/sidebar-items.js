@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["aliases",""],["chains","Constructs for N-ary connected chains."],["channel","Constructs for N-ary connected channels."],["connection","Constructs for N-ary connected connections."],["foreign_client",""]]};
+window.SIDEBAR_ITEMS = {"mod":["aliases","chains","channel","connection","foreign_client"]};

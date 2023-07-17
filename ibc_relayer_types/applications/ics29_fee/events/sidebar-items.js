@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["DistributionType",""]],"struct":[["DistributeFeePacket",""],["IncentivizedPacket",""]]};
+window.SIDEBAR_ITEMS = {"enum":["DistributionType"],"struct":["DistributeFeePacket","IncentivizedPacket"]};

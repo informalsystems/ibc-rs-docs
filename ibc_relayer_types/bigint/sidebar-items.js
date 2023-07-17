@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["U256","Little-endian large integer type 256-bit unsigned integer."]]};
+window.SIDEBAR_ITEMS = {"struct":["U256"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["PacketMsgType","Enumeration of proof carrying ICS4 message, helper for relayer."],["Receipt",""]],"struct":[["Packet",""],["Sequence","The sequence number of a packet enforces ordering among packets from the same source."]]};
+window.SIDEBAR_ITEMS = {"enum":["PacketMsgType","Receipt"],"struct":["Packet","Sequence"]};

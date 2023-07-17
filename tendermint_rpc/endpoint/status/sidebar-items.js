@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Request","Node status request"],["Response","Status responses"],["SyncInfo","Sync information"]]};
+window.SIDEBAR_ITEMS = {"struct":["Request","Response","SyncInfo"]};

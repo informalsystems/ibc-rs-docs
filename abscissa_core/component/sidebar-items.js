@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"derive":[["Component",""]],"mod":[["registry","Abscissa’s component registry"]],"struct":[["Handle","Component handles are references to components which have been registered with a `component::Registry`."],["Id","Identifier for an individual component"]],"trait":[["AsAny","Dynamic type helper trait"],["Component","Application components."]]};
+window.SIDEBAR_ITEMS = {"derive":["Component"],"mod":["registry"],"struct":["Handle","Id"],"trait":["AsAny","Component"]};

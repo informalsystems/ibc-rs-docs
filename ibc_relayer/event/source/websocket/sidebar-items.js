@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Next",""]],"mod":[["extract",""]],"struct":[["EventSource","A batch of events received from a WebSocket endpoint from a chain at a specific height."]]};
+window.SIDEBAR_ITEMS = {"enum":["Next"],"mod":["extract"],"struct":["EventSource"]};

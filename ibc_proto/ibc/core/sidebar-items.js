@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["channel",""],["client",""],["commitment",""],["connection",""],["types",""]]};
+window.SIDEBAR_ITEMS = {"mod":["channel","client","commitment","connection","types"]};

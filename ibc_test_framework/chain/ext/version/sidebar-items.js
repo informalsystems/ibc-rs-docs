@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["ChainVersionMethodsExt",""]]};
+window.SIDEBAR_ITEMS = {"trait":["ChainVersionMethodsExt"]};

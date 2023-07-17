@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["build_forward_address","Build the recipient address as following: {intermediate_refund_address}|{foward_port}/{forward_channel}:{final_destination_address} See https://hub.cosmos.network/main/governance/proposals/2021-09-hub-ibc-router/"],["build_invalid_forward_address","Build a forward address with the destination address invalid"]]};
+window.SIDEBAR_ITEMS = {"fn":["build_forward_address","build_invalid_forward_address"]};

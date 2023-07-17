@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["HostBlock","Depending on `HostType` (the type of host chain underlying a context mock), this enum defines the type of blocks composing the history of the host chain."],["HostType","Defines the different types of host chains that a mock context can emulate. The variants are as follows:"]],"struct":[["SyntheticTmBlock",""]]};
+window.SIDEBAR_ITEMS = {"enum":["HostBlock","HostType"],"struct":["SyntheticTmBlock"]};

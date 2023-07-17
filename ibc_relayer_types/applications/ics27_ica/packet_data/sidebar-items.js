@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["InterchainAccountPacketData",""]]};
+window.SIDEBAR_ITEMS = {"struct":["InterchainAccountPacketData"]};

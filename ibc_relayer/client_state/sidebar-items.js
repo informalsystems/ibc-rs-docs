@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["AnyClientState",""],["AnyUpgradeOptions",""]],"struct":[["IdentifiedAnyClientState",""]]};
+window.SIDEBAR_ITEMS = {"enum":["AnyClientState","AnyUpgradeOptions"],"struct":["IdentifiedAnyClientState"]};

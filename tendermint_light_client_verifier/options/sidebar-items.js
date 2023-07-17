@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Options","Verification parameters"]]};
+window.SIDEBAR_ITEMS = {"struct":["Options"]};

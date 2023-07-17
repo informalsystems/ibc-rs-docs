@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["FeeGrantMethodsExt",""]]};
+window.SIDEBAR_ITEMS = {"trait":["FeeGrantMethodsExt"]};

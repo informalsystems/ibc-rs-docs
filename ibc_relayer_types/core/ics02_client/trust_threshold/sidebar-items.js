@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["TrustThreshold","Represents the level of trust that a client has towards a set of validators of a chain. Another way to phrase it is that the trust threshold defines the minimum amount of voting power in a block that originates from trusted validators."]]};
+window.SIDEBAR_ITEMS = {"struct":["TrustThreshold"]};

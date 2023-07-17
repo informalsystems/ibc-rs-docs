@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Next",""],["TaskError","A wrapper around the error type returned by a background task step function to indicate whether the background task should be terminated because of the error."]],"fn":[["spawn_background_task","Spawn a long-running background task with the given step runner."]],"struct":[["TaskHandle","A task handle holds the endpoints for stopping or waiting for a background task to terminate."]]};
+window.SIDEBAR_ITEMS = {"enum":["Next","TaskError"],"fn":["spawn_background_task"],"struct":["TaskHandle"]};

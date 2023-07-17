@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["CosmosTx",""]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["CosmosTx"]};

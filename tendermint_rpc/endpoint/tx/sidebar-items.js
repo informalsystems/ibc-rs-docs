@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["DialectResponse","RPC dialect helper for serialization of the response."],["Request","Request for finding a transaction by its hash."],["Response",""]]};
+window.SIDEBAR_ITEMS = {"struct":["DialectResponse","Request","Response"]};

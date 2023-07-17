@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["get_dummy_tendermint_client_state",""]]};
+window.SIDEBAR_ITEMS = {"fn":["get_dummy_tendermint_client_state"]};

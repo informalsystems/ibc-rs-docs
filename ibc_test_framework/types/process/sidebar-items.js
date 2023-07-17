@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ChildProcess","A lightweight wrapper around std::process::Child to ensure that the process is killed when the handle is dropped."]]};
+window.SIDEBAR_ITEMS = {"struct":["ChildProcess"]};

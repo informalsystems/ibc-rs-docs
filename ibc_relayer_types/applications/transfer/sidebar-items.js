@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["MODULE_ID_STR","Module identifier for the ICS20 application."],["PORT_ID_STR","The port identifier that the ICS20 applications typically bind with."],["VERSION","ICS20 application current version."]],"mod":[["acknowledgement",""],["amount",""],["coin",""],["denom",""],["error",""],["events",""],["msgs",""],["packet",""]]};
+window.SIDEBAR_ITEMS = {"constant":["MODULE_ID_STR","PORT_ID_STR","VERSION"],"mod":["acknowledgement","amount","coin","denom","error","events","msgs","packet"]};

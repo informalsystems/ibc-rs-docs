@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize (string or u32) into u32(part_set_header.total)"],["serialize","Serialize from u32(part_set_header.total) into u32"]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

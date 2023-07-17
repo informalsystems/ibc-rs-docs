@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize a base64-encoded string into an tendermint::Hash"],["serialize","Serialize from a tendermint::Hash into a base64-encoded string"]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

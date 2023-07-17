@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["script_find_and_remove","Search for `needle` in the vector `haystack` and remove every instance of it, returning the number of instances removed. Loops through the vector opcode by opcode, skipping pushed data."]]};
+window.SIDEBAR_ITEMS = {"fn":["script_find_and_remove"]};

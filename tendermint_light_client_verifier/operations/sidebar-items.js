@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["commit_validator","Provides an interface and default implementation for the `CommitValidator` operation"],["voting_power","Provides an interface and default implementation for the `VotingPower` operation"]]};
+window.SIDEBAR_ITEMS = {"mod":["commit_validator","voting_power"]};

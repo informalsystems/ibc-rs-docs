@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["LightClient",""]]};
+window.SIDEBAR_ITEMS = {"struct":["LightClient"]};

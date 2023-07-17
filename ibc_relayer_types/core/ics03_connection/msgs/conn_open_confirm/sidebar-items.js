@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["MsgConnectionOpenConfirm","Message definition for `MsgConnectionOpenConfirm` (i.e., `ConnOpenConfirm` datagram)."]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["MsgConnectionOpenConfirm"]};

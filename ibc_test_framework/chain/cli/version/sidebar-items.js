@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["major_version",""]]};
+window.SIDEBAR_ITEMS = {"fn":["major_version"]};

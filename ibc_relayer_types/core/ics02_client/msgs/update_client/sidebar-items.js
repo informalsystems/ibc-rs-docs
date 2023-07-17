@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["MsgUpdateClient","A type of message that triggers the update of an on-chain (IBC) client with new headers."]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["MsgUpdateClient"]};

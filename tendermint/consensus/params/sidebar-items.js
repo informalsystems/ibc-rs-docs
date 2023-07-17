@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Params","All consensus-relevant parameters that can be adjusted by the ABCI app."],["ValidatorParams","ValidatorParams restrict the public key types validators can use."],["VersionParams","Version Parameters"]]};
+window.SIDEBAR_ITEMS = {"struct":["Params","ValidatorParams","VersionParams"]};

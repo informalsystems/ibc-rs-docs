@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["pay_packet",""],["pay_packet_async",""],["register_payee",""]]};
+window.SIDEBAR_ITEMS = {"mod":["pay_packet","pay_packet_async","register_payee"]};

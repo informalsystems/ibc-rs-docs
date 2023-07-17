@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Tag","Represents an IBC path tag"]],"struct":[["ChainDesc",""],["Channel",""],["ChannelPort",""],["IBCPath",""],["Tags",""]]};
+window.SIDEBAR_ITEMS = {"enum":["Tag"],"struct":["ChainDesc","Channel","ChannelPort","IBCPath","Tags"]};

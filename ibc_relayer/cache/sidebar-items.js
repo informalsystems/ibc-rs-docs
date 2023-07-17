@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["CacheStatus","Whether or not a result was in cache (ie. a cache hit)"]],"struct":[["Cache","The main cache data structure, which comprises multiple sub-caches for caching different chain components, each with different time-to-live values."]],"type":[["CacheResult","Alias for a result and its cache status."]]};
+window.SIDEBAR_ITEMS = {"enum":["CacheStatus"],"struct":["Cache"],"type":["CacheResult"]};

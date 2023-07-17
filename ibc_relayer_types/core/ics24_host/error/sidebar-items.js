@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ValidationErrorDetail",""]],"struct":[["ChainIdInvalidFormatSubdetail",""],["ContainSeparatorSubdetail",""],["EmptySubdetail",""],["InvalidCharacterSubdetail",""],["InvalidCounterpartyChannelIdSubdetail",""],["InvalidLengthSubdetail",""],["ValidationError",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ValidationErrorDetail"],"struct":["ChainIdInvalidFormatSubdetail","ContainSeparatorSubdetail","EmptySubdetail","InvalidCharacterSubdetail","InvalidCounterpartyChannelIdSubdetail","InvalidLengthSubdetail","ValidationError"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Error","An error related to Ed25519 signatures."]],"struct":[["Signature","An Ed25519 signature."],["SigningKey","An Ed25519 signing key."],["VerificationKey","A valid Ed25519 verification key."],["VerificationKeyBytes","A refinement type for `[u8; 32]` indicating that the bytes represent an encoding of an Ed25519 verification key."]]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["Signature","SigningKey","VerificationKey","VerificationKeyBytes"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["DialectResponse","RPC dialect helper for serialization of the response."],["Request","`/broadcast_tx_commit`: only returns error if `mempool.CheckTx()` errs or if we timeout waiting for tx to commit."],["Response","Response from `/broadcast_tx_commit`."]]};
+window.SIDEBAR_ITEMS = {"struct":["DialectResponse","Request","Response"]};

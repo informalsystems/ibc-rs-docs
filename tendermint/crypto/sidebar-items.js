@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["default","Pure Rust implementations of the cryptographic traits."],["ed25519",""],["sha256",""],["signature",""]]};
+window.SIDEBAR_ITEMS = {"mod":["default","ed25519","sha256","signature"]};

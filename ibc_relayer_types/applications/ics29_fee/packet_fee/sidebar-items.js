@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Fee","The core type that encodes the different fees that are redeemable by relayers for relaying different types of packets."],["IdentifiedPacketFees",""],["PacketFee",""]]};
+window.SIDEBAR_ITEMS = {"struct":["Fee","IdentifiedPacketFees","PacketFee"]};

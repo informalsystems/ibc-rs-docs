@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["DynResidue","A residue represented using `LIMBS` limbs. The odd modulus of this residue is set at runtime."],["DynResidueParams","The parameters to efficiently go to and from the Montgomery form for a modulus provided at runtime."]]};
+window.SIDEBAR_ITEMS = {"struct":["DynResidue","DynResidueParams"]};

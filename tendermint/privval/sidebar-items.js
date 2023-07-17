@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["RemoteSignerError",""]]};
+window.SIDEBAR_ITEMS = {"struct":["RemoteSignerError"]};

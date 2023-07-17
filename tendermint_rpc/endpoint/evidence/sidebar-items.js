@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Request","`/broadcast_evidence`: broadcast an evidence."],["Response","Response from either an evidence broadcast request."]]};
+window.SIDEBAR_ITEMS = {"struct":["Request","Response"]};

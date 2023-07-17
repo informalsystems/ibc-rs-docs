@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["copy_validator_key_pair",""],["query_consumer_genesis",""],["replace_genesis_state",""],["submit_consumer_chain_proposal",""]]};
+window.SIDEBAR_ITEMS = {"fn":["copy_validator_key_pair","query_consumer_genesis","replace_genesis_state","submit_consumer_chain_proposal"]};

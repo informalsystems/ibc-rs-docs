@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["generate_k","Deterministically generate ephemeral scalar `k`."]],"mod":[["consts","Type aliases for many constants."]],"struct":[["HmacDrbg","Internal implementation of `HMAC_DRBG` as described in NIST SP800-90A."]],"type":[["ByteArray","Array of bytes representing a scalar serialized as a big endian integer."]]};
+window.SIDEBAR_ITEMS = {"fn":["generate_k"],"mod":["consts"],"struct":["HmacDrbg"],"type":["ByteArray"]};

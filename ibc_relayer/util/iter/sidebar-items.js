@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["SplitResults",""]]};
+window.SIDEBAR_ITEMS = {"trait":["SplitResults"]};

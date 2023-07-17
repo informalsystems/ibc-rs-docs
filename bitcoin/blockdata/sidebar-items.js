@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["block","Bitcoin blocks."],["constants","Blockdata constants."],["fee_rate","Implements `FeeRate` and assoctiated features."],["locktime","Provides absolute and relative locktimes."],["opcodes","Bitcoin script opcodes."],["script","Bitcoin scripts."],["transaction","Bitcoin transactions."],["weight","Implements `Weight` and associated features."],["witness","Witness"]]};
+window.SIDEBAR_ITEMS = {"mod":["block","constants","fee_rate","locktime","opcodes","script","transaction","weight","witness"]};

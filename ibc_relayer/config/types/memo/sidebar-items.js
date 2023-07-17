@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ErrorDetail",""]],"struct":[["Error",""],["Memo","A memo domain-type."],["TooLongSubdetail",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["Error","Memo","TooLongSubdetail"]};

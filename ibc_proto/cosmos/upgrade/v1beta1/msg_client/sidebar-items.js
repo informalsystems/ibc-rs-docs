@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MsgClient","Msg defines the upgrade Msg service."]]};
+window.SIDEBAR_ITEMS = {"struct":["MsgClient"]};

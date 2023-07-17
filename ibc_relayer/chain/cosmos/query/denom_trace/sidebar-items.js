@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_denom_trace",""]]};
+window.SIDEBAR_ITEMS = {"fn":["query_denom_trace"]};

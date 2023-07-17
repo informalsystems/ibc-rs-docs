@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ConnectedConnection","A connection that is connected between two chains with the full handshake completed."]]};
+window.SIDEBAR_ITEMS = {"struct":["ConnectedConnection"]};

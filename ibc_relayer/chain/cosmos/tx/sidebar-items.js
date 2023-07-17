@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["batched_send_tx",""],["broadcast_tx_sync","Perform a `broadcast_tx_sync`, and return the corresponding deserialized response data."],["estimate_fee_and_send_tx",""],["simple_send_tx","A simplified version of send_tx that does not depend on `ChainHandle`."]]};
+window.SIDEBAR_ITEMS = {"fn":["batched_send_tx","broadcast_tx_sync","estimate_fee_and_send_tx","simple_send_tx"]};

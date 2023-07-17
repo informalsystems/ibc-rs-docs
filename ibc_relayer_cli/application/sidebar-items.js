@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["app_config","Obtain a read-only (multi-reader) lock on the application configuration."],["app_reader","Obtain a read-only (multi-reader) lock on the application state."]],"static":[["APPLICATION","Application state"]],"struct":[["CliApp","Cli Application"]]};
+window.SIDEBAR_ITEMS = {"fn":["app_config","app_reader"],"static":["APPLICATION"],"struct":["CliApp"]};

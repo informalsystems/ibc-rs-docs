@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["pretty",""]]};
+window.SIDEBAR_ITEMS = {"mod":["pretty"]};

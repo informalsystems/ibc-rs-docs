@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["query_client","Generated client implementations."]],"struct":[["Params","Params defines the set of on-chain interchain accounts parameters. The following parameters may be used to disable the host submodule."],["QueryParamsRequest","QueryParamsRequest is the request type for the Query/Params RPC method."],["QueryParamsResponse","QueryParamsResponse is the response type for the Query/Params RPC method."]]};
+window.SIDEBAR_ITEMS = {"mod":["query_client"],"struct":["Params","QueryParamsRequest","QueryParamsResponse"]};

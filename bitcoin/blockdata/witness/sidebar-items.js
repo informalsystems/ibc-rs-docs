@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Iter","An iterator returning individual witness elements."],["Witness","The Witness is the data used to unlock bitcoin since the segwit upgrade."]]};
+window.SIDEBAR_ITEMS = {"struct":["Iter","Witness"]};

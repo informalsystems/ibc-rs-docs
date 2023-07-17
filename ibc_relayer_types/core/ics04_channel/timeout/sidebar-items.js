@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["TimeoutHeight","Indicates a consensus height on the destination chain after which the packet will no longer be processed, and will instead count as having timed-out."]]};
+window.SIDEBAR_ITEMS = {"enum":["TimeoutHeight"]};

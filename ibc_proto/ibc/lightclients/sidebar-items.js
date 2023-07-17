@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["localhost",""],["solomachine",""],["tendermint",""]]};
+window.SIDEBAR_ITEMS = {"mod":["localhost","solomachine","tendermint"]};

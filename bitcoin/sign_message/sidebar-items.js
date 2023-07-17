@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["BITCOIN_SIGNED_MSG_PREFIX","The prefix for signed messages using Bitcoin’s message signing protocol."]],"enum":[["MessageSignatureError","An error used for dealing with Bitcoin Signed Messages."]],"fn":[["signed_msg_hash","Hash message for signature using Bitcoin’s message signing format."]],"struct":[["MessageSignature","A signature on a Bitcoin Signed Message."]]};
+window.SIDEBAR_ITEMS = {"constant":["BITCOIN_SIGNED_MSG_PREFIX"],"enum":["MessageSignatureError"],"fn":["signed_msg_hash"],"struct":["MessageSignature"]};

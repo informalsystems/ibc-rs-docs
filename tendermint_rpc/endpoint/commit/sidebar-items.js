@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Request","Get commit information about a specific block"],["Response","Commit responses"]]};
+window.SIDEBAR_ITEMS = {"struct":["Request","Response"]};

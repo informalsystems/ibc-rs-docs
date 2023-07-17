@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["MsgSendTx",""]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["MsgSendTx"]};

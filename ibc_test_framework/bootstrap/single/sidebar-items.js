@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["bootstrap_single_node","Bootstrap a single full node with the provided [`ChainBuilder`] and a prefix for the chain ID."]]};
+window.SIDEBAR_ITEMS = {"fn":["bootstrap_single_node"]};

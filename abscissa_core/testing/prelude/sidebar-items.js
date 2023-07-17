@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CmdRunner","Run a command via `cargo run`"],["ExitStatus","Information about a process’s exit status"],["Stderr","Buffered reader for standard error"],["Stdout","Buffered reader for standard output"]],"trait":[["OutputStream","Methods common to output streams"]]};
+window.SIDEBAR_ITEMS = {"struct":["CmdRunner"]};

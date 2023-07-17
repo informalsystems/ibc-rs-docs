@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["protobuf",""]]};
+window.SIDEBAR_ITEMS = {"mod":["protobuf"]};

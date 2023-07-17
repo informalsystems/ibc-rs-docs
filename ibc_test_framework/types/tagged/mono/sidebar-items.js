@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Tagged","Tag a `Value` type with a single `Tag` type tag."],["TaggedIterator","Create a tagged iterator, if the underlying value supports iteration."]]};
+window.SIDEBAR_ITEMS = {"struct":["Tagged","TaggedIterator"]};

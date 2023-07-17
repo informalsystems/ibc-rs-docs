@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Version","The version field for a `ChannelEnd`."]]};
+window.SIDEBAR_ITEMS = {"struct":["Version"]};

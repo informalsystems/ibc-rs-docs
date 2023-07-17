@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["ED25519_KEYPAIR_SIZE",""]],"enum":[["PrivateKey","Private keys as parsed from configuration files"]],"struct":[["Ed25519",""]]};
+window.SIDEBAR_ITEMS = {"constant":["ED25519_KEYPAIR_SIZE"],"enum":["PrivateKey"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TENDERMINT_MISBEHAVIOR_TYPE_URL",""]],"struct":[["Misbehaviour",""]]};
+window.SIDEBAR_ITEMS = {"constant":["TENDERMINT_MISBEHAVIOR_TYPE_URL"],"struct":["Misbehaviour"]};

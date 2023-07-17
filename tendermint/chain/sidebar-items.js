@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["id","Tendermint blockchain identifiers"]],"struct":[["Info","Information about a particular Tendermint blockchain"]]};
+window.SIDEBAR_ITEMS = {"mod":["id"],"struct":["Info"]};

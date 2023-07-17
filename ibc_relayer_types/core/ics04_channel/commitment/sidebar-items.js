@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["AcknowledgementCommitment","Acknowledgement commitment to be stored"],["PacketCommitment","Packet commitment"]]};
+window.SIDEBAR_ITEMS = {"struct":["AcknowledgementCommitment","PacketCommitment"]};

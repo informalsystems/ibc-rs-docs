@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["connection",""],["error",""],["events","Types for the IBC events emitted from Tendermint Websocket by the connection module."],["msgs","Message definitions for the connection handshake datagrams."],["version",""]]};
+window.SIDEBAR_ITEMS = {"mod":["connection","error","events","msgs","version"]};

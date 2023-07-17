@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["FILE_MODE","Mode to use for newly created files"]],"trait":[["Encoding","All encoding types in this crate implement this trait"]]};
+window.SIDEBAR_ITEMS = {"constant":["FILE_MODE"],"trait":["Encoding"]};

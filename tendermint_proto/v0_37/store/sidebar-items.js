@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["BlockStoreState",""]]};
+window.SIDEBAR_ITEMS = {"struct":["BlockStoreState"]};

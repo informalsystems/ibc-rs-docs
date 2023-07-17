@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ErrorDetail",""]],"struct":[["AppInfo","Helper struct to capture all the reported information of an IBC application, e.g., `gaiad`."],["ConsensusModuleNotFoundSubdetail",""],["Error",""],["SdkModuleNotFoundSubdetail",""],["Specs","Captures the version(s) specification of different modules of a network."],["VersionParsingFailedSubdetail",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["AppInfo","ConsensusModuleNotFoundSubdetail","Error","SdkModuleNotFoundSubdetail","Specs","VersionParsingFailedSubdetail"]};

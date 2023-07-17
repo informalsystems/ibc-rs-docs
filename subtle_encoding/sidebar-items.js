@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Error","Error type"]],"mod":[["base64","Base64 encoding with (almost) data-independent constant time(-ish) operation."],["bech32","Bech32 (BIP-173) checksummed Base32 data encoding (WARNING: preview!)"],["encoding","The `Encoding` trait: common operations across all encoders"],["hex","Hex encoding/decoding with data-independent constant time(-ish) operation."],["identity","Identity `Encoding`: output is identical to input"]]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"mod":["base64","bech32","encoding","hex","identity"]};

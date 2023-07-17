@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["default_gas_from_config","The default amount of gas the relayer is willing to pay for a transaction, when it cannot simulate the tx and therefore estimate the gas amount needed."],["gas_multiplier_from_config","The gas multiplier"],["max_gas_from_config","The maximum amount of gas the relayer is willing to pay for a transaction"]],"struct":[["GasConfig",""]]};
+window.SIDEBAR_ITEMS = {"fn":["default_gas_from_config","gas_multiplier_from_config","max_gas_from_config"],"struct":["GasConfig"]};

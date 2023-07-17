@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["register_host_zone",""]]};
+window.SIDEBAR_ITEMS = {"fn":["register_host_zone"]};

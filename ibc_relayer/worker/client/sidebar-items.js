@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["detect_misbehavior_task",""],["spawn_refresh_client",""]]};
+window.SIDEBAR_ITEMS = {"fn":["detect_misbehavior_task","spawn_refresh_client"]};

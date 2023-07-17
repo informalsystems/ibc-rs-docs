@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["grpc",""]]};
+window.SIDEBAR_ITEMS = {"mod":["grpc"]};

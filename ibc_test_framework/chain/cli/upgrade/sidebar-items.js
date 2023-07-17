@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["vote_proposal",""]]};
+window.SIDEBAR_ITEMS = {"fn":["vote_proposal"]};

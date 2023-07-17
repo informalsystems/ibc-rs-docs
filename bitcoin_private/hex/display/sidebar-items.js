@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":[["fmt_hex_exact","Format known-length array as hex."]],"struct":[["DisplayArray","Displays byte array as hex."],["DisplayByteSlice","Displays byte slice as hex."]],"trait":[["DisplayHex","Extension trait for types that can be displayed as hex."]]};
+window.SIDEBAR_ITEMS = {"macro":["fmt_hex_exact"],"struct":["DisplayArray","DisplayByteSlice"],"trait":["DisplayHex"]};

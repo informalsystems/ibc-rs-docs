@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["ONCE_INIT","Used to initialize `lock` field in `Lazy` struct."]],"struct":[["Lazy","Lasily initialized data."]]};
+window.SIDEBAR_ITEMS = {"constant":["ONCE_INIT"],"struct":["Lazy"]};

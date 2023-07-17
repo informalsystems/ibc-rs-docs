@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["data","Nested message and enum types in `Data`."]],"struct":[["Data","Data represents signature data"]]};
+window.SIDEBAR_ITEMS = {"mod":["data"],"struct":["Data"]};

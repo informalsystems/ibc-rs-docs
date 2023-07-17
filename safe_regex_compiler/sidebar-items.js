@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["escape_ascii","Converts the bytes into an ASCII string."],["impl_regex","Implements the `regex!` macro."]],"macro":[["dprintln",""]],"mod":[["generator","Provides a `generate` function used by the `regex!` proc macro."],["parser","A parser for regular expressions."]]};
+window.SIDEBAR_ITEMS = {"fn":["escape_ascii","impl_regex"],"macro":["dprintln"],"mod":["generator","parser"]};

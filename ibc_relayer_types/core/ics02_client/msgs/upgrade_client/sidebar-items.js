@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MsgUpgradeClient","A type of message that triggers the upgrade of an on-chain (IBC) client."]]};
+window.SIDEBAR_ITEMS = {"struct":["MsgUpgradeClient"]};

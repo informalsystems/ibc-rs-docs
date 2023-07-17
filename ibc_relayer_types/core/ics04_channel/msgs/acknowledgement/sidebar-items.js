@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["TYPE_URL",""]],"struct":[["Acknowledgement","A generic Acknowledgement type that modules may interpret as they like."],["MsgAcknowledgement","Message definition for packet acknowledgements."]]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["Acknowledgement","MsgAcknowledgement"]};

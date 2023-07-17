@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["try_from_tx",""]]};
+window.SIDEBAR_ITEMS = {"fn":["try_from_tx"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CfgCell","Configuration cell: holder of application configuration."]],"trait":[["Config","Trait for Abscissa configuration data structures."],["Configurable","Command type with which a configuration file is associated"],["Override","Use options from the given `Command` to override settings in the config."]],"type":[["Reader","Configuration reader."]]};
+window.SIDEBAR_ITEMS = {"struct":["CfgCell"],"trait":["Config","Configurable","Override"],"type":["Reader"]};

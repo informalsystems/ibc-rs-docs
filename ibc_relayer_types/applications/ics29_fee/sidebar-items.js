@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["error",""],["events",""],["msgs",""],["packet_fee",""]]};
+window.SIDEBAR_ITEMS = {"mod":["error","events","msgs","packet_fee"]};

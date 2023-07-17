@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["denom","Helper functions for deriving IBC denom."],["token",""]]};
+window.SIDEBAR_ITEMS = {"mod":["denom","token"]};

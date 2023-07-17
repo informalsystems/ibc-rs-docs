@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["GenesisState","GenesisState defines the ibc module’s genesis state."]]};
+window.SIDEBAR_ITEMS = {"struct":["GenesisState"]};

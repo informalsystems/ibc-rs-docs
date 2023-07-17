@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["chain","Functions for bootstrapping N-ary number of chains."],["channel","Functions for bootstrapping N-ary number of chanels."],["connection","Functions for bootstrapping N-ary number of connections."]]};
+window.SIDEBAR_ITEMS = {"mod":["chain","channel","connection"]};

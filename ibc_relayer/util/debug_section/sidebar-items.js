@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["DebugSection",""]]};
+window.SIDEBAR_ITEMS = {"enum":["DebugSection"]};

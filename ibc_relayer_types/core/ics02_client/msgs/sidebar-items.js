@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ClientMsg",""]],"mod":[["create_client","Definition of domain type message `MsgCreateClient`."],["misbehaviour",""],["update_client","Definition of domain type message `MsgUpdateAnyClient`."],["upgrade_client","Definition of domain type msg `MsgUpgradeAnyClient`."]]};
+window.SIDEBAR_ITEMS = {"enum":["ClientMsg"],"mod":["create_client","misbehaviour","update_client","upgrade_client"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["clock","Provides an interface and a default implementation of the `Clock` component"],["io","Provides an interface and a default implementation of the `Io` component"],["scheduler","Provides an interface and default implementation of the `Scheduler` component"]]};
+window.SIDEBAR_ITEMS = {"mod":["clock","io","scheduler"]};

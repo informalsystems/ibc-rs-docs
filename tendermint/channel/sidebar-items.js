@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Channel","Channels"],["Channels","Channel collections"],["Id","Channel IDs"]]};
+window.SIDEBAR_ITEMS = {"struct":["Channel","Channels","Id"]};

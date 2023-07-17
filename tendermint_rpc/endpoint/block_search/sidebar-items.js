@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Request","Request for searching for blocks by their BeginBlock and EndBlock events."],["Response",""]]};
+window.SIDEBAR_ITEMS = {"struct":["Request","Response"]};

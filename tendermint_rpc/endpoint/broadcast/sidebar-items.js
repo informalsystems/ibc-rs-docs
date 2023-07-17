@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["tx_async","`/broadcast_tx_async`: broadcast a transaction and return immediately."],["tx_commit","`/broadcast_tx_commit`: only returns error if `mempool.CheckTx()` errs or if we timeout waiting for tx to commit."],["tx_sync","`/broadcast_tx_sync`: returns with the response from `CheckTx`."]]};
+window.SIDEBAR_ITEMS = {"mod":["tx_async","tx_commit","tx_sync"]};

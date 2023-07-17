@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize `T` from a `nil`-able representation, accepting the `nil`"],["serialize","Serialize `T` as `Some` value of `Option<T>`."]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

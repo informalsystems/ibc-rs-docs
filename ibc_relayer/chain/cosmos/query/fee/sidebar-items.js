@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_counterparty_payee",""],["query_incentivized_packet","Query the incentivized packet for a specific packet at a specific height."],["query_incentivized_packets",""]]};
+window.SIDEBAR_ITEMS = {"fn":["query_counterparty_payee","query_incentivized_packet","query_incentivized_packets"]};

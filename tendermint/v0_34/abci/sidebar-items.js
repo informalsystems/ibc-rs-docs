@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["request",""],["response",""]]};
+window.SIDEBAR_ITEMS = {"mod":["request","response"]};

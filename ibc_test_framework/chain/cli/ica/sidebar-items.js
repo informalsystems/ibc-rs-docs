@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_interchain_account","Query the address of the interchain account corresponding to the given controller account."],["register_interchain_account","Register a new interchain account controlled by the given account over the given connection."]]};
+window.SIDEBAR_ITEMS = {"fn":["query_interchain_account","register_interchain_account"]};

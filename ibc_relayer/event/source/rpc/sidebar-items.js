@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Next",""]],"mod":[["extract",""]],"struct":[["EventSource","An RPC endpoint that serves as a source of events for a given chain."],["HeightRangeInclusive",""]],"type":[["Result",""]]};
+window.SIDEBAR_ITEMS = {"enum":["Next"],"mod":["extract"],"struct":["EventSource","HeightRangeInclusive"],"type":["Result"]};

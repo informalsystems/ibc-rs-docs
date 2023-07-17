@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Error","A key-related error."]],"struct":[["SerializedSignature","Holds signature serialized in-line (not in `Vec`)."],["Signature","An ECDSA signature with the corresponding hash type."]]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["SerializedSignature","Signature"]};

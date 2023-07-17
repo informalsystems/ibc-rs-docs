@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["IbcTransferMBT",""]]};
+window.SIDEBAR_ITEMS = {"struct":["IbcTransferMBT"]};

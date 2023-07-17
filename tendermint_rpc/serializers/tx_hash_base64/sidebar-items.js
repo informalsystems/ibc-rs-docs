@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize a base64-encoded string into an abci::transaction::Hash"],["serialize","Serialize from an abci::transaction::Hash into a base64-encoded string"]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

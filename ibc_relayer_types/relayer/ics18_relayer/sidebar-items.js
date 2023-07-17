@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["context",""],["error",""]]};
+window.SIDEBAR_ITEMS = {"mod":["context","error"]};

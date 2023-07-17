@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["QueryClient","Query defines the gRPC querier service."]]};
+window.SIDEBAR_ITEMS = {"struct":["QueryClient"]};

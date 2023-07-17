@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ChainType",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ChainType"]};

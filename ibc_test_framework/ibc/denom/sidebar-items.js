@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Denom","A newtype wrapper to represent a denomination string."]],"fn":[["derive_ibc_denom","Derives the denom on `ChainB` based on a denom on `ChainA` that has been transferred to `ChainB` via IBC."]],"type":[["TaggedDenom","Type alias for [`Denom`] tagged with the chain it belongs to."],["TaggedDenomRef","Type alias for `&Denom` tagged with the chain it belongs to."]]};
+window.SIDEBAR_ITEMS = {"enum":["Denom"],"fn":["derive_ibc_denom"],"type":["TaggedDenom","TaggedDenomRef"]};

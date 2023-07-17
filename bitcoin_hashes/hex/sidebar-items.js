@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Error","Hex decoding error."]],"struct":[["HexIterator","Iterator over a hex-encoded string slice which decodes hex and yields bytes."]],"trait":[["FromHex","Trait for objects that can be deserialized from hex strings."]]};
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["HexIterator"],"trait":["FromHex"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["ChainBootstrapMethodsExt",""]]};
+window.SIDEBAR_ITEMS = {"trait":["ChainBootstrapMethodsExt"]};

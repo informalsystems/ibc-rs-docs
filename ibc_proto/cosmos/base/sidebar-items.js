@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["abci",""],["kv",""],["node",""],["query",""],["reflection",""],["store",""],["tendermint",""],["v1beta1",""]]};
+window.SIDEBAR_ITEMS = {"mod":["abci","kv","node","query","reflection","store","tendermint","v1beta1"]};

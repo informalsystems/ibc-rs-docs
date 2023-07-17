@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ChainType","Types of chains the relayer can relay to and from"]],"mod":[["client","Data structures and logic to set up IBC client’s parameters."],["cosmos",""],["counterparty",""],["endpoint",""],["handle",""],["requests",""],["runtime",""],["tracking",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ChainType"],"mod":["client","cosmos","counterparty","endpoint","handle","requests","runtime","tracking"]};

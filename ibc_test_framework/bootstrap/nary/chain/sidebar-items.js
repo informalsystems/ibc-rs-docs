@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["boostrap_chains_with_any_nodes","Bootstrap a dynamic number of chains, according to the number of full nodes in the `Vec<FullNode>`."],["boostrap_chains_with_nodes","Bootstrap a fixed number of chains specified by `SIZE`."],["boostrap_chains_with_self_connected_node","Bootstrap a fixed number of chains that are actually backed by the same underlying full node."]]};
+window.SIDEBAR_ITEMS = {"fn":["boostrap_chains_with_any_nodes","boostrap_chains_with_nodes","boostrap_chains_with_self_connected_node"]};

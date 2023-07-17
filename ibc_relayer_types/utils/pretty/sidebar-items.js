@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["PrettyDuration",""],["PrettyOption",""],["PrettySignedHeader",""],["PrettySlice",""],["PrettyValidatorSet",""]]};
+window.SIDEBAR_ITEMS = {"struct":["PrettyDuration","PrettyOption","PrettySignedHeader","PrettySlice","PrettyValidatorSet"]};

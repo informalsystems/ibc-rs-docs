@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CompactTarget","Encoding of 256-bit target as 32-bit float."],["Target","A 256 bit integer representing target."],["TryFromError","Error from `TryFrom<signed type>` implementations, occurs when input is negative."],["Work","A 256 bit integer representing work."]]};
+window.SIDEBAR_ITEMS = {"struct":["CompactTarget","Target","TryFromError","Work"]};

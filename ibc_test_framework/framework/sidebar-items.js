@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["base","Base infrastructure for the test framework. Includes basic setup for initializing the logger and loading the test configuration."],["binary","Constructs for test cases that involve interaction between two chains."],["nary","Run N-ary test cases that involve more than 2 chains."],["overrides","Constructs for implementing overrides for test cases."],["supervisor",""]]};
+window.SIDEBAR_ITEMS = {"mod":["base","binary","nary","overrides","supervisor"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["query_upgrade_proposal_height","Query the proposal with the given proposal_id, which is supposed to be an UpgradeProposal. Extract the Plan from the UpgradeProposal and get the height at which the chain upgrades, from the Plan."]],"trait":[["ChainProposalMethodsExt",""]]};
+window.SIDEBAR_ITEMS = {"fn":["query_upgrade_proposal_height"],"trait":["ChainProposalMethodsExt"]};

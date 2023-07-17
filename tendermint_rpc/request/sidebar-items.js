@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Wrapper","JSON-RPC request wrapper (i.e. message envelope)"]],"trait":[["Request","JSON-RPC requests"],["RequestMessage","Serialization for JSON-RPC requests"],["SimpleRequest","Simple JSON-RPC requests which correlate with a single response from the remote endpoint."]]};
+window.SIDEBAR_ITEMS = {"struct":["Wrapper"],"trait":["Request","RequestMessage","SimpleRequest"]};

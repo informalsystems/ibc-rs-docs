@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["prelude","Import prelude for Abscissa tests"],["process","Subprocesses spawned by runners"]],"struct":[["CmdRunner","Run a command via `cargo run`"],["Regex","Regex newtype (wraps `regex::Regex`)"]]};
+window.SIDEBAR_ITEMS = {"mod":["prelude","process"],"struct":["CmdRunner","Regex"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["get_configs","Fetches a list of ChainConfigs specified by the given slice of chain names. These configs are fetched from https://github.com/cosmos/chain-registry. The `default_gas` and `max_gas` parameters set to default values. The `gas_price` parameter is set to the average gas price for the chain listed in the chain registry."]]};
+window.SIDEBAR_ITEMS = {"fn":["get_configs"]};

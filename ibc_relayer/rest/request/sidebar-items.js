@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Request","REST API request variants"]],"fn":[["reply_channel",""]],"struct":[["VersionInfo",""]],"type":[["ReplyReceiver",""],["ReplySender",""]]};
+window.SIDEBAR_ITEMS = {"enum":["Request"],"fn":["reply_channel"],"struct":["VersionInfo"],"type":["ReplyReceiver","ReplySender"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Hash","Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))"]]};
+window.SIDEBAR_ITEMS = {"struct":["Hash"]};

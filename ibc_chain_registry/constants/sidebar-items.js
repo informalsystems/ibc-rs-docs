@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["ALL_CHAINS",""],["ALL_PATHS",""],["DEFAULT_REF",""],["HOST",""],["PROTOCOL",""],["REGISTRY_PATH",""]]};
+window.SIDEBAR_ITEMS = {"constant":["ALL_CHAINS","ALL_PATHS","DEFAULT_REF","HOST","PROTOCOL","REGISTRY_PATH"]};

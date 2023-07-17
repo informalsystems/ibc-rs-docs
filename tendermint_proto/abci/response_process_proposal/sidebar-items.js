@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ProposalStatus",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ProposalStatus"]};

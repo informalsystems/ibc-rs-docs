@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["client_state",""],["consensus_state",""],["error",""],["header",""],["misbehaviour",""]]};
+window.SIDEBAR_ITEMS = {"mod":["client_state","consensus_state","error","header","misbehaviour"]};

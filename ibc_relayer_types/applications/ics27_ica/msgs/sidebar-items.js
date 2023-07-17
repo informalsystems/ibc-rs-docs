@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["register",""],["send_tx",""]]};
+window.SIDEBAR_ITEMS = {"mod":["register","send_tx"]};

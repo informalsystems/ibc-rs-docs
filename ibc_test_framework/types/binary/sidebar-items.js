@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["chains","Type definition for two connected chains."],["channel","Type definitions for channel connected between two chains."],["client","Type definitions for IBC clients connected between two chains."],["connection","Type definitions for connection that is connected between two chains."],["foreign_client",""]]};
+window.SIDEBAR_ITEMS = {"mod":["chains","channel","client","connection","foreign_client"]};

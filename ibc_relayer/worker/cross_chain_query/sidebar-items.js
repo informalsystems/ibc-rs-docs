@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["spawn_cross_chain_query_worker",""]]};
+window.SIDEBAR_ITEMS = {"fn":["spawn_cross_chain_query_worker"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["bootstrap",""],["fee_grant",""],["host_zone",""],["ica",""],["provider",""],["query",""],["transfer","Methods for performing IBC token transfer on a chain."],["upgrade","Methods for voting on a proposal."],["version",""]]};
+window.SIDEBAR_ITEMS = {"mod":["bootstrap","fee_grant","host_zone","ica","provider","query","transfer","upgrade","version"]};

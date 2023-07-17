@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["HASH_SIZE","Length of a SHA256 hash in bytes."]],"trait":[["Sha256","A SHA256 digest implementation."]]};
+window.SIDEBAR_ITEMS = {"constant":["HASH_SIZE"],"trait":["Sha256"]};

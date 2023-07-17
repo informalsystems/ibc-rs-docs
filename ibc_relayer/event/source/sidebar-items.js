@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["EventSource",""],["EventSourceCmd",""]],"mod":[["queries",""],["rpc",""],["websocket",""]],"struct":[["EventBatch","A batch of events from a chain at a specific height"],["TxEventSourceCmd",""]],"type":[["EventReceiver",""],["EventSender",""],["Result",""]]};
+window.SIDEBAR_ITEMS = {"enum":["EventSource","EventSourceCmd"],"mod":["queries","rpc","websocket"],"struct":["EventBatch","TxEventSourceCmd"],"type":["EventReceiver","EventSender","Result"]};

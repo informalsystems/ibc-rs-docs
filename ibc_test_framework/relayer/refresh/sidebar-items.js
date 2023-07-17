@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["spawn_refresh_client_tasks",""]]};
+window.SIDEBAR_ITEMS = {"fn":["spawn_refresh_client_tasks"]};

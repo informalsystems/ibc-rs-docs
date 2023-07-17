@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ErrorDetail",""]],"struct":[["Error",""],["MaxMsgNum",""],["TooBigSubdetail",""],["TooSmallSubdetail",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["Error","MaxMsgNum","TooBigSubdetail","TooSmallSubdetail"]};

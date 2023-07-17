@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["ccv",""]]};
+window.SIDEBAR_ITEMS = {"mod":["ccv"]};

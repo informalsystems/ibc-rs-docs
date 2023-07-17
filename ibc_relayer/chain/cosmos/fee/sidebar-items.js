@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["maybe_register_counterparty_payee",""]]};
+window.SIDEBAR_ITEMS = {"fn":["maybe_register_counterparty_payee"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["channel",""],["commitment",""],["error",""],["events","Types for the IBC events emitted from Tendermint Websocket by the channels module."],["msgs","Message definitions for all ICS4 domain types: channel open & close handshake datagrams, as well as packets."],["packet",""],["packet_id",""],["timeout",""],["version","Data type definition and utilities for the version field of a channel end."]]};
+window.SIDEBAR_ITEMS = {"mod":["channel","commitment","error","events","msgs","packet","packet_id","timeout","version"]};

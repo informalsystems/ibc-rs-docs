@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Message","Error message type: provide additional context with a string."]]};
+window.SIDEBAR_ITEMS = {"struct":["Message"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["send_tx_with_account_sequence_retry","Try to `send_tx` and retry on account sequence error with re-cached account s.n. An account sequence error can occur if the account sequence that the relayer caches becomes outdated."]]};
+window.SIDEBAR_ITEMS = {"fn":["send_tx_with_account_sequence_retry"]};

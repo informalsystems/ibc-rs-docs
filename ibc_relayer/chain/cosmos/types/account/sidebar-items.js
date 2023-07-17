@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Account","Wrapper for account number and sequence number."],["AccountAddress","Newtype for account address"],["AccountNumber","Newtype for account numbers"],["AccountSequence","Newtype for account sequence numbers"]]};
+window.SIDEBAR_ITEMS = {"struct":["Account","AccountAddress","AccountNumber","AccountSequence"]};

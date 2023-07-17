@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["Ics18Context","Trait capturing all dependencies (i.e., the context) which algorithms in ICS18 require to relay packets between chains. This trait comprises the dependencies towards a single chain. Most of the functions in this represent wrappers over the ABCI interface. This trait mimics the `Chain` trait, but at a lower level of abstraction (no networking, header types, light client, RPC client, etc.)"]]};
+window.SIDEBAR_ITEMS = {"trait":["Ics18Context"]};

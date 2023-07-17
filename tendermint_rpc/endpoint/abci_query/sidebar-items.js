@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["AbciQuery","ABCI query results"],["Request","Query the ABCI application for information"],["Response","ABCI query response wrapper"]]};
+window.SIDEBAR_ITEMS = {"struct":["AbciQuery","Request","Response"]};

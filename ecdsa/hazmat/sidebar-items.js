@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["bits2field","Partial implementation of the `bits2int` function as defined in RFC6979 § 2.3.2 as well as SEC1 § 2.3.8."]],"trait":[["DigestPrimitive","Bind a preferred [`Digest`] algorithm to an elliptic curve type."],["SignPrimitive","Try to sign the given prehashed message using ECDSA."],["VerifyPrimitive","Verify the given prehashed message using ECDSA."]]};
+window.SIDEBAR_ITEMS = {"fn":["bits2field"],"trait":["DigestPrimitive","SignPrimitive","VerifyPrimitive"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["backtrace_enabled",""],["install_error_reporter",""],["main",""]]};
+window.SIDEBAR_ITEMS = {"fn":["backtrace_enabled","install_error_reporter","main"]};

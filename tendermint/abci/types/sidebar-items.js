@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["MisbehaviorKind","The possible kinds of [`Misbehavior`]."]],"struct":[["CommitInfo","Information on a block commit."],["Misbehavior","Evidence of validator misbehavior."],["Snapshot","Used for state sync snapshots."],["Validator","A validator address with voting power."],["VoteInfo","Information about a whether a validator signed the last block."]]};
+window.SIDEBAR_ITEMS = {"enum":["MisbehaviorKind"],"struct":["CommitInfo","Misbehavior","Snapshot","Validator","VoteInfo"]};

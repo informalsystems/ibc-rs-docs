@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Case","Possible case of hex."]],"mod":[["buf_encoder","Implements a buffered encoder."],["display","Helpers for displaying bytes as hex strings."],["exts","Reexports of extension traits."]]};
+window.SIDEBAR_ITEMS = {"enum":["Case"],"mod":["buf_encoder","display","exts"]};

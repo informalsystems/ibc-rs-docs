@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["BufEncoder","Hex-encodes bytes into the provided buffer."],["OutBytes","A byte buffer that can only be written-into."]],"trait":[["AsOutBytes","Trait for types that can be soundly converted to `OutBytes`."],["FixedLenBuf","A buffer with compile-time-known length."]]};
+window.SIDEBAR_ITEMS = {"struct":["BufEncoder","OutBytes"],"trait":["AsOutBytes","FixedLenBuf"]};

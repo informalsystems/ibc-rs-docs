@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["unbounded","Constructor for an unbounded channel."]],"struct":[["ChannelRx","Receiver interface for a channel."],["ChannelTx","Sender interface for a channel."]]};
+window.SIDEBAR_ITEMS = {"fn":["unbounded"],"struct":["ChannelRx","ChannelTx"]};

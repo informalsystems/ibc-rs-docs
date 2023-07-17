@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["builder","Builder construct that spawn new chains with some common parameters."],["chain_type",""],["cli",""],["config","Helper functions for modifying the Gaia chain config in TOML."],["driver","Implementation of [`ChainDriver`]."],["exec",""],["ext",""],["tagged","Methods for tagged version of the chain driver."],["version",""]]};
+window.SIDEBAR_ITEMS = {"mod":["builder","chain_type","cli","config","driver","exec","ext","tagged","version"]};

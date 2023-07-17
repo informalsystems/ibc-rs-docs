@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["default_consensus_params","Default consensus params modeled after Go code; but it’s not clear how to go to a valid hash from here"]]};
+window.SIDEBAR_ITEMS = {"fn":["default_consensus_params"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["error","Errors raised by the builder DSL"]],"struct":[["LightClientBuilder","Builder for a light client [`Instance`]"]]};
+window.SIDEBAR_ITEMS = {"mod":["error"],"struct":["LightClientBuilder"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Equivocation","Equivocation implements the Evidence interface and defines evidence of double signing misbehavior."]]};
+window.SIDEBAR_ITEMS = {"struct":["Equivocation"]};

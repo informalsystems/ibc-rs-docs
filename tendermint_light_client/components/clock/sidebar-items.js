@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["FixedClock",""],["SystemClock","Provides the current wall clock time."]],"trait":[["Clock","Abstracts over the current time."]]};
+window.SIDEBAR_ITEMS = {"struct":["FixedClock","SystemClock"],"trait":["Clock"]};

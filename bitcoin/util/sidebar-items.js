@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["misc","The `misc` module was moved and re-named to `sign_message`."]]};
+window.SIDEBAR_ITEMS = {"mod":["misc"]};

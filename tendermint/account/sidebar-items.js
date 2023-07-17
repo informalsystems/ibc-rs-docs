@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["LENGTH","Size of an  account ID in bytes"]],"struct":[["Id","Account IDs"]]};
+window.SIDEBAR_ITEMS = {"constant":["LENGTH"],"struct":["Id"]};

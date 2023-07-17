@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize `Hash` from a string, allowing for empty hashes."],["serialize","Serialize `Hash` into a string."]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

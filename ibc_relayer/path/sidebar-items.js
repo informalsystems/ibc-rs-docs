@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["PathIdentifiers","Defines the channel & port identifiers which comprise the two ends of a relayer path."]]};
+window.SIDEBAR_ITEMS = {"struct":["PathIdentifiers"]};

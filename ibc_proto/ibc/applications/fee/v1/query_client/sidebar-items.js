@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["QueryClient","Query defines the ICS29 gRPC querier service."]]};
+window.SIDEBAR_ITEMS = {"struct":["QueryClient"]};

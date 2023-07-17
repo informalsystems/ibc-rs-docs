@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ClassItem","An element of a regular expression character class."],["FinalNode","A completely parsed element of a regular expression abstract syntax tree (AST)."],["Node","An AST node used during parsing."],["NonFinalNode","AST nodes used internally during parsing."]],"fn":[["parse","Parses `regex` as a regular expression."]]};
+window.SIDEBAR_ITEMS = {"enum":["ClassItem","FinalNode","Node","NonFinalNode"],"fn":["parse"]};

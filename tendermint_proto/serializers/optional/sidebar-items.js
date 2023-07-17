@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize","Deserialize `Option<T>`"],["serialize","Serialize `Option<T>`"]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize","serialize"]};

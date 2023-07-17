@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["absolute","Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY."],["relative","Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY."]]};
+window.SIDEBAR_ITEMS = {"mod":["absolute","relative"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["interchainquery",""]]};
+window.SIDEBAR_ITEMS = {"mod":["interchainquery"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Type","Types of proposals"]],"struct":[["CanonicalProposal","CanonicalProposal for signing"],["Proposal","Proposal"],["SignProposalRequest","SignProposalRequest is a request to sign a proposal"],["SignedProposalResponse","SignedProposalResponse is response containing a signed proposal or an error"]]};
+window.SIDEBAR_ITEMS = {"enum":["Type"],"struct":["CanonicalProposal","Proposal","SignProposalRequest","SignedProposalResponse"]};

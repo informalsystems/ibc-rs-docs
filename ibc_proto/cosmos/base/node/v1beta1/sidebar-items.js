@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["service_client","Generated client implementations."]],"struct":[["ConfigRequest","ConfigRequest defines the request structure for the Config gRPC query."],["ConfigResponse","ConfigResponse defines the response structure for the Config gRPC query."]]};
+window.SIDEBAR_ITEMS = {"mod":["service_client"],"struct":["ConfigRequest","ConfigResponse"]};

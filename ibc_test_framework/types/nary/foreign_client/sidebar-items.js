@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ForeignClientPairs",""]],"type":[["NthForeignClient","A [`ForeignClient`] that is tagged by a `Handle: ChainHandle` and the const generics `DEST: usize` and `SRC: usize`."],["NthForeignClientPair",""]]};
+window.SIDEBAR_ITEMS = {"struct":["ForeignClientPairs"],"type":["NthForeignClient","NthForeignClientPair"]};

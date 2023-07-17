@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["bootstrap_consumer_node",""]]};
+window.SIDEBAR_ITEMS = {"fn":["bootstrap_consumer_node"]};
