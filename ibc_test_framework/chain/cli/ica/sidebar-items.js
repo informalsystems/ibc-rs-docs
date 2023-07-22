@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["query_interchain_account","register_interchain_account"]};
+window.SIDEBAR_ITEMS = {"fn":["query_interchain_account","register_interchain_account_cli"]};
