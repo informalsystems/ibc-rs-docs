@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["array","assert","file","random","retry","suspend"]};
+window.SIDEBAR_ITEMS = {"mod":["array","assert","file","interchain_security","random","retry","suspend"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["update_genesis_for_consumer_chain","update_relayer_config_for_consumer_chain"]};
