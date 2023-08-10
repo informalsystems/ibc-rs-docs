@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.11.2/src/sync/cache.rs`."><title>cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.11.3/src/sync/cache.rs`."><title>cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -4746,6 +4746,16 @@
 <a href="#4746" id="4746">4746</a>
 <a href="#4747" id="4747">4747</a>
 <a href="#4748" id="4748">4748</a>
+<a href="#4749" id="4749">4749</a>
+<a href="#4750" id="4750">4750</a>
+<a href="#4751" id="4751">4751</a>
+<a href="#4752" id="4752">4752</a>
+<a href="#4753" id="4753">4753</a>
+<a href="#4754" id="4754">4754</a>
+<a href="#4755" id="4755">4755</a>
+<a href="#4756" id="4756">4756</a>
+<a href="#4757" id="4757">4757</a>
+<a href="#4758" id="4758">4758</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     value_initializer::{InitResult, ValueInitializer},
     CacheBuilder, ConcurrentCacheExt, OwnedKeyEntrySelector, RefKeyEntrySelector,
@@ -5329,7 +5339,7 @@
 /// ### `Immediate` mode
 ///
 /// Tne `Immediate` mode is the default delivery mode for the `sync` caches. Use this
-/// mode when it is import to keep the order of write operations and eviction
+/// mode when it is important to keep the order of write operations and eviction
 /// notifications.
 ///
 /// This mode has the following characteristics:
@@ -6802,6 +6812,10 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_expiration_clock(<span class="kw-2">&amp;</span><span class="self">self</span>, clock: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::common::time::Clock&gt;) {
         <span class="self">self</span>.base.set_expiration_clock(clock);
     }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key_locks_map_is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.base.key_locks_map_is_empty()
+    }
 }
 
 <span class="comment">// To see the debug prints, run test as `cargo test -- --nocapture`
@@ -6934,6 +6948,7 @@
             <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
 
             verify_notification_vec(<span class="kw-2">&amp;</span>cache, actual, <span class="kw-2">&amp;</span>expected, delivery_mode);
+            <span class="macro">assert_with_mode!</span>(cache.key_locks_map_is_empty(), delivery_mode);
         }
     }
 
@@ -7064,6 +7079,7 @@
             <span class="macro">assert_eq_with_mode!</span>(cache.weighted_size(), <span class="number">25</span>, delivery_mode);
 
             verify_notification_vec(<span class="kw-2">&amp;</span>cache, actual, <span class="kw-2">&amp;</span>expected, delivery_mode);
+            <span class="macro">assert_with_mode!</span>(cache.key_locks_map_is_empty(), delivery_mode);
         }
     }
 
@@ -7956,7 +7972,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[thread1, thread2, thread3, thread4, thread5] {
+        <span class="kw">for </span>t <span class="kw">in </span>[thread1, thread2, thread3, thread4, thread5] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
         }
     }
@@ -8039,7 +8055,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[thread1, thread2, thread3, thread4, thread5] {
+        <span class="kw">for </span>t <span class="kw">in </span>[thread1, thread2, thread3, thread4, thread5] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
         }
     }
@@ -8174,7 +8190,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[
+        <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7,
         ] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
@@ -8313,7 +8329,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[
+        <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7,
         ] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
@@ -8452,7 +8468,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[
+        <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7, thread8,
         ] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
@@ -8591,7 +8607,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[
+        <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7, thread8,
         ] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
@@ -8720,7 +8736,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[
+        <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7, thread8,
         ] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
@@ -8849,7 +8865,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[
+        <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7, thread8,
         ] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
@@ -9087,6 +9103,8 @@
             <span class="macro">assert_eq!</span>(a[<span class="number">0</span>], (Arc::new(<span class="string">&quot;alice&quot;</span>), <span class="string">&quot;a3&quot;</span>, RemovalCause::Expired));
             a.clear();
         }
+
+        <span class="macro">assert!</span>(cache.key_locks_map_is_empty());
     }
 
     <span class="comment">// This test ensures the key-level lock for the immediate notification
@@ -9207,7 +9225,7 @@
             })
         };
 
-        <span class="kw">for </span>t <span class="kw">in </span><span class="macro">vec!</span>[thread1, thread2, thread3] {
+        <span class="kw">for </span>t <span class="kw">in </span>[thread1, thread2, thread3] {
             t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
         }
 
@@ -9217,6 +9235,8 @@
         <span class="kw">for </span>(i, (actual, expected)) <span class="kw">in </span>actual.iter().zip(<span class="kw-2">&amp;</span>expected).enumerate() {
             <span class="macro">assert_eq!</span>(actual, expected, <span class="string">&quot;expected[{}]&quot;</span>, i);
         }
+
+        <span class="macro">assert!</span>(cache.key_locks_map_is_empty());
     }
 
     <span class="comment">// NOTE: To enable the panic logging, run the following command:
