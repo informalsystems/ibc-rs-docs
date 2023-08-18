@@ -1,6 +1,5 @@
 (function() {var implementors = {
 "digest":[],
-"ed25519_dalek":[],
 "ripemd":[],
 "sha1":[],
 "sha2":[],

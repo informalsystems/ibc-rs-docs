@@ -142,21 +142,11 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::any::Any;
 
 <span class="kw">use </span>bip39::{Language, Mnemonic, Seed};
-<span class="kw">use </span>ed25519_dalek::{Keypair, PublicKey, SecretKey};
-<span class="kw">use </span>ed25519_dalek_bip32::{ChildIndex, DerivationPath, ExtendedSecretKey};
+<span class="kw">use </span>ed25519_dalek::{SigningKey, VerifyingKey};
+<span class="kw">use </span>ed25519_dalek_bip32::{ChildIndex, DerivationPath, ExtendedSigningKey};
 <span class="kw">use </span>hdpath::StandardHDPath;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>signature::Signer;
@@ -167,13 +157,13 @@
 <span class="kw">pub fn </span>private_key_from_mnemonic(
     mnemonic_words: <span class="kw-2">&amp;</span>str,
     hd_path: <span class="kw-2">&amp;</span>StandardHDPath,
-) -&gt; <span class="prelude-ty">Result</span>&lt;ExtendedSecretKey, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;ExtendedSigningKey, Error&gt; {
     <span class="kw">let </span>mnemonic = Mnemonic::from_phrase(mnemonic_words, Language::English)
         .map_err(Error::invalid_mnemonic)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>seed = Seed::new(<span class="kw-2">&amp;</span>mnemonic, <span class="string">&quot;&quot;</span>);
 
-    <span class="kw">let </span>base_key = ExtendedSecretKey::from_seed(seed.as_bytes())
+    <span class="kw">let </span>base_key = ExtendedSigningKey::from_seed(seed.as_bytes())
         .map_err(|err| Error::bip32_key_generation_failed(Ed25519KeyPair::KEY_TYPE, err.into()))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>private_key = base_key
@@ -213,27 +203,10 @@
     }
 }
 
-<span class="attr">#[derive(Debug, Deserialize, Serialize)]
+<span class="attr">#[derive(Clone, Debug, Deserialize, Serialize)]
 </span><span class="kw">pub struct </span>Ed25519KeyPair {
-    keypair: Keypair,
+    signing_key: SigningKey,
     address_type: Ed25519AddressType,
-}
-
-<span class="kw">impl </span>Clone <span class="kw">for </span>Ed25519KeyPair {
-    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="self">Self </span>{
-            keypair: Keypair { secret, public },
-            address_type,
-        } = <span class="self">self</span>;
-        <span class="self">Self </span>{
-            keypair: Keypair {
-                <span class="comment">// Needed as `SecretKey` does not implement `Clone`
-                </span>secret: SecretKey::from_bytes(secret.as_bytes()).unwrap(),
-                public: <span class="kw-2">*</span>public,
-            },
-            address_type: <span class="kw-2">*</span>address_type,
-        }
-    }
 }
 
 <span class="kw">impl </span>Ed25519KeyPair {
@@ -242,15 +215,11 @@
         hd_path: <span class="kw-2">&amp;</span>StandardHDPath,
         address_type: Ed25519AddressType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
-        <span class="kw">let </span>private_key = private_key_from_mnemonic(mnemonic, hd_path)<span class="question-mark">?</span>.secret_key;
-        <span class="kw">let </span>public_key = (<span class="kw-2">&amp;</span>private_key).into();
-        <span class="kw">let </span>keypair = Keypair {
-            secret: private_key,
-            public: public_key,
-        };
+        <span class="kw">let </span>extended_signing_key = private_key_from_mnemonic(mnemonic, hd_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>signing_key = extended_signing_key.signing_key;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            keypair,
+            signing_key,
             address_type,
         })
     }
@@ -260,25 +229,34 @@
     <span class="kw">const </span>KEY_TYPE: KeyType = KeyType::Ed25519;
 
     <span class="kw">fn </span>from_key_file(key_file: KeyFile, hd_path: <span class="kw-2">&amp;</span>StandardHDPath) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">use </span>ed25519_dalek::PUBLIC_KEY_LENGTH;
+
         <span class="comment">// TODO: Derive this from something in `key_file`
         </span><span class="kw">let </span>address_type = Ed25519AddressType::Solana;
         <span class="kw">let </span>key_pair = <span class="self">Self</span>::from_mnemonic_internal(<span class="kw-2">&amp;</span>key_file.mnemonic, hd_path, address_type)<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>public_key_vec = <span class="kw-2">&amp;</span>bs58::decode(key_file.pubkey)
+            .into_vec()
+            .map_err(Error::bs58_decode)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>public_key_bytes: <span class="kw-2">&amp;</span>[u8; PUBLIC_KEY_LENGTH] =
+            public_key_vec.as_slice().try_into().map_err(|<span class="kw">_</span>| {
+                Error::invalid_public_key_length(public_key_vec.len(), PUBLIC_KEY_LENGTH)
+            })<span class="question-mark">?</span>;
+
         <span class="kw">let </span>public_key_from_file = <span class="kw">match </span>address_type {
-            Ed25519AddressType::Solana =&gt; PublicKey::from_bytes(
-                <span class="kw-2">&amp;</span>bs58::decode(key_file.pubkey)
-                    .into_vec()
-                    .map_err(Error::bs58_decode)<span class="question-mark">?</span>,
-            )
-            .map_err(Error::invalid_public_key)<span class="question-mark">?</span>,
+            Ed25519AddressType::Solana =&gt; {
+                VerifyingKey::from_bytes(public_key_bytes).map_err(Error::invalid_public_key)<span class="question-mark">?
+            </span>}
         };
 
-        <span class="kw">if </span>key_pair.keypair.public != public_key_from_file {
+        <span class="kw">if </span>key_pair.signing_key.verifying_key() != public_key_from_file {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::public_key_mismatch(
-                key_pair.keypair.public.as_bytes().to_vec(),
+                key_pair.signing_key.verifying_key().as_bytes().to_vec(),
                 public_key_from_file.as_bytes().to_vec(),
             ));
         }
+
         <span class="prelude-val">Ok</span>(key_pair)
     }
 
@@ -294,12 +272,14 @@
     <span class="comment">// Solana address: base58(pubkey)
     </span><span class="kw">fn </span>account(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="kw">match </span><span class="self">self</span>.address_type {
-            Ed25519AddressType::Solana =&gt; bs58::encode(<span class="kw-2">&amp;</span><span class="self">self</span>.keypair.public).into_string(),
+            Ed25519AddressType::Solana =&gt; {
+                bs58::encode(<span class="kw-2">&amp;</span><span class="self">self</span>.signing_key.verifying_key()).into_string()
+            }
         }
     }
 
     <span class="kw">fn </span>sign(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Error&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.keypair.sign(message).as_ref().to_vec())
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.signing_key.sign(message).to_vec())
     }
 
     <span class="kw">fn </span>as_any(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Any {

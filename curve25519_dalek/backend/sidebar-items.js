@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["pippenger_optional_multiscalar_mul","straus_multiscalar_mul","straus_optional_multiscalar_mul","variable_base_mul","vartime_double_base_mul"],"mod":["serial","vector"]};

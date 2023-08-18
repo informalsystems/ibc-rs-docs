@@ -1,0 +1,529 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An AVX512-IFMA implementation of the vectorized point operation strategy."><title>curve25519_dalek::backend::vector::ifma - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="curve25519_dalek" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt="logo"></a><h2 class="location"><a href="#">Module ifma</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#modules">Modules</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../../../index.html">curve25519_dalek</a>::<wbr><a href="../../index.html">backend</a>::<wbr><a href="../index.html">vector</a>::<wbr><a class="mod" href="#">ifma</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../../../../src/curve25519_dalek/backend/vector/ifma/mod.rs.html#10-20">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><span class="item-info"><div class="stab portability">Available on <strong><code>curve25519_dalek_backend="simd"</code> and <code>nightly</code></strong> only.</div></span><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An AVX512-IFMA implementation of the vectorized point operation
+strategy.</p>
+<h2 id="ifma-instructions"><a href="#ifma-instructions">IFMA instructions</a></h2>
+<p>AVX512-IFMA is an extension to AVX-512 consisting of two instructions:</p>
+<ul>
+<li><code>vpmadd52luq</code>: packed multiply of unsigned 52-bit integers and add
+the low 52 product bits to 64-bit accumulators;</li>
+<li><code>vpmadd52huq</code>: packed multiply of unsigned 52-bit integers and add
+the high 52 product bits to 64-bit accumulators;</li>
+</ul>
+<p>These operate on 64-bit lanes of their source vectors, taking the low
+52 bits of each lane of each source vector, computing the 104-bit
+products of each pair, and then adding either the high or low 52 bits
+of the 104-bit products to the 64-bit lanes of the destination vector.
+The multiplication is performed internally by reusing circuitry for
+floating-point arithmetic.  Although these instructions are part of
+AVX512, the AVX512VL (vector length) extension (present whenever IFMA
+is) allows using them with 512, 256, or 128-bit operands.</p>
+<p>This provides a major advantage to vectorized integer operations:
+previously, vector operations could only use a \(32 \times 32
+\rightarrow 64\)-bit multiplier, while serial code could use a
+\(64\times 64 \rightarrow 128\)-bit multiplier.</p>
+<h3 id="ifma-for-big-integer-multiplications"><a href="#ifma-for-big-integer-multiplications">IFMA for big-integer multiplications</a></h3>
+<p>A detailed example of the intended use of the IFMA instructions can be
+found in a 2016 paper by Gueron and Krasnov, <a href="https://ieeexplore.ieee.org/document/7563269"><em>Accelerating Big
+Integer Arithmetic Using Intel IFMA Extensions</em></a>.
+The basic idea is that multiplication of large integers (such as 1024,
+2048, or more bits) can be performed as follows.</p>
+<p>First, convert a “packed” 64-bit representation
+\[
+\begin{aligned}
+x &amp;= x’_0 + x’_1 2^{64} + x’_2 2^{128} + \cdots \\
+y &amp;= y’_0 + y’_1 2^{64} + y’_2 2^{128} + \cdots 
+\end{aligned}
+\]
+into a “redundant” 52-bit representation
+\[
+\begin{aligned}
+x &amp;= x_0 + x_1 2^{52} + x_2 2^{104} + \cdots \\
+y &amp;= y_0 + y_1 2^{52} + y_2 2^{104} + \cdots 
+\end{aligned}
+\]
+with each \(x_i, y_j\) in a 64-bit lane.</p>
+<p>Writing the product as \(z = z_0 + z_1 2^{52} + z_2 2^{104} + \cdots\),
+the “schoolbook” multiplication strategy gives
+\[
+\begin{aligned}
+&amp;z_0   &amp;&amp;=&amp; x_0      &amp;   y_0    &amp;           &amp;          &amp;           &amp;          &amp;           &amp;          &amp;        &amp;       \\
+&amp;z_1   &amp;&amp;=&amp; x_1      &amp;   y_0    &amp;+ x_0      &amp;   y_1    &amp;           &amp;          &amp;           &amp;          &amp;        &amp;       \\
+&amp;z_2   &amp;&amp;=&amp; x_2      &amp;   y_0    &amp;+ x_1      &amp;   y_1    &amp;+ x_0      &amp;   y_2    &amp;           &amp;          &amp;        &amp;       \\
+&amp;z_3   &amp;&amp;=&amp; x_3      &amp;   y_0    &amp;+ x_2      &amp;   y_1    &amp;+ x_1      &amp;   y_2    &amp;+ x_0      &amp;   y_3    &amp;        &amp;       \\
+&amp;z_4   &amp;&amp;=&amp; \vdots\;&amp;\;\vdots &amp;+ x_3      &amp;   y_1    &amp;+ x_2      &amp;   y_2    &amp;+ x_1      &amp;   y_3    &amp;+ \cdots&amp;       \\
+&amp;z_5   &amp;&amp;=&amp;          &amp;          &amp;  \vdots\;&amp;\;\vdots &amp;+ x_3      &amp;   y_2    &amp;+ x_2      &amp;   y_3    &amp;+ \cdots&amp;       \\
+&amp;z_6   &amp;&amp;=&amp;          &amp;          &amp;           &amp;          &amp;  \vdots\;&amp;\;\vdots &amp;+ x_3      &amp;   y_3    &amp;+ \cdots&amp;       \\
+&amp;z_7   &amp;&amp;=&amp;          &amp;          &amp;           &amp;          &amp;           &amp;          &amp;  \vdots\;&amp;\;\vdots &amp;+ \cdots&amp;       \\
+&amp;\vdots&amp;&amp;=&amp;          &amp;          &amp;           &amp;          &amp;           &amp;          &amp;           &amp;          &amp;  \ddots&amp;       \\
+\end{aligned}
+\]
+Notice that the product coefficient \(z_k\), representing the value
+\(z_k 2^{52k}\), is the sum of all product terms
+\(
+(x_i 2^{52 i}) (y_j 2^{52 j})
+\)
+with \(k = i + j\).<br />
+Write the IFMA operators \(\mathrm{lo}(a,b)\), denoting the low
+\(52\) bits of \(ab\), and
+\(\mathrm{hi}(a,b)\), denoting the high \(52\) bits of 
+\(ab\).<br />
+Now we can rewrite the product terms as
+\[
+\begin{aligned}
+(x_i 2^{52 i}) (y_j 2^{52 j})
+&amp;=
+2^{52 (i+j)}(
+\mathrm{lo}(x_i, y_j) +
+\mathrm{hi}(x_i, y_j) 2^{52}
+)
+\\
+&amp;=
+\mathrm{lo}(x_i, y_j) 2^{52 (i+j)} + 
+\mathrm{hi}(x_i, y_j) 2^{52 (i+j+1)}.
+\end{aligned}
+\]
+This means that the low half of \(x_i y_j\) can be accumulated onto
+the product limb \(z_{i+j}\) and the high half can be directly
+accumulated onto the next-higher product limb \(z_{i+j+1}\) with no
+additional operations.  This allows rewriting the schoolbook
+multiplication into the form
+\[
+\begin{aligned}
+&amp;z_0   &amp;&amp;=&amp; \mathrm{lo}(x_0,&amp;y_0)      &amp;                 &amp;          &amp;                 &amp;          &amp;                 &amp;          &amp;                 &amp;          &amp;        &amp;     \\
+&amp;z_1   &amp;&amp;=&amp; \mathrm{lo}(x_1,&amp;y_0)      &amp;+\mathrm{hi}(x_0,&amp;y_0)      &amp;+\mathrm{lo}(x_0,&amp;y_1)      &amp;                 &amp;          &amp;                 &amp;          &amp;        &amp;     \\
+&amp;z_2   &amp;&amp;=&amp; \mathrm{lo}(x_2,&amp;y_0)      &amp;+\mathrm{hi}(x_1,&amp;y_0)      &amp;+\mathrm{lo}(x_1,&amp;y_1)      &amp;+\mathrm{hi}(x_0,&amp;y_1)      &amp;+\mathrm{lo}(x_0,&amp;y_2)      &amp;        &amp;     \\
+&amp;z_3   &amp;&amp;=&amp; \mathrm{lo}(x_3,&amp;y_0)      &amp;+\mathrm{hi}(x_2,&amp;y_0)      &amp;+\mathrm{lo}(x_2,&amp;y_1)      &amp;+\mathrm{hi}(x_1,&amp;y_1)      &amp;+\mathrm{lo}(x_1,&amp;y_2)      &amp;+ \cdots&amp;     \\
+&amp;z_4   &amp;&amp;=&amp;        \vdots\;&amp;\;\vdots &amp;+\mathrm{hi}(x_3,&amp;y_0)      &amp;+\mathrm{lo}(x_3,&amp;y_1)      &amp;+\mathrm{hi}(x_2,&amp;y_1)      &amp;+\mathrm{lo}(x_2,&amp;y_2)      &amp;+ \cdots&amp;     \\
+&amp;z_5   &amp;&amp;=&amp;                 &amp;          &amp;        \vdots\;&amp;\;\vdots &amp;        \vdots\;&amp;\;\vdots &amp;+\mathrm{hi}(x_3,&amp;y_1)      &amp;+\mathrm{lo}(x_3,&amp;y_2)      &amp;+ \cdots&amp;     \\
+&amp;z_6   &amp;&amp;=&amp;                 &amp;          &amp;                 &amp;          &amp;                 &amp;          &amp;        \vdots\;&amp;\;\vdots &amp;        \vdots\;&amp;\;\vdots &amp;+ \cdots&amp;     \\
+&amp;\vdots&amp;&amp;=&amp;                 &amp;          &amp;                 &amp;          &amp;                 &amp;          &amp;                 &amp;          &amp;                 &amp;          &amp;  \ddots&amp;     \\
+\end{aligned}
+\]
+Gueron and Krasnov implement multiplication by constructing vectors
+out of the columns of this diagram, so that the source operands for
+the IFMA instructions are of the form \((x_0, x_1, x_2, \ldots)\) 
+and \((y_i, y_i, y_i, \ldots)\). 
+After performing the multiplication,
+the product terms \(z_i\) are then repacked into a 64-bit representation.</p>
+<h3 id="an-alternative-strategy"><a href="#an-alternative-strategy">An alternative strategy</a></h3>
+<p>The strategy described above is aimed at big-integer multiplications,
+such as 1024, 2048, or 4096 bits, which would be used for applications
+like RSA.  However, elliptic curve cryptography uses much smaller field
+sizes, such as 256 or 384 bits, so a different strategy is needed.</p>
+<p>The parallel Edwards formulas provide parallelism at the level of the
+formulas for curve operations.  This means that instead of scanning
+through the terms of the source operands and parallelizing <em>within</em> a
+field element (as described above), we can arrange the computation in
+product-scanning form and parallelize <em>across</em> field elements (as
+described below).</p>
+<p>The parallel Edwards
+formulas provide 4-way parallelism, so they can be implemented using
+256-bit vectors using a single 64-bit lane for each element, or using
+512-bit vectors using two 64-bit lanes.
+The only available CPU supporting IFMA (the
+i3-8121U) executes 512-bit IFMA instructions at half rate compared to
+256-bit instructions, so for now there’s no throughput advantage to
+using 512-bit IFMA instructions, and this implementation uses 256-bit
+vectors.</p>
+<p>To extend this to 512-bit vectors, it’s only only necessary to achieve
+2-way parallelism, and it’s possible (with a small amount of overhead)
+to create a hybrid strategy that operates entirely within 128-bit
+lanes.  This means that cross-lane operations can use the faster
+<code>vpshufd</code> (1c latency) instead of a general shuffle instruction (3c
+latency).</p>
+<h2 id="choice-of-radix"><a href="#choice-of-radix">Choice of radix</a></h2>
+<p>The inputs to IFMA instructions are 52 bits wide, so the radix \(r\)
+used to represent a multiprecision integer must be \( r \leq 52 \).
+The obvious choice is the “native” radix \(r = 52\).</p>
+<p>As described above, this choice
+has the advantage that for \(x_i, y_j \in [0,2^{52})\), the product term
+\[
+\begin{aligned}
+(x_i 2^{52 i}) (y_j 2^{52 j})
+&amp;=
+2^{52 (i+j)}(
+\mathrm{lo}(x_i, y_j) +
+\mathrm{hi}(x_i, y_j) 2^{52}
+)
+\\
+&amp;=
+\mathrm{lo}(x_i, y_j) 2^{52 (i+j)} + 
+\mathrm{hi}(x_i, y_j) 2^{52 (i+j+1)},
+\end{aligned}
+\]
+so that the low and high halves of the product can be directly accumulated 
+onto the product limbs.
+In contrast, when using a smaller radix \(r = 52 - k\), 
+the product term has the form
+\[
+\begin{aligned}
+(x_i 2^{r i}) (y_j 2^{r j})
+&amp;=
+2^{r (i+j)}(
+\mathrm{lo}(x_i, y_j) +
+\mathrm{hi}(x_i, y_j) 2^{52}
+)
+\\
+&amp;=
+\mathrm{lo}(x_i, y_j) 2^{r (i+j)} + 
+(
+\mathrm{hi}(x_i, y_j) 2^k
+)
+2^{r (i+j+1)}.
+\end{aligned}
+\]
+What’s happening is that the product \(x_i y_j\) of size \(2r\)
+bits is split not at \(r\) but at \(52\), so \(k\) product bits
+are placed into the low half instead of the high half.  This means
+that the high half of the product cannot be directly accumulated onto
+\(z_{i+j+1}\), but must first be multiplied by \(2^k\) (i.e., left
+shifted by \(k\)).  In addition, the low half of the product is
+\(52\) bits large instead of \(r\) bits.</p>
+<h3 id="handling-offset-product-terms"><a href="#handling-offset-product-terms">Handling offset product terms</a></h3>
+<p><a href="https://eprint.iacr.org/2018/335">Drucker and Gueron</a> analyze the choice of radix
+in the context of big-integer squaring, outlining three ways to handle
+the offset product terms, before concluding that all of them are
+suboptimal:</p>
+<ol>
+<li>Shift the results after accumulation;</li>
+<li>Shift the input operands before multiplication;</li>
+<li>Split the MAC operation, accumulating into a zeroed register,
+shifting the result, and then adding.</li>
+</ol>
+<p>The first option is rejected because it could double-shift some
+previously accumulated terms, the second doesn’t work because the
+inputs could become larger than \(52\) bits, and the third requires
+additional instructions to handle the shifting and adding.</p>
+<p>Based on an analysis of total number of instructions, they suggest an
+addition to the instruction set, which they call <code>FMSA</code> (fused
+multiply-shift-add). This would shift the result according to an 8-bit
+immediate value before accumulating it into the destination register.</p>
+<p>However, this change to the instruction set doesn’t seem to be
+necessary.  Instead, the product terms can be grouped according to
+their coefficients, accumulated together, then shifted once before
+adding them to the final sum.  This uses an extra register, shift, and
+add, but only once per product term (accumulation target), not once
+per source term (as in the Drucker-Gueron paper).</p>
+<p>Moreover, because IFMA instructions execute only on two ports
+(presumably 0 and 1), while adds and shifts can execute on three ports
+(0, 1, and 5), the adds and shifts can execute independently of the
+IFMA operations, as long as there is not too much pressure on port 5.
+This means that, although the total number of instructions increases,
+the shifts and adds do not necessarily increase the execution time, as
+long as throughput is limited by IFMA operations.</p>
+<p>Finally, because IFMA instructions have 4 cycle latency and 0.5/1
+cycle throughput (for 256/512 bit vectors), maximizing IFMA throughput
+requires either 8 (for 256) or 4 (for 512) independent operations.  So
+accumulating groups of terms independently before adding them at the
+end may be necessary anyways, in order to prevent long chains of
+dependent instructions.</p>
+<h3 id="advantages-of-a-smaller-radix"><a href="#advantages-of-a-smaller-radix">Advantages of a smaller radix</a></h3>
+<p>Using a smaller radix has other advantages.  Although radix \(52\)
+is an unsaturated representation from the point of view of the
+\(64\)-bit accumulators (because up to 4096 product terms can be
+accumulated without carries), it’s a saturated representation from the
+point of view of the multiplier (since \(52\)-bit values are the
+maximum input size).</p>
+<p>Because the inputs to a multiplication must have all of their limbs
+bounded by \(2^{52}\), limbs in excess of \(2^{52}\) must be
+reduced before they can be used as an input.  The
+<a href="https://ieeexplore.ieee.org/document/7563269">Gueron-Krasnov</a> paper suggests normalizing
+values using a standard, sequential carry chain: for each limb, add
+the carryin from reducing the previous limb, compute the carryout and
+reduce the current limb, then move to the next limb.</p>
+<p>However, when using a smaller radix, such as \(51\), each limb can
+store a carry bit and still be used as the input to a multiplication.
+This means that the inputs do not need to be normalized, and instead
+of using a sequential carry chain, we can compute all carryouts in
+parallel, reduce all limbs in parallel, and then add the carryins in
+parallel (possibly growing the limb values by one bit).</p>
+<p>Because the output of this partial reduction is an acceptable
+multiplication input, we can “close the loop” using partial reductions
+and never have to normalize to a canonical representation through the
+entire computation, in contrast to the Gueron-Krasnov approach, which
+converts back to a packed representation after every operation.  (This
+idea seems to trace back to at least as early as <a href="https://pdfs.semanticscholar.org/0e6a/3e8f30b63b556679f5dff2cbfdfe9523f4fa.pdf">this 1999
+paper</a>).</p>
+<p>Using \(r = 51\) is enough to keep a carry bit in each limb and
+avoid normalizations.  What about an even smaller radix?  One reason
+to choose a smaller radix would be to align the limb boundaries with
+an inline reduction (for instance, choosing \(r = 43\) for the
+Mersenne field \(p = 2^{127} - 1\)), but for \(p = 2^{255 - 19}\),
+\(r = 51 = 255/5\) is the natural choice.</p>
+<h2 id="multiplication"><a href="#multiplication">Multiplication</a></h2>
+<p>The inputs to a multiplication are two field elements
+\[
+\begin{aligned}
+x &amp;= x_0 + x_1 2^{51} + x_2 2^{102} + x_3 2^{153} + x_4 2^{204} \\
+y &amp;= y_0 + y_1 2^{51} + y_2 2^{102} + y_3 2^{153} + y_4 2^{204},
+\end{aligned}
+\]
+with limbs in range \([0,2^{52})\).</p>
+<p>Writing the product terms as
+\[
+\begin{aligned}
+z &amp;= z_0 + z_1 2^{51} + z_2 2^{102} + z_3 2^{153} + z_4 2^{204} \\
+&amp;+ z_5 2^{255} + z_6 2^{306} + z_7 2^{357} + z_8 2^{408} + z_9 2^{459},
+\end{aligned}
+\]
+a schoolbook multiplication in product scanning form takes the form
+\[
+\begin{aligned}
+z_0 &amp;= x_0 y_0 \\
+z_1 &amp;= x_1 y_0 + x_0 y_1 \\
+z_2 &amp;= x_2 y_0 + x_1 y_1 + x_0 y_2 \\
+z_3 &amp;= x_3 y_0 + x_2 y_1 + x_1 y_2 + x_0 y_3 \\
+z_4 &amp;= x_4 y_0 + x_3 y_1 + x_2 y_2 + x_1 y_3 + x_0 y_4 \\
+z_5 &amp;=           x_4 y_1 + x_3 y_2 + x_2 y_3 + x_1 y_4 \\
+z_6 &amp;=                     x_4 y_2 + x_3 y_3 + x_2 y_4 \\
+z_7 &amp;=                               x_4 y_3 + x_3 y_4 \\
+z_8 &amp;=                                         x_4 y_4 \\
+z_9 &amp;= 0 \\
+\end{aligned}
+\]
+Each term \(x_i y_j\) can be written in terms of IFMA operations as
+\[
+x_i y_j = \mathrm{lo}(x_i,y_j) + 2\mathrm{hi}(x_i,y_j)2^{51}.
+\]
+Substituting this equation into the schoolbook multiplication, then
+moving terms to eliminate the \(2^{51}\) factors gives
+\[
+\begin{aligned}
+z_0 &amp;= \mathrm{lo}(x_0, y_0) \\
+&amp;+ \qquad 0 \\
+z_1 &amp;= \mathrm{lo}(x_1, y_0) + \mathrm{lo}(x_0, y_1) \\
+&amp;+ \qquad 2( \mathrm{hi}(x_0, y_0) )\\
+z_2 &amp;= \mathrm{lo}(x_2, y_0) + \mathrm{lo}(x_1, y_1) + \mathrm{lo}(x_0, y_2) \\
+&amp;+ \qquad 2( \mathrm{hi}(x_1, y_0) + \mathrm{hi}(x_0, y_1) )\\
+z_3 &amp;= \mathrm{lo}(x_3, y_0) + \mathrm{lo}(x_2, y_1) + \mathrm{lo}(x_1, y_2) + \mathrm{lo}(x_0, y_3) \\
+&amp;+ \qquad 2( \mathrm{hi}(x_2, y_0) + \mathrm{hi}(x_1, y_1) + \mathrm{hi}(x_0, y_2) )\\
+z_4 &amp;= \mathrm{lo}(x_4, y_0) + \mathrm{lo}(x_3, y_1) + \mathrm{lo}(x_2, y_2) + \mathrm{lo}(x_1, y_3) + \mathrm{lo}(x_0, y_4) \\
+&amp;+ \qquad 2( \mathrm{hi}(x_3, y_0) + \mathrm{hi}(x_2, y_1) + \mathrm{hi}(x_1, y_2) + \mathrm{hi}(x_0, y_3) )\\
+z_5 &amp;=                         \mathrm{lo}(x_4, y_1) + \mathrm{lo}(x_3, y_2) + \mathrm{lo}(x_2, y_3) + \mathrm{lo}(x_1, y_4) \\
+&amp;+ \qquad 2( \mathrm{hi}(x_4, y_0) + \mathrm{hi}(x_3, y_1) + \mathrm{hi}(x_2, y_2) + \mathrm{hi}(x_1, y_3) + \mathrm{hi}(x_0, y_4) )\\
+z_6 &amp;=                                                 \mathrm{lo}(x_4, y_2) + \mathrm{lo}(x_3, y_3) + \mathrm{lo}(x_2, y_4) \\
+&amp;+ \qquad 2(                         \mathrm{hi}(x_4, y_1) + \mathrm{hi}(x_3, y_2) + \mathrm{hi}(x_2, y_3) + \mathrm{hi}(x_1, y_4) )\\
+z_7 &amp;=                                                                         \mathrm{lo}(x_4, y_3) + \mathrm{lo}(x_3, y_4) \\
+&amp;+ \qquad 2(                                                 \mathrm{hi}(x_4, y_2) + \mathrm{hi}(x_3, y_3) + \mathrm{hi}(x_2, y_4) )\\
+z_8 &amp;=                                                                                                 \mathrm{lo}(x_4, y_4) \\
+&amp;+ \qquad 2(                                                                         \mathrm{hi}(x_4, y_3) + \mathrm{hi}(x_3, y_4) )\\
+z_9 &amp;= 0 \\
+&amp;+ \qquad 2(                                                                                                 \mathrm{hi}(x_4, y_4) )\\
+\end{aligned}
+\]
+As noted above, our strategy will be to multiply and accumulate the
+terms with coefficient \(2\) separately from those with coefficient
+\(1\), before combining them at the end.  This can alternately be
+thought of as accumulating product terms into a <em>doubly-redundant</em>
+representation, with two limbs for each digit, before collapsing 
+the doubly-redundant representation by shifts and adds.</p>
+<p>This computation requires 25 <code>vpmadd52luq</code> and 25 <code>vpmadd52huq</code>
+operations.  For 256-bit vectors, IFMA operations execute on an
+i3-8121U with latency 4 cycles, throughput 0.5 cycles, so executing 50
+instructions requires 25 cycles’ worth of throughput.  Accumulating
+terms with coefficient \(1\) and \(2\) seperately means that the
+longest dependency chain has length 5, so the critical path has length
+20 cycles and the bottleneck is throughput.</p>
+<h2 id="reduction-modulo-p"><a href="#reduction-modulo-p">Reduction modulo \(p\)</a></h2>
+<p>The next question is how to handle the reduction modulo \(p\).
+Because \(p = 2^{255} - 19\), \(2^{255} = 19 \pmod p\), so we can
+alternately write
+\[
+\begin{aligned}
+z &amp;= z_0 + z_1 2^{51} + z_2 2^{102} + z_3 2^{153} + z_4 2^{204} \\
+&amp;+ z_5 2^{255} + z_6 2^{306} + z_7 2^{357} + z_8 2^{408} + z_9 2^{459}
+\end{aligned}
+\]
+as
+\[
+\begin{aligned}
+z &amp;= (z_0 + 19z_5) + (z_1 + 19z_6) 2^{51} + (z_2 + 19z_7) 2^{102} + (z_3 + 19z_8) 2^{153} + (z_4 + 19z_9) 2^{204}.
+\end{aligned}
+\]
+When using a \(64 \times 64 \rightarrow 128\)-bit multiplier, this
+can be handled (as in <a href="https://ed25519.cr.yp.to/ed25519-20110926.pdf">Ed25519</a>) by premultiplying
+source terms by \(19\).  Since \(\lg(19) &lt; 4.25\), this increases
+their size by less than \(4.25\) bits, and the rest of the
+multiplication can be shown to work out.</p>
+<p>Here, we have at most \(1\) bit of headroom.  In order to allow
+premultiplication, we would need to use radix \(2^{47}\), which
+would require six limbs instead of five.  Instead, we compute the high
+terms \(z_5, \ldots, z_9\), each using two chains of IFMA
+operations, then multiply by \(19\) and combine with the lower terms
+\(z_0, \ldots, z_4\).  There are two ways to perform the
+multiplication by \(19\): using more IFMA operations, or using the
+<code>vpmullq</code> instruction, which computes the low \(64\) bits of a \(64
+\times 64\)-bit product.  However, <code>vpmullq</code> has 15c/1.5c
+latency/throughput, in contrast to the 4c/0.5c latency/throughput of
+IFMA operations, so it seems like a worse choice.</p>
+<p>The high terms \(z_5, \ldots, z_9\) are sums of \(52\)-bit terms,
+so they are larger than \(52\) bits.  Write these terms in radix \(52\) as
+\[
+z_{5+i} = z_{5+i}’ + z_{5+i}‘’ 2^{52}, \qquad z_{5+i}’ &lt; 2^{52}.
+\]
+Then the contribution of \(z_{5+i}\), taken modulo \(p\), is
+\[
+\begin{aligned}
+z_{5+i} 2^{255} 2^{51 i}
+&amp;= 
+19 (z_{5+i}’ + z_{5+i}‘’ 2^{52}) 2^{51 i} 
+\\
+&amp;= 
+19 z_{5+i}’ 2^{51 i} + 2 \cdot 19 z_{5+i}‘’ 2^{51 (i+1)}
+\\
+\end{aligned}
+\]
+The products \(19 z_{5+i}‘, 19 z_{5+i}’‘\) can be written in terms of IFMA operations as
+\[
+\begin{aligned}
+19 z_{5+i}’ &amp;= \mathrm{lo}(19, z_{5+i}‘) + 2 \mathrm{hi}(19, z_{5+i}’) 2^{51}, \\
+19 z_{5+i}‘’ &amp;= \mathrm{lo}(19, z_{5+i}‘’) + 2 \mathrm{hi}(19, z_{5+i}‘’) 2^{51}. \\
+\end{aligned}
+\]
+Because \(z_{5+i} &lt; 2^{64}\), \(z_{5+i}‘’ &lt; 2^{12} \), so \(19
+z_{5+i}‘’ &lt; 2^{17} &lt; 2^{52} \) and \(\mathrm{hi}(19, z_{5+i}‘’) = 0\).
+Because IFMA operations ignore the high bits of their source
+operands, we do not need to compute \(z_{5+i}‘\) explicitly:
+the high bits will be ignored.
+Combining these observations, we can write
+\[
+\begin{aligned}
+z_{5+i} 2^{255} 2^{51 i}
+&amp;= 
+19 z_{5+i}’ 2^{51 i} + 2 \cdot 19 z_{5+i}‘’ 2^{51 (i+1)}
+\\
+&amp;= 
+\mathrm{lo}(19, z_{5+i}) 2^{51 i}
++ 2 \mathrm{hi}(19, z_{5+i}) 2^{51 (i+1)}
++ 2 \mathrm{lo}(19, z_{5+i}/2^{52}) 2^{51 (i+1)}.
+\end{aligned}
+\]</p>
+<p>For \(i = 0,1,2,3\), this allows reducing \(z_{5+i}\) onto
+\(z_{i}, z_{i+1}\), and if the low terms are computed using a
+doubly-redundant representation, no additional shifts are needed to
+handle the \(2\) coefficients.  For \(i = 4\), there’s a
+complication: the contribution becomes
+\[
+\begin{aligned}
+z_{9} 2^{255} 2^{204}
+&amp;= 
+\mathrm{lo}(19, z_{9}) 2^{204}
++ 2 \mathrm{hi}(19, z_{9}) 2^{255}
++ 2 \mathrm{lo}(19, z_{9}/2^{52}) 2^{255}
+\\
+&amp;= 
+\mathrm{lo}(19, z_{9}) 2^{204}
++ 2 \mathrm{hi}(19, z_{9}) 19
++ 2 \mathrm{lo}(19, z_{9}/2^{52}) 19
+\\
+&amp;=
+\mathrm{lo}(19, z_{9}) 2^{204}
++ 2 
+\mathrm{lo}(19, \mathrm{hi}(19, z_{9}) + \mathrm{lo}(19, z_{9}/2^{52})).
+\\
+\end{aligned}
+\]</p>
+<p>It would be possible to cut the number of multiplications from 3 to 2
+by carrying the high part of each \(z_i\) onto \(z_{i+1}\). This
+would eliminate 5 multiplications, clearing 2.5 cycles of port
+pressure, at the cost of 5 additions, adding 1.66 cycles of port
+pressure.  But doing this would create a dependency between terms
+(e.g., \(z_{5}\) must be computed before the reduction of
+\(z_{6}\) can begin), whereas with the approach above, all
+contributions to all terms are computed independently, to maximize ILP
+and flexibility for the processor to schedule instructions.</p>
+<p>This strategy performs 16 IFMA operations, adding two IFMA operations
+to each of the \(2\)-coefficient terms and one to each of the
+\(1\)-coefficient terms.  Considering the multiplication and
+reduction together, we use 66 IFMA operations, requiring 33 cycles’
+throughput, while the longest chain of IFMA operations is in the
+reduction of \(z_5\) onto \(z_1\), of length 7 (so 28 cycles, plus
+2 cycles to combine the two parts of \(z_5\), and the bottleneck is
+again throughput.</p>
+<p>Once this is done, we have computed the product terms
+\[
+z = z_0 + z_1 2^{51} + z_2 2^{102} + z_3 2^{153} + z_4 2^{204},
+\]
+without reducing the \(z_i\) to fit in \(52\) bits.  Because the
+overall flow of operations alternates multiplications and additions or
+subtractions, we would have to perform a reduction after an addition
+but before the next multiplication anyways, so there’s no benefit to
+fully reducing the limbs at the end of a multiplication.  Instead, we
+leave them unreduced, and track the reduction state using the type
+system to ensure that unreduced limbs are not accidentally used as an
+input to a multiplication.</p>
+<h2 id="squaring"><a href="#squaring">Squaring</a></h2>
+<p>Squaring operates similarly to multiplication, but with the
+possibility to combine identical terms.
+As before, we write the input as
+\[
+\begin{aligned}
+x &amp;= x_0 + x_1 2^{51} + x_2 2^{102} + x_3 2^{153} + x_4 2^{204}
+\end{aligned}
+\]
+with limbs in range \([0,2^{52})\).
+Writing the product terms as
+\[
+\begin{aligned}
+z &amp;= z_0 + z_1 2^{51} + z_2 2^{102} + z_3 2^{153} + z_4 2^{204} \\
+&amp;+ z_5 2^{255} + z_6 2^{306} + z_7 2^{357} + z_8 2^{408} + z_9 2^{459},
+\end{aligned}
+\]
+a schoolbook squaring in product scanning form takes the form
+\[
+\begin{aligned}
+z_0 &amp;=   x_0 x_0 \\
+z_1 &amp;= 2 x_1 x_0 \\
+z_2 &amp;= 2 x_2 x_0 +   x_1 x_1 \\
+z_3 &amp;= 2 x_3 x_0 + 2 x_2 x_1 \\
+z_4 &amp;= 2 x_4 x_0 + 2 x_3 x_1 + x_2 x_2 \\
+z_5 &amp;= 2 x_4 x_1 + 2 x_3 x_2 \\
+z_6 &amp;= 2 x_4 x_2 +   x_3 x_3 \\
+z_7 &amp;= 2 x_4 x_3 \\
+z_8 &amp;=   x_4 x_4 \\
+z_9 &amp;= 0 \\
+\end{aligned}
+\]
+As before, we write \(x_i x_j\) as
+\[
+x_i x_j = \mathrm{lo}(x_i,x_j) + 2\mathrm{hi}(x_i,x_j)2^{51},
+\]
+and substitute to obtain
+\[
+\begin{aligned}
+z_0 &amp;=   \mathrm{lo}(x_0, x_0) + 0 \\
+z_1 &amp;= 2 \mathrm{lo}(x_1, x_0) + 2 \mathrm{hi}(x_0, x_0) \\
+z_2 &amp;= 2 \mathrm{lo}(x_2, x_0) +   \mathrm{lo}(x_1, x_1) + 4 \mathrm{hi}(x_1, x_0) \\
+z_3 &amp;= 2 \mathrm{lo}(x_3, x_0) + 2 \mathrm{lo}(x_2, x_1) + 4 \mathrm{hi}(x_2, x_0) + 2 \mathrm{hi}(x_1, x_1) \\
+z_4 &amp;= 2 \mathrm{lo}(x_4, x_0) + 2 \mathrm{lo}(x_3, x_1) +   \mathrm{lo}(x_2, x_2) + 4 \mathrm{hi}(x_3, x_0) + 4 \mathrm{hi}(x_2, x_1) \\
+z_5 &amp;= 2 \mathrm{lo}(x_4, x_1) + 2 \mathrm{lo}(x_3, x_2) + 4 \mathrm{hi}(x_4, x_0) + 4 \mathrm{hi}(x_3, x_1) + 2 \mathrm{hi}(x_2, x_2) \\
+z_6 &amp;= 2 \mathrm{lo}(x_4, x_2) +   \mathrm{lo}(x_3, x_3) + 4 \mathrm{hi}(x_4, x_1) + 4 \mathrm{hi}(x_3, x_2) \\
+z_7 &amp;= 2 \mathrm{lo}(x_4, x_3) + 4 \mathrm{hi}(x_4, x_2) + 2 \mathrm{hi}(x_3, x_3) \\
+z_8 &amp;=   \mathrm{lo}(x_4, x_4) + 4 \mathrm{hi}(x_4, x_3) \\
+z_9 &amp;= 0 + 2 \mathrm{hi}(x_4, x_4) \\
+\end{aligned}
+\]
+To implement these, we group terms by their coefficient, computing
+those with coefficient \(2\) on set of IFMA chains, and on another
+set of chains, we begin with coefficient-\(4\) terms, then shift
+left before continuing with the coefficient-\(1\) terms.
+The reduction strategy is the same as for multiplication.</p>
+<h2 id="future-improvements"><a href="#future-improvements">Future improvements</a></h2>
+<p>LLVM won’t use blend operations on <a href="https://bugs.llvm.org/show_bug.cgi?id=38343">256-bit vectors yet</a>,
+so there’s a bunch of blend instructions that could be omitted.</p>
+<p>Although the multiplications and squarings are much faster, there’s no
+speedup to the additions and subtractions, so there are diminishing
+returns.  In fact, the complications in the doubling formulas mean
+that doubling is actually slower than readdition.  This also suggests
+that moving to 512-bit vectors won’t be much help for a strategy aimed
+at parallelism within a group operation, so to extract performance
+gains from 512-bit vectors it will probably be necessary to create a
+parallel-friendly multiscalar multiplication algorithm.  This could
+also help with reducing shuffle pressure.</p>
+<p>The squaring implementation could probably be optimized, but without
+<code>perf</code> support on Cannonlake it’s difficult to make actual
+measurements.</p>
+<p>Another improvement would be to implement vectorized square root
+computations, which would allow creating an iterator adaptor for point
+decompression that bunched decompression operations and executed them
+in parallel.  This would accelerate batch verification.</p>
+</div></details><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="constants/index.html" title="mod curve25519_dalek::backend::vector::ifma::constants">constants</a></div><div class="desc docblock-short">This module contains constants used by the IFMA backend.</div></li><li><div class="item-name"><a class="mod" href="edwards/index.html" title="mod curve25519_dalek::backend::vector::ifma::edwards">edwards</a></div></li><li><div class="item-name"><a class="mod" href="field/index.html" title="mod curve25519_dalek::backend::vector::ifma::field">field</a></div></li></ul></section></div></main></body></html>
