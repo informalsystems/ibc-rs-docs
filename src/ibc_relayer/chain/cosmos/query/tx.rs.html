@@ -397,7 +397,6 @@
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ibc_relayer_types::core::ics02_client::height::Height;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::{Packet, Sequence};
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
@@ -598,46 +597,45 @@
         .<span class="kw">await
         </span>.map_err(|e| Error::rpc(rpc_address.clone(), e))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span><span class="kw-2">mut </span>tx_events = <span class="macro">vec!</span>[];
-    <span class="kw">let </span><span class="kw-2">mut </span>begin_block_events = <span class="macro">vec!</span>[];
-    <span class="kw">let </span><span class="kw-2">mut </span>end_block_events = <span class="macro">vec!</span>[];
+    <span class="kw">let </span><span class="kw-2">mut </span>events: Vec&lt;<span class="kw">_</span>&gt; = block_results
+        .begin_block_events
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|ev| filter_matching_event(ev, request, <span class="kw-2">&amp;</span>request.sequences))
+        .map(|ev| IbcEventWithHeight::new(ev, height))
+        .collect();
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(txs) = block_results.txs_results {
         <span class="kw">for </span>tx <span class="kw">in </span>txs {
-            tx_events.append(
-                <span class="kw-2">&amp;mut </span>tx
-                    .events
+            events.extend(
+                tx.events
                     .iter()
                     .filter_map(|ev| filter_matching_event(ev, request, <span class="kw-2">&amp;</span>request.sequences))
-                    .map(|ev| IbcEventWithHeight::new(ev, height))
-                    .collect(),
+                    .map(|ev| IbcEventWithHeight::new(ev, height)),
             )
         }
     }
 
-    begin_block_events.append(
-        <span class="kw-2">&amp;mut </span>block_results
-            .begin_block_events
-            .unwrap_or_default()
-            .iter()
-            .filter_map(|ev| filter_matching_event(ev, request, <span class="kw-2">&amp;</span>request.sequences))
-            .map(|ev| IbcEventWithHeight::new(ev, height))
-            .collect(),
-    );
-
-    end_block_events.append(
-        <span class="kw-2">&amp;mut </span>block_results
+    events.extend(
+        block_results
             .end_block_events
             .unwrap_or_default()
             .iter()
             .filter_map(|ev| filter_matching_event(ev, request, <span class="kw-2">&amp;</span>request.sequences))
-            .map(|ev| IbcEventWithHeight::new(ev, height))
-            .collect(),
+            .map(|ev| IbcEventWithHeight::new(ev, height)),
     );
 
-    <span class="kw">let </span><span class="kw-2">mut </span>events = begin_block_events;
-    events.append(<span class="kw-2">&amp;mut </span>tx_events);
-    events.append(<span class="kw-2">&amp;mut </span>end_block_events);
+    <span class="comment">// Since CometBFT 0.38, block events are returned in the
+    // finalize_block_events field and the other *_block_events fields
+    // are no longer present. We put these in place of the end_block_events
+    // in older protocol.
+    </span>events.extend(
+        block_results
+            .finalize_block_events
+            .iter()
+            .filter_map(|ev| filter_matching_event(ev, request, <span class="kw-2">&amp;</span>request.sequences))
+            .map(|ev| IbcEventWithHeight::new(ev, height)),
+    );
 
     <span class="prelude-val">Ok</span>(events)
 }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DialectEventData","EventData"],"struct":["DialectEvent","DialectTxInfo","DialectTxResult","Event","TxInfo","TxResult"]};
+window.SIDEBAR_ITEMS = {"enum":["EventData"],"mod":["v0_34","v0_37","v0_38"],"struct":["Event","TxInfo","TxResult"]};

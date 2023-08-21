@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DeEventData","SerEventData"],"struct":["DeEvent","DialectTxInfo","DialectTxResult","SerEvent"]};

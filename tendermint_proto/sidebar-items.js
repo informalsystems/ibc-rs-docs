@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["abci","blocksync","consensus","crypto","google","libs","mempool","meta","p2p","privval","rpc","serializers","state","statesync","store","types","v0_34","v0_37","version"],"struct":["Error"],"trait":["Protobuf"]};
+window.SIDEBAR_ITEMS = {"mod":["abci","blocksync","consensus","crypto","google","libs","mempool","meta","p2p","privval","rpc","serializers","state","statesync","store","types","v0_34","v0_37","v0_38","version"],"struct":["Error"],"trait":["Protobuf"]};

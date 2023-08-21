@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["commit_sig","header","parts","signed_header"],"struct":["Block","Commit","Height","Id","Meta","Round","Size"],"trait":["ParseHeight","ParseId"]};
+window.SIDEBAR_ITEMS = {"enum":["BlockIdFlag"],"mod":["commit_sig","header","parts","signed_header"],"struct":["Block","Commit","Height","Id","Meta","Round","Size"],"trait":["ParseHeight","ParseId"]};

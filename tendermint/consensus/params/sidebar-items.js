@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Params","ValidatorParams","VersionParams"]};
+window.SIDEBAR_ITEMS = {"struct":["AbciParams","Params","ValidatorParams","VersionParams"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DialectResponse","Request","Response"]};
+window.SIDEBAR_ITEMS = {"mod":["v0_34","v0_37"],"struct":["Request","Response"]};

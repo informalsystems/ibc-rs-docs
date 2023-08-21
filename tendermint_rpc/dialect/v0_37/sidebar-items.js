@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Dialect","Event","EventAttribute","Evidence"]};
+window.SIDEBAR_ITEMS = {"struct":["Dialect","Event","Evidence"]};

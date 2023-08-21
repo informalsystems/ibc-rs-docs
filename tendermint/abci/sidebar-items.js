@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Code","ConsensusRequest","ConsensusResponse","InfoRequest","InfoResponse","MempoolRequest","MempoolResponse","MethodKind","SnapshotRequest","SnapshotResponse"],"mod":["request","response","types"],"struct":["Event","EventAttribute"],"trait":["EventAttributeIndexExt","TypedEvent"]};
+window.SIDEBAR_ITEMS = {"enum":["Code","MethodKind"],"mod":["request","response","types"],"struct":["Event","EventAttribute"],"trait":["EventAttributeIndexExt","TypedEvent"]};

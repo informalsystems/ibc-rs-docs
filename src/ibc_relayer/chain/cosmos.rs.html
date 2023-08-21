@@ -2450,6 +2450,11 @@
 <a href="#2450" id="2450">2450</a>
 <a href="#2451" id="2451">2451</a>
 <a href="#2452" id="2452">2452</a>
+<a href="#2453" id="2453">2453</a>
+<a href="#2454" id="2454">2454</a>
+<a href="#2455" id="2455">2455</a>
+<a href="#2456" id="2456">2456</a>
+<a href="#2457" id="2457">2457</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -3214,9 +3219,6 @@
         );
         <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;query_block&quot;</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>begin_block_events = <span class="macro">vec!</span>[];
-        <span class="kw">let </span><span class="kw-2">mut </span>end_block_events = <span class="macro">vec!</span>[];
-
         <span class="kw">let </span>tm_height =
             tendermint::block::Height::try_from(block_height.revision_height()).unwrap();
 
@@ -3227,24 +3229,32 @@
         <span class="kw">let </span>response_height = ICSHeight::new(<span class="self">self</span>.id().version(), u64::from(response.height))
             .map_err(|<span class="kw">_</span>| Error::invalid_height_no_source())<span class="question-mark">?</span>;
 
-        begin_block_events.append(
-            <span class="kw-2">&amp;mut </span>response
-                .begin_block_events
-                .unwrap_or_default()
-                .iter()
-                .filter_map(|ev| filter_matching_event(ev, request, seqs))
-                .map(|ev| IbcEventWithHeight::new(ev, response_height))
-                .collect(),
-        );
+        <span class="kw">let </span>begin_block_events = response
+            .begin_block_events
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|ev| filter_matching_event(ev, request, seqs))
+            .map(|ev| IbcEventWithHeight::new(ev, response_height))
+            .collect();
 
-        end_block_events.append(
-            <span class="kw-2">&amp;mut </span>response
-                .end_block_events
-                .unwrap_or_default()
+        <span class="kw">let </span><span class="kw-2">mut </span>end_block_events: Vec&lt;<span class="kw">_</span>&gt; = response
+            .end_block_events
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|ev| filter_matching_event(ev, request, seqs))
+            .map(|ev| IbcEventWithHeight::new(ev, response_height))
+            .collect();
+
+        <span class="comment">// Since CometBFT 0.38, block events are returned in the
+        // finalize_block_events field and the other *_block_events fields
+        // are no longer present. We put these in place of the end_block_events
+        // in older protocol.
+        </span>end_block_events.extend(
+            response
+                .finalize_block_events
                 .iter()
                 .filter_map(|ev| filter_matching_event(ev, request, seqs))
-                .map(|ev| IbcEventWithHeight::new(ev, response_height))
-                .collect(),
+                .map(|ev| IbcEventWithHeight::new(ev, response_height)),
         );
 
         <span class="prelude-val">Ok</span>((begin_block_events, end_block_events))

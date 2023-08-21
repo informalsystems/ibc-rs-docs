@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["allow_null","apphash","bytes","evidence","from_str","hash","nullable","option_hash","optional","optional_from_str","part_set_header_total","public_key","time","time_duration","timestamp","txs"]};
+window.SIDEBAR_ITEMS = {"mod":["allow_null","apphash","apphash_base64","bytes","evidence","from_str","hash","nullable","option_hash","optional","optional_from_str","part_set_header_total","time","time_duration","timestamp","txs"]};
