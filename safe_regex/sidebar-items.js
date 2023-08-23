@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["regex"],"struct":["Matcher0","Matcher1","Matcher10","Matcher2","Matcher3","Matcher4","Matcher5","Matcher6","Matcher7","Matcher8","Matcher9"],"trait":["IsMatch"]};

@@ -208,11 +208,6 @@ var sourcesIndex = JSON.parse('{\
 "rustls_pemfile":["",[],["lib.rs","pemfile.rs"]],\
 "rustversion":["",[],["attr.rs","bound.rs","constfn.rs","date.rs","error.rs","expand.rs","expr.rs","iter.rs","lib.rs","release.rs","time.rs","token.rs","version.rs"]],\
 "ryu":["",[["buffer",[],["mod.rs"]],["pretty",[],["exponent.rs","mantissa.rs","mod.rs"]]],["common.rs","d2s.rs","d2s_full_table.rs","d2s_intrinsics.rs","digit_table.rs","f2s.rs","f2s_intrinsics.rs","lib.rs"]],\
-"safe_proc_macro2":["",[],["detection.rs","fallback.rs","lib.rs","marker.rs","parse.rs","wrapper.rs"]],\
-"safe_quote":["",[],["ext.rs","format.rs","ident_fragment.rs","lib.rs","runtime.rs","spanned.rs","to_tokens.rs"]],\
-"safe_regex":["",[],["lib.rs"]],\
-"safe_regex_compiler":["",[],["generator.rs","lib.rs","parser.rs"]],\
-"safe_regex_macro":["",[],["lib.rs"]],\
 "same_file":["",[],["lib.rs","unix.rs"]],\
 "scheduled_thread_pool":["",[],["builder.rs","lib.rs"]],\
 "scopeguard":["",[],["lib.rs"]],\
