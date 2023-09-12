@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["send_command","spawn_reload_handler"],"type":["ReloadHandle"]};

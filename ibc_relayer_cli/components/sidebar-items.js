@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["enable_ansi"],"struct":["JsonTracing","PrettyTracing"]};
+window.SIDEBAR_ITEMS = {"fn":["default_directive","enable_ansi"],"struct":["JsonTracing","PrettyTracing"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_CONFIG_PATH"],"mod":["application","chain_registry","cli_utils","commands","components","conclude","config","entry","error","prelude"]};
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_CONFIG_PATH"],"mod":["application","chain_registry","cli_utils","commands","components","conclude","config","entry","error","prelude","tracing_handle"]};

@@ -128,6 +128,30 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Various components for internal use by the Abscissa subsystem.
 
 </span><span class="kw">use </span>abscissa_core::{Component, FrameworkError, FrameworkErrorKind};
@@ -139,6 +163,7 @@
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::config::Error;
+<span class="kw">use </span><span class="kw">crate</span>::tracing_handle::ReloadHandle;
 
 <span class="doccomment">/// The name of the environment variable through which one can override
 /// the tracing filter built in [`build_tracing_filter`].
@@ -204,6 +229,29 @@
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>)
     }
+
+    <span class="kw">pub fn </span>new_with_reload_handle(
+        cfg: GlobalConfig,
+        debug_sections: <span class="kw-2">&amp;</span>[DebugSection],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, ReloadHandle&lt;<span class="kw">impl </span>tracing::Subscriber + <span class="lifetime">&#39;static</span>&gt;), FrameworkError&gt; {
+        <span class="kw">let </span>filter = build_tracing_filter(cfg.log_level, debug_sections)<span class="question-mark">?</span>;
+
+        <span class="comment">// Construct a tracing subscriber with the supplied filter and enable reloading.
+        </span><span class="kw">let </span>builder = FmtSubscriber::builder()
+            .with_target(<span class="bool-val">false</span>)
+            .with_env_filter(filter)
+            .with_writer(std::io::stderr)
+            .with_ansi(enable_ansi())
+            .with_thread_ids(<span class="bool-val">true</span>)
+            .with_filter_reloading();
+
+        <span class="kw">let </span>reload_handle = builder.reload_handle();
+
+        <span class="kw">let </span>subscriber = builder.finish();
+        subscriber.init();
+
+        <span class="prelude-val">Ok</span>((<span class="self">Self</span>, reload_handle))
+    }
 }
 
 <span class="doccomment">/// Check if both stdout and stderr are proper terminal (tty),
@@ -220,7 +268,7 @@
 
 <span class="doccomment">/// Build a tracing directive setting the log level for the relayer crates to the
 /// given `log_level`.
-</span><span class="kw">fn </span>default_directive(log_level: LogLevel) -&gt; String {
+</span><span class="kw">pub fn </span>default_directive(log_level: LogLevel) -&gt; String {
     <span class="kw">use </span>itertools::Itertools;
 
     TARGET_CRATES
