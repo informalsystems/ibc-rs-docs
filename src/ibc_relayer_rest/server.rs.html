@@ -83,22 +83,44 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     error::Error,
     net::{SocketAddr, ToSocketAddrs},
 };
 
-<span class="kw">use </span>axum::{extract::Path, response::IntoResponse, routing::get, Extension, Json, Router, Server};
+<span class="kw">use </span>axum::{
+    extract::{Path, Query},
+    response::IntoResponse,
+    routing::{get, post},
+    Extension, Json, Router, Server,
+};
 <span class="kw">use </span>crossbeam_channel <span class="kw">as </span>channel;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>tokio::task::JoinHandle;
 
-<span class="kw">use </span>ibc_relayer::{
-    rest::{request::Request, RestApiError},
-    supervisor::dump_state::SupervisorState,
-};
+<span class="kw">use </span>ibc_relayer::rest::{request::Request, RestApiError};
 
-<span class="kw">use </span><span class="kw">crate</span>::handle::{all_chain_ids, assemble_version_info, chain_config, supervisor_state};
+<span class="kw">use </span><span class="kw">crate</span>::handle::{
+    all_chain_ids, assemble_version_info, chain_config, supervisor_state, trigger_clear_packets,
+};
 
 <span class="kw">pub type </span>BoxError = Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;;
 
@@ -146,11 +168,22 @@
     Json(JsonResult::from(chain))
 }
 
-<span class="kw">async fn </span>get_state(
-    Extension(sender): Extension&lt;Sender&gt;,
-) -&gt; Json&lt;JsonResult&lt;SupervisorState, RestApiError&gt;&gt; {
+<span class="kw">async fn </span>get_state(Extension(sender): Extension&lt;Sender&gt;) -&gt; <span class="kw">impl </span>IntoResponse {
     <span class="kw">let </span>state = supervisor_state(<span class="kw-2">&amp;</span>sender);
     Json(JsonResult::from(state))
+}
+
+<span class="attr">#[derive(Debug, Deserialize)]
+</span><span class="kw">struct </span>ClearPacketParams {
+    chain: <span class="prelude-ty">Option</span>&lt;ChainId&gt;,
+}
+
+<span class="kw">async fn </span>clear_packets(
+    Extension(sender): Extension&lt;Sender&gt;,
+    Query(params): Query&lt;ClearPacketParams&gt;,
+) -&gt; <span class="kw">impl </span>IntoResponse {
+    <span class="kw">let </span>result = trigger_clear_packets(<span class="kw-2">&amp;</span>sender, params.chain);
+    Json(JsonResult::from(result))
 }
 
 <span class="kw">type </span>Sender = channel::Sender&lt;Request&gt;;
@@ -161,6 +194,7 @@
         .route(<span class="string">&quot;/chains&quot;</span>, get(get_chains))
         .route(<span class="string">&quot;/chain/:id&quot;</span>, get(get_chain))
         .route(<span class="string">&quot;/state&quot;</span>, get(get_state))
+        .route(<span class="string">&quot;/clear_packets&quot;</span>, post(clear_packets))
         .layer(Extension(sender));
 
     Server::bind(<span class="kw-2">&amp;</span>addr)

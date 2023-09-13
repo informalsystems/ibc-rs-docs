@@ -943,6 +943,27 @@
 <a href="#943" id="943">943</a>
 <a href="#944" id="944">944</a>
 <a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::btree_map::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::convert::Infallible;
@@ -1659,14 +1680,35 @@
 </span><span class="kw">fn </span>handle_rest_cmd&lt;Chain: ChainHandle&gt;(
     registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;,
     workers: <span class="kw-2">&amp;</span>WorkerMap,
-    m: rest::Command,
+    cmd: rest::Command,
 ) {
-    <span class="kw">match </span>m {
+    <span class="kw">match </span>cmd {
         rest::Command::DumpState(reply) =&gt; {
             <span class="kw">let </span>state = state(registry, workers);
             reply
                 .send(<span class="prelude-val">Ok</span>(state))
-                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {}&quot;</span>, e));
+                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {e}&quot;</span>));
+        }
+
+        rest::Command::ClearPackets(chain_id, reply) =&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(chain_id) = chain_id {
+                <span class="macro">info!</span>(<span class="string">&quot;clearing packets for chain {chain_id} after REST request&quot;</span>);
+
+                clear_pending_packets(workers, <span class="kw-2">&amp;</span>chain_id)
+                    .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error clearing packets for chain {chain_id}: {e}&quot;</span>));
+            } <span class="kw">else </span>{
+                <span class="kw">for </span>chain_id <span class="kw">in </span>registry.chains().map(|c| c.id()) {
+                    <span class="macro">info!</span>(<span class="string">&quot;clearing packets for chain {chain_id} after REST request&quot;</span>);
+
+                    clear_pending_packets(workers, <span class="kw-2">&amp;</span>chain_id).unwrap_or_else(|e| {
+                        <span class="macro">error!</span>(<span class="string">&quot;error clearing packets for chain {chain_id}: {e}&quot;</span>)
+                    });
+                }
+            }
+
+            reply
+                .send(<span class="prelude-val">Ok</span>(()))
+                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {e}&quot;</span>));
         }
     }
 }
@@ -1677,7 +1719,7 @@
     skip_all,
     fields(chain = %chain_id)
 )]
-</span><span class="kw">fn </span>clear_pending_packets(workers: <span class="kw-2">&amp;mut </span>WorkerMap, chain_id: <span class="kw-2">&amp;</span>ChainId) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+</span><span class="kw">fn </span>clear_pending_packets(workers: <span class="kw-2">&amp;</span>WorkerMap, chain_id: <span class="kw-2">&amp;</span>ChainId) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
     <span class="kw">for </span>worker <span class="kw">in </span>workers.workers_for_chain(chain_id) {
         worker.clear_pending_packets();
     }

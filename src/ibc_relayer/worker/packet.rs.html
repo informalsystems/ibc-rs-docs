@@ -531,6 +531,8 @@
 <a href="#531" id="531">531</a>
 <a href="#532" id="532">532</a>
 <a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;telemetry&quot;</span>)]
 </span><span class="kw">use </span>{
     ibc_relayer_types::core::ics24_host::identifier::ChannelId,
@@ -538,13 +540,14 @@
 };
 
 <span class="kw">use </span>core::time::Duration;
-<span class="kw">use </span>itertools::Itertools;
-<span class="kw">use </span>moka::sync::Cache;
 <span class="kw">use </span>std::borrow::BorrowMut;
 <span class="kw">use </span>std::sync::{Arc, Mutex};
-<span class="kw">use </span>tracing::{debug, warn};
 
 <span class="kw">use </span>crossbeam_channel::Receiver;
+<span class="kw">use </span>itertools::Itertools;
+<span class="kw">use </span>moka::sync::Cache;
+<span class="kw">use </span>tracing::{debug, error, error_span, info, trace, warn};
+
 <span class="kw">use </span>ibc_proto::ibc::apps::fee::v1::{IdentifiedPacketFees, QueryIncentivizedPacketRequest};
 <span class="kw">use </span>ibc_proto::ibc::core::channel::v1::PacketId;
 <span class="kw">use </span>ibc_relayer_types::applications::ics29_fee::events::IncentivizedPacket;
@@ -552,8 +555,6 @@
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::events::WriteAcknowledgement;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::events::{IbcEvent, IbcEventType};
-<span class="kw">use </span>tracing::{error, error_span, trace};
-
 <span class="kw">use </span>ibc_relayer_types::Height;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::handle::ChainHandle;
@@ -760,11 +761,14 @@
     };
 
     <span class="kw">if </span>do_clear {
+        <span class="macro">info!</span>(<span class="string">&quot;clearing packets&quot;</span>);
+
         <span class="comment">// Reset the `clear_on_start` flag and attempt packet clearing once now.
         // More clearing will be done at clear interval.
         </span><span class="kw">if </span><span class="kw-2">*</span>should_clear_on_start {
             <span class="kw-2">*</span>should_clear_on_start = <span class="bool-val">false</span>;
         }
+
         handle_clear_packet(link, clear_interval, path, maybe_height)<span class="question-mark">?</span>;
     }
 
