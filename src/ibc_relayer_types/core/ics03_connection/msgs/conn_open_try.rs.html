@@ -357,6 +357,15 @@
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     convert::{TryFrom, TryInto},
     str::FromStr,
@@ -449,6 +458,10 @@
         <span class="kw">let </span>client_proof =
             CommitmentProofBytes::try_from(msg.proof_client).map_err(Error::invalid_proof)<span class="question-mark">?</span>;
 
+        <span class="comment">// Host consensus state proof can be missing for IBC-Go &lt; 7.2.0
+        </span><span class="kw">let </span>host_consensus_state_proof =
+            CommitmentProofBytes::try_from(msg.host_consensus_state_proof).ok();
+
         <span class="kw">let </span>counterparty_versions = msg
             .counterparty_versions
             .into_iter()
@@ -472,6 +485,7 @@
                 msg.proof_init.try_into().map_err(Error::invalid_proof)<span class="question-mark">?</span>,
                 <span class="prelude-val">Some</span>(client_proof),
                 <span class="prelude-val">Some</span>(consensus_proof_obj),
+                host_consensus_state_proof,
                 <span class="prelude-val">None</span>,
                 proof_height,
             )
@@ -503,12 +517,15 @@
             proof_client: ics_msg
                 .proofs
                 .client_proof()
-                .clone()
-                .map_or_else(Vec::new, |v| v.into()),
+                .map_or_else(Vec::new, |v| v.to_bytes()),
             proof_consensus: ics_msg
                 .proofs
                 .consensus_proof()
-                .map_or_else(Vec::new, |v| v.proof().clone().into()),
+                .map_or_else(Vec::new, |v| v.proof().to_bytes()),
+            host_consensus_state_proof: ics_msg
+                .proofs
+                .host_consensus_state_proof()
+                .map_or_else(Vec::new, |v| v.to_bytes()),
             consensus_height: ics_msg
                 .proofs
                 .consensus_proof()
@@ -574,6 +591,7 @@
                 revision_height: proof_height,
             }),
             proof_consensus: get_dummy_proof(),
+            host_consensus_state_proof: get_dummy_proof(),
             consensus_height: <span class="prelude-val">Some</span>(Height {
                 revision_number: <span class="number">0</span>,
                 revision_height: consensus_height,

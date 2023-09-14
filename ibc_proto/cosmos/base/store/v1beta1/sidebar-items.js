@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CommitId","CommitInfo","StoreInfo","StoreKvPair"]};

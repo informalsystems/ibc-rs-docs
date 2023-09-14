@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["service_client"],"struct":["ConfigRequest","ConfigResponse"]};
+window.SIDEBAR_ITEMS = {"mod":["service_client"],"struct":["ConfigRequest","ConfigResponse","StatusRequest","StatusResponse"]};

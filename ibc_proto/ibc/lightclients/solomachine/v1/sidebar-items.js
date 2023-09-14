@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DataType"],"struct":["ChannelStateData","ClientState","ClientStateData","ConnectionStateData","ConsensusState","ConsensusStateData","Header","HeaderData","Misbehaviour","NextSequenceRecvData","PacketAcknowledgementData","PacketCommitmentData","PacketReceiptAbsenceData","SignBytes","SignatureAndData","TimestampedSignatureData"]};
