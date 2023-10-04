@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["multisig"]};
+window.SIDEBAR_ITEMS = {"mod":["ed25519","hd","keyring","multisig","secp256k1","secp256r1"]};

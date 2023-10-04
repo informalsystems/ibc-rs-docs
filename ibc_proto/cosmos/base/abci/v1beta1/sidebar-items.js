@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["AbciMessageLog","Attribute","GasInfo","MsgData","Result","SearchBlocksResult","SearchTxsResult","SimulationResponse","StringEvent","TxMsgData","TxResponse"]};
+window.SIDEBAR_ITEMS = {"struct":["AbciMessageLog","Attribute","GasInfo","MsgData","Result","SearchTxsResult","SimulationResponse","StringEvent","TxMsgData","TxResponse"]};

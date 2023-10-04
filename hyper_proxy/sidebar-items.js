@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Intercept","ProxyStream"],"struct":["Custom","Proxy","ProxyConnector"],"trait":["Dst"]};

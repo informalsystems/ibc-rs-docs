@@ -1,5 +1,4 @@
 (function() {var implementors = {
-"headers_core":[],
 "http":[],
 "hyper":[],
 "reqwest":[]
