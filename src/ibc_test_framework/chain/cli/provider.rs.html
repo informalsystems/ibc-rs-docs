@@ -95,9 +95,51 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::str;
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::str;
 
-<span class="kw">use </span><span class="kw">crate</span>::chain::exec::simple_exec;
+<span class="kw">use </span><span class="kw">crate</span>::chain::exec::{simple_exec, ExecOutput};
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
 <span class="kw">pub fn </span>submit_consumer_chain_proposal(
@@ -108,7 +150,8 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
     <span class="kw">let </span>proposal_file = <span class="macro">format!</span>(<span class="string">&quot;{}/consumer_proposal.json&quot;</span>, home_path);
 
-    simple_exec(
+    <span class="comment">// The submission might fail silently if there is not enough gas
+    </span>simple_exec(
         chain_id,
         command_path,
         <span class="kw-2">&amp;</span>[
@@ -127,11 +170,37 @@
             rpc_listen_address,
             <span class="string">&quot;--keyring-backend&quot;</span>,
             <span class="string">&quot;test&quot;</span>,
+            <span class="string">&quot;--gas&quot;</span>,
+            <span class="string">&quot;2000000&quot;</span>,
             <span class="string">&quot;--yes&quot;</span>,
         ],
     )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">pub fn </span>query_consumer_proposal(
+    chain_id: <span class="kw-2">&amp;</span>str,
+    command_path: <span class="kw-2">&amp;</span>str,
+    home_path: <span class="kw-2">&amp;</span>str,
+    rpc_listen_address: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;ExecOutput, Error&gt; {
+    simple_exec(
+        chain_id,
+        command_path,
+        <span class="kw-2">&amp;</span>[
+            <span class="string">&quot;--home&quot;</span>,
+            home_path,
+            <span class="string">&quot;--node&quot;</span>,
+            rpc_listen_address,
+            <span class="string">&quot;query&quot;</span>,
+            <span class="string">&quot;gov&quot;</span>,
+            <span class="string">&quot;proposal&quot;</span>,
+            <span class="string">&quot;1&quot;</span>,
+            <span class="string">&quot;--output&quot;</span>,
+            <span class="string">&quot;json&quot;</span>,
+        ],
+    )
 }
 
 <span class="kw">pub fn </span>query_consumer_genesis(
@@ -140,6 +209,7 @@
     home_path: <span class="kw-2">&amp;</span>str,
     rpc_listen_address: <span class="kw-2">&amp;</span>str,
     consumer_chain_id: <span class="kw-2">&amp;</span>str,
+    consumer_command_path: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;String, Error&gt; {
     <span class="kw">let </span>exec_output = simple_exec(
         chain_id,
@@ -158,7 +228,19 @@
         ],
     )<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(exec_output.stdout)
+    <span class="comment">// Neutron does not have the `PreCCV` configuration in its genesis file,
+    // and will panic due to an unknown configuration if it is set
+    </span><span class="kw">let </span>consumer_genesis = <span class="kw">if </span>consumer_command_path == <span class="string">&quot;neutrond&quot; </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>queried_genesis: HashMap&lt;String, serde_json::Value&gt; =
+            serde_json::from_str(<span class="kw-2">&amp;</span>exec_output.stdout).expect(<span class="string">&quot;failed to read file&quot;</span>);
+
+        queried_genesis.remove(<span class="string">&quot;preCCV&quot;</span>);
+        serde_json::to_string(<span class="kw-2">&amp;</span>queried_genesis).unwrap()
+    } <span class="kw">else </span>{
+        exec_output.stdout
+    };
+
+    <span class="prelude-val">Ok</span>(consumer_genesis)
 }
 
 <span class="kw">pub fn </span>replace_genesis_state(chain_id: <span class="kw-2">&amp;</span>str, home_path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, Error&gt; {
