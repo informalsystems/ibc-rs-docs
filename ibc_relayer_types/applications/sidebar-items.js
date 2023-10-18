@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["ics27_ica","ics29_fee","ics31_icq","transfer"]};
+window.SIDEBAR_ITEMS = {"mod":["ics27_ica","ics28_ccv","ics29_fee","ics31_icq","transfer"]};

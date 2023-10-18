@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ccv_double_voting","ccv_misbehaviour","error"]};

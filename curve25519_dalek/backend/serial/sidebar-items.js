@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["curve_models","scalar_mul","u64"]};
+window.SIDEBAR_ITEMS = {"mod":["curve_models","scalar_mul"]};

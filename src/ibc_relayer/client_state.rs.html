@@ -301,16 +301,25 @@
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 
-<span class="kw">use </span>ibc_proto::ibc::core::client::v1::IdentifiedClientState;
-<span class="kw">use </span>ibc_proto::ibc::lightclients::tendermint::v1::ClientState <span class="kw">as </span>RawClientState;
-<span class="attr">#[cfg(test)]
-</span><span class="kw">use </span>ibc_proto::ibc::mock::ClientState <span class="kw">as </span>RawMockClientState;
-<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
+<span class="kw">use </span>ibc_proto::ibc::core::client::v1::IdentifiedClientState;
+<span class="kw">use </span>ibc_proto::ibc::lightclients::tendermint::v1::ClientState <span class="kw">as </span>RawTmClientState;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">use </span>ibc_proto::ibc::mock::ClientState <span class="kw">as </span>RawMockClientState;
+<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::client_state::{
     ClientState <span class="kw">as </span>TmClientState, UpgradeOptions <span class="kw">as </span>TmUpgradeOptions,
     TENDERMINT_CLIENT_STATE_TYPE_URL,
@@ -361,6 +370,15 @@
 }
 
 <span class="kw">impl </span>AnyClientState {
+    <span class="kw">pub fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChainId {
+        <span class="kw">match </span><span class="self">self </span>{
+            AnyClientState::Tendermint(tm_state) =&gt; tm_state.chain_id(),
+
+            <span class="attr">#[cfg(test)]
+            </span>AnyClientState::Mock(mock_state) =&gt; mock_state.chain_id(),
+        }
+    }
+
     <span class="kw">pub fn </span>latest_height(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Height {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Tendermint(tm_state) =&gt; tm_state.latest_height(),
@@ -426,7 +444,7 @@
             <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">Err</span>(Error::empty_client_state_response()),
 
             TENDERMINT_CLIENT_STATE_TYPE_URL =&gt; <span class="prelude-val">Ok</span>(AnyClientState::Tendermint(
-                Protobuf::&lt;RawClientState&gt;::decode_vec(<span class="kw-2">&amp;</span>raw.value)
+                Protobuf::&lt;RawTmClientState&gt;::decode_vec(<span class="kw-2">&amp;</span>raw.value)
                     .map_err(Error::decode_raw_client_state)<span class="question-mark">?</span>,
             )),
 
@@ -446,7 +464,7 @@
         <span class="kw">match </span>value {
             AnyClientState::Tendermint(value) =&gt; Any {
                 type_url: TENDERMINT_CLIENT_STATE_TYPE_URL.to_string(),
-                value: Protobuf::&lt;RawClientState&gt;::encode_vec(<span class="kw-2">&amp;</span>value),
+                value: Protobuf::&lt;RawTmClientState&gt;::encode_vec(<span class="kw-2">&amp;</span>value),
             },
             <span class="attr">#[cfg(test)]
             </span>AnyClientState::Mock(value) =&gt; Any {

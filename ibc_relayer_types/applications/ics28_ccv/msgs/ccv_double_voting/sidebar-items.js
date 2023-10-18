@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ICS_DOUBLE_VOTING_TYPE_URL"],"struct":["MsgSubmitIcsConsumerDoubleVoting"]};

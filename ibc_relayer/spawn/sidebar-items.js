@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SpawnErrorDetail"],"fn":["spawn_chain_runtime"],"struct":["MissingChainConfigSubdetail","RelayerSubdetail","RuntimeNotFoundSubdetail","SpawnError"]};
+window.SIDEBAR_ITEMS = {"enum":["SpawnErrorDetail"],"fn":["spawn_chain_runtime","spawn_chain_runtime_with_config","spawn_chain_runtime_with_modified_config"],"struct":["MissingChainConfigSubdetail","RelayerSubdetail","RuntimeNotFoundSubdetail","SpawnError"]};

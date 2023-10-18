@@ -59,6 +59,34 @@
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 
 <span class="kw">use </span>flex_error::define_error;
@@ -68,7 +96,7 @@
 
 <span class="kw">use crate</span>::{
     chain::{cosmos::CosmosSdkChain, handle::ChainHandle, runtime::ChainRuntime, ChainType},
-    config::Config,
+    config::{ChainConfig, Config},
     error::Error <span class="kw">as </span>RelayerError,
 };
 
@@ -113,8 +141,36 @@
         .cloned()
         .ok_or_else(|| SpawnError::missing_chain_config(chain_id.clone()))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>handle = <span class="kw">match </span>chain_config.r#type {
-        ChainType::CosmosSdk =&gt; ChainRuntime::&lt;CosmosSdkChain&gt;::spawn::&lt;Handle&gt;(chain_config, rt),
+    spawn_chain_runtime_with_config(chain_config, rt)
+}
+
+<span class="doccomment">/// Spawns a chain runtime from the configuration and given a chain identifier,
+/// allowing the caller to modify the chain config.
+/// Returns the corresponding handle if successful.
+</span><span class="kw">pub fn </span>spawn_chain_runtime_with_modified_config&lt;Handle: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span>Config,
+    chain_id: <span class="kw-2">&amp;</span>ChainId,
+    rt: Arc&lt;TokioRuntime&gt;,
+    modify: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>ChainConfig),
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, SpawnError&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>chain_config = config
+        .find_chain(chain_id)
+        .cloned()
+        .ok_or_else(|| SpawnError::missing_chain_config(chain_id.clone()))<span class="question-mark">?</span>;
+
+    modify(<span class="kw-2">&amp;mut </span>chain_config);
+
+    spawn_chain_runtime_with_config(chain_config, rt)
+}
+
+<span class="doccomment">/// Spawns a chain runtime from the given chain configuration
+/// Returns the corresponding handle if successful.
+</span><span class="kw">pub fn </span>spawn_chain_runtime_with_config&lt;Handle: ChainHandle&gt;(
+    config: ChainConfig,
+    rt: Arc&lt;TokioRuntime&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, SpawnError&gt; {
+    <span class="kw">let </span>handle = <span class="kw">match </span>config.r#type {
+        ChainType::CosmosSdk =&gt; ChainRuntime::&lt;CosmosSdkChain&gt;::spawn::&lt;Handle&gt;(config, rt),
     }
     .map_err(SpawnError::relayer)<span class="question-mark">?</span>;
 
