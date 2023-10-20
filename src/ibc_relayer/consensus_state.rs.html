@@ -160,43 +160,28 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>ibc_proto::google::protobuf::Any;
+</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+
+<span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_proto::ibc::core::client::v1::ConsensusStateWithHeight;
 <span class="kw">use </span>ibc_proto::ibc::lightclients::tendermint::v1::ConsensusState <span class="kw">as </span>RawConsensusState;
-<span class="attr">#[cfg(test)]
-</span><span class="kw">use </span>ibc_proto::ibc::mock::ConsensusState <span class="kw">as </span>RawMockConsensusState;
-<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
+<span class="kw">use </span>ibc_proto::Protobuf;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::consensus_state::{
     ConsensusState <span class="kw">as </span>TmConsensusState, TENDERMINT_CONSENSUS_STATE_TYPE_URL,
 };
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_type::ClientType;
-<span class="kw">use </span>ibc_relayer_types::core::ics02_client::consensus_state::{
-    downcast_consensus_state, ConsensusState,
-};
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::consensus_state::ConsensusState;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::error::Error;
 <span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::commitment::CommitmentRoot;
+<span class="kw">use </span>ibc_relayer_types::timestamp::Timestamp;
+<span class="kw">use </span>ibc_relayer_types::Height;
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">use </span>ibc_proto::ibc::mock::ConsensusState <span class="kw">as </span>RawMockConsensusState;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>ibc_relayer_types::mock::consensus_state::MockConsensusState;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>ibc_relayer_types::mock::consensus_state::MOCK_CONSENSUS_STATE_TYPE_URL;
-<span class="kw">use </span>ibc_relayer_types::timestamp::Timestamp;
-<span class="kw">use </span>ibc_relayer_types::Height;
-<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = <span class="string">&quot;type&quot;</span>)]
@@ -258,12 +243,12 @@
         <span class="kw">match </span>value {
             AnyConsensusState::Tendermint(value) =&gt; Any {
                 type_url: TENDERMINT_CONSENSUS_STATE_TYPE_URL.to_string(),
-                value: Protobuf::&lt;RawConsensusState&gt;::encode_vec(<span class="kw-2">&amp;</span>value),
+                value: Protobuf::&lt;RawConsensusState&gt;::encode_vec(value),
             },
             <span class="attr">#[cfg(test)]
             </span>AnyConsensusState::Mock(value) =&gt; Any {
                 type_url: MOCK_CONSENSUS_STATE_TYPE_URL.to_string(),
-                value: Protobuf::&lt;RawMockConsensusState&gt;::encode_vec(<span class="kw-2">&amp;</span>value),
+                value: Protobuf::&lt;RawMockConsensusState&gt;::encode_vec(value),
             },
         }
     }
@@ -279,21 +264,6 @@
 <span class="kw">impl </span>From&lt;TmConsensusState&gt; <span class="kw">for </span>AnyConsensusState {
     <span class="kw">fn </span>from(cs: TmConsensusState) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Tendermint(cs)
-    }
-}
-
-<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span><span class="kw">dyn </span>ConsensusState&gt; <span class="kw">for </span>AnyConsensusState {
-    <span class="kw">fn </span>from(cs: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ConsensusState) -&gt; <span class="self">Self </span>{
-        <span class="attr">#[cfg(test)]
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(cs) = downcast_consensus_state::&lt;MockConsensusState&gt;(cs) {
-            <span class="kw">return </span>AnyConsensusState::from(cs.clone());
-        }
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(cs) = downcast_consensus_state::&lt;TmConsensusState&gt;(cs) {
-            AnyConsensusState::from(cs.clone())
-        } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>()
-        }
     }
 }
 

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AnyHeader"],"fn":["decode_header"],"mod":["io","tendermint"],"struct":["Verified"],"trait":["LightBlock","LightClient"]};
+window.SIDEBAR_ITEMS = {"mod":["io","tendermint"],"struct":["Verified"],"trait":["LightBlock","LightClient"]};

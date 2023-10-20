@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["downcast_header"],"trait":["Header"]};
+window.SIDEBAR_ITEMS = {"enum":["AnyHeader"],"fn":["decode_header"],"trait":["Header"]};

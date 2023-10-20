@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["ClientAlreadyUpToDateSubdetail","ClientAtHigherHeightSubdetail","ClientStateNotFoundSubdetail","Error","TransactionFailedSubdetail"]};

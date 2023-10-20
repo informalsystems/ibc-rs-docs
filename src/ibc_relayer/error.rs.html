@@ -762,15 +762,6 @@
 <a href="#762" id="762">762</a>
 <a href="#763" id="763">763</a>
 <a href="#764" id="764">764</a>
-<a href="#765" id="765">765</a>
-<a href="#766" id="766">766</a>
-<a href="#767" id="767">767</a>
-<a href="#768" id="768">768</a>
-<a href="#769" id="769">769</a>
-<a href="#770" id="770">770</a>
-<a href="#771" id="771">771</a>
-<a href="#772" id="772">772</a>
-<a href="#773" id="773">773</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module defines the various errors that be raised in the relayer.
 
 </span><span class="kw">use </span>core::time::Duration;
@@ -778,9 +769,13 @@
 <span class="kw">use </span>flex_error::{define_error, DisplayOnly, TraceError};
 <span class="kw">use </span>http::uri::InvalidUri;
 <span class="kw">use </span>humantime::format_duration;
-<span class="kw">use </span>ibc_proto::protobuf::Error <span class="kw">as </span>TendermintProtoError;
 <span class="kw">use </span>prost::{DecodeError, EncodeError};
 <span class="kw">use </span>regex::Regex;
+<span class="kw">use </span>tonic::{
+    metadata::errors::InvalidMetadataValue, transport::Error <span class="kw">as </span>TransportError,
+    Status <span class="kw">as </span>GrpcStatus,
+};
+
 <span class="kw">use </span>tendermint::abci;
 <span class="kw">use </span>tendermint::Error <span class="kw">as </span>TendermintError;
 <span class="kw">use </span>tendermint_light_client::builder::error::Error <span class="kw">as </span>LightClientBuilderError;
@@ -788,28 +783,19 @@
 <span class="kw">use </span>tendermint_light_client::errors::{
     Error <span class="kw">as </span>LightClientError, ErrorDetail <span class="kw">as </span>LightClientErrorDetail,
 };
+<span class="kw">use </span>tendermint_proto::Error <span class="kw">as </span>TendermintProtoError;
 <span class="kw">use </span>tendermint_rpc::endpoint::abci_query::AbciQuery;
 <span class="kw">use </span>tendermint_rpc::endpoint::broadcast::tx_sync::Response <span class="kw">as </span>TxSyncResponse;
 <span class="kw">use </span>tendermint_rpc::Error <span class="kw">as </span>TendermintRpcError;
-<span class="kw">use </span>tonic::{
-    metadata::errors::InvalidMetadataValue, transport::Error <span class="kw">as </span>TransportError,
-    Status <span class="kw">as </span>GrpcStatus,
-};
 
-<span class="kw">use </span>ibc_relayer_types::{
-    applications::{
-        ics29_fee::error::Error <span class="kw">as </span>FeeError, ics31_icq::error::Error <span class="kw">as </span>CrossChainQueryError,
-    },
-    clients::ics07_tendermint::error <span class="kw">as </span>tendermint_error,
-    core::{
-        ics02_client::{client_type::ClientType, error <span class="kw">as </span>client_error},
-        ics03_connection::error <span class="kw">as </span>connection_error,
-        ics23_commitment::error <span class="kw">as </span>commitment_error,
-        ics24_host::identifier::{ChainId, ChannelId, ConnectionId},
-    },
-    proofs::ProofError,
-    relayer::ics18_relayer::error <span class="kw">as </span>relayer_error,
-};
+<span class="kw">use </span>ibc_relayer_types::applications::ics29_fee::error::Error <span class="kw">as </span>FeeError;
+<span class="kw">use </span>ibc_relayer_types::applications::ics31_icq::error::Error <span class="kw">as </span>CrossChainQueryError;
+<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::error <span class="kw">as </span>tendermint_error;
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::{client_type::ClientType, error <span class="kw">as </span>client_error};
+<span class="kw">use </span>ibc_relayer_types::core::ics03_connection::error <span class="kw">as </span>connection_error;
+<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::error <span class="kw">as </span>commitment_error;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, ConnectionId};
+<span class="kw">use </span>ibc_relayer_types::proofs::ProofError;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::version;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::BLOCK_MAX_BYTES_MAX_FRACTION;
@@ -1053,10 +1039,6 @@
         Ics07
             [ tendermint_error::Error ]
             |<span class="kw">_</span>| { <span class="string">&quot;ICS 07 error&quot; </span>},
-
-        Ics18
-            [ relayer_error::Error ]
-            |<span class="kw">_</span>| { <span class="string">&quot;ICS 18 error&quot; </span>},
 
         Ics23
             [ commitment_error::Error ]

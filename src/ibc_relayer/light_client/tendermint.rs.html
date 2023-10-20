@@ -410,6 +410,7 @@
 <a href="#410" id="410">410</a>
 <a href="#411" id="411">411</a>
 <a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>detector;
 
 <span class="kw">use </span>std::time::Duration;
@@ -432,23 +433,21 @@
 <span class="kw">use </span>tendermint_light_client_detector::Divergence;
 <span class="kw">use </span>tendermint_rpc <span class="kw">as </span>rpc;
 
-<span class="kw">use </span>ibc_relayer_types::{
-    clients::ics07_tendermint::{
-        header::Header <span class="kw">as </span>TmHeader, misbehaviour::Misbehaviour <span class="kw">as </span>TmMisbehaviour,
-    },
-    core::{
-        ics02_client::{client_type::ClientType, events::UpdateClient, header::downcast_header},
-        ics24_host::identifier::ChainId,
-    },
-    downcast, Height <span class="kw">as </span>ICSHeight,
-};
+<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::header::Header <span class="kw">as </span>TmHeader;
+<span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::misbehaviour::Misbehaviour <span class="kw">as </span>TmMisbehaviour;
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::header::AnyHeader;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
+<span class="kw">use </span>ibc_relayer_types::Height <span class="kw">as </span>ICSHeight;
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_type::ClientType;
 
 <span class="kw">use crate</span>::{
     chain::cosmos::CosmosSdkChain,
     client_state::AnyClientState,
     config::ChainConfig,
     error::Error,
-    light_client::AnyHeader,
     misbehaviour::{AnyMisbehaviour, MisbehaviourEvidence},
 };
 
@@ -551,28 +550,26 @@
             }
         );
 
-        <span class="kw">let </span>update_header = update.header.as_ref().ok_or_else(|| {
+        <span class="kw">let </span>any_header = update.header.as_ref().ok_or_else(|| {
             Error::misbehaviour(<span class="macro">format!</span>(
                 <span class="string">&quot;missing header in update client event {}&quot;</span>,
                 <span class="self">self</span>.chain_id
             ))
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>update_header: <span class="kw-2">&amp;</span>TmHeader =
-            downcast_header(update_header.as_ref()).ok_or_else(|| {
-                Error::misbehaviour(<span class="macro">format!</span>(
-                    <span class="string">&quot;header type incompatible for chain {}&quot;</span>,
-                    <span class="self">self</span>.chain_id
-                ))
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>update_header: <span class="kw-2">&amp;</span>TmHeader = <span class="kw">match </span>any_header {
+            AnyHeader::Tendermint(header) =&gt; <span class="prelude-val">Ok</span>(header),
+        }<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>client_state =
-            <span class="macro">downcast!</span>(client_state =&gt; AnyClientState::Tendermint).ok_or_else(|| {
-                Error::misbehaviour(<span class="macro">format!</span>(
-                    <span class="string">&quot;client type incompatible for chain {}&quot;</span>,
-                    <span class="self">self</span>.chain_id
-                ))
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>client_state = <span class="kw">match </span>client_state {
+            AnyClientState::Tendermint(client_state) =&gt; <span class="prelude-val">Ok</span>(client_state),
+
+            <span class="attr">#[cfg(test)]
+            </span><span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::misbehaviour(<span class="macro">format!</span>(
+                <span class="string">&quot;client type incompatible for chain {}&quot;</span>,
+                <span class="self">self</span>.chain_id
+            ))),
+        }<span class="question-mark">?</span>;
 
         <span class="kw">let </span>next_validators = <span class="self">self
             </span>.io
@@ -727,10 +724,15 @@
         <span class="kw">let </span>verifier = ProdVerifier::default();
         <span class="kw">let </span>scheduler = components::scheduler::basic_bisecting_schedule;
 
-        <span class="kw">let </span>client_state =
-            <span class="macro">downcast!</span>(client_state =&gt; AnyClientState::Tendermint).ok_or_else(|| {
-                Error::client_type_mismatch(ClientType::Tendermint, client_state.client_type())
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>client_state = <span class="kw">match </span>client_state {
+            AnyClientState::Tendermint(client_state) =&gt; <span class="prelude-val">Ok</span>(client_state),
+
+            <span class="attr">#[cfg(test)]
+            </span><span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::client_type_mismatch(
+                ClientType::Tendermint,
+                client_state.client_type(),
+            )),
+        }<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(TmLightClient::new(
             <span class="self">self</span>.peer_id,

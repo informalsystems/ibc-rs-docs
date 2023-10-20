@@ -291,25 +291,6 @@
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -317,27 +298,26 @@
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_proto::ibc::core::client::v1::IdentifiedClientState;
 <span class="kw">use </span>ibc_proto::ibc::lightclients::tendermint::v1::ClientState <span class="kw">as </span>RawTmClientState;
-<span class="attr">#[cfg(test)]
-</span><span class="kw">use </span>ibc_proto::ibc::mock::ClientState <span class="kw">as </span>RawMockClientState;
-<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
+<span class="kw">use </span>ibc_proto::Protobuf;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::client_state::{
     ClientState <span class="kw">as </span>TmClientState, UpgradeOptions <span class="kw">as </span>TmUpgradeOptions,
     TENDERMINT_CLIENT_STATE_TYPE_URL,
 };
-<span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_state::{
-    downcast_client_state, ClientState, UpgradeOptions,
-};
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_state::ClientState;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_type::ClientType;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::error::Error;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::trust_threshold::TrustThreshold;
 
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::error::ValidationError;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ClientId};
+<span class="kw">use </span>ibc_relayer_types::Height;
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">use </span>ibc_proto::ibc::mock::ClientState <span class="kw">as </span>RawMockClientState;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>ibc_relayer_types::mock::client_state::MockClientState;
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>ibc_relayer_types::mock::client_state::MOCK_CLIENT_STATE_TYPE_URL;
-<span class="kw">use </span>ibc_relayer_types::Height;
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = <span class="string">&quot;type&quot;</span>)]
@@ -349,7 +329,7 @@
 }
 
 <span class="kw">impl </span>AnyUpgradeOptions {
-    <span class="kw">fn </span>as_tm_upgrade_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>TmUpgradeOptions&gt; {
+    <span class="kw">fn </span>into_tm_upgrade_options(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TmUpgradeOptions&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             AnyUpgradeOptions::Tendermint(tm) =&gt; <span class="prelude-val">Some</span>(tm),
             <span class="attr">#[cfg(test)]
@@ -357,8 +337,6 @@
         }
     }
 }
-
-<span class="kw">impl </span>UpgradeOptions <span class="kw">for </span>AnyUpgradeOptions {}
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = <span class="string">&quot;type&quot;</span>)]
@@ -464,18 +442,20 @@
         <span class="kw">match </span>value {
             AnyClientState::Tendermint(value) =&gt; Any {
                 type_url: TENDERMINT_CLIENT_STATE_TYPE_URL.to_string(),
-                value: Protobuf::&lt;RawTmClientState&gt;::encode_vec(<span class="kw-2">&amp;</span>value),
+                value: Protobuf::&lt;RawTmClientState&gt;::encode_vec(value),
             },
             <span class="attr">#[cfg(test)]
             </span>AnyClientState::Mock(value) =&gt; Any {
                 type_url: MOCK_CLIENT_STATE_TYPE_URL.to_string(),
-                value: Protobuf::&lt;RawMockClientState&gt;::encode_vec(<span class="kw-2">&amp;</span>value),
+                value: Protobuf::&lt;RawMockClientState&gt;::encode_vec(value),
             },
         }
     }
 }
 
 <span class="kw">impl </span>ClientState <span class="kw">for </span>AnyClientState {
+    <span class="kw">type </span>UpgradeOptions = AnyUpgradeOptions;
+
     <span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChainId {
         <span class="kw">match </span><span class="self">self </span>{
             AnyClientState::Tendermint(tm_state) =&gt; tm_state.chain_id(),
@@ -500,24 +480,21 @@
     <span class="kw">fn </span>upgrade(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         upgrade_height: Height,
-        upgrade_options: <span class="kw-2">&amp;</span><span class="kw">dyn </span>UpgradeOptions,
+        upgrade_options: AnyUpgradeOptions,
         chain_id: ChainId,
     ) {
-        <span class="kw">let </span>upgrade_options = upgrade_options
-            .as_any()
-            .downcast_ref::&lt;AnyUpgradeOptions&gt;()
-            .expect(<span class="string">&quot;UpgradeOptions not of type AnyUpgradeOptions&quot;</span>);
-
         <span class="kw">match </span><span class="self">self </span>{
-            AnyClientState::Tendermint(tm_state) =&gt; tm_state.upgrade(
-                upgrade_height,
-                upgrade_options.as_tm_upgrade_options().unwrap(),
-                chain_id,
-            ),
+            AnyClientState::Tendermint(tm_state) =&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(upgrade_options) = upgrade_options.into_tm_upgrade_options() {
+                    tm_state.upgrade(upgrade_height, upgrade_options, chain_id);
+                }
+                <span class="comment">// TODO: Handle case where upgrade options are not of the right type,
+                //       not a problem in practice for now but good to have.
+            </span>}
 
             <span class="attr">#[cfg(test)]
             </span>AnyClientState::Mock(mock_state) =&gt; {
-                mock_state.upgrade(upgrade_height, upgrade_options, chain_id)
+                mock_state.upgrade(upgrade_height, (), chain_id);
             }
         }
     }
@@ -542,21 +519,6 @@
 </span><span class="kw">impl </span>From&lt;MockClientState&gt; <span class="kw">for </span>AnyClientState {
     <span class="kw">fn </span>from(cs: MockClientState) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Mock(cs)
-    }
-}
-
-<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span><span class="kw">dyn </span>ClientState&gt; <span class="kw">for </span>AnyClientState {
-    <span class="kw">fn </span>from(client_state: <span class="kw-2">&amp;</span><span class="kw">dyn </span>ClientState) -&gt; <span class="self">Self </span>{
-        <span class="attr">#[cfg(test)]
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(cs) = downcast_client_state::&lt;MockClientState&gt;(client_state) {
-            <span class="kw">return </span>AnyClientState::from(<span class="kw-2">*</span>cs);
-        }
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(cs) = downcast_client_state::&lt;TmClientState&gt;(client_state) {
-            AnyClientState::from(cs.clone())
-        } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>()
-        }
     }
 }
 

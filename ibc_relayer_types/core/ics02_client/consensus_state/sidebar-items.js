@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["downcast_consensus_state"],"trait":["ConsensusState"]};
+window.SIDEBAR_ITEMS = {"trait":["ConsensusState"]};

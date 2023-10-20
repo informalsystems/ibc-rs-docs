@@ -135,37 +135,16 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::time::Duration;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_proto::ibc::mock::ClientState <span class="kw">as </span>RawMockClientState;
-<span class="kw">use </span>ibc_proto::protobuf::Protobuf;
+<span class="kw">use </span>ibc_proto::Protobuf;
 
-<span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::client_state::{ClientState, UpgradeOptions};
+<span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::client_state::ClientState;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::client_type::ClientType;
-<span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::consensus_state::ConsensusState;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics02_client::error::Error;
 
 <span class="kw">use </span><span class="kw">crate</span>::core::ics24_host::identifier::ChainId;
@@ -176,20 +155,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::Height;
 
 <span class="kw">pub const </span>MOCK_CLIENT_STATE_TYPE_URL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/ibc.mock.ClientState&quot;</span>;
-
-<span class="doccomment">/// A mock of an IBC client record as it is stored in a mock context.
-/// For testing ICS02 handlers mostly, cf. `MockClientContext`.
-</span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>MockClientRecord {
-    <span class="doccomment">/// The type of this client.
-    </span><span class="kw">pub </span>client_type: ClientType,
-
-    <span class="doccomment">/// The client state (representing only the latest height at the moment).
-    </span><span class="kw">pub </span>client_state: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>ClientState&gt;&gt;,
-
-    <span class="doccomment">/// Mapping of heights to consensus states for this client.
-    </span><span class="kw">pub </span>consensus_states: HashMap&lt;Height, Box&lt;<span class="kw">dyn </span>ConsensusState&gt;&gt;,
-}
 
 <span class="doccomment">/// A mock of a client state. For an example of a real structure that this mocks, you can see
 /// `ClientState` of ics07_tendermint/client_state.rs.
@@ -269,12 +234,14 @@
     <span class="kw">fn </span>from(client_state: MockClientState) -&gt; <span class="self">Self </span>{
         Any {
             type_url: MOCK_CLIENT_STATE_TYPE_URL.to_string(),
-            value: Protobuf::&lt;RawMockClientState&gt;::encode_vec(<span class="kw-2">&amp;</span>client_state),
+            value: Protobuf::&lt;RawMockClientState&gt;::encode_vec(client_state),
         }
     }
 }
 
 <span class="kw">impl </span>ClientState <span class="kw">for </span>MockClientState {
+    <span class="kw">type </span>UpgradeOptions = ();
+
     <span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChainId {
         <span class="macro">unimplemented!</span>()
     }
@@ -291,12 +258,7 @@
         <span class="self">self</span>.frozen_height
     }
 
-    <span class="kw">fn </span>upgrade(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _upgrade_height: Height,
-        _upgrade_options: <span class="kw-2">&amp;</span><span class="kw">dyn </span>UpgradeOptions,
-        _chain_id: ChainId,
-    ) {
+    <span class="kw">fn </span>upgrade(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _upgrade_height: Height, _upgrade_options: (), _chain_id: ChainId) {
         <span class="macro">unimplemented!</span>()
     }
 
