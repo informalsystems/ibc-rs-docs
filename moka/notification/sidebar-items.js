@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DeliveryMode","RemovalCause"],"struct":["Configuration","ConfigurationBuilder"]};
+window.SIDEBAR_ITEMS = {"enum":["RemovalCause"],"type":["ListenerFuture"]};

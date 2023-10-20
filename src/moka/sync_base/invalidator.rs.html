@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.11.3/src/sync_base/invalidator.rs`."><title>invalidator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.1/src/sync_base/invalidator.rs`."><title>invalidator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -384,144 +384,29 @@
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
-<a href="#450" id="450">450</a>
-<a href="#451" id="451">451</a>
-<a href="#452" id="452">452</a>
-<a href="#453" id="453">453</a>
-<a href="#454" id="454">454</a>
-<a href="#455" id="455">455</a>
-<a href="#456" id="456">456</a>
-<a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
-<a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
-<a href="#478" id="478">478</a>
-<a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a>
-<a href="#482" id="482">482</a>
-<a href="#483" id="483">483</a>
-<a href="#484" id="484">484</a>
-<a href="#485" id="485">485</a>
-<a href="#486" id="486">486</a>
-<a href="#487" id="487">487</a>
-<a href="#488" id="488">488</a>
-<a href="#489" id="489">489</a>
-<a href="#490" id="490">490</a>
-<a href="#491" id="491">491</a>
-<a href="#492" id="492">492</a>
-<a href="#493" id="493">493</a>
-<a href="#494" id="494">494</a>
-<a href="#495" id="495">495</a>
-<a href="#496" id="496">496</a>
-</pre></div><pre class="rust"><code><span class="kw">use super</span>::{base_cache::Inner, PredicateId, PredicateIdStr};
+</pre></div><pre class="rust"><code><span class="kw">use super</span>::{PredicateId, PredicateIdStr};
 <span class="kw">use crate</span>::{
     common::{
-        concurrent::{
-            thread_pool::{PoolName, ThreadPool, ThreadPoolRegistry},
-            unsafe_weak_pointer::UnsafeWeakPointer,
-            AccessTime, KvEntry, ValueEntry,
-        },
+        concurrent::{AccessTime, KvEntry, ValueEntry},
         time::Instant,
     },
     PredicateError,
 };
 
-<span class="kw">use </span>parking_lot::{Mutex, RwLock};
+<span class="kw">use </span>parking_lot::{Mutex, MutexGuard};
 <span class="kw">use </span>std::{
-    collections::HashMap,
     hash::{BuildHasher, Hash},
-    marker::PhantomData,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc, Weak,
+        Arc,
     },
-    time::Duration,
 };
 <span class="kw">use </span>triomphe::Arc <span class="kw">as </span>TrioArc;
 <span class="kw">use </span>uuid::Uuid;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>PredicateFun&lt;K, V&gt; = Arc&lt;<span class="kw">dyn </span>Fn(<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>V) -&gt; bool + Send + Sync + <span class="lifetime">&#39;static</span>&gt;;
+
+<span class="kw">const </span>PREDICATE_MAP_NUM_SEGMENTS: usize = <span class="number">16</span>;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>GetOrRemoveEntry&lt;K, V&gt; {
     <span class="kw">fn </span>get_value_entry(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;, hash: u64) -&gt; <span class="prelude-ty">Option</span>&lt;TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;&gt;;
@@ -563,54 +448,30 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>InvalidationResult&lt;K, V&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) invalidated: Vec&lt;KvEntry&lt;K, V&gt;&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) is_done: bool,
-}
-
-<span class="kw">impl</span>&lt;K, V&gt; InvalidationResult&lt;K, V&gt; {
-    <span class="kw">fn </span>new(invalidated: Vec&lt;KvEntry&lt;K, V&gt;&gt;, is_done: bool) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            invalidated,
-            is_done,
-        }
-    }
-}
-
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Invalidator&lt;K, V, S&gt; {
-    predicates: RwLock&lt;HashMap&lt;PredicateId, Predicate&lt;K, V&gt;&gt;&gt;,
+    predicates: <span class="kw">crate</span>::cht::SegmentedHashMap&lt;PredicateId, Predicate&lt;K, V&gt;, S&gt;,
     is_empty: AtomicBool,
-    scan_context: Arc&lt;ScanContext&lt;K, V, S&gt;&gt;,
-    thread_pool: Arc&lt;ThreadPool&gt;,
-}
-
-<span class="kw">impl</span>&lt;K, V, S&gt; Drop <span class="kw">for </span>Invalidator&lt;K, V, S&gt; {
-    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>ctx = <span class="kw-2">&amp;</span><span class="self">self</span>.scan_context;
-        <span class="comment">// Disallow to create and run a scanning task by now.
-        </span>ctx.is_shutting_down.store(<span class="bool-val">true</span>, Ordering::Release);
-
-        <span class="comment">// Wait for the scanning task to finish. (busy loop)
-        </span><span class="kw">while </span>ctx.is_running.load(Ordering::Acquire) {
-            std::thread::sleep(Duration::from_millis(<span class="number">1</span>));
-        }
-
-        ThreadPoolRegistry::release_pool(<span class="kw-2">&amp;</span><span class="self">self</span>.thread_pool);
-    }
+    scan_context: Arc&lt;ScanContext&lt;K, V&gt;&gt;,
 }
 
 <span class="comment">//
 // Crate public methods.
 //
 </span><span class="kw">impl</span>&lt;K, V, S&gt; Invalidator&lt;K, V, S&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(cache: Weak&lt;Inner&lt;K, V, S&gt;&gt;) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>thread_pool = ThreadPoolRegistry::acquire_pool(PoolName::Invalidator);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(hasher: S) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>S: BuildHasher,
+    {
+        <span class="kw">const </span>CAPACITY: usize = <span class="number">0</span>;
+        <span class="kw">let </span>predicates = <span class="kw">crate</span>::cht::SegmentedHashMap::with_num_segments_capacity_and_hasher(
+            PREDICATE_MAP_NUM_SEGMENTS,
+            CAPACITY,
+            hasher,
+        );
         <span class="self">Self </span>{
-            predicates: RwLock::new(HashMap::new()),
+            predicates,
             is_empty: AtomicBool::new(<span class="bool-val">true</span>),
-            <span class="attr">#[cfg_attr(beta_clippy, allow(clippy::arc_with_non_send_sync))]
-            </span>scan_context: Arc::new(ScanContext::new(cache)),
-            thread_pool,
+            scan_context: Arc::new(ScanContext::default()),
         }
     }
 
@@ -618,18 +479,23 @@
         <span class="self">self</span>.is_empty.load(Ordering::Acquire)
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove_predicates_registered_before(<span class="kw-2">&amp;</span><span class="self">self</span>, ts: Instant) {
-        <span class="kw">let </span><span class="kw-2">mut </span>pred_map = <span class="self">self</span>.predicates.write();
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove_predicates_registered_before(<span class="kw-2">&amp;</span><span class="self">self</span>, ts: Instant)
+    <span class="kw">where
+        </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
+        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        S: BuildHasher,
+    {
+        <span class="kw">let </span>pred_map = <span class="kw-2">&amp;</span><span class="self">self</span>.predicates;
 
         <span class="kw">let </span>removing_ids = pred_map
             .iter()
             .filter(|(<span class="kw">_</span>, pred)| pred.registered_at &lt;= ts)
             .map(|(id, <span class="kw">_</span>)| id)
-            .cloned()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="kw">for </span>id <span class="kw">in </span>removing_ids {
-            pred_map.remove(<span class="kw-2">&amp;</span>id);
+            <span class="kw">let </span>hash = pred_map.hash(<span class="kw-2">&amp;</span>id);
+            pred_map.remove(hash, |k| k == <span class="kw-2">&amp;</span>id);
         }
 
         <span class="kw">if </span>pred_map.is_empty() {
@@ -641,20 +507,26 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         predicate: PredicateFun&lt;K, V&gt;,
         registered_at: Instant,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;PredicateId, PredicateError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;PredicateId, PredicateError&gt;
+    <span class="kw">where
+        </span>K: Hash + Eq,
+        S: BuildHasher,
+    {
         <span class="kw">const </span>MAX_RETRY: usize = <span class="number">1_000</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>tries = <span class="number">0</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>preds = <span class="self">self</span>.predicates.write();
+        <span class="kw">let </span>preds = <span class="kw-2">&amp;</span><span class="self">self</span>.predicates;
 
         <span class="kw">while </span>tries &lt; MAX_RETRY {
             <span class="kw">let </span>id = Uuid::new_v4().as_hyphenated().to_string();
-            <span class="kw">if </span>preds.contains_key(<span class="kw-2">&amp;</span>id) {
+
+            <span class="kw">let </span>hash = preds.hash(<span class="kw-2">&amp;</span>id);
+            <span class="kw">if </span>preds.contains_key(hash, |k| k == <span class="kw-2">&amp;</span>id) {
                 tries += <span class="number">1</span>;
 
                 <span class="kw">continue</span>; <span class="comment">// Retry
             </span>}
             <span class="kw">let </span>pred = Predicate::new(<span class="kw-2">&amp;</span>id, predicate, registered_at);
-            preds.insert(id.clone(), pred);
+            preds.insert_entry_and(id.clone(), hash, pred, |<span class="kw">_</span>, <span class="kw">_</span>| ());
             <span class="self">self</span>.is_empty.store(<span class="bool-val">false</span>, Ordering::Release);
 
             <span class="kw">return </span><span class="prelude-val">Ok</span>(id);
@@ -668,62 +540,64 @@
 
     <span class="comment">// This method will be called by the get method of Cache.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>apply_predicates(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; bool {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>apply_predicates(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; bool
+    <span class="kw">where
+        </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
+        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        S: BuildHasher,
+    {
         <span class="kw">if </span><span class="self">self</span>.is_empty() {
             <span class="bool-val">false
         </span>} <span class="kw">else if let </span><span class="prelude-val">Some</span>(ts) = entry.last_modified() {
-            <span class="self">Self</span>::do_apply_predicates(<span class="self">self</span>.predicates.read().values(), key, <span class="kw-2">&amp;</span>entry.value, ts)
+            <span class="self">Self</span>::do_apply_predicates(
+                <span class="self">self</span>.predicates.iter().map(|(<span class="kw">_</span>, v)| v),
+                key,
+                <span class="kw-2">&amp;</span>entry.value,
+                ts,
+            )
         } <span class="kw">else </span>{
             <span class="bool-val">false
         </span>}
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_task_running(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.scan_context.is_running.load(Ordering::Acquire)
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>submit_task(<span class="kw-2">&amp;</span><span class="self">self</span>, candidates: Vec&lt;KeyDateLite&lt;K&gt;&gt;, is_truncated: bool)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>scan_and_invalidate&lt;C&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        cache: <span class="kw-2">&amp;</span>C,
+        candidates: Vec&lt;KeyDateLite&lt;K&gt;&gt;,
+        is_truncated: bool,
+    ) -&gt; (Vec&lt;KvEntry&lt;K, V&gt;&gt;, bool)
     <span class="kw">where
-        </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>C: GetOrRemoveEntry&lt;K, V&gt;,
+        K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
         V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-        S: BuildHasher + Send + Sync + <span class="lifetime">&#39;static</span>,
+        S: BuildHasher,
     {
-        <span class="kw">let </span>ctx = <span class="kw-2">&amp;</span><span class="self">self</span>.scan_context;
-
-        <span class="comment">// Do not submit a task if this invalidator is about to be dropped.
-        </span><span class="kw">if </span>ctx.is_shutting_down.load(Ordering::Acquire) {
-            <span class="kw">return</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>predicates = <span class="self">self</span>.scan_context.predicates.lock();
+        <span class="kw">if </span>predicates.is_empty() {
+            <span class="kw-2">*</span>predicates = <span class="self">self</span>.predicates.iter().map(|(_k, v)| v).collect();
         }
 
-        <span class="comment">// Ensure there is no pending task and result.
-        </span><span class="macro">assert!</span>(!<span class="self">self</span>.is_task_running());
-        <span class="macro">assert!</span>(ctx.result.lock().is_none());
+        <span class="kw">let </span><span class="kw-2">mut </span>invalidated = Vec::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>newest_timestamp = <span class="prelude-val">None</span>;
 
-        <span class="comment">// Populate ctx.predicates if it is empty.
-        </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>ps = ctx.predicates.lock();
-            <span class="kw">if </span>ps.is_empty() {
-                <span class="kw-2">*</span>ps = <span class="self">self</span>.predicates.read().values().cloned().collect();
+        <span class="kw">for </span>candidate <span class="kw">in </span><span class="kw-2">&amp;</span>candidates {
+            <span class="kw">let </span>key = <span class="kw-2">&amp;</span>candidate.key;
+            <span class="kw">let </span>hash = candidate.hash;
+            <span class="kw">let </span>ts = candidate.timestamp;
+            <span class="kw">if </span><span class="self">self</span>.apply(<span class="kw-2">&amp;</span>predicates, cache, key, hash, ts) {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="self">Self</span>::invalidate(cache, key, hash, ts) {
+                    invalidated.push(KvEntry {
+                        key: Arc::clone(key),
+                        entry,
+                    })
+                }
             }
+            newest_timestamp = <span class="prelude-val">Some</span>(ts);
         }
 
-        <span class="self">self</span>.scan_context.is_running.store(<span class="bool-val">true</span>, Ordering::Release);
+        <span class="self">self</span>.remove_finished_predicates(predicates, is_truncated, newest_timestamp);
 
-        <span class="kw">let </span>task = ScanTask::new(<span class="kw-2">&amp;</span><span class="self">self</span>.scan_context, candidates, is_truncated);
-        <span class="self">self</span>.thread_pool.pool.execute(<span class="kw">move </span>|| {
-            task.execute();
-        });
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>task_result(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;InvalidationResult&lt;K, V&gt;&gt; {
-        <span class="macro">assert!</span>(!<span class="self">self</span>.is_task_running());
-        <span class="kw">let </span>ctx = <span class="kw-2">&amp;</span><span class="self">self</span>.scan_context;
-
-        ctx.result.lock().take().map(|result| {
-            <span class="self">self</span>.remove_finished_predicates(ctx, <span class="kw-2">&amp;</span>result);
-            <span class="kw">let </span>is_done = ctx.predicates.lock().is_empty();
-            InvalidationResult::new(result.invalidated, is_done)
-        })
+        (invalidated, <span class="self">self</span>.predicates.is_empty())
     }
 }
 
@@ -732,9 +606,9 @@
 //
 </span><span class="kw">impl</span>&lt;K, V, S&gt; Invalidator&lt;K, V, S&gt; {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>do_apply_predicates&lt;<span class="lifetime">&#39;a</span>, I&gt;(predicates: I, key: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V, ts: Instant) -&gt; bool
+    </span><span class="kw">fn </span>do_apply_predicates&lt;I&gt;(predicates: I, key: <span class="kw-2">&amp;</span>K, value: <span class="kw-2">&amp;</span>V, ts: Instant) -&gt; bool
     <span class="kw">where
-        </span>I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Predicate&lt;K, V&gt;&gt;,
+        </span>I: Iterator&lt;Item = Predicate&lt;K, V&gt;&gt;,
     {
         <span class="kw">for </span>predicate <span class="kw">in </span>predicates {
             <span class="kw">if </span>predicate.is_applicable(ts) &amp;&amp; predicate.apply(key, value) {
@@ -744,11 +618,18 @@
         <span class="bool-val">false
     </span>}
 
-    <span class="kw">fn </span>remove_finished_predicates(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;</span>ScanContext&lt;K, V, S&gt;, result: <span class="kw-2">&amp;</span>ScanResult&lt;K, V&gt;) {
-        <span class="kw">let </span><span class="kw-2">mut </span>predicates = ctx.predicates.lock();
-
-        <span class="kw">if </span>result.is_truncated {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(ts) = result.newest_timestamp {
+    <span class="kw">fn </span>remove_finished_predicates(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="kw-2">mut </span>predicates: MutexGuard&lt;<span class="lifetime">&#39;_</span>, Vec&lt;Predicate&lt;K, V&gt;&gt;&gt;,
+        is_truncated: bool,
+        newest_timestamp: <span class="prelude-ty">Option</span>&lt;Instant&gt;,
+    ) <span class="kw">where
+        </span>K: Hash + Eq,
+        S: BuildHasher,
+    {
+        <span class="kw">let </span>predicates = <span class="kw-2">&amp;mut *</span>predicates;
+        <span class="kw">if </span>is_truncated {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(ts) = newest_timestamp {
                 <span class="kw">let </span>(active, finished): (Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;) =
                     predicates.drain(..).partition(|p| p.is_applicable(ts));
 
@@ -756,22 +637,77 @@
                 </span><span class="self">self</span>.remove_predicates(<span class="kw-2">&amp;</span>finished);
                 <span class="comment">// Set the active predicates to the scan context.
                 </span><span class="kw-2">*</span>predicates = active;
+            } <span class="kw">else </span>{
+                <span class="macro">unreachable!</span>();
             }
         } <span class="kw">else </span>{
             <span class="comment">// Remove all the predicates from the predicate registry and scan context.
-            </span><span class="self">self</span>.remove_predicates(<span class="kw-2">&amp;</span>predicates);
+            </span><span class="self">self</span>.remove_predicates(predicates);
             predicates.clear();
         }
     }
 
-    <span class="kw">fn </span>remove_predicates(<span class="kw-2">&amp;</span><span class="self">self</span>, predicates: <span class="kw-2">&amp;</span>[Predicate&lt;K, V&gt;]) {
-        <span class="kw">let </span><span class="kw-2">mut </span>pred_map = <span class="self">self</span>.predicates.write();
+    <span class="kw">fn </span>remove_predicates(<span class="kw-2">&amp;</span><span class="self">self</span>, predicates: <span class="kw-2">&amp;</span>[Predicate&lt;K, V&gt;])
+    <span class="kw">where
+        </span>K: Hash + Eq,
+        S: BuildHasher,
+    {
+        <span class="kw">let </span>pred_map = <span class="kw-2">&amp;</span><span class="self">self</span>.predicates;
         predicates.iter().for_each(|p| {
-            pred_map.remove(p.id());
+            <span class="kw">let </span>hash = pred_map.hash(p.id());
+            pred_map.remove(hash, |k| k == p.id());
         });
+
         <span class="kw">if </span>pred_map.is_empty() {
             <span class="self">self</span>.is_empty.store(<span class="bool-val">true</span>, Ordering::Release);
         }
+    }
+
+    <span class="kw">fn </span>apply&lt;C&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        predicates: <span class="kw-2">&amp;</span>[Predicate&lt;K, V&gt;],
+        cache: <span class="kw-2">&amp;</span>C,
+        key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;,
+        hash: u64,
+        ts: Instant,
+    ) -&gt; bool
+    <span class="kw">where
+        </span>C: GetOrRemoveEntry&lt;K, V&gt;,
+    {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = cache.get_value_entry(key, hash) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(lm) = entry.last_modified() {
+                <span class="kw">if </span>lm == ts {
+                    <span class="kw">return </span>Invalidator::&lt;<span class="kw">_</span>, <span class="kw">_</span>, S&gt;::do_apply_predicates(
+                        predicates.iter().cloned(),
+                        key,
+                        <span class="kw-2">&amp;</span>entry.value,
+                        lm,
+                    );
+                }
+            }
+        }
+
+        <span class="bool-val">false
+    </span>}
+
+    <span class="kw">fn </span>invalidate&lt;C&gt;(
+        cache: <span class="kw-2">&amp;</span>C,
+        key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;,
+        hash: u64,
+        ts: Instant,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;&gt;
+    <span class="kw">where
+        </span>C: GetOrRemoveEntry&lt;K, V&gt;,
+        K: Send + Sync + <span class="lifetime">&#39;static</span>,
+        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    {
+        cache.remove_key_value_if(key, hash, |<span class="kw">_</span>, v| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(lm) = v.last_modified() {
+                lm == ts
+            } <span class="kw">else </span>{
+                <span class="bool-val">false
+            </span>}
+        })
     }
 }
 
@@ -781,28 +717,18 @@
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">impl</span>&lt;K, V, S&gt; Invalidator&lt;K, V, S&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>predicate_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.predicates.read().len()
+        <span class="self">self</span>.predicates.len()
     }
 }
 
-<span class="kw">struct </span>ScanContext&lt;K, V, S&gt; {
+<span class="kw">struct </span>ScanContext&lt;K, V&gt; {
     predicates: Mutex&lt;Vec&lt;Predicate&lt;K, V&gt;&gt;&gt;,
-    cache: Mutex&lt;UnsafeWeakPointer&lt;Inner&lt;K, V, S&gt;&gt;&gt;,
-    result: Mutex&lt;<span class="prelude-ty">Option</span>&lt;ScanResult&lt;K, V&gt;&gt;&gt;,
-    is_running: AtomicBool,
-    is_shutting_down: AtomicBool,
-    _marker: PhantomData&lt;S&gt;,
 }
 
-<span class="kw">impl</span>&lt;K, V, S&gt; ScanContext&lt;K, V, S&gt; {
-    <span class="kw">fn </span>new(cache: Weak&lt;Inner&lt;K, V, S&gt;&gt;) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span>ScanContext&lt;K, V&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             predicates: Mutex::new(Vec::default()),
-            cache: Mutex::new(UnsafeWeakPointer::from_weak_arc(cache)),
-            result: Mutex::new(<span class="prelude-val">None</span>),
-            is_running: AtomicBool::new(<span class="bool-val">false</span>),
-            is_shutting_down: AtomicBool::new(<span class="bool-val">false</span>),
-            _marker: PhantomData,
         }
     }
 }
@@ -842,152 +768,6 @@
 
     <span class="kw">fn </span>apply(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K, value: <span class="kw-2">&amp;</span>V) -&gt; bool {
         (<span class="self">self</span>.f)(key, value)
-    }
-}
-
-<span class="kw">struct </span>ScanTask&lt;K, V, S&gt; {
-    scan_context: Arc&lt;ScanContext&lt;K, V, S&gt;&gt;,
-    candidates: Vec&lt;KeyDateLite&lt;K&gt;&gt;,
-    is_truncated: bool,
-}
-
-<span class="kw">impl</span>&lt;K, V, S&gt; ScanTask&lt;K, V, S&gt;
-<span class="kw">where
-    </span>K: Hash + Eq,
-    S: BuildHasher,
-{
-    <span class="kw">fn </span>new(
-        scan_context: <span class="kw-2">&amp;</span>Arc&lt;ScanContext&lt;K, V, S&gt;&gt;,
-        candidates: Vec&lt;KeyDateLite&lt;K&gt;&gt;,
-        is_truncated: bool,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            scan_context: Arc::clone(scan_context),
-            candidates,
-            is_truncated,
-        }
-    }
-
-    <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>)
-    <span class="kw">where
-        </span>K: Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    {
-        <span class="kw">let </span>cache_lock = <span class="self">self</span>.scan_context.cache.lock();
-
-        <span class="comment">// Restore the Weak pointer to Inner&lt;K, V, S&gt;.
-        </span><span class="kw">let </span>weak = <span class="kw">unsafe </span>{ cache_lock.as_weak_arc() };
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(inner_cache) = weak.upgrade() {
-            <span class="comment">// TODO: Protect this call with catch_unwind().
-            </span><span class="kw-2">*</span><span class="self">self</span>.scan_context.result.lock() = <span class="prelude-val">Some</span>(<span class="self">self</span>.do_execute(<span class="kw-2">&amp;</span>inner_cache));
-
-            <span class="comment">// Change this flag here (before downgrading the Arc to a Weak) to avoid a (soft)
-            // deadlock. (forget_arc might trigger to drop the cache, which is in turn to drop
-            // this invalidator. To do it, this flag must be false, otherwise dropping self
-            // will be blocked forever)
-            </span><span class="self">self</span>.scan_context.is_running.store(<span class="bool-val">false</span>, Ordering::Release);
-            <span class="comment">// Avoid to drop the Arc&lt;Inner&lt;K, V, S&gt;&gt;.
-            </span>UnsafeWeakPointer::forget_arc(inner_cache);
-        } <span class="kw">else </span>{
-            <span class="kw-2">*</span><span class="self">self</span>.scan_context.result.lock() = <span class="prelude-val">Some</span>(ScanResult::default());
-            <span class="self">self</span>.scan_context.is_running.store(<span class="bool-val">false</span>, Ordering::Release);
-            <span class="comment">// Avoid to drop the Weak&lt;Inner&lt;K, V, S&gt;&gt;.
-            </span>UnsafeWeakPointer::forget_weak_arc(weak);
-        }
-    }
-
-    <span class="kw">fn </span>do_execute&lt;C&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;</span>Arc&lt;C&gt;) -&gt; ScanResult&lt;K, V&gt;
-    <span class="kw">where
-        </span>Arc&lt;C&gt;: GetOrRemoveEntry&lt;K, V&gt;,
-        K: Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    {
-        <span class="kw">let </span>predicates = <span class="self">self</span>.scan_context.predicates.lock();
-        <span class="kw">let </span><span class="kw-2">mut </span>invalidated = Vec::default();
-        <span class="kw">let </span><span class="kw-2">mut </span>newest_timestamp = <span class="prelude-val">None</span>;
-
-        <span class="kw">for </span>candidate <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.candidates {
-            <span class="kw">let </span>key = <span class="kw-2">&amp;</span>candidate.key;
-            <span class="kw">let </span>hash = candidate.hash;
-            <span class="kw">let </span>ts = candidate.timestamp;
-            <span class="kw">if </span><span class="self">Self</span>::apply(<span class="kw-2">&amp;</span>predicates, cache, key, hash, ts) {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="self">Self</span>::invalidate(cache, key, hash, ts) {
-                    invalidated.push(KvEntry {
-                        key: Arc::clone(key),
-                        entry,
-                    })
-                }
-            }
-            newest_timestamp = <span class="prelude-val">Some</span>(ts);
-        }
-
-        ScanResult {
-            invalidated,
-            is_truncated: <span class="self">self</span>.is_truncated,
-            newest_timestamp,
-        }
-    }
-
-    <span class="kw">fn </span>apply&lt;C&gt;(
-        predicates: <span class="kw-2">&amp;</span>[Predicate&lt;K, V&gt;],
-        cache: <span class="kw-2">&amp;</span>Arc&lt;C&gt;,
-        key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;,
-        hash: u64,
-        ts: Instant,
-    ) -&gt; bool
-    <span class="kw">where
-        </span>Arc&lt;C&gt;: GetOrRemoveEntry&lt;K, V&gt;,
-    {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = cache.get_value_entry(key, hash) {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(lm) = entry.last_modified() {
-                <span class="kw">if </span>lm == ts {
-                    <span class="kw">return </span>Invalidator::&lt;<span class="kw">_</span>, <span class="kw">_</span>, S&gt;::do_apply_predicates(
-                        predicates.iter(),
-                        key,
-                        <span class="kw-2">&amp;</span>entry.value,
-                        lm,
-                    );
-                }
-            }
-        }
-
-        <span class="bool-val">false
-    </span>}
-
-    <span class="kw">fn </span>invalidate&lt;C&gt;(
-        cache: <span class="kw-2">&amp;</span>Arc&lt;C&gt;,
-        key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;,
-        hash: u64,
-        ts: Instant,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;&gt;
-    <span class="kw">where
-        </span>Arc&lt;C&gt;: GetOrRemoveEntry&lt;K, V&gt;,
-        K: Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    {
-        cache.remove_key_value_if(key, hash, |<span class="kw">_</span>, v| {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(lm) = v.last_modified() {
-                lm == ts
-            } <span class="kw">else </span>{
-                <span class="bool-val">false
-            </span>}
-        })
-    }
-}
-
-<span class="kw">struct </span>ScanResult&lt;K, V&gt; {
-    invalidated: Vec&lt;KvEntry&lt;K, V&gt;&gt;,
-    is_truncated: bool,
-    newest_timestamp: <span class="prelude-ty">Option</span>&lt;Instant&gt;,
-}
-
-<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span>ScanResult&lt;K, V&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            invalidated: Vec::default(),
-            is_truncated: <span class="bool-val">false</span>,
-            newest_timestamp: <span class="prelude-val">None</span>,
-        }
     }
 }
 </code></pre></div></section></main></body></html>

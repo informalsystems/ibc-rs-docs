@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Split"]};
+window.SIDEBAR_ITEMS = {"struct":["RawSplit"],"type":["Split"]};
