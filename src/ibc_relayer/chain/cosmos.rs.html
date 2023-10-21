@@ -2485,22 +2485,6 @@
 <a href="#2485" id="2485">2485</a>
 <a href="#2486" id="2486">2486</a>
 <a href="#2487" id="2487">2487</a>
-<a href="#2488" id="2488">2488</a>
-<a href="#2489" id="2489">2489</a>
-<a href="#2490" id="2490">2490</a>
-<a href="#2491" id="2491">2491</a>
-<a href="#2492" id="2492">2492</a>
-<a href="#2493" id="2493">2493</a>
-<a href="#2494" id="2494">2494</a>
-<a href="#2495" id="2495">2495</a>
-<a href="#2496" id="2496">2496</a>
-<a href="#2497" id="2497">2497</a>
-<a href="#2498" id="2498">2498</a>
-<a href="#2499" id="2499">2499</a>
-<a href="#2500" id="2500">2500</a>
-<a href="#2501" id="2501">2501</a>
-<a href="#2502" id="2502">2502</a>
-<a href="#2503" id="2503">2503</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -4461,48 +4445,32 @@
         );
         <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;query_next_sequence_receive&quot;</span>);
 
-        <span class="kw">match </span>include_proof {
-            IncludeProof::Yes =&gt; {
-                <span class="kw">let </span>res = <span class="self">self</span>.query(
-                    SeqRecvsPath(request.port_id, request.channel_id),
-                    request.height,
-                    <span class="bool-val">true</span>,
-                )<span class="question-mark">?</span>;
+        <span class="kw">let </span>prove = include_proof.to_bool();
 
-                <span class="comment">// Note: We expect the return to be a u64 encoded in big-endian. Refer to ibc-go:
-                // https://github.com/cosmos/ibc-go/blob/25767f6bdb5bab2c2a116b41d92d753c93e18121/modules/core/04-channel/client/utils/utils.go#L191
-                </span><span class="kw">if </span>res.value.len() != <span class="number">8 </span>{
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::query(<span class="string">&quot;next_sequence_receive&quot;</span>.into()));
-                }
-                <span class="kw">let </span>seq: Sequence = Bytes::from(res.value).get_u64().into();
+        <span class="kw">let </span>res = <span class="self">self</span>.query(
+            SeqRecvsPath(request.port_id, request.channel_id),
+            request.height,
+            <span class="bool-val">true</span>,
+        )<span class="question-mark">?</span>;
 
-                <span class="kw">let </span>proof = res.proof.ok_or_else(Error::empty_response_proof)<span class="question-mark">?</span>;
-
-                <span class="prelude-val">Ok</span>((seq, <span class="prelude-val">Some</span>(proof)))
-            }
-            IncludeProof::No =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self
-                    </span>.block_on(
-                        ibc_proto::ibc::core::channel::v1::query_client::QueryClient::connect(
-                            <span class="self">self</span>.grpc_addr.clone(),
-                        ),
-                    )
-                    .map_err(Error::grpc_transport)<span class="question-mark">?</span>;
-
-                client = client.max_decoding_message_size(
-                    <span class="self">self</span>.config().max_grpc_decoding_size.get_bytes() <span class="kw">as </span>usize,
-                );
-
-                <span class="kw">let </span>request = tonic::Request::new(request.into());
-
-                <span class="kw">let </span>response = <span class="self">self
-                    </span>.block_on(client.next_sequence_receive(request))
-                    .map_err(|e| Error::grpc_status(e, <span class="string">&quot;query_next_sequence_receive&quot;</span>.to_owned()))<span class="question-mark">?
-                    </span>.into_inner();
-
-                <span class="prelude-val">Ok</span>((Sequence::from(response.next_sequence_receive), <span class="prelude-val">None</span>))
-            }
+        <span class="comment">// Note: We expect the return to be a u64 encoded in big-endian. Refer to ibc-go:
+        // https://github.com/cosmos/ibc-go/blob/25767f6bdb5bab2c2a116b41d92d753c93e18121/modules/core/04-channel/client/utils/utils.go#L191
+        </span><span class="kw">if </span>res.value.len() != <span class="number">8 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::query(<span class="macro">format!</span>(
+                <span class="string">&quot;next_sequence_receive: expected a u64 but got {} bytes of data&quot;</span>,
+                res.value.len()
+            )));
         }
+
+        <span class="kw">let </span>seq: Sequence = Bytes::from(res.value).get_u64().into();
+
+        <span class="kw">let </span>proof = <span class="kw">if </span>prove {
+            <span class="prelude-val">Some</span>(res.proof.ok_or_else(Error::empty_response_proof)<span class="question-mark">?</span>)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
+
+        <span class="prelude-val">Ok</span>((seq, proof))
     }
 
     <span class="doccomment">/// This function queries transactions for events matching certain criteria.
