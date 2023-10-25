@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Diagnostic","ErrorDetail"],"fn":["config_path","validate_config"],"struct":["DeprecatedGasAdjustmentSubdetail","DuplicateChainsSubdetail","Error","InvalidLogDirectiveSubdetail","InvalidModeSubdetail","InvalidTrustThresholdSubdetail","ZeroChainSubdetail"]};
+window.SIDEBAR_ITEMS = {"fn":["config_path"]};

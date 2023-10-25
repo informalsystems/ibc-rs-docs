@@ -387,7 +387,6 @@
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
 <a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>std::{
     fs,
@@ -400,7 +399,6 @@
 <span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>hdpath::StandardHDPath;
 <span class="kw">use </span>ibc_relayer::{
-    chain::ChainType,
     config::{ChainConfig, Config},
     keyring::{
         AnySigningKeyPair, KeyRing, Secp256k1KeyPair, SigningKeyPair, SigningKeyPairSized, Store,
@@ -497,7 +495,7 @@
         <span class="kw">let </span>name = <span class="self">self
             </span>.key_name
             .clone()
-            .unwrap_or_else(|| chain_config.key_name.clone());
+            .unwrap_or_else(|| chain_config.key_name().to_string());
 
         <span class="kw">let </span>hd_path = StandardHDPath::from_str(<span class="kw-2">&amp;</span><span class="self">self</span>.hd_path)
             .map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(<span class="string">&quot;invalid derivation path: {}&quot;</span>, <span class="self">self</span>.hd_path))<span class="question-mark">?</span>;
@@ -541,7 +539,7 @@
                         <span class="string">&quot;Added key &#39;{}&#39; ({}) on chain {}&quot;</span>,
                         opts.name,
                         key.account(),
-                        opts.config.id
+                        opts.config.id(),
                     ))
                     .exit(),
                     <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
@@ -565,7 +563,7 @@
                         <span class="string">&quot;Restored key &#39;{}&#39; ({}) on chain {}&quot;</span>,
                         opts.name,
                         key.account(),
-                        opts.config.id
+                        opts.config.id()
                     ))
                     .exit(),
                     <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
@@ -593,8 +591,8 @@
     hd_path: <span class="kw-2">&amp;</span>StandardHDPath,
     overwrite: bool,
 ) -&gt; eyre::Result&lt;AnySigningKeyPair&gt; {
-    <span class="kw">let </span>key_pair = <span class="kw">match </span>config.r#type {
-        ChainType::CosmosSdk =&gt; {
+    <span class="kw">let </span>key_pair = <span class="kw">match </span>config {
+        ChainConfig::CosmosSdk(config) =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>keyring = KeyRing::new_secp256k1(
                 Store::Test,
                 <span class="kw-2">&amp;</span>config.account_prefix,
@@ -626,8 +624,8 @@
     <span class="kw">let </span>mnemonic_content =
         fs::read_to_string(mnemonic).map_err(|<span class="kw">_</span>| <span class="macro">eyre!</span>(<span class="string">&quot;error reading the mnemonic file&quot;</span>))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>key_pair = <span class="kw">match </span>config.r#type {
-        ChainType::CosmosSdk =&gt; {
+    <span class="kw">let </span>key_pair = <span class="kw">match </span>config {
+        ChainConfig::CosmosSdk(config) =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>keyring = KeyRing::new_secp256k1(
                 Store::Test,
                 <span class="kw-2">&amp;</span>config.account_prefix,

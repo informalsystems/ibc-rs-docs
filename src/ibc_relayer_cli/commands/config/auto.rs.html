@@ -221,7 +221,6 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::chain_registry::get_configs;
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
@@ -229,14 +228,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::conclude::Output;
 
 <span class="kw">use </span>ibc_relayer::config::{store, ChainConfig, Config};
-<span class="kw">use </span>ibc_relayer::keyring::list_keys;
 
 <span class="kw">use </span>std::collections::HashSet;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>tracing::{info, warn};
 
 <span class="kw">fn </span>find_key(chain_config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
-    <span class="kw">let </span>keys = list_keys(chain_config).ok()<span class="question-mark">?</span>;
+    <span class="kw">let </span>keys = chain_config.list_keys().ok()<span class="question-mark">?</span>;
     keys.into_iter().next().map(|(name, <span class="kw">_</span>)| name)
 }
 
@@ -341,7 +339,7 @@
             .collect();
 
         <span class="comment">// Determine which chains were not fetched
-        </span><span class="kw">let </span>fetched_chains_set = HashSet::from_iter(chain_configs.iter().map(|c| c.id.name()));
+        </span><span class="kw">let </span>fetched_chains_set = HashSet::from_iter(chain_configs.iter().map(|c| c.id().name()));
         <span class="kw">let </span>missing_chains_set: HashSet&lt;<span class="kw">_</span>&gt; =
             sorted_names_set.difference(<span class="kw-2">&amp;</span>fetched_chains_set).collect();
 
@@ -352,15 +350,15 @@
         <span class="kw">for </span>(chain_config, key_option) <span class="kw">in </span>configs_and_keys {
             <span class="comment">// If a key is provided, use it
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_option {
-                <span class="macro">info!</span>(<span class="string">&quot;{}: uses key \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span>chain_config.id, <span class="kw-2">&amp;</span>key_name);
-                chain_config.key_name = key_name;
+                <span class="macro">info!</span>(<span class="string">&quot;{}: uses key \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span>chain_config.id(), <span class="kw-2">&amp;</span>key_name);
+                chain_config.set_key_name(key_name);
             } <span class="kw">else </span>{
                 <span class="comment">// Otherwise, find the key in the keystore
-                </span><span class="kw">let </span>chain_id = <span class="kw-2">&amp;</span>chain_config.id;
+                </span><span class="kw">let </span>chain_id = <span class="kw-2">&amp;</span>chain_config.id();
                 <span class="kw">let </span>key = find_key(chain_config);
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(key) = key {
-                    <span class="macro">info!</span>(<span class="string">&quot;{}: uses key &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>chain_id, <span class="kw-2">&amp;</span>key);
-                    chain_config.key_name = key;
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key {
+                    <span class="macro">info!</span>(<span class="string">&quot;{}: uses key &#39;{}&#39;&quot;</span>, <span class="kw-2">&amp;</span>chain_id, <span class="kw-2">&amp;</span>key_name);
+                    chain_config.set_key_name(key_name);
                 } <span class="kw">else </span>{
                     <span class="comment">// If no key is found, warn the user and continue
                     </span><span class="macro">warn!</span>(<span class="string">&quot;No key found for chain: {}&quot;</span>, chain_id);

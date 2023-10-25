@@ -256,6 +256,16 @@
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
@@ -359,7 +369,7 @@
 }
 
 <span class="doccomment">/// Listen to events
-</span><span class="attr">#[instrument(skip_all, level = <span class="string">&quot;error&quot;</span>, fields(chain = %config.id))]
+</span><span class="attr">#[instrument(skip_all, level = <span class="string">&quot;error&quot;</span>, fields(chain = %config.id()))]
 </span><span class="kw">pub fn </span>listen(config: <span class="kw-2">&amp;</span>ChainConfig, filters: <span class="kw-2">&amp;</span>[EventFilter]) -&gt; eyre::Result&lt;()&gt; {
     <span class="kw">let </span>rt = Arc::new(TokioRuntime::new()<span class="question-mark">?</span>);
     <span class="kw">let </span>compat_mode = detect_compatibility_mode(config, rt.clone())<span class="question-mark">?</span>;
@@ -401,33 +411,43 @@
     compat_mode: CompatMode,
     rt: Arc&lt;TokioRuntime&gt;,
 ) -&gt; eyre::Result&lt;Subscription&gt; {
-    <span class="kw">let </span>(event_source, monitor_tx) = <span class="kw">match </span><span class="kw-2">&amp;</span>chain_config.event_source {
-        EventSourceMode::Push { url, batch_delay } =&gt; EventSource::websocket(
-            chain_config.id.clone(),
-            url.clone(),
-            compat_mode,
-            <span class="kw-2">*</span>batch_delay,
-            rt,
-        ),
-        EventSourceMode::Pull { interval } =&gt; EventSource::rpc(
-            chain_config.id.clone(),
-            HttpClient::new(chain_config.rpc_addr.clone())<span class="question-mark">?</span>,
-            <span class="kw-2">*</span>interval,
-            rt,
-        ),
-    }<span class="question-mark">?</span>;
+    <span class="comment">// Q: Should this be restricted only to backends that support it,
+    // or are all backends expected to support subscriptions?
+    </span><span class="kw">match </span>chain_config {
+        ChainConfig::CosmosSdk(config) =&gt; {
+            <span class="kw">let </span>(event_source, monitor_tx) = <span class="kw">match </span><span class="kw-2">&amp;</span>config.event_source {
+                EventSourceMode::Push { url, batch_delay } =&gt; EventSource::websocket(
+                    chain_config.id().clone(),
+                    url.clone(),
+                    compat_mode,
+                    <span class="kw-2">*</span>batch_delay,
+                    rt,
+                ),
+                EventSourceMode::Pull { interval } =&gt; EventSource::rpc(
+                    chain_config.id().clone(),
+                    HttpClient::new(config.rpc_addr.clone())<span class="question-mark">?</span>,
+                    <span class="kw-2">*</span>interval,
+                    rt,
+                ),
+            }<span class="question-mark">?</span>;
 
-    thread::spawn(<span class="kw">move </span>|| event_source.run());
+            thread::spawn(<span class="kw">move </span>|| event_source.run());
 
-    <span class="kw">let </span>subscription = monitor_tx.subscribe()<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(subscription)
+            <span class="kw">let </span>subscription = monitor_tx.subscribe()<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(subscription)
+        }
+    }
 }
 
 <span class="kw">fn </span>detect_compatibility_mode(
     config: <span class="kw-2">&amp;</span>ChainConfig,
     rt: Arc&lt;TokioRuntime&gt;,
 ) -&gt; eyre::Result&lt;CompatMode&gt; {
-    <span class="kw">let </span>client = HttpClient::new(config.rpc_addr.clone())<span class="question-mark">?</span>;
+    <span class="comment">// TODO(erwan): move this to the cosmos sdk endpoint implementation
+    </span><span class="kw">let </span>rpc_addr = <span class="kw">match </span>config {
+        ChainConfig::CosmosSdk(config) =&gt; config.rpc_addr.clone(),
+    };
+    <span class="kw">let </span>client = HttpClient::new(rpc_addr)<span class="question-mark">?</span>;
     <span class="kw">let </span>status = rt.block_on(client.status())<span class="question-mark">?</span>;
     <span class="kw">let </span>compat_mode = CompatMode::from_version(status.node_info.version).unwrap_or_else(|e| {
         <span class="macro">warn!</span>(<span class="string">&quot;Unsupported tendermint version, will use v0.34 compatibility mode but relaying might not work as desired: {e}&quot;</span>);

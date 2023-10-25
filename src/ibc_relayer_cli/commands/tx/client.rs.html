@@ -1101,6 +1101,20 @@
 <a href="#1101" id="1101">1101</a>
 <a href="#1102" id="1102">1102</a>
 <a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
     time::Duration,
@@ -1110,13 +1124,16 @@
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 
-<span class="kw">use </span>ibc_relayer::chain::requests::{
-    IncludeProof, PageRequest, QueryClientStateRequest, QueryClientStatesRequest, QueryHeight,
-};
 <span class="kw">use </span>ibc_relayer::config::Config;
 <span class="kw">use </span>ibc_relayer::event::IbcEventWithHeight;
 <span class="kw">use </span>ibc_relayer::foreign_client::{CreateOptions, ForeignClient};
 <span class="kw">use </span>ibc_relayer::{chain::handle::ChainHandle, config::GenesisRestart};
+<span class="kw">use </span>ibc_relayer::{
+    chain::requests::{
+        IncludeProof, PageRequest, QueryClientStateRequest, QueryClientStatesRequest, QueryHeight,
+    },
+    config::ChainConfig,
+};
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ClientId};
 <span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
 <span class="kw">use </span>ibc_relayer_types::Height;
@@ -1304,8 +1321,19 @@
         };
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(restart_params) = <span class="self">self</span>.genesis_restart_params() {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = config.find_chain_mut(<span class="kw-2">&amp;</span>reference_chain_id) {
-                c.genesis_restart = <span class="prelude-val">Some</span>(restart_params);
+            <span class="kw">match </span>config.find_chain_mut(<span class="kw-2">&amp;</span>reference_chain_id) {
+                <span class="prelude-val">Some</span>(chain_config) =&gt; <span class="kw">match </span>chain_config {
+                    ChainConfig::CosmosSdk(chain_config) =&gt; {
+                        chain_config.genesis_restart = <span class="prelude-val">Some</span>(restart_params)
+                    }
+                },
+                <span class="prelude-val">None </span>=&gt; {
+                    Output::error(<span class="macro">format!</span>(
+                        <span class="string">&quot;Chain &#39;{}&#39; is unsupported, or not found in the configuration&quot;</span>,
+                        reference_chain_id
+                    ))
+                    .exit();
+                }
             }
         }
 
@@ -1537,15 +1565,15 @@
             .chains
             .iter()
             .filter(|<span class="kw-2">&amp;</span>chain| {
-                <span class="self">self</span>.reference_chain_id != chain.id
+                <span class="self">self</span>.reference_chain_id != <span class="kw-2">*</span>chain.id()
                     &amp;&amp; (<span class="self">self</span>.host_chain_id.is_none()
-                        || <span class="self">self</span>.host_chain_id == <span class="prelude-val">Some</span>(chain.id.clone()))
+                        || <span class="self">self</span>.host_chain_id == <span class="prelude-val">Some</span>(chain.id().clone()))
             })
             .map(|chain| {
                 <span class="self">self</span>.upgrade_clients_for_chain(
                     <span class="kw-2">&amp;</span>config,
                     reference_chain.clone(),
-                    <span class="kw-2">&amp;</span>chain.id,
+                    chain.id(),
                     reference_upgrade_height,
                 )
             })

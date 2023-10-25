@@ -839,6 +839,8 @@
 <a href="#839" id="839">839</a>
 <a href="#840" id="840">840</a>
 <a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Relayer configuration
 
 </span><span class="kw">pub mod </span>error;
@@ -856,28 +858,20 @@
     time::Duration,
 };
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
-<span class="kw">use </span>std::{
-    fs,
-    fs::File,
-    io::Write,
-    ops::Range,
-    path::{Path, PathBuf},
-};
+<span class="kw">use </span>std::{fs, fs::File, io::Write, ops::Range, path::Path};
 <span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>BlockHeight;
-<span class="kw">use </span>tendermint_light_client::verifier::types::TrustThreshold;
 <span class="kw">use </span>tendermint_rpc::{Url, WebSocketClientUrl};
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
-<span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::specs::ProofSpecs;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 <span class="kw">use </span>ibc_relayer_types::timestamp::ZERO_DURATION;
 
-<span class="kw">use </span><span class="kw">crate</span>::chain::ChainType;
-<span class="kw">use </span><span class="kw">crate</span>::config::gas_multiplier::GasMultiplier;
-<span class="kw">use </span><span class="kw">crate</span>::config::types::{MaxMsgNum, MaxTxSize, Memo};
-<span class="kw">use </span><span class="kw">crate</span>::error::Error <span class="kw">as </span>RelayerError;
 <span class="kw">use </span><span class="kw">crate</span>::extension_options::ExtensionOptionDynamicFeeTx;
 <span class="kw">use </span><span class="kw">crate</span>::keyring::Store;
+<span class="kw">use </span><span class="kw">crate</span>::keyring::{AnySigningKeyPair, KeyRing};
+<span class="kw">use crate</span>::{chain::cosmos::config::CosmosSdkConfig, error::Error <span class="kw">as </span>RelayerError};
+
+<span class="kw">use </span><span class="kw">crate</span>::keyring;
 
 <span class="kw">pub use </span><span class="kw">crate</span>::config::Error <span class="kw">as </span>ConfigError;
 <span class="kw">pub use </span>error::Error;
@@ -991,10 +985,6 @@
 </span><span class="kw">pub mod </span>default {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">pub fn </span>chain_type() -&gt; ChainType {
-        ChainType::CosmosSdk
-    }
-
     <span class="kw">pub fn </span>ccv_consumer_chain() -&gt; bool {
         <span class="bool-val">false
     </span>}
@@ -1087,15 +1077,15 @@
 
 <span class="kw">impl </span>Config {
     <span class="kw">pub fn </span>has_chain(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>ChainId) -&gt; bool {
-        <span class="self">self</span>.chains.iter().any(|c| c.id == <span class="kw-2">*</span>id)
+        <span class="self">self</span>.chains.iter().any(|c| c.id() == id)
     }
 
     <span class="kw">pub fn </span>find_chain(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>ChainId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ChainConfig&gt; {
-        <span class="self">self</span>.chains.iter().find(|c| c.id == <span class="kw-2">*</span>id)
+        <span class="self">self</span>.chains.iter().find(|c| c.id() == id)
     }
 
     <span class="kw">pub fn </span>find_chain_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>ChainId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>ChainConfig&gt; {
-        <span class="self">self</span>.chains.iter_mut().find(|c| c.id == <span class="kw-2">*</span>id)
+        <span class="self">self</span>.chains.iter_mut().find(|c| c.id() == id)
     }
 
     <span class="doccomment">/// Returns true if filtering is disabled or if packets are allowed on
@@ -1109,7 +1099,7 @@
     ) -&gt; bool {
         <span class="kw">match </span><span class="self">self</span>.find_chain(chain_id) {
             <span class="prelude-val">Some</span>(chain_config) =&gt; chain_config
-                .packet_filter
+                .packet_filter()
                 .channel_policy
                 .is_allowed(port_id, channel_id),
             <span class="prelude-val">None </span>=&gt; <span class="bool-val">false</span>,
@@ -1117,7 +1107,35 @@
     }
 
     <span class="kw">pub fn </span>chains_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;<span class="kw-2">&amp;</span>ChainId, <span class="kw-2">&amp;</span>ChainConfig&gt; {
-        <span class="self">self</span>.chains.iter().map(|c| (<span class="kw-2">&amp;</span>c.id, c)).collect()
+        <span class="self">self</span>.chains.iter().map(|c| (c.id(), c)).collect()
+    }
+
+    <span class="doccomment">/// Method for syntactic validation of the input configuration file.
+    </span><span class="kw">pub fn </span>validate_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&lt;Error&gt;&gt; {
+        <span class="kw">use </span>alloc::collections::BTreeSet;
+        <span class="comment">// Check for duplicate chain configuration and invalid trust thresholds
+        </span><span class="kw">let </span><span class="kw-2">mut </span>unique_chain_ids = BTreeSet::new();
+        <span class="kw">for </span>chain_config <span class="kw">in </span><span class="self">self</span>.chains.iter() {
+            <span class="kw">let </span>already_present = !unique_chain_ids.insert(chain_config.id().clone());
+            <span class="kw">if </span>already_present {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Diagnostic::Error(Error::duplicate_chains(
+                    chain_config.id().clone(),
+                )));
+            }
+
+            <span class="kw">match </span>chain_config {
+                ChainConfig::CosmosSdk(cosmos_config) =&gt; {
+                    cosmos_config
+                        .validate()
+                        .map_err(Into::&lt;Diagnostic&lt;Error&gt;&gt;::into)<span class="question-mark">?</span>;
+                }
+            }
+        }
+
+        <span class="comment">// Check for invalid mode config
+        </span><span class="self">self</span>.mode.validate()<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
@@ -1136,6 +1154,22 @@
             &amp;&amp; !<span class="self">self</span>.connections.enabled
             &amp;&amp; !<span class="self">self</span>.channels.enabled
             &amp;&amp; !<span class="self">self</span>.packets.enabled
+    }
+
+    <span class="kw">fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&lt;Error&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.all_disabled() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Diagnostic::Warning(Error::invalid_mode(
+                <span class="string">&quot;all operation modes of Hermes are disabled, relayer won&#39;t perform any action aside from subscribing to events&quot;</span>.to_string(),
+            )));
+        }
+
+        <span class="kw">if </span><span class="self">self</span>.clients.enabled &amp;&amp; !<span class="self">self</span>.clients.refresh &amp;&amp; !<span class="self">self</span>.clients.misbehaviour {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Diagnostic::Error(Error::invalid_mode(
+                <span class="string">&quot;either `refresh` or `misbehaviour` must be set to true if `clients.enabled` is set to true&quot;</span>.to_string(),
+            )));
+        }
+
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
@@ -1397,113 +1431,60 @@
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-</span><span class="kw">pub struct </span>ChainConfig {
-    <span class="doccomment">/// The chain&#39;s network identifier
-    </span><span class="kw">pub </span>id: ChainId,
+#[serde(tag = <span class="string">&quot;type&quot;</span>)]
+</span><span class="kw">pub enum </span>ChainConfig {
+    CosmosSdk(CosmosSdkConfig),
+}
 
-    <span class="doccomment">/// The chain type
-    </span><span class="attr">#[serde(default = <span class="string">&quot;default::chain_type&quot;</span>)]
-    </span><span class="kw">pub </span>r#type: ChainType,
+<span class="kw">impl </span>ChainConfig {
+    <span class="kw">pub fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainId {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::CosmosSdk(config) =&gt; <span class="kw-2">&amp;</span>config.id,
+        }
+    }
 
-    <span class="doccomment">/// The RPC URL to connect to
-    </span><span class="kw">pub </span>rpc_addr: Url,
+    <span class="kw">pub fn </span>packet_filter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>PacketFilter {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::CosmosSdk(config) =&gt; <span class="kw-2">&amp;</span>config.packet_filter,
+        }
+    }
 
-    <span class="doccomment">/// The gRPC URL to connect to
-    </span><span class="kw">pub </span>grpc_addr: Url,
+    <span class="kw">pub fn </span>max_block_time(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Duration {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::CosmosSdk(config) =&gt; config.max_block_time,
+        }
+    }
 
-    <span class="doccomment">/// The type of event source and associated settings
-    </span><span class="kw">pub </span>event_source: EventSourceMode,
+    <span class="kw">pub fn </span>key_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>String {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::CosmosSdk(config) =&gt; <span class="kw-2">&amp;</span>config.key_name,
+        }
+    }
 
-    <span class="doccomment">/// Timeout used when issuing RPC queries
-    </span><span class="attr">#[serde(default = <span class="string">&quot;default::rpc_timeout&quot;</span>, with = <span class="string">&quot;humantime_serde&quot;</span>)]
-    </span><span class="kw">pub </span>rpc_timeout: Duration,
+    <span class="kw">pub fn </span>set_key_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key_name: String) {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::CosmosSdk(config) =&gt; config.key_name = key_name,
+        }
+    }
 
-    <span class="doccomment">/// Whether or not the full node Hermes connects to is trusted
-    </span><span class="attr">#[serde(default = <span class="string">&quot;default::trusted_node&quot;</span>)]
-    </span><span class="kw">pub </span>trusted_node: bool,
-
-    <span class="kw">pub </span>account_prefix: String,
-    <span class="kw">pub </span>key_name: String,
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>key_store_type: Store,
-    <span class="kw">pub </span>key_store_folder: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
-    <span class="kw">pub </span>store_prefix: String,
-    <span class="kw">pub </span>default_gas: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-    <span class="kw">pub </span>max_gas: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-
-    <span class="comment">// This field is only meant to be set via the `update client` command,
-    // for when we need to ugprade a client across a genesis restart and
-    // therefore need and archive node to fetch blocks from.
-    </span><span class="kw">pub </span>genesis_restart: <span class="prelude-ty">Option</span>&lt;GenesisRestart&gt;,
-
-    <span class="comment">// This field is deprecated, use `gas_multiplier` instead
-    </span><span class="kw">pub </span>gas_adjustment: <span class="prelude-ty">Option</span>&lt;f64&gt;,
-    <span class="kw">pub </span>gas_multiplier: <span class="prelude-ty">Option</span>&lt;GasMultiplier&gt;,
-
-    <span class="kw">pub </span>fee_granter: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>max_msg_num: MaxMsgNum,
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>max_tx_size: MaxTxSize,
-    <span class="attr">#[serde(default = <span class="string">&quot;default::max_grpc_decoding_size&quot;</span>)]
-    </span><span class="kw">pub </span>max_grpc_decoding_size: Byte,
-
-    <span class="doccomment">/// A correction parameter that helps deal with clocks that are only approximately synchronized
-    /// between the source and destination chains for a client.
-    /// This parameter is used when deciding to accept or reject a new header
-    /// (originating from the source chain) for any client with the destination chain
-    /// that uses this configuration, unless it is overridden by the client-specific
-    /// clock drift option.
-    </span><span class="attr">#[serde(default = <span class="string">&quot;default::clock_drift&quot;</span>, with = <span class="string">&quot;humantime_serde&quot;</span>)]
-    </span><span class="kw">pub </span>clock_drift: Duration,
-
-    <span class="attr">#[serde(default = <span class="string">&quot;default::max_block_time&quot;</span>, with = <span class="string">&quot;humantime_serde&quot;</span>)]
-    </span><span class="kw">pub </span>max_block_time: Duration,
-
-    <span class="doccomment">/// The trusting period specifies how long a validator set is trusted for
-    /// (must be shorter than the chain&#39;s unbonding period).
-    </span><span class="attr">#[serde(default, with = <span class="string">&quot;humantime_serde&quot;</span>)]
-    </span><span class="kw">pub </span>trusting_period: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
-
-    <span class="doccomment">/// CCV consumer chain
-    </span><span class="attr">#[serde(default = <span class="string">&quot;default::ccv_consumer_chain&quot;</span>)]
-    </span><span class="kw">pub </span>ccv_consumer_chain: bool,
-
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>memo_prefix: Memo,
-
-    <span class="comment">// This is an undocumented and hidden config to make the relayer wait for
-    // DeliverTX before sending the next transaction when sending messages in
-    // multiple batches. We will instruct relayer operators to turn this on
-    // in case relaying failed in a chain with priority mempool enabled.
-    // Warning: turning this on may cause degradation in performance.
-    </span><span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>sequential_batch_tx: bool,
-
-    <span class="comment">// Note: These last few need to be last otherwise we run into `ValueAfterTable` error when serializing to TOML.
-    //       That&#39;s because these are all tables and have to come last when serializing.
-    </span><span class="attr">#[serde(
-        default,
-        skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>,
-        with = <span class="string">&quot;self::proof_specs&quot;
-    </span>)]
-    </span><span class="kw">pub </span>proof_specs: <span class="prelude-ty">Option</span>&lt;ProofSpecs&gt;,
-
-    <span class="comment">// These last few need to be last otherwise we run into `ValueAfterTable` error when serializing to TOML
-    </span><span class="doccomment">/// The trust threshold defines what fraction of the total voting power of a known
-    /// and trusted validator set is sufficient for a commit to be accepted going forward.
-    </span><span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>trust_threshold: TrustThreshold,
-
-    <span class="kw">pub </span>gas_price: GasPrice,
-
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>packet_filter: PacketFilter,
-
-    <span class="attr">#[serde(default)]
-    </span><span class="kw">pub </span>address_type: AddressType,
-    <span class="attr">#[serde(default = <span class="string">&quot;Vec::new&quot;</span>, skip_serializing_if = <span class="string">&quot;Vec::is_empty&quot;</span>)]
-    </span><span class="kw">pub </span>extension_options: Vec&lt;ExtensionOption&gt;,
+    <span class="kw">pub fn </span>list_keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(String, AnySigningKeyPair)&gt;, keyring::errors::Error&gt; {
+        <span class="kw">let </span>keys = <span class="kw">match </span><span class="self">self </span>{
+            ChainConfig::CosmosSdk(config) =&gt; {
+                <span class="kw">let </span>keyring = KeyRing::new_secp256k1(
+                    Store::Test,
+                    <span class="kw-2">&amp;</span>config.account_prefix,
+                    <span class="kw-2">&amp;</span>config.id,
+                    <span class="kw-2">&amp;</span>config.key_store_folder,
+                )<span class="question-mark">?</span>;
+                keyring
+                    .keys()<span class="question-mark">?
+                    </span>.into_iter()
+                    .map(|(key_name, keys)| (key_name, keys.into()))
+                    .collect()
+            }
+        };
+        <span class="prelude-val">Ok</span>(keys)
+    }
 }
 
 <span class="doccomment">/// Attempt to load and parse the TOML config file as a `Config`.
@@ -1548,6 +1529,29 @@
             enabled: <span class="bool-val">false</span>,
             port: <span class="number">5555</span>,
         }
+    }
+}
+
+<span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub enum </span>Diagnostic&lt;E&gt; {
+    Warning(E),
+    Error(E),
+}
+
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::config::Diagnostic <span class="kw">as </span>CosmosConfigDiagnostic;
+<span class="kw">impl</span>&lt;E: Into&lt;Error&gt;&gt; From&lt;CosmosConfigDiagnostic&lt;E&gt;&gt; <span class="kw">for </span>Diagnostic&lt;Error&gt; {
+    <span class="kw">fn </span>from(value: CosmosConfigDiagnostic&lt;E&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>value {
+            CosmosConfigDiagnostic::Warning(e) =&gt; Diagnostic::Warning(e.into()),
+            CosmosConfigDiagnostic::Error(e) =&gt; Diagnostic::Error(e.into()),
+        }
+    }
+}
+
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::config::error::Error <span class="kw">as </span>CosmosConfigError;
+<span class="kw">impl </span>From&lt;CosmosConfigError&gt; <span class="kw">for </span>Error {
+    <span class="kw">fn </span>from(error: CosmosConfigError) -&gt; Error {
+        Error::cosmos_config_error(error.to_string())
     }
 }
 

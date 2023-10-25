@@ -177,6 +177,12 @@
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Definition of all the Hermes subcommands
 
 </span><span class="kw">mod </span>clear;
@@ -212,7 +218,7 @@
 <span class="kw">use </span>tracing::{error, info};
 
 <span class="kw">use </span><span class="kw">crate</span>::DEFAULT_CONFIG_PATH;
-<span class="kw">use </span>ibc_relayer::config::Config;
+<span class="kw">use </span>ibc_relayer::config::{ChainConfig, Config};
 
 <span class="doccomment">/// Default configuration file path
 </span><span class="kw">pub fn </span>default_config_file() -&gt; <span class="prelude-ty">Option</span>&lt;PathBuf&gt; {
@@ -328,14 +334,20 @@
         </span><span class="kw">let </span>web = <span class="string">&quot;https://hermes.informal.systems&quot;</span>;
         <span class="kw">let </span>suffix = <span class="macro">format!</span>(<span class="string">&quot;{} {} ({})&quot;</span>, CliCmd::name(), <span class="macro">clap::crate_version!</span>(), web);
         <span class="kw">for </span>ccfg <span class="kw">in </span>config.chains.iter_mut() {
-            ccfg.memo_prefix.apply_suffix(<span class="kw-2">&amp;</span>suffix);
+            <span class="attr">#[allow(irrefutable_let_patterns)]
+            </span><span class="kw">if let </span>ChainConfig::CosmosSdk(<span class="kw-2">ref mut </span>cosmos_ccfg) = ccfg {
+                cosmos_ccfg.memo_prefix.apply_suffix(<span class="kw-2">&amp;</span>suffix);
+            }
         }
 
         <span class="comment">// For all commands except for `start` Hermes retries
         // for a prolonged period of time.
         </span><span class="kw">if </span>!<span class="macro">matches!</span>(<span class="self">self</span>, CliCmd::Start(<span class="kw">_</span>)) {
             <span class="kw">for </span>c <span class="kw">in </span>config.chains.iter_mut() {
-                c.rpc_timeout = Duration::from_secs(<span class="number">120</span>);
+                <span class="attr">#[allow(irrefutable_let_patterns)]
+                </span><span class="kw">if let </span>ChainConfig::CosmosSdk(<span class="kw-2">ref mut </span>cosmos_ccfg) = c {
+                    cosmos_ccfg.rpc_timeout = Duration::from_secs(<span class="number">120</span>);
+                }
             }
         }
 

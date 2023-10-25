@@ -2485,6 +2485,27 @@
 <a href="#2485" id="2485">2485</a>
 <a href="#2486" id="2486">2486</a>
 <a href="#2487" id="2487">2487</a>
+<a href="#2488" id="2488">2488</a>
+<a href="#2489" id="2489">2489</a>
+<a href="#2490" id="2490">2490</a>
+<a href="#2491" id="2491">2491</a>
+<a href="#2492" id="2492">2492</a>
+<a href="#2493" id="2493">2493</a>
+<a href="#2494" id="2494">2494</a>
+<a href="#2495" id="2495">2495</a>
+<a href="#2496" id="2496">2496</a>
+<a href="#2497" id="2497">2497</a>
+<a href="#2498" id="2498">2498</a>
+<a href="#2499" id="2499">2499</a>
+<a href="#2500" id="2500">2500</a>
+<a href="#2501" id="2501">2501</a>
+<a href="#2502" id="2502">2502</a>
+<a href="#2503" id="2503">2503</a>
+<a href="#2504" id="2504">2504</a>
+<a href="#2505" id="2505">2505</a>
+<a href="#2506" id="2506">2506</a>
+<a href="#2507" id="2507">2507</a>
+<a href="#2508" id="2508">2508</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2548,7 +2569,6 @@
 <span class="kw">use </span>tendermint_rpc::{Client, HttpClient, Order};
 
 <span class="kw">use </span><span class="kw">crate</span>::account::Balance;
-<span class="kw">use </span><span class="kw">crate</span>::chain::client::ClientSettings;
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::batch::{
     send_batched_messages_and_wait_check_tx, send_batched_messages_and_wait_commit,
     sequential_send_batched_messages_and_wait_commit,
@@ -2590,12 +2610,14 @@
 <span class="kw">use </span><span class="kw">crate</span>::util::pretty::{
     PrettyIdentifiedChannel, PrettyIdentifiedClientState, PrettyIdentifiedConnection,
 };
+<span class="kw">use crate</span>::{chain::client::ClientSettings, config::Error <span class="kw">as </span>ConfigError};
 
 <span class="kw">use </span><span class="self">self</span>::types::app_state::GenesisAppState;
 
 <span class="kw">pub mod </span>batch;
 <span class="kw">pub mod </span>client;
 <span class="kw">pub mod </span>compatibility;
+<span class="kw">pub mod </span>config;
 <span class="kw">pub mod </span>encode;
 <span class="kw">pub mod </span>estimate;
 <span class="kw">pub mod </span>fee;
@@ -2624,7 +2646,7 @@
 /// [tm-37-max]: https://github.com/tendermint/tendermint/blob/v0.37.0-rc1/types/params.go#L79
 </span><span class="kw">pub const </span>BLOCK_MAX_BYTES_MAX_FRACTION: f64 = <span class="number">0.9</span>;
 <span class="kw">pub struct </span>CosmosSdkChain {
-    config: ChainConfig,
+    config: config::CosmosSdkConfig,
     tx_config: TxConfig,
     <span class="kw">pub </span>rpc_client: HttpClient,
     compat_mode: CompatMode,
@@ -2641,7 +2663,7 @@
 
 <span class="kw">impl </span>CosmosSdkChain {
     <span class="doccomment">/// Get a reference to the configuration for this chain.
-    </span><span class="kw">pub fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainConfig {
+    </span><span class="kw">pub fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>config::CosmosSdkConfig {
         <span class="kw-2">&amp;</span><span class="self">self</span>.config
     }
 
@@ -3356,7 +3378,17 @@
     <span class="kw">type </span>Time = TmTime;
     <span class="kw">type </span>SigningKeyPair = Secp256k1KeyPair;
 
+    <span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainId {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.config.id
+    }
+
     <span class="kw">fn </span>bootstrap(config: ChainConfig, rt: Arc&lt;TokioRuntime&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="attr">#[allow(irrefutable_let_patterns)]
+        </span><span class="kw">let </span>ChainConfig::CosmosSdk(config) = config
+        <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::config(ConfigError::wrong_type()));
+        };
+
         <span class="kw">let </span><span class="kw-2">mut </span>rpc_client = HttpClient::new(config.rpc_addr.clone())
             .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
 
@@ -3368,7 +3400,7 @@
         });
         rpc_client.set_compat_mode(compat_mode);
 
-        <span class="kw">let </span>light_client = TmLightClient::from_config(<span class="kw-2">&amp;</span>config, node_info.id)<span class="question-mark">?</span>;
+        <span class="kw">let </span>light_client = TmLightClient::from_cosmos_sdk_config(<span class="kw-2">&amp;</span>config, node_info.id)<span class="question-mark">?</span>;
 
         <span class="comment">// Initialize key store and load key
         </span><span class="kw">let </span>keybase = KeyRing::new_secp256k1(
@@ -3416,6 +3448,16 @@
 
     <span class="kw">fn </span>keybase_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>KeyRing&lt;<span class="self">Self</span>::SigningKeyPair&gt; {
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.keybase
+    }
+
+    <span class="kw">fn </span>get_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SigningKeyPair, Error&gt; {
+        <span class="comment">// Get the key from key seed file
+        </span><span class="kw">let </span>key_pair = <span class="self">self
+            </span>.keybase()
+            .get_key(<span class="kw-2">&amp;</span><span class="self">self</span>.config.key_name)
+            .map_err(|e| Error::key_not_found(<span class="self">self</span>.config().key_name.clone(), e))<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(key_pair)
     }
 
     <span class="kw">fn </span>subscribe(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Subscription, Error&gt; {
@@ -3542,8 +3584,8 @@
     }
 
     <span class="doccomment">/// Get the chain configuration
-    </span><span class="kw">fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ChainConfig {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.config
+    </span><span class="kw">fn </span>config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChainConfig {
+        ChainConfig::CosmosSdk(<span class="self">self</span>.config.clone())
     }
 
     <span class="kw">fn </span>ibc_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
@@ -4769,7 +4811,7 @@
 
 <span class="kw">async fn </span>fetch_node_info(
     rpc_client: <span class="kw-2">&amp;</span>HttpClient,
-    config: <span class="kw-2">&amp;</span>ChainConfig,
+    config: <span class="kw-2">&amp;</span>config::CosmosSdkConfig,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;node::Info, Error&gt; {
     <span class="macro">crate::time!</span>(<span class="string">&quot;fetch_node_info&quot;</span>,
     {

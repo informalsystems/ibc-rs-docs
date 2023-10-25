@@ -73,10 +73,12 @@
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::Fee;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::calculate_fee;
-<span class="kw">use </span><span class="kw">crate</span>::config::{ChainConfig, GasPrice};
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::config::CosmosSdkConfig;
+<span class="kw">use </span><span class="kw">crate</span>::config::GasPrice;
 
 <span class="doccomment">/// Default gas limit when submitting a transaction.
 </span><span class="kw">const </span>DEFAULT_MAX_GAS: u64 = <span class="number">400_000</span>;
@@ -93,8 +95,8 @@
     <span class="kw">pub </span>fee_granter: String,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ChainConfig&gt; <span class="kw">for </span>GasConfig {
-    <span class="kw">fn </span>from(config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ChainConfig) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CosmosSdkConfig&gt; <span class="kw">for </span>GasConfig {
+    <span class="kw">fn </span>from(config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CosmosSdkConfig) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             default_gas: default_gas_from_config(config),
             max_gas: max_gas_from_config(config),
@@ -108,24 +110,24 @@
 
 <span class="doccomment">/// The default amount of gas the relayer is willing to pay for a transaction,
 /// when it cannot simulate the tx and therefore estimate the gas amount needed.
-</span><span class="kw">pub fn </span>default_gas_from_config(config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; u64 {
+</span><span class="kw">pub fn </span>default_gas_from_config(config: <span class="kw-2">&amp;</span>CosmosSdkConfig) -&gt; u64 {
     config
         .default_gas
         .unwrap_or_else(|| max_gas_from_config(config))
 }
 
 <span class="doccomment">/// The maximum amount of gas the relayer is willing to pay for a transaction
-</span><span class="kw">pub fn </span>max_gas_from_config(config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; u64 {
+</span><span class="kw">pub fn </span>max_gas_from_config(config: <span class="kw-2">&amp;</span>CosmosSdkConfig) -&gt; u64 {
     config.max_gas.unwrap_or(DEFAULT_MAX_GAS)
 }
 
 <span class="doccomment">/// The gas multiplier
-</span><span class="kw">pub fn </span>gas_multiplier_from_config(config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; f64 {
+</span><span class="kw">pub fn </span>gas_multiplier_from_config(config: <span class="kw-2">&amp;</span>CosmosSdkConfig) -&gt; f64 {
     config.gas_multiplier.unwrap_or_default().to_f64()
 }
 
 <span class="doccomment">/// Get the fee granter address
-</span><span class="kw">fn </span>fee_granter_from_config(config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; String {
+</span><span class="kw">fn </span>fee_granter_from_config(config: <span class="kw-2">&amp;</span>CosmosSdkConfig) -&gt; String {
     config
         .fee_granter
         .as_deref()
@@ -133,7 +135,7 @@
         .to_string()
 }
 
-<span class="kw">fn </span>max_fee_from_config(config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; Fee {
+<span class="kw">fn </span>max_fee_from_config(config: <span class="kw-2">&amp;</span>CosmosSdkConfig) -&gt; Fee {
     <span class="kw">let </span>max_gas = max_gas_from_config(config);
 
     <span class="comment">// The maximum fee the relayer pays for a transaction

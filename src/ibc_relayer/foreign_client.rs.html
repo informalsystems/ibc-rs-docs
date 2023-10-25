@@ -1885,6 +1885,7 @@
 <a href="#1885" id="1885">1885</a>
 <a href="#1886" id="1886">1886</a>
 <a href="#1887" id="1887">1887</a>
+<a href="#1888" id="1888">1888</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,
@@ -1922,6 +1923,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::chain::tracking::TrackedMsgs;
 <span class="kw">use </span><span class="kw">crate</span>::client_state::AnyClientState;
+<span class="kw">use </span><span class="kw">crate</span>::config::ChainConfig;
 <span class="kw">use </span><span class="kw">crate</span>::consensus_state::AnyConsensusState;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error <span class="kw">as </span>RelayerError;
 <span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
@@ -3588,16 +3590,16 @@
             )
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>is_ccv_consumer_chain = <span class="self">self
-            </span>.src_chain()
-            .config()
-            .map_err(|e| {
-                ForeignClientError::misbehaviour(
-                    <span class="macro">format!</span>(<span class="string">&quot;failed querying configuration of src chain {}&quot;</span>, <span class="self">self</span>.id),
-                    e,
-                )
-            })<span class="question-mark">?
-            </span>.ccv_consumer_chain;
+        <span class="kw">let </span>chain_config = <span class="self">self</span>.src_chain().config().map_err(|e| {
+            ForeignClientError::misbehaviour(
+                <span class="macro">format!</span>(<span class="string">&quot;failed querying configuration of src chain {}&quot;</span>, <span class="self">self</span>.id),
+                e,
+            )
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>is_ccv_consumer_chain = <span class="kw">match </span>chain_config {
+            ChainConfig::CosmosSdk(config) =&gt; config.ccv_consumer_chain,
+        };
 
         <span class="kw">let </span><span class="kw-2">mut </span>msgs = <span class="macro">vec!</span>[];
 

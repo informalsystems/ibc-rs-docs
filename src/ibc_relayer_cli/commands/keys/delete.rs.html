@@ -204,7 +204,6 @@
 
 <span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>ibc_relayer::{
-    chain::ChainType,
     config::{ChainConfig, Config},
     keyring::{KeyRing, Store},
 };
@@ -296,7 +295,7 @@
         <span class="kw">match </span>opts.id {
             KeysDeleteId::All =&gt; <span class="kw">match </span>delete_all_keys(<span class="kw-2">&amp;</span>opts.config) {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                    Output::success_msg(<span class="macro">format!</span>(<span class="string">&quot;Removed all keys on chain {}&quot;</span>, opts.config.id))
+                    Output::success_msg(<span class="macro">format!</span>(<span class="string">&quot;Removed all keys on chain {}&quot;</span>, opts.config.id()))
                         .exit()
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
@@ -304,7 +303,8 @@
             KeysDeleteId::Named(key_name) =&gt; <span class="kw">match </span>delete_key(<span class="kw-2">&amp;</span>opts.config, key_name) {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; Output::success_msg(<span class="macro">format!</span>(
                     <span class="string">&quot;Removed key ({}) on chain {}&quot;</span>,
-                    key_name, opts.config.id
+                    key_name,
+                    opts.config.id(),
                 ))
                 .exit(),
                 <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
@@ -314,8 +314,8 @@
 }
 
 <span class="kw">pub fn </span>delete_key(config: <span class="kw-2">&amp;</span>ChainConfig, key_name: <span class="kw-2">&amp;</span>str) -&gt; eyre::Result&lt;()&gt; {
-    <span class="kw">match </span>config.r#type {
-        ChainType::CosmosSdk =&gt; {
+    <span class="kw">match </span>config {
+        ChainConfig::CosmosSdk(config) =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>keyring = KeyRing::new_secp256k1(
                 Store::Test,
                 <span class="kw-2">&amp;</span>config.account_prefix,
@@ -329,8 +329,8 @@
 }
 
 <span class="kw">pub fn </span>delete_all_keys(config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; eyre::Result&lt;()&gt; {
-    <span class="kw">match </span>config.r#type {
-        ChainType::CosmosSdk =&gt; {
+    <span class="kw">match </span>config {
+        ChainConfig::CosmosSdk(config) =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>keyring = KeyRing::new_secp256k1(
                 Store::Test,
                 <span class="kw-2">&amp;</span>config.account_prefix,

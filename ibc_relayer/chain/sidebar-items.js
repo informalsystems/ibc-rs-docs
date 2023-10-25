@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ChainType"],"mod":["client","cosmos","counterparty","endpoint","handle","requests","runtime","tracking"]};
+window.SIDEBAR_ITEMS = {"mod":["client","cosmos","counterparty","endpoint","handle","requests","runtime","tracking"]};
