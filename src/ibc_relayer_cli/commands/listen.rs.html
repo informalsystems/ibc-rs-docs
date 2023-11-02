@@ -266,6 +266,8 @@
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
@@ -285,6 +287,7 @@
     chain::handle::Subscription,
     config::{ChainConfig, EventSourceMode},
     event::source::EventSource,
+    util::compat_mode::compat_mode_from_version,
 };
 <span class="kw">use </span>ibc_relayer_types::{core::ics24_host::identifier::ChainId, events::IbcEvent};
 
@@ -449,10 +452,11 @@
     };
     <span class="kw">let </span>client = HttpClient::new(rpc_addr)<span class="question-mark">?</span>;
     <span class="kw">let </span>status = rt.block_on(client.status())<span class="question-mark">?</span>;
-    <span class="kw">let </span>compat_mode = CompatMode::from_version(status.node_info.version).unwrap_or_else(|e| {
-        <span class="macro">warn!</span>(<span class="string">&quot;Unsupported tendermint version, will use v0.34 compatibility mode but relaying might not work as desired: {e}&quot;</span>);
-        CompatMode::V0_34
-    });
+    <span class="kw">let </span>compat_mode = <span class="kw">match </span>config {
+        ChainConfig::CosmosSdk(config) =&gt; {
+            compat_mode_from_version(<span class="kw-2">&amp;</span>config.compat_mode, status.node_info.version)<span class="question-mark">?</span>.into()
+        }
+    };
     <span class="prelude-val">Ok</span>(compat_mode)
 }
 

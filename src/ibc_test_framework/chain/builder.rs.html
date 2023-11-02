@@ -126,13 +126,40 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Builder construct that spawn new chains with some common parameters.
 */
 
-</span><span class="kw">use </span>std::str::FromStr;
+</span><span class="kw">use </span>eyre::eyre;
+<span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>alloc::sync::Arc;
+<span class="kw">use </span>ibc_relayer::config::compat_mode::CompatMode;
 <span class="kw">use </span>tokio::runtime::Runtime;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::driver::ChainDriver;
@@ -167,6 +194,10 @@
 
     <span class="kw">pub </span>account_prefixes: Vec&lt;String&gt;,
 
+    <span class="kw">pub </span>native_tokens: Vec&lt;String&gt;,
+
+    <span class="kw">pub </span>compat_modes: <span class="prelude-ty">Option</span>&lt;Vec&lt;String&gt;&gt;,
+
     <span class="kw">pub </span>runtime: Arc&lt;Runtime&gt;,
 }
 
@@ -178,12 +209,16 @@
         command_paths: Vec&lt;String&gt;,
         base_store_dir: <span class="kw-2">&amp;</span>str,
         account_prefixes: Vec&lt;String&gt;,
+        native_tokens: Vec&lt;String&gt;,
+        compat_modes: <span class="prelude-ty">Option</span>&lt;Vec&lt;String&gt;&gt;,
         runtime: Arc&lt;Runtime&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             command_paths,
             base_store_dir: base_store_dir.to_string(),
             account_prefixes,
+            native_tokens,
+            compat_modes,
             runtime,
         }
     }
@@ -196,6 +231,8 @@
             config.chain_command_paths.clone(),
             <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, config.chain_store_dir.display()),
             config.account_prefixes.clone(),
+            config.native_tokens.clone(),
+            config.compat_modes.clone(),
             runtime,
         )
     }
@@ -224,6 +261,17 @@
         // the number of chain binaries given. Same for account prefix.
         </span><span class="kw">let </span>chain_number = chain_number % <span class="self">self</span>.command_paths.len();
         <span class="kw">let </span>account_number = chain_number % <span class="self">self</span>.account_prefixes.len();
+        <span class="kw">let </span>native_token_number = chain_number % <span class="self">self</span>.native_tokens.len();
+        <span class="kw">let </span>compat_mode = <span class="kw">if let </span><span class="prelude-val">Some</span>(modes) = <span class="kw-2">&amp;</span><span class="self">self</span>.compat_modes {
+            <span class="kw">let </span>mode_str = <span class="kw-2">&amp;</span>modes[chain_number % modes.len()];
+            <span class="prelude-val">Some</span>(CompatMode::from_str(mode_str).map_err(|e| {
+                Error::generic(<span class="macro">eyre!</span>(
+                    <span class="string">&quot;Invalid CompatMode environment variable `{mode_str}`: {e}&quot;
+                </span>))
+            })<span class="question-mark">?</span>)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
 
         <span class="kw">let </span>chain_type = ChainType::from_str(<span class="kw-2">&amp;</span><span class="self">self</span>.command_paths[chain_number])<span class="question-mark">?</span>;
 
@@ -249,6 +297,8 @@
             p2p_port,
             pprof_port,
             <span class="self">self</span>.runtime.clone(),
+            <span class="self">self</span>.native_tokens[native_token_number].clone(),
+            compat_mode,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(driver)

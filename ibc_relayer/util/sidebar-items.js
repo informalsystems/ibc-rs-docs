@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["block_on","spawn_blocking"],"mod":["collate","debug_section","diff","iter","lock","pretty","profiling","queue","retry","stream","task"]};
+window.SIDEBAR_ITEMS = {"fn":["block_on","spawn_blocking"],"mod":["collate","compat_mode","debug_section","diff","iter","lock","pretty","profiling","queue","retry","stream","task"]};

@@ -196,6 +196,18 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Type definition for a single running full node.
 */
@@ -206,6 +218,7 @@
 <span class="kw">use </span>eyre::Report <span class="kw">as </span>Error;
 <span class="kw">use </span>ibc_relayer::chain::cosmos::config::CosmosSdkConfig;
 <span class="kw">use </span>ibc_relayer::config;
+<span class="kw">use </span>ibc_relayer::config::compat_mode::CompatMode;
 <span class="kw">use </span>ibc_relayer::config::gas_multiplier::GasMultiplier;
 <span class="kw">use </span>ibc_relayer::keyring::Store;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
@@ -324,13 +337,20 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         chain_type: <span class="kw-2">&amp;</span>TestedChainType,
         test_config: <span class="kw-2">&amp;</span>TestConfig,
+        chain_number: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;config::ChainConfig, Error&gt; {
+        <span class="kw">let </span>native_token_number = chain_number % test_config.native_tokens.len();
         <span class="kw">let </span>hermes_keystore_dir = test_config
             .chain_store_dir
             .join(<span class="string">&quot;hermes_keyring&quot;</span>)
             .as_path()
             .display()
             .to_string();
+
+        <span class="kw">let </span>compat_mode = test_config.compat_modes.as_ref().map(|modes| {
+            <span class="kw">let </span>mode = <span class="kw-2">&amp;</span>modes[chain_number % modes.len()];
+            CompatMode::from_str(mode).unwrap()
+        });
 
         <span class="prelude-val">Ok</span>(config::ChainConfig::CosmosSdk(CosmosSdkConfig {
             id: <span class="self">self</span>.chain_driver.chain_id.clone(),
@@ -361,13 +381,17 @@
             trusting_period: <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">14 </span>* <span class="number">24 </span>* <span class="number">3600</span>)),
             ccv_consumer_chain: <span class="bool-val">false</span>,
             trust_threshold: Default::default(),
-            gas_price: config::GasPrice::new(<span class="number">0.003</span>, <span class="string">&quot;stake&quot;</span>.to_string()),
+            gas_price: config::GasPrice::new(
+                <span class="number">0.003</span>,
+                test_config.native_tokens[native_token_number].clone(),
+            ),
             packet_filter: Default::default(),
             address_type: chain_type.address_type(),
             memo_prefix: Default::default(),
             proof_specs: Default::default(),
             extension_options: Default::default(),
             sequential_batch_tx: <span class="bool-val">false</span>,
+            compat_mode,
         }))
     }
 

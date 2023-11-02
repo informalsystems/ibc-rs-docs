@@ -165,6 +165,11 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Helper functions for bootstrapping a single full node.
 */
@@ -212,7 +217,9 @@
     genesis_modifier: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>serde_json::Value) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;,
     chain_number: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;FullNode, Error&gt; {
-    <span class="kw">let </span>stake_denom = Denom::base(<span class="string">&quot;stake&quot;</span>);
+    <span class="kw">let </span>native_token_number = chain_number % builder.native_tokens.len();
+    <span class="kw">let </span>native_token = <span class="kw-2">&amp;</span>builder.native_tokens[native_token_number];
+    <span class="kw">let </span>native_denom = Denom::base(native_token);
 
     <span class="kw">let </span>denom = <span class="kw">if </span>use_random_id {
         Denom::base(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;coin{:x}&quot;</span>, random_u32()))
@@ -225,13 +232,14 @@
     // when running `evmosd start`.
     </span><span class="kw">let </span>initial_amount = random_u128_range(<span class="number">1_000_000_000_000_000_000</span>, <span class="number">2_000_000_000_000_000_000</span>);
 
-    <span class="kw">let </span>initial_stake = Token::new(stake_denom, initial_amount);
-    <span class="kw">let </span>additional_initial_stake = initial_stake
+    <span class="kw">let </span>initial_native_token = Token::new(native_denom, initial_amount);
+    <span class="kw">let </span>additional_native_token = initial_native_token
         .clone()
         .checked_add(<span class="number">1_000_000_000_000u64</span>)
         .ok_or(Error::generic(<span class="macro">eyre!</span>(
-            <span class="string">&quot;error creating initial stake with additional amount&quot;
-        </span>)))<span class="question-mark">?</span>;
+            <span class="string">&quot;error creating initial {} with additional amount&quot;</span>,
+            native_token
+        )))<span class="question-mark">?</span>;
     <span class="kw">let </span>initial_coin = Token::new(denom.clone(), initial_amount);
 
     <span class="kw">let </span>chain_driver = builder.new_chain(prefix, use_random_id, chain_number)<span class="question-mark">?</span>;
@@ -246,15 +254,15 @@
     <span class="kw">let </span>user2 = add_wallet(<span class="kw-2">&amp;</span>chain_driver, <span class="string">&quot;user2&quot;</span>, use_random_id)<span class="question-mark">?</span>;
 
     <span class="comment">// Validator is given more tokens as they are required to vote on upgrade chain
-    </span>chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>validator.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>additional_initial_stake])<span class="question-mark">?</span>;
+    </span>chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>validator.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>additional_native_token])<span class="question-mark">?</span>;
 
-    chain_driver.add_genesis_validator(<span class="kw-2">&amp;</span>validator.id, <span class="kw-2">&amp;</span>initial_stake)<span class="question-mark">?</span>;
+    chain_driver.add_genesis_validator(<span class="kw-2">&amp;</span>validator.id, <span class="kw-2">&amp;</span>initial_native_token)<span class="question-mark">?</span>;
 
-    chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>user1.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_stake, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
+    chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>user1.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_native_token, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
 
-    chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>user2.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_stake, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
+    chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>user2.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_native_token, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
 
-    chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>relayer.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_stake, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
+    chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>relayer.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_native_token, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
 
     chain_driver.collect_gen_txs()<span class="question-mark">?</span>;
 
@@ -268,17 +276,19 @@
         config::set_timeout_commit(config, Duration::from_secs(<span class="number">1</span>))<span class="question-mark">?</span>;
         config::set_timeout_propose(config, Duration::from_secs(<span class="number">1</span>))<span class="question-mark">?</span>;
         config::set_mode(config, <span class="string">&quot;validator&quot;</span>)<span class="question-mark">?</span>;
+        config::set_indexer(config, <span class="string">&quot;kv&quot;</span>)<span class="question-mark">?</span>;
 
         config_modifier(config)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     })<span class="question-mark">?</span>;
 
+    <span class="kw">let </span>minimum_gas = <span class="macro">format!</span>(<span class="string">&quot;0{}&quot;</span>, native_token);
     chain_driver.update_chain_config(<span class="string">&quot;app.toml&quot;</span>, |config| {
         config::set_grpc_port(config, chain_driver.grpc_port)<span class="question-mark">?</span>;
         config::disable_grpc_web(config)<span class="question-mark">?</span>;
         config::disable_api(config)<span class="question-mark">?</span>;
-        config::set_minimum_gas_price(config, <span class="string">&quot;0stake&quot;</span>)<span class="question-mark">?</span>;
+        config::set_minimum_gas_price(config, <span class="kw-2">&amp;</span>minimum_gas)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     })<span class="question-mark">?</span>;
