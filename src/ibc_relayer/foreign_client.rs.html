@@ -1886,6 +1886,25 @@
 <a href="#1886" id="1886">1886</a>
 <a href="#1887" id="1887">1887</a>
 <a href="#1888" id="1888">1888</a>
+<a href="#1889" id="1889">1889</a>
+<a href="#1890" id="1890">1890</a>
+<a href="#1891" id="1891">1891</a>
+<a href="#1892" id="1892">1892</a>
+<a href="#1893" id="1893">1893</a>
+<a href="#1894" id="1894">1894</a>
+<a href="#1895" id="1895">1895</a>
+<a href="#1896" id="1896">1896</a>
+<a href="#1897" id="1897">1897</a>
+<a href="#1898" id="1898">1898</a>
+<a href="#1899" id="1899">1899</a>
+<a href="#1900" id="1900">1900</a>
+<a href="#1901" id="1901">1901</a>
+<a href="#1902" id="1902">1902</a>
+<a href="#1903" id="1903">1903</a>
+<a href="#1904" id="1904">1904</a>
+<a href="#1905" id="1905">1905</a>
+<a href="#1906" id="1906">1906</a>
+<a href="#1907" id="1907">1907</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,
@@ -2011,7 +2030,7 @@
                 height: Height,
             }
             |e| {
-                <span class="macro">format_args!</span>(<span class="string">&quot;client {} is already up-to-date with chain {}@{}&quot;</span>,
+                <span class="macro">format_args!</span>(<span class="string">&quot;client {} is already up-to-date with chain {} at height {}&quot;</span>,
                     e.client_id, e.chain_id, e.height)
             },
 
@@ -3019,6 +3038,24 @@
             }
         );
 
+        <span class="kw">let </span>consensus_state = <span class="self">self</span>.dst_chain().query_consensus_state(
+            QueryConsensusStateRequest {
+                client_id: <span class="self">self</span>.id().clone(),
+                consensus_height: target_height,
+                query_height: QueryHeight::Latest,
+            },
+            IncludeProof::No,
+        );
+
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>((consensus_state, <span class="kw">_</span>)) = consensus_state {
+            <span class="macro">debug!</span>(<span class="string">&quot;consensus state already exists at height {target_height}, skipping update&quot;</span>);
+            <span class="macro">trace!</span>(<span class="question-mark">?</span>consensus_state, <span class="string">&quot;consensus state&quot;</span>);
+
+            <span class="comment">// If the client already stores a consensus state for the target height,
+            // there is no need to update the client
+            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[]);
+        }
+
         <span class="kw">let </span>src_application_latest_height = || {
             <span class="self">self</span>.src_chain().query_latest_height().map_err(|e| {
                 ForeignClientError::client_create(
@@ -3037,6 +3074,7 @@
                     <span class="string">&quot;dst_chain&quot;</span>: <span class="self">self</span>.dst_chain().id(),
                 }
             );
+
             <span class="comment">// Wait for the source network to produce block(s) &amp; reach `target_height`.
             </span><span class="kw">while </span>src_application_latest_height()<span class="question-mark">? </span>&lt; target_height {
                 thread::sleep(Duration::from_millis(<span class="number">100</span>));
