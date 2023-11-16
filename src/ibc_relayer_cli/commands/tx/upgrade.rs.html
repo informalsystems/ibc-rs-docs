@@ -380,11 +380,67 @@
 <a href="#380" id="380">380</a>
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 
+<span class="kw">use </span>ibc_relayer::upgrade_chain::requires_legacy_upgrade_proposal;
 <span class="kw">use </span>ibc_relayer::upgrade_chain::{build_and_send_ibc_upgrade_proposal, UpgradePlanOptions};
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ClientId};
 
@@ -441,6 +497,13 @@
     </span>height_offset: u64,
 
     <span class="attr">#[clap(
+        long = <span class="string">&quot;gov-account&quot;</span>,
+        value_name = <span class="string">&quot;GOV_ACCOUNT&quot;</span>,
+        help = <span class="string">&quot;Authority account used to sign upgrade proposal. Note: This is only used for chains with ibc-go version v8.0.0 or higher&quot;
+    </span>)]
+    </span>gov_account: <span class="prelude-ty">Option</span>&lt;String&gt;,
+
+    <span class="attr">#[clap(
         long = <span class="string">&quot;new-chain&quot;</span>,
         value_name = <span class="string">&quot;CHAIN_ID&quot;</span>,
         help = <span class="string">&quot;New chain identifier to assign to the upgrading chain (optional)&quot;
@@ -470,7 +533,7 @@
 }
 
 <span class="kw">impl </span>TxIbcUpgradeChainCmd {
-    <span class="kw">fn </span>validate_options(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;UpgradePlanOptions, String&gt; {
+    <span class="kw">fn </span>validate_options(<span class="kw-2">&amp;</span><span class="self">self</span>, gov_account: String) -&gt; <span class="prelude-ty">Result</span>&lt;UpgradePlanOptions, String&gt; {
         <span class="kw">let </span>opts = UpgradePlanOptions {
             src_client_id: <span class="self">self</span>.host_client_id.clone(),
             amount: <span class="self">self</span>.amount,
@@ -485,6 +548,7 @@
                 </span>.upgrade_name
                 .clone()
                 .unwrap_or_else(|| <span class="string">&quot;plan&quot;</span>.to_string()),
+            gov_account,
         };
 
         <span class="prelude-val">Ok</span>(opts)
@@ -495,16 +559,24 @@
     <span class="kw">fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="kw">let </span>config = app_config();
 
-        <span class="kw">let </span>opts = <span class="kw">match </span><span class="self">self</span>.validate_options() {
-            <span class="prelude-val">Err</span>(err) =&gt; Output::error(err).exit(),
-            <span class="prelude-val">Ok</span>(result) =&gt; result,
-        };
-
         <span class="kw">let </span>host_chain = spawn_chain_runtime(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.host_chain_id)
             .unwrap_or_else(exit_with_unrecoverable_error);
 
         <span class="kw">let </span>reference_chain = spawn_chain_runtime(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.reference_chain_id)
             .unwrap_or_else(exit_with_unrecoverable_error);
+
+        <span class="kw">let </span>gov_account = <span class="kw">if </span>requires_legacy_upgrade_proposal(reference_chain.clone()) {
+            <span class="string">&quot;&quot;</span>.to_string()
+        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(gov_account) = <span class="kw-2">&amp;</span><span class="self">self</span>.gov_account {
+            gov_account.clone()
+        } <span class="kw">else </span>{
+            Output::error(<span class="string">&quot;The chain being upgraded uses an ibc-go version v8.0.0 or higher, which requires the governance module account to be specified using the flag `--gov-account`&quot;</span>.to_owned()).exit();
+        };
+
+        <span class="kw">let </span>opts = <span class="kw">match </span><span class="self">self</span>.validate_options(gov_account) {
+            <span class="prelude-val">Err</span>(err) =&gt; Output::error(err).exit(),
+            <span class="prelude-val">Ok</span>(result) =&gt; result,
+        };
 
         <span class="kw">let </span>res = build_and_send_ibc_upgrade_proposal(reference_chain, host_chain, <span class="kw-2">&amp;</span>opts)
             .map_err(Error::upgrade_chain);
@@ -533,6 +605,7 @@
                 host_client_id: ClientId::from_str(<span class="string">&quot;client_sender&quot;</span>).unwrap(),
                 amount: <span class="number">42</span>,
                 height_offset: <span class="number">21</span>,
+                gov_account: <span class="prelude-val">None</span>,
                 new_chain_id: <span class="prelude-val">None</span>,
                 new_unbonding: <span class="prelude-val">None</span>,
                 upgrade_name: <span class="prelude-val">None</span>,
@@ -549,8 +622,8 @@
                 <span class="string">&quot;--amount&quot;</span>,
                 <span class="string">&quot;42&quot;</span>,
                 <span class="string">&quot;--height-offset&quot;</span>,
-                <span class="string">&quot;21&quot;
-            </span>])
+                <span class="string">&quot;21&quot;</span>,
+            ])
         )
     }
 
@@ -563,6 +636,7 @@
                 host_client_id: ClientId::from_str(<span class="string">&quot;client_sender&quot;</span>).unwrap(),
                 amount: <span class="number">42</span>,
                 height_offset: <span class="number">21</span>,
+                gov_account: <span class="prelude-val">None</span>,
                 new_chain_id: <span class="prelude-val">None</span>,
                 new_unbonding: <span class="prelude-val">None</span>,
                 upgrade_name: <span class="prelude-val">None</span>,
@@ -595,6 +669,7 @@
                 host_client_id: ClientId::from_str(<span class="string">&quot;client_sender&quot;</span>).unwrap(),
                 amount: <span class="number">42</span>,
                 height_offset: <span class="number">21</span>,
+                gov_account: <span class="prelude-val">None</span>,
                 new_chain_id: <span class="prelude-val">Some</span>(ChainId::from_string(<span class="string">&quot;new_chain&quot;</span>)),
                 new_unbonding: <span class="prelude-val">None</span>,
                 upgrade_name: <span class="prelude-val">None</span>,
@@ -627,6 +702,7 @@
                 host_client_id: ClientId::from_str(<span class="string">&quot;client_sender&quot;</span>).unwrap(),
                 amount: <span class="number">42</span>,
                 height_offset: <span class="number">21</span>,
+                gov_account: <span class="prelude-val">None</span>,
                 new_chain_id: <span class="prelude-val">None</span>,
                 new_unbonding: <span class="prelude-val">Some</span>(<span class="number">17</span>),
                 upgrade_name: <span class="prelude-val">None</span>,
@@ -659,6 +735,7 @@
                 host_client_id: ClientId::from_str(<span class="string">&quot;client_sender&quot;</span>).unwrap(),
                 amount: <span class="number">42</span>,
                 height_offset: <span class="number">21</span>,
+                gov_account: <span class="prelude-val">None</span>,
                 new_chain_id: <span class="prelude-val">None</span>,
                 new_unbonding: <span class="prelude-val">None</span>,
                 upgrade_name: <span class="prelude-val">Some</span>(<span class="string">&quot;upgrade_name&quot;</span>.to_owned()),
@@ -683,6 +760,39 @@
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_upgrade_chain_gov_account() {
+        <span class="macro">assert_eq!</span>(
+            TxIbcUpgradeChainCmd {
+                reference_chain_id: ChainId::from_string(<span class="string">&quot;chain_receiver&quot;</span>),
+                host_chain_id: ChainId::from_string(<span class="string">&quot;chain_sender&quot;</span>),
+                host_client_id: ClientId::from_str(<span class="string">&quot;client_sender&quot;</span>).unwrap(),
+                amount: <span class="number">42</span>,
+                height_offset: <span class="number">21</span>,
+                gov_account: <span class="prelude-val">Some</span>(<span class="string">&quot;gov_account&quot;</span>.to_owned()),
+                new_chain_id: <span class="prelude-val">None</span>,
+                new_unbonding: <span class="prelude-val">None</span>,
+                upgrade_name: <span class="prelude-val">None</span>,
+                denom: <span class="prelude-val">None
+            </span>},
+            TxIbcUpgradeChainCmd::parse_from([
+                <span class="string">&quot;test&quot;</span>,
+                <span class="string">&quot;--reference-chain&quot;</span>,
+                <span class="string">&quot;chain_receiver&quot;</span>,
+                <span class="string">&quot;--host-chain&quot;</span>,
+                <span class="string">&quot;chain_sender&quot;</span>,
+                <span class="string">&quot;--host-client&quot;</span>,
+                <span class="string">&quot;client_sender&quot;</span>,
+                <span class="string">&quot;--amount&quot;</span>,
+                <span class="string">&quot;42&quot;</span>,
+                <span class="string">&quot;--height-offset&quot;</span>,
+                <span class="string">&quot;21&quot;</span>,
+                <span class="string">&quot;--gov-account&quot;</span>,
+                <span class="string">&quot;gov_account&quot;
+            </span>])
+        )
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_upgrade_chain_no_height_offset() {
         <span class="macro">assert!</span>(TxIbcUpgradeChainCmd::try_parse_from([
             <span class="string">&quot;test&quot;</span>,
@@ -693,8 +803,8 @@
             <span class="string">&quot;--host-client&quot;</span>,
             <span class="string">&quot;client_sender&quot;</span>,
             <span class="string">&quot;--amount&quot;</span>,
-            <span class="string">&quot;42&quot;
-        </span>])
+            <span class="string">&quot;42&quot;</span>,
+        ])
         .is_err())
     }
 
@@ -709,8 +819,8 @@
             <span class="string">&quot;--host-client&quot;</span>,
             <span class="string">&quot;client_sender&quot;</span>,
             <span class="string">&quot;--height-offset&quot;</span>,
-            <span class="string">&quot;21&quot;
-        </span>])
+            <span class="string">&quot;21&quot;</span>,
+        ])
         .is_err())
     }
 
@@ -725,8 +835,8 @@
             <span class="string">&quot;--amount&quot;</span>,
             <span class="string">&quot;42&quot;</span>,
             <span class="string">&quot;--height-offset&quot;</span>,
-            <span class="string">&quot;21&quot;
-        </span>])
+            <span class="string">&quot;21&quot;</span>,
+        ])
         .is_err())
     }
 
@@ -741,8 +851,8 @@
             <span class="string">&quot;--amount&quot;</span>,
             <span class="string">&quot;42&quot;</span>,
             <span class="string">&quot;--height-offset&quot;</span>,
-            <span class="string">&quot;21&quot;
-        </span>])
+            <span class="string">&quot;21&quot;</span>,
+        ])
         .is_err())
     }
 
@@ -757,8 +867,8 @@
             <span class="string">&quot;--amount&quot;</span>,
             <span class="string">&quot;42&quot;</span>,
             <span class="string">&quot;--height-offset&quot;</span>,
-            <span class="string">&quot;21&quot;
-        </span>])
+            <span class="string">&quot;21&quot;</span>,
+        ])
         .is_err())
     }
 }

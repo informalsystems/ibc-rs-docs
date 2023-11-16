@@ -127,6 +127,9 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span><span class="kw">crate</span>::bootstrap::consumer::bootstrap_consumer_node;
@@ -140,6 +143,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::framework::binary::node::{NodeConfigOverride, NodeGenesisOverride};
 <span class="kw">use </span><span class="kw">crate</span>::prelude::FullNode;
 <span class="kw">use </span><span class="kw">crate</span>::types::config::TestConfig;
+<span class="kw">use </span><span class="kw">crate</span>::util::proposal_status::ProposalStatus;
 
 <span class="doccomment">/**
 Runs a test case that implements [`InterchainSecurityChainTest`].
@@ -203,14 +207,14 @@ Runs a test case that implements [`InterchainSecurityChainTest`].
             .chain_driver
             .submit_consumer_chain_proposal(chain_id.as_str(), <span class="string">&quot;2023-05-31T12:09:47.048227Z&quot;</span>)<span class="question-mark">?</span>;
 
-        node_a
-            .chain_driver
-            .assert_consumer_chain_proposal_submitted(
-                node_a.chain_driver.chain_id.as_str(),
-                <span class="kw-2">&amp;</span>node_a.chain_driver.command_path,
-                <span class="kw-2">&amp;</span>node_a.chain_driver.home_path,
-                <span class="kw-2">&amp;</span>node_a.chain_driver.rpc_listen_address(),
-            )<span class="question-mark">?</span>;
+        node_a.chain_driver.assert_proposal_status(
+            node_a.chain_driver.chain_id.as_str(),
+            <span class="kw-2">&amp;</span>node_a.chain_driver.command_path,
+            <span class="kw-2">&amp;</span>node_a.chain_driver.home_path,
+            <span class="kw-2">&amp;</span>node_a.chain_driver.rpc_listen_address(),
+            ProposalStatus::VotingPeriod,
+            <span class="string">&quot;1&quot;</span>,
+        )<span class="question-mark">?</span>;
 
         vote_proposal(
             node_a.chain_driver.chain_id.as_str(),
@@ -220,11 +224,13 @@ Runs a test case that implements [`InterchainSecurityChainTest`].
             <span class="kw-2">&amp;</span>provider_fee,
         )<span class="question-mark">?</span>;
 
-        node_a.chain_driver.assert_consumer_chain_proposal_passed(
+        node_a.chain_driver.assert_proposal_status(
             node_a.chain_driver.chain_id.as_str(),
             <span class="kw-2">&amp;</span>node_a.chain_driver.command_path,
             <span class="kw-2">&amp;</span>node_a.chain_driver.home_path,
             <span class="kw-2">&amp;</span>node_a.chain_driver.rpc_listen_address(),
+            ProposalStatus::Passed,
+            <span class="string">&quot;1&quot;</span>,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>node_b = bootstrap_consumer_node(

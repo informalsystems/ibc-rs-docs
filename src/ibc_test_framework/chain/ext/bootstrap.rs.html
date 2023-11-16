@@ -415,21 +415,6 @@
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>hdpath::StandardHDPath;
@@ -448,8 +433,8 @@
     start_chain,
 };
 <span class="kw">use </span><span class="kw">crate</span>::chain::cli::provider::{
-    copy_validator_key_pair, query_consumer_genesis, query_consumer_proposal,
-    replace_genesis_state, submit_consumer_chain_proposal,
+    copy_validator_key_pair, query_consumer_genesis, query_gov_proposal, replace_genesis_state,
+    submit_consumer_chain_proposal,
 };
 <span class="kw">use </span><span class="kw">crate</span>::chain::driver::ChainDriver;
 <span class="kw">use </span><span class="kw">crate</span>::chain::exec::simple_exec;
@@ -458,6 +443,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::prelude::assert_eventually_succeed;
 <span class="kw">use </span><span class="kw">crate</span>::types::process::ChildProcess;
 <span class="kw">use </span><span class="kw">crate</span>::types::wallet::{Wallet, WalletAddress, WalletId};
+<span class="kw">use </span><span class="kw">crate</span>::util::proposal_status::ProposalStatus;
 
 <span class="kw">pub trait </span>ChainBootstrapMethodsExt {
     <span class="doccomment">/**
@@ -542,25 +528,16 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
 
     <span class="doccomment">/**
-       Assert that the consumer chain proposal is eventually submitted.
+       Assert that the proposal is eventually in the desired state.
     */
-    </span><span class="kw">fn </span>assert_consumer_chain_proposal_submitted(
+    </span><span class="kw">fn </span>assert_proposal_status(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         chain_id: <span class="kw-2">&amp;</span>str,
         command_path: <span class="kw-2">&amp;</span>str,
         home_path: <span class="kw-2">&amp;</span>str,
         rpc_listen_address: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
-
-    <span class="doccomment">/**
-       Assert that the consumer chain proposal eventually passes.
-    */
-    </span><span class="kw">fn </span>assert_consumer_chain_proposal_passed(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        chain_id: <span class="kw-2">&amp;</span>str,
-        command_path: <span class="kw-2">&amp;</span>str,
-        home_path: <span class="kw-2">&amp;</span>str,
-        rpc_listen_address: <span class="kw-2">&amp;</span>str,
+        status: ProposalStatus,
+        proposal_id: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;;
 
     <span class="doccomment">/**
@@ -762,66 +739,59 @@
         )
     }
 
-    <span class="kw">fn </span>assert_consumer_chain_proposal_submitted(
+    <span class="kw">fn </span>assert_proposal_status(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         chain_id: <span class="kw-2">&amp;</span>str,
         command_path: <span class="kw-2">&amp;</span>str,
         home_path: <span class="kw-2">&amp;</span>str,
         rpc_listen_address: <span class="kw-2">&amp;</span>str,
+        status: ProposalStatus,
+        proposal_id: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         assert_eventually_succeed(
-            <span class="string">&quot;consumer chain proposal submitted&quot;</span>,
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;proposal `{}` status: {}&quot;</span>, proposal_id, status.as_str()),
             <span class="number">10</span>,
-            Duration::from_secs(<span class="number">1</span>),
-            || {
-                <span class="kw">match </span>query_consumer_proposal(chain_id, command_path, home_path, rpc_listen_address) {
-                    <span class="prelude-val">Ok</span>(exec_output) =&gt; {
-                        <span class="kw">let </span>json_res = json::from_str::&lt;json::Value&gt;(<span class="kw-2">&amp;</span>exec_output.stdout).map_err(handle_generic_error)<span class="question-mark">?</span>;
-                        <span class="kw">let </span>proposal_status = json_res.get(<span class="string">&quot;status&quot;</span>)
+            Duration::from_secs(<span class="number">2</span>),
+            || <span class="kw">match </span>query_gov_proposal(
+                chain_id,
+                command_path,
+                home_path,
+                rpc_listen_address,
+                proposal_id,
+            ) {
+                <span class="prelude-val">Ok</span>(exec_output) =&gt; {
+                    <span class="kw">let </span>json_res = json::from_str::&lt;json::Value&gt;(<span class="kw-2">&amp;</span>exec_output.stdout)
+                        .map_err(handle_generic_error)<span class="question-mark">?</span>;
+                    <span class="comment">// Cosmos SDK v0.50.1 outputs the status of the proposal using an integer code
+                    </span><span class="kw">let </span>proposal_status: ProposalStatus = <span class="kw">match </span>json_res.get(<span class="string">&quot;proposal&quot;</span>) {
+                        <span class="prelude-val">Some</span>(proposal_status) =&gt; proposal_status
+                            .get(<span class="string">&quot;status&quot;</span>)
                             .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expected `status` field&quot;</span>))<span class="question-mark">?
-                            </span>.as_str()
-                            .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expected string field&quot;</span>))<span class="question-mark">?</span>;
-                        <span class="kw">if </span>proposal_status == <span class="string">&quot;PROPOSAL_STATUS_VOTING_PERIOD&quot; </span>{
-                            <span class="prelude-val">Ok</span>(())
-                        } <span class="kw">else </span>{
-                            <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">&quot;consumer chain proposal is not in voting period. Proposal status: {proposal_status}&quot;</span>)))
-                        }
-                    },
-                    <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">&quot;Error querying the consumer chain proposal. Potential issues could be due to not using enough gas or the proposal submitted is invalid. Error: {e}&quot;</span>))),
-                }
-            },
-        )<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
-    }
+                            </span>.try_into()<span class="question-mark">?</span>,
+                        <span class="prelude-val">None </span>=&gt; json_res
+                            .get(<span class="string">&quot;status&quot;</span>)
+                            .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expected `status` field&quot;</span>))<span class="question-mark">?
+                            </span>.try_into()<span class="question-mark">?</span>,
+                    };
 
-    <span class="kw">fn </span>assert_consumer_chain_proposal_passed(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        chain_id: <span class="kw-2">&amp;</span>str,
-        command_path: <span class="kw-2">&amp;</span>str,
-        home_path: <span class="kw-2">&amp;</span>str,
-        rpc_listen_address: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        assert_eventually_succeed(
-            <span class="string">&quot;consumer chain proposal passed&quot;</span>,
-            <span class="number">10</span>,
-            Duration::from_secs(<span class="number">5</span>),
-            || {
-                <span class="kw">match </span>query_consumer_proposal(chain_id, command_path, home_path, rpc_listen_address) {
-                        <span class="prelude-val">Ok</span>(exec_output) =&gt; {
-                            <span class="kw">let </span>json_res = json::from_str::&lt;json::Value&gt;(<span class="kw-2">&amp;</span>exec_output.stdout).map_err(handle_generic_error)<span class="question-mark">?</span>;
-                            <span class="kw">let </span>proposal_status = json_res.get(<span class="string">&quot;status&quot;</span>)
-                                .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expected `status` field&quot;</span>))<span class="question-mark">?
-                                </span>.as_str()
-                                .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expected string field&quot;</span>))<span class="question-mark">?</span>;
-
-                            <span class="kw">if </span>proposal_status == <span class="string">&quot;PROPOSAL_STATUS_PASSED&quot; </span>{
-                                <span class="prelude-val">Ok</span>(())
-                            } <span class="kw">else </span>{
-                                <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">&quot;consumer chain proposal has not passed. Proposal status: {proposal_status}&quot;</span>)))
-                            }
-                        },
-                        <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">&quot;Error querying the consumer chain proposal. Potential issues could be due to not using enough gas or the proposal submitted is invalid. Error: {e}&quot;</span>))),
+                    <span class="kw">if </span>proposal_status == status {
+                        <span class="prelude-val">Ok</span>(())
+                    } <span class="kw">else </span>{
+                        <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(
+                            <span class="string">&quot;proposal is not in `{}`. Proposal status: {}&quot;</span>,
+                            status.as_str(),
+                            proposal_status.as_str()
+                        )))
                     }
+                }
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="kw">let </span>msg = e.to_string();
+                    <span class="kw">if </span>msg.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;status:{}&quot;</span>, status.as_str())) {
+                        <span class="prelude-val">Ok</span>(())
+                    } <span class="kw">else </span>{
+                        <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">&quot;Error querying proposal `{proposal_id}`. Potential issues could be due to not using enough gas or the proposal submitted is invalid. Error: {e}&quot;</span>)))
+                    }
+                }
             },
         )<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
