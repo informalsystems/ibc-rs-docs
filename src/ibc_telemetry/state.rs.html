@@ -1114,6 +1114,35 @@
 <a href="#1114" id="1114">1114</a>
 <a href="#1115" id="1115">1115</a>
 <a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::{
     ops::Range,
@@ -1216,6 +1245,10 @@
 
     <span class="doccomment">/// Number of client update messages submitted per client
     </span>client_updates_submitted: Counter&lt;u64&gt;,
+
+    <span class="doccomment">/// Number of client update skipped due to consensus state already
+    /// existing
+    </span>client_updates_skipped: Counter&lt;u64&gt;,
 
     <span class="doccomment">/// Number of misbehaviours detected and submitted per client
     </span>client_misbehaviours_submitted: Counter&lt;u64&gt;,
@@ -1347,6 +1380,11 @@
             client_updates_submitted: meter
                 .u64_counter(<span class="string">&quot;client_updates_submitted&quot;</span>)
                 .with_description(<span class="string">&quot;Number of client update messages submitted&quot;</span>)
+                .init(),
+
+            client_updates_skipped: meter
+                .u64_counter(<span class="string">&quot;client_updates_skipped&quot;</span>)
+                .with_description(<span class="string">&quot;Number of client update messages skipped&quot;</span>)
                 .init(),
 
             client_misbehaviours_submitted: meter
@@ -1574,6 +1612,7 @@
         ];
 
         <span class="self">self</span>.client_updates_submitted.add(<span class="kw-2">&amp;</span>cx, <span class="number">0</span>, labels);
+        <span class="self">self</span>.client_updates_skipped.add(<span class="kw-2">&amp;</span>cx, <span class="number">0</span>, labels);
 
         <span class="kw">if </span>misbehaviour {
             <span class="self">self</span>.client_misbehaviours_submitted.add(<span class="kw-2">&amp;</span>cx, <span class="number">0</span>, labels);
@@ -1626,6 +1665,25 @@
         ];
 
         <span class="self">self</span>.client_updates_submitted.add(<span class="kw-2">&amp;</span>cx, count, labels);
+    }
+
+    <span class="doccomment">/// Update the number of client updates skipped per client
+    </span><span class="kw">pub fn </span>client_updates_skipped(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        src_chain: <span class="kw-2">&amp;</span>ChainId,
+        dst_chain: <span class="kw-2">&amp;</span>ChainId,
+        client: <span class="kw-2">&amp;</span>ClientId,
+        count: u64,
+    ) {
+        <span class="kw">let </span>cx = Context::current();
+
+        <span class="kw">let </span>labels = <span class="kw-2">&amp;</span>[
+            KeyValue::new(<span class="string">&quot;src_chain&quot;</span>, src_chain.to_string()),
+            KeyValue::new(<span class="string">&quot;dst_chain&quot;</span>, dst_chain.to_string()),
+            KeyValue::new(<span class="string">&quot;client&quot;</span>, client.to_string()),
+        ];
+
+        <span class="self">self</span>.client_updates_skipped.add(<span class="kw-2">&amp;</span>cx, count, labels);
     }
 
     <span class="doccomment">/// Number of client misbehaviours per client
