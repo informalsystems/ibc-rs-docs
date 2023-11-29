@@ -776,15 +776,90 @@
 <a href="#776" id="776">776</a>
 <a href="#777" id="777">777</a>
 <a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::ops::Deref;
+<span class="kw">use </span>std::ops::{ControlFlow, Deref};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::thread::sleep;
 <span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
-<span class="kw">use </span>ibc_relayer::config::ChainConfig;
+<span class="kw">use </span>ibc_relayer::config::{ChainConfig, Config};
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
 
 <span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>TendermintHeight;
@@ -874,7 +949,13 @@
         );
 
         <span class="kw">let </span>chain = CosmosSdkChain::bootstrap(chain_config, rt.clone()).unwrap();
-        <span class="kw">let </span>res = monitor_misbehaviours(rt, chain, <span class="self">self</span>.key_name.as_ref(), <span class="self">self</span>.check_past_blocks);
+        <span class="kw">let </span>res = monitor_misbehaviours(
+            rt,
+            <span class="kw-2">&amp;</span>config,
+            chain,
+            <span class="self">self</span>.key_name.as_ref(),
+            <span class="self">self</span>.check_past_blocks,
+        );
 
         <span class="kw">match </span>res {
             <span class="prelude-val">Ok</span>(()) =&gt; Output::success(()).exit(),
@@ -885,6 +966,7 @@
 
 <span class="kw">fn </span>monitor_misbehaviours(
     rt: Arc&lt;TokioRuntime&gt;,
+    config: <span class="kw-2">&amp;</span>Config,
     <span class="kw-2">mut </span>chain: CosmosSdkChain,
     key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>String&gt;,
     check_past_blocks: u64,
@@ -914,7 +996,7 @@
     <span class="kw">while </span>height &gt;= target_height {
         <span class="macro">debug!</span>(<span class="string">&quot;checking for evidence at height {height}&quot;</span>);
 
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = check_misbehaviour_at(rt.clone(), <span class="kw-2">&amp;</span>chain, key_name, height) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = check_misbehaviour_at(rt.clone(), config, <span class="kw-2">&amp;</span>chain, key_name, height) {
             <span class="macro">warn!</span>(<span class="string">&quot;error while checking for misbehaviour at height {height}: {e}&quot;</span>);
         }
 
@@ -937,9 +1019,13 @@
                     <span class="kw">if let </span>IbcEvent::NewBlock(new_block) = <span class="kw-2">&amp;</span>event_with_height.event {
                         <span class="macro">info!</span>(<span class="string">&quot;checking for evidence at height {}&quot;</span>, new_block.height);
 
-                        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
-                            check_misbehaviour_at(rt.clone(), <span class="kw-2">&amp;</span>chain, key_name, new_block.height)
-                        {
+                        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = check_misbehaviour_at(
+                            rt.clone(),
+                            config,
+                            <span class="kw-2">&amp;</span>chain,
+                            key_name,
+                            new_block.height,
+                        ) {
                             <span class="macro">error!</span>(
                                 <span class="string">&quot;error while checking for misbehaviour at height {}: {e}&quot;</span>,
                                 new_block.height
@@ -962,6 +1048,7 @@
 /// clients of the chain, freezing them.
 </span><span class="kw">fn </span>check_misbehaviour_at(
     rt: Arc&lt;TokioRuntime&gt;,
+    config: <span class="kw-2">&amp;</span>Config,
     chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
     key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>String&gt;,
     height: Height,
@@ -976,128 +1063,181 @@
                 <span class="macro">warn!</span>(<span class="string">&quot;found duplicate vote evidence&quot;</span>);
                 <span class="macro">trace!</span>(<span class="string">&quot;{dv:#?}&quot;</span>);
 
-                handle_duplicate_vote(rt.clone(), chain, key_name, <span class="kw-2">*</span>dv)<span class="question-mark">?</span>;
+                handle_duplicate_vote(rt.clone(), config, chain, key_name, <span class="kw-2">*</span>dv)<span class="question-mark">?</span>;
             }
             tendermint::evidence::Evidence::LightClientAttack(lc) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;found light client attack evidence&quot;</span>);
                 <span class="macro">trace!</span>(<span class="string">&quot;{lc:#?}&quot;</span>);
 
-                handle_light_client_attack(rt.clone(), chain, key_name, <span class="kw-2">*</span>lc)<span class="question-mark">?</span>;
+                handle_light_client_attack(rt.clone(), config, chain, key_name, <span class="kw-2">*</span>lc)<span class="question-mark">?</span>;
             }
         }
     }
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">fn </span>spawn_runtime(
+    rt: Arc&lt;TokioRuntime&gt;,
+    config: <span class="kw-2">&amp;</span>Config,
+    cache: <span class="kw-2">&amp;mut </span>HashMap&lt;ChainId, BaseChainHandle&gt;,
+    chain_id: <span class="kw-2">&amp;</span>ChainId,
+    key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>String&gt;,
+) -&gt; eyre::Result&lt;BaseChainHandle&gt; {
+    <span class="kw">if </span>!cache.contains_key(chain_id) {
+        <span class="kw">let </span>chain_handle = spawn_chain_runtime_with_modified_config::&lt;BaseChainHandle&gt;(
+            config,
+            chain_id,
+            rt,
+            |chain_config| {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_name {
+                    chain_config.set_key_name(key_name.to_string());
+                }
+            },
+        )<span class="question-mark">?</span>;
+
+        cache.insert(chain_id.clone(), chain_handle);
+    }
+
+    <span class="prelude-val">Ok</span>(cache
+        .get(chain_id)
+        .expect(<span class="string">&quot;chain handle was either already there or we just inserted it&quot;</span>)
+        .clone())
 }
 
 <span class="kw">fn </span>handle_duplicate_vote(
     rt: Arc&lt;TokioRuntime&gt;,
+    config: <span class="kw-2">&amp;</span>Config,
     chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
     key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>String&gt;,
-    dv: DuplicateVoteEvidence,
+    evidence: DuplicateVoteEvidence,
 ) -&gt; eyre::Result&lt;()&gt; {
-    <span class="kw">use </span>ibc_relayer::chain::requests::QueryConsensusStateHeightsRequest;
-
-    <span class="kw">let </span>config = app_config();
-
     <span class="comment">// Fetch all the counterparty clients of this chain.
-    </span><span class="kw">let </span>counterparty_clients = fetch_all_counterparty_clients(chain)<span class="question-mark">?</span>;
+    </span><span class="kw">let </span>counterparty_clients = fetch_all_counterparty_clients(config, chain)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span><span class="kw-2">mut </span>chains = HashMap::new();
+    <span class="comment">// Cache for the chain handles
+    </span><span class="kw">let </span><span class="kw-2">mut </span>chains = HashMap::new();
 
     <span class="comment">// For each counterparty client, build the double voting evidence and submit it to the chain,
     // freezing that client.
     </span><span class="kw">for </span>(counterparty_chain_id, counterparty_client_id) <span class="kw">in </span>counterparty_clients {
-        <span class="kw">if </span>!chains.contains_key(<span class="kw-2">&amp;</span>counterparty_chain_id) {
-            <span class="kw">let </span>chain_handle = spawn_chain_runtime_with_modified_config::&lt;BaseChainHandle&gt;(
-                <span class="kw-2">&amp;</span>config,
-                <span class="kw-2">&amp;</span>counterparty_chain_id,
-                rt.clone(),
-                |chain_config| {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_name {
-                        chain_config.set_key_name(key_name.to_string());
-                    }
-                },
-            )<span class="question-mark">?</span>;
-
-            chains.insert(counterparty_chain_id.clone(), chain_handle);
+        <span class="kw">let </span>counterparty_chain_handle = <span class="kw">match </span>spawn_runtime(
+            rt.clone(),
+            config,
+            <span class="kw-2">&amp;mut </span>chains,
+            <span class="kw-2">&amp;</span>counterparty_chain_id,
+            key_name,
+        ) {
+            <span class="prelude-val">Ok</span>(chain_handle) =&gt; chain_handle,
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(<span class="string">&quot;failed to spawn runtime for chain `{counterparty_chain_id}`: {e}&quot;</span>);
+                <span class="kw">continue</span>;
+            }
         };
 
-        <span class="kw">let </span>counterparty_chain_handle = chains.get(<span class="kw-2">&amp;</span>counterparty_chain_id).unwrap();
+        <span class="kw">let </span>next = submit_duplicate_vote_evidence(
+            <span class="kw-2">&amp;</span>rt,
+            chain,
+            <span class="kw-2">&amp;</span>counterparty_chain_handle,
+            <span class="kw-2">&amp;</span>counterparty_chain_id,
+            <span class="kw-2">&amp;</span>counterparty_client_id,
+            <span class="kw-2">&amp;</span>evidence,
+        );
 
-        <span class="kw">let </span>signer = counterparty_chain_handle.get_signer()<span class="question-mark">?</span>;
-
-        <span class="kw">if </span>!is_counterparty_provider(chain, counterparty_chain_handle, <span class="kw-2">&amp;</span>counterparty_client_id) {
-            <span class="macro">debug!</span>(<span class="string">&quot;counterparty client `{counterparty_client_id}` on chain `{counterparty_chain_id}` is not a CCV client, skipping...&quot;</span>);
-            <span class="kw">continue</span>;
-        }
-
-        <span class="kw">let </span>infraction_height = dv.vote_a.height;
-
-        <span class="comment">// Get the trusted height in the same way we do for client updates,
-        // ie. retrieve the consensus state at the highest height smaller than the infraction height.
-        //
-        // Note: The consensus state heights are sorted in increasing order.
-        </span><span class="kw">let </span>consensus_state_heights =
-            chain.query_consensus_state_heights(QueryConsensusStateHeightsRequest {
-                client_id: counterparty_client_id.clone(),
-                pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
-            })<span class="question-mark">?</span>;
-
-        <span class="comment">// Retrieve the consensus state at the highest height smaller than the infraction height.
-        </span><span class="kw">let </span>consensus_state_height_before_infraction_height = consensus_state_heights
-            .into_iter()
-            .filter(|height| height.revision_height() &lt; infraction_height.value())
-            .last();
-
-        <span class="kw">let </span><span class="prelude-val">Some</span>(trusted_height) = consensus_state_height_before_infraction_height <span class="kw">else </span>{
-            <span class="macro">error!</span>(
-                <span class="string">&quot;cannot build infraction block header for client `{counterparty_client_id}` on chain `{counterparty_chain_id}`,\
-                reason: could not find consensus state at highest height smaller than infraction height {infraction_height}&quot;
-            </span>);
-
-            <span class="kw">continue</span>;
-        };
-
-        <span class="comment">// Construct the light client block header for the consumer chain at the infraction height
-        </span><span class="kw">let </span>infraction_block_header =
-            fetch_infraction_block_header(<span class="kw-2">&amp;</span>rt, chain, infraction_height, trusted_height)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>submit_msg = MsgSubmitIcsConsumerDoubleVoting {
-            submitter: signer.clone(),
-            duplicate_vote_evidence: dv.clone(),
-            infraction_block_header,
-        }
-        .to_any();
-
-        <span class="macro">info!</span>(
-            <span class="string">&quot;submitting consumer double voting evidence to provider chain `{counterparty_chain_id}`&quot;
-        </span>);
-
-        <span class="kw">let </span>tracked_msgs = TrackedMsgs::new_static(<span class="macro">vec!</span>[submit_msg], <span class="string">&quot;double_voting_evidence&quot;</span>);
-        <span class="kw">let </span>responses = counterparty_chain_handle.send_messages_and_wait_check_tx(tracked_msgs)<span class="question-mark">?</span>;
-
-        <span class="kw">for </span>response <span class="kw">in </span>responses {
-            <span class="kw">if </span>response.code.is_ok() {
-                <span class="macro">info!</span>(<span class="string">&quot;successfully submitted double voting evidence to chain `{counterparty_chain_id}`, tx hash: {}&quot;</span>, response.hash);
-            } <span class="kw">else </span>{
+        <span class="kw">match </span>next {
+            <span class="prelude-val">Ok</span>(ControlFlow::Continue(())) =&gt; <span class="kw">continue</span>,
+            <span class="prelude-val">Ok</span>(ControlFlow::Break(())) =&gt; <span class="kw">break</span>,
+            <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;failed to submit double voting evidence to chain `{counterparty_chain_id}`: {response:?}&quot;
+                    <span class="string">&quot;failed to report double voting evidence to chain `{counterparty_chain_id}`: {e}&quot;
                 </span>);
+
+                <span class="kw">continue</span>;
             }
         }
-
-        <span class="comment">// We have submitted the evidence to the provider, and because there can only be a single
-        // provider for a consumer chain, we can stop now. No need to check all the other
-        // counteparties.
-        </span><span class="kw">break</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
+<span class="kw">fn </span>submit_duplicate_vote_evidence(
+    rt: <span class="kw-2">&amp;</span>TokioRuntime,
+    chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
+    counterparty_chain_handle: <span class="kw-2">&amp;</span>BaseChainHandle,
+    counterparty_chain_id: <span class="kw-2">&amp;</span>ChainId,
+    counterparty_client_id: <span class="kw-2">&amp;</span>ClientId,
+    evidence: <span class="kw-2">&amp;</span>DuplicateVoteEvidence,
+) -&gt; eyre::Result&lt;ControlFlow&lt;()&gt;&gt; {
+    <span class="kw">use </span>ibc_relayer::chain::requests::QueryConsensusStateHeightsRequest;
+
+    <span class="kw">let </span>signer = counterparty_chain_handle.get_signer()<span class="question-mark">?</span>;
+
+    <span class="kw">if </span>!is_counterparty_provider(chain, counterparty_chain_handle, counterparty_client_id) {
+        <span class="macro">debug!</span>(<span class="string">&quot;counterparty client `{counterparty_client_id}` on chain `{counterparty_chain_id}` is not a CCV client, skipping...&quot;</span>);
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(ControlFlow::Continue(()));
+    }
+
+    <span class="kw">let </span>infraction_height = evidence.vote_a.height;
+
+    <span class="comment">// Get the trusted height in the same way we do for client updates,
+    // ie. retrieve the consensus state at the highest height smaller than the infraction height.
+    //
+    // Note: The consensus state heights are sorted in increasing order.
+    </span><span class="kw">let </span>consensus_state_heights =
+        chain.query_consensus_state_heights(QueryConsensusStateHeightsRequest {
+            client_id: counterparty_client_id.clone(),
+            pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
+        })<span class="question-mark">?</span>;
+
+    <span class="comment">// Retrieve the consensus state at the highest height smaller than the infraction height.
+    </span><span class="kw">let </span>consensus_state_height_before_infraction_height = consensus_state_heights
+        .into_iter()
+        .filter(|height| height.revision_height() &lt; infraction_height.value())
+        .last();
+
+    <span class="kw">let </span><span class="prelude-val">Some</span>(trusted_height) = consensus_state_height_before_infraction_height <span class="kw">else </span>{
+        <span class="macro">error!</span>(
+            <span class="string">&quot;cannot build infraction block header for client `{counterparty_client_id}` on chain `{counterparty_chain_id}`,\
+            reason: could not find consensus state at highest height smaller than infraction height {infraction_height}&quot;
+        </span>);
+
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(ControlFlow::Continue(()));
+    };
+
+    <span class="comment">// Construct the light client block header for the consumer chain at the infraction height
+    </span><span class="kw">let </span>infraction_block_header =
+        fetch_infraction_block_header(rt, chain, infraction_height, trusted_height)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>submit_msg = MsgSubmitIcsConsumerDoubleVoting {
+        submitter: signer.clone(),
+        duplicate_vote_evidence: evidence.clone(),
+        infraction_block_header,
+    }
+    .to_any();
+
+    <span class="macro">info!</span>(<span class="string">&quot;submitting consumer double voting evidence to provider chain `{counterparty_chain_id}`&quot;</span>);
+
+    <span class="kw">let </span>tracked_msgs = TrackedMsgs::new_static(<span class="macro">vec!</span>[submit_msg], <span class="string">&quot;double_voting_evidence&quot;</span>);
+    <span class="kw">let </span>responses = counterparty_chain_handle.send_messages_and_wait_check_tx(tracked_msgs)<span class="question-mark">?</span>;
+
+    <span class="kw">for </span>response <span class="kw">in </span>responses {
+        <span class="kw">if </span>response.code.is_ok() {
+            <span class="macro">info!</span>(<span class="string">&quot;successfully submitted double voting evidence to chain `{counterparty_chain_id}`, tx hash: {}&quot;</span>, response.hash);
+        } <span class="kw">else </span>{
+            <span class="macro">error!</span>(
+                <span class="string">&quot;failed to submit double voting evidence to chain `{counterparty_chain_id}`: {response:?}&quot;
+            </span>);
+        }
+    }
+
+    <span class="comment">// We have submitted the evidence to the provider, and because there can only be a single
+    // provider for a consumer chain, we can stop now. No need to check all the other
+    // counteparties.
+    </span><span class="prelude-val">Ok</span>(ControlFlow::Break(()))
+}
+
 <span class="kw">fn </span>fetch_infraction_block_header(
-    rt: <span class="kw-2">&amp;</span>Arc&lt;TokioRuntime&gt;,
+    rt: <span class="kw-2">&amp;</span>TokioRuntime,
     chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
     infraction_height: TendermintHeight,
     trusted_height: Height,
@@ -1134,61 +1274,54 @@
 
 <span class="kw">fn </span>handle_light_client_attack(
     rt: Arc&lt;TokioRuntime&gt;,
+    config: <span class="kw-2">&amp;</span>Config,
     chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
     key_name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>String&gt;,
     evidence: LightClientAttackEvidence,
 ) -&gt; eyre::Result&lt;()&gt; {
-    <span class="kw">let </span>config = app_config();
-
     <span class="comment">// Build the two headers to submit as part of the `MsgSubmitMisbehaviour` message.
     </span><span class="kw">let </span>(header1, header2) = build_evidence_headers(rt.clone(), chain, evidence.clone())<span class="question-mark">?</span>;
 
     <span class="comment">// Fetch all the counterparty clients of this chain.
-    </span><span class="kw">let </span>counterparty_clients = fetch_all_counterparty_clients(chain)<span class="question-mark">?</span>;
+    </span><span class="kw">let </span>counterparty_clients = fetch_all_counterparty_clients(config, chain)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span><span class="kw-2">mut </span>chains = HashMap::new();
+    <span class="comment">// Cache for the chain handles
+    </span><span class="kw">let </span><span class="kw-2">mut </span>chains = HashMap::new();
+
+    <span class="kw">let </span>chain_handle = spawn_runtime(rt.clone(), config, <span class="kw-2">&amp;mut </span>chains, chain.id(), key_name)
+        .map_err(|e| {
+            <span class="macro">eyre::eyre!</span>(
+                <span class="string">&quot;failed to spawn chain runtime for chain `{chain_id}`: {e}&quot;</span>,
+                chain_id = chain.id()
+            )
+        })<span class="question-mark">?</span>;
 
     <span class="comment">// For each counterparty client, build the misbehaviour evidence and submit it to the chain,
     // freezing that client.
     </span><span class="kw">for </span>(counterparty_chain_id, counterparty_client_id) <span class="kw">in </span>counterparty_clients {
+        <span class="kw">let </span>counterparty_chain_handle = <span class="kw">match </span>spawn_runtime(
+            rt.clone(),
+            config,
+            <span class="kw-2">&amp;mut </span>chains,
+            <span class="kw-2">&amp;</span>counterparty_chain_id,
+            key_name,
+        ) {
+            <span class="prelude-val">Ok</span>(chain_handle) =&gt; chain_handle,
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(
+                    <span class="string">&quot;failed to spawn chain runtime for chain `{counterparty_chain_id}`: {e}&quot;</span>,
+                    counterparty_chain_id = counterparty_chain_id
+                );
+
+                <span class="kw">continue</span>;
+            }
+        };
+
         <span class="kw">let </span>misbehaviour = TendermintMisbehaviour {
             client_id: counterparty_client_id.clone(),
             header1: header1.clone(),
             header2: header2.clone(),
         };
-
-        <span class="kw">if </span>!chains.contains_key(chain.id()) {
-            <span class="kw">let </span>chain_handle = spawn_chain_runtime_with_modified_config::&lt;BaseChainHandle&gt;(
-                <span class="kw-2">&amp;</span>config,
-                chain.id(),
-                rt.clone(),
-                |chain_config| {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_name {
-                        chain_config.set_key_name(key_name.to_string());
-                    }
-                },
-            )<span class="question-mark">?</span>;
-
-            chains.insert(chain.id().clone(), chain_handle);
-        }
-
-        <span class="kw">if </span>!chains.contains_key(<span class="kw-2">&amp;</span>counterparty_chain_id) {
-            <span class="kw">let </span>chain_handle = spawn_chain_runtime_with_modified_config::&lt;BaseChainHandle&gt;(
-                <span class="kw-2">&amp;</span>config,
-                <span class="kw-2">&amp;</span>counterparty_chain_id,
-                rt.clone(),
-                |chain_config| {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_name {
-                        chain_config.set_key_name(key_name.to_string());
-                    }
-                },
-            )<span class="question-mark">?</span>;
-
-            chains.insert(counterparty_chain_id.clone(), chain_handle);
-        };
-
-        <span class="kw">let </span>chain_handle = chains.get(chain.id()).unwrap();
-        <span class="kw">let </span>counterparty_chain_handle = chains.get(<span class="kw-2">&amp;</span>counterparty_chain_id).unwrap();
 
         <span class="kw">let </span>counterparty_client = ForeignClient::restore(
             counterparty_client_id.clone(),
@@ -1201,7 +1334,7 @@
             chain,
             counterparty_client,
             counterparty_client_id,
-            counterparty_chain_handle,
+            <span class="kw-2">&amp;</span>counterparty_chain_handle,
             misbehaviour,
         );
 
@@ -1414,6 +1547,7 @@
 ///     2.2. From the client state, extract the chain id of the counterparty chain.
 /// 4. Return a list of all counterparty chains and counterparty clients.
 </span><span class="kw">fn </span>fetch_all_counterparty_clients(
+    config: <span class="kw-2">&amp;</span>Config,
     chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
 ) -&gt; eyre::Result&lt;Vec&lt;(ChainId, ClientId)&gt;&gt; {
     <span class="kw">use </span>ibc_relayer::chain::requests::{QueryClientStateRequest, QueryConnectionsRequest};
@@ -1427,12 +1561,18 @@
     <span class="kw">let </span><span class="kw-2">mut </span>counterparty_clients = <span class="macro">vec!</span>[];
 
     <span class="kw">for </span>connection <span class="kw">in </span>connections {
+        <span class="kw">let </span>client_id = connection.connection_end.client_id();
+        <span class="kw">let </span>counterparty_client_id = connection.connection_end.counterparty().client_id();
+
         <span class="macro">debug!</span>(
-            <span class="string">&quot;fetching counterparty client state for connection `{}`&quot;</span>,
+            <span class="string">&quot;found connection `{}` with client `{client_id}` and counterparty client `{counterparty_client_id}`&quot;</span>,
             connection.connection_id
         );
 
-        <span class="kw">let </span>client_id = connection.connection_end.client_id();
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;fetching client state for client `{client_id}` on connection `{}`&quot;</span>,
+            connection.connection_id
+        );
 
         <span class="kw">let </span>client_state = chain.query_client_state(
             QueryClientStateRequest {
@@ -1445,9 +1585,7 @@
         <span class="kw">let </span>client_state = <span class="kw">match </span>client_state {
             <span class="prelude-val">Ok</span>((client_state, <span class="kw">_</span>)) =&gt; client_state,
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">error!</span>(
-                    <span class="string">&quot;failed to fetch client state for counterparty client `{client_id}`, skipping...&quot;
-                </span>);
+                <span class="macro">error!</span>(<span class="string">&quot;failed to fetch client state for client `{client_id}`, skipping...&quot;</span>);
                 <span class="macro">error!</span>(<span class="string">&quot;reason: {e}&quot;</span>);
 
                 <span class="kw">continue</span>;
@@ -1455,10 +1593,22 @@
         };
 
         <span class="kw">let </span>counterparty_chain_id = client_state.chain_id();
-        <span class="macro">info!</span>(<span class="string">&quot;found counterparty client with id `{client_id}` on counterparty chain `{counterparty_chain_id}`&quot;</span>);
 
-        counterparty_clients.push((counterparty_chain_id, client_id.clone()));
+        <span class="kw">if </span>config.find_chain(<span class="kw-2">&amp;</span>counterparty_chain_id).is_some() {
+            <span class="macro">info!</span>(<span class="string">&quot;found counterparty client `{counterparty_client_id}` which lives on counterparty chain `{counterparty_chain_id}`&quot;</span>);
+
+            counterparty_clients.push((counterparty_chain_id, counterparty_client_id.clone()));
+        } <span class="kw">else </span>{
+            <span class="macro">debug!</span>(
+                <span class="string">&quot;skipping counterparty client `{client_id}` on counterparty \
+                chain `{counterparty_chain_id}` which is not present in the config...&quot;
+            </span>);
+        }
     }
+
+    <span class="comment">// Remove duplicates
+    </span>counterparty_clients.sort();
+    counterparty_clients.dedup();
 
     <span class="prelude-val">Ok</span>(counterparty_clients)
 }
