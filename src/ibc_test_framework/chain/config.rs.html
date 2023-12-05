@@ -345,6 +345,42 @@
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
     Helper functions for modifying the Gaia chain config in TOML.
 
@@ -366,6 +402,17 @@
         </span>.as_table_mut()
         .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expect object&quot;</span>))<span class="question-mark">?
         </span>.insert(<span class="string">&quot;laddr&quot;</span>.to_string(), <span class="macro">format!</span>(<span class="string">&quot;tcp://0.0.0.0:{port}&quot;</span>).into());
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">pub fn </span>enable_grpc(config: <span class="kw-2">&amp;mut </span>Value) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    config
+        .get_mut(<span class="string">&quot;grpc&quot;</span>)
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expect grpc section&quot;</span>))<span class="question-mark">?
+        </span>.as_table_mut()
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;expect object&quot;</span>))<span class="question-mark">?
+        </span>.insert(<span class="string">&quot;enable&quot;</span>.to_string(), <span class="bool-val">true</span>.into());
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -522,6 +569,31 @@
             serde_json::Value::String(period.to_string()),
         )
         .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to update max_deposit_period in genesis file&quot;</span>))<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">pub fn </span>set_min_deposit_amount(
+    genesis: <span class="kw-2">&amp;mut </span>serde_json::Value,
+    min_deposit_amount: u64,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">let </span>min_deposit = genesis
+        .get_mut(<span class="string">&quot;app_state&quot;</span>)
+        .and_then(|app_state| app_state.get_mut(<span class="string">&quot;gov&quot;</span>))
+        .and_then(|gov| get_mut_with_fallback(gov, <span class="string">&quot;params&quot;</span>, <span class="string">&quot;deposit_params&quot;</span>))
+        .and_then(|deposit_params| deposit_params.get_mut(<span class="string">&quot;min_deposit&quot;</span>))
+        .and_then(|min_deposit| min_deposit.as_array_mut())
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to find min_deposit in genesis file&quot;</span>))<span class="question-mark">?
+        </span>.get_mut(<span class="number">0</span>)
+        .and_then(|min_deposit_entry| min_deposit_entry.as_object_mut())
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to find first entry of min_deposit in genesis file&quot;</span>))<span class="question-mark">?</span>;
+
+    min_deposit
+        .insert(
+            <span class="string">&quot;amount&quot;</span>.to_owned(),
+            serde_json::Value::String(min_deposit_amount.to_string()),
+        )
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to update deposit_params amount in genesis file&quot;</span>))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
