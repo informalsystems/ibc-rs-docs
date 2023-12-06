@@ -1167,6 +1167,7 @@
 <a href="#1167" id="1167">1167</a>
 <a href="#1168" id="1168">1168</a>
 <a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::{
     ops::Range,
@@ -1191,7 +1192,7 @@
 
 <span class="kw">use </span>tendermint::Time;
 
-<span class="kw">use </span><span class="kw">crate</span>::path_identifier::PathIdentifier;
+<span class="kw">use crate</span>::{broadcast_error::BroadcastError, path_identifier::PathIdentifier};
 
 <span class="kw">const </span>EMPTY_BACKLOG_SYMBOL: u64 = <span class="number">0</span>;
 <span class="kw">const </span>BACKLOG_CAPACITY: usize = <span class="number">1000</span>;
@@ -2251,13 +2252,14 @@
 
     <span class="doccomment">/// Add an error and its description to the list of errors observed after broadcasting
     /// a Tx with a specific account.
-    </span><span class="kw">pub fn </span>broadcast_errors(<span class="kw-2">&amp;</span><span class="self">self</span>, address: <span class="kw-2">&amp;</span>String, error_code: u32, error_description: <span class="kw-2">&amp;</span>String) {
+    </span><span class="kw">pub fn </span>broadcast_errors(<span class="kw-2">&amp;</span><span class="self">self</span>, address: <span class="kw-2">&amp;</span>String, error_code: u32, error_description: <span class="kw-2">&amp;</span>str) {
         <span class="kw">let </span>cx = Context::current();
+        <span class="kw">let </span>broadcast_error = BroadcastError::new(error_code, error_description);
 
         <span class="kw">let </span>labels = <span class="kw-2">&amp;</span>[
             KeyValue::new(<span class="string">&quot;account&quot;</span>, address.to_string()),
-            KeyValue::new(<span class="string">&quot;error_code&quot;</span>, error_code.to_string()),
-            KeyValue::new(<span class="string">&quot;error_description&quot;</span>, error_description.to_string()),
+            KeyValue::new(<span class="string">&quot;error_code&quot;</span>, broadcast_error.code.to_string()),
+            KeyValue::new(<span class="string">&quot;error_description&quot;</span>, broadcast_error.description),
         ];
 
         <span class="self">self</span>.broadcast_errors.add(<span class="kw-2">&amp;</span>cx, <span class="number">1</span>, labels);
