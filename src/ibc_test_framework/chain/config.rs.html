@@ -381,6 +381,48 @@
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
     Helper functions for modifying the Gaia chain config in TOML.
 
@@ -734,6 +776,48 @@
         <span class="string">&quot;soft_opt_out_threshold&quot;</span>.to_owned(),
         serde_json::Value::String(threshold.to_string()),
     );
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">pub fn </span>consensus_params_max_gas(
+    genesis: <span class="kw-2">&amp;mut </span>serde_json::Value,
+    max_gas: <span class="kw-2">&amp;</span>str,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">let </span>block = genesis
+        .get_mut(<span class="string">&quot;consensus_params&quot;</span>)
+        .and_then(|consensus_params| consensus_params.get_mut(<span class="string">&quot;block&quot;</span>))
+        .and_then(|block| block.as_object_mut())
+        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to get `block` field in genesis file&quot;</span>))<span class="question-mark">?</span>;
+
+    block.insert(
+        <span class="string">&quot;max_gas&quot;</span>.to_owned(),
+        serde_json::Value::String(max_gas.to_string()),
+    );
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">pub fn </span>globalfee_minimum_gas_prices(
+    genesis: <span class="kw-2">&amp;mut </span>serde_json::Value,
+    minimum_gas_prices: serde_json::Value,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">let </span>globalfee = genesis
+        .get_mut(<span class="string">&quot;app_state&quot;</span>)
+        .and_then(|app_state| app_state.get_mut(<span class="string">&quot;globalfee&quot;</span>));
+
+    <span class="comment">// Only update `minimum_gas_prices` if `globalfee` is enabled
+    </span><span class="kw">match </span>globalfee {
+        <span class="prelude-val">Some</span>(globalfee) =&gt; {
+            <span class="kw">let </span>params = globalfee
+                .get_mut(<span class="string">&quot;params&quot;</span>)
+                .and_then(|params| params.as_object_mut())
+                .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">&quot;failed to get `params` fields in genesis file&quot;</span>))<span class="question-mark">?</span>;
+
+            params.insert(<span class="string">&quot;minimum_gas_prices&quot;</span>.to_owned(), minimum_gas_prices);
+        }
+        <span class="prelude-val">None </span>=&gt; <span class="macro">debug!</span>(<span class="string">&quot;chain doesn&#39;t have `globalfee`&quot;</span>),
+    }
 
     <span class="prelude-val">Ok</span>(())
 }
