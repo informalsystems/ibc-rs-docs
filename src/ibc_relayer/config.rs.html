@@ -849,6 +849,15 @@
 <a href="#849" id="849">849</a>
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Relayer configuration
 
 </span><span class="kw">pub mod </span>compat_mode;
@@ -951,7 +960,7 @@
 /// the parsing of other prices.
 </span><span class="kw">pub fn </span>parse_gas_prices(prices: String) -&gt; Vec&lt;GasPrice&gt; {
     prices
-        .split(<span class="string">&#39;;&#39;</span>)
+        .split(|c| c == <span class="string">&#39;,&#39; </span>|| c == <span class="string">&#39;;&#39;</span>)
         .filter_map(|gp| GasPrice::from_str(gp).ok())
         .collect()
 }
@@ -1662,9 +1671,6 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_multiple_gas_prices() {
-        <span class="kw">let </span>gas_prices = <span class="string">&quot;0.25token1;0.0001token2&quot;</span>;
-        <span class="kw">let </span>parsed = parse_gas_prices(gas_prices.to_string());
-
         <span class="kw">let </span>expected = <span class="macro">vec!</span>[
             GasPrice {
                 price: <span class="number">0.25</span>,
@@ -1676,7 +1682,15 @@
             },
         ];
 
-        <span class="macro">assert_eq!</span>(expected, parsed);
+        <span class="kw">let </span>test_cases = <span class="macro">vec!</span>[
+            (<span class="string">&quot;0.25token1;0.0001token2&quot;</span>, expected.clone()),
+            (<span class="string">&quot;0.25token1,0.0001token2&quot;</span>, expected.clone()),
+        ];
+
+        <span class="kw">for </span>(input, expected) <span class="kw">in </span>test_cases {
+            <span class="kw">let </span>parsed = parse_gas_prices(input.to_string());
+            <span class="macro">assert_eq!</span>(expected, parsed);
+        }
     }
 
     <span class="attr">#[test]
@@ -1689,15 +1703,19 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>malformed_gas_prices_do_not_get_parsed() {
-        <span class="kw">let </span>malformed_prices = <span class="string">&quot;token1;.token2;0.25token3&quot;</span>;
-        <span class="kw">let </span>parsed = parse_gas_prices(malformed_prices.to_string());
-
         <span class="kw">let </span>expected = <span class="macro">vec!</span>[GasPrice {
             price: <span class="number">0.25</span>,
             denom: <span class="string">&quot;token3&quot;</span>.to_owned(),
         }];
+        <span class="kw">let </span>test_cases = <span class="macro">vec!</span>[
+            (<span class="string">&quot;token1;.token2;0.25token3&quot;</span>, expected.clone()),
+            (<span class="string">&quot;token1,.token2,0.25token3&quot;</span>, expected.clone()),
+        ];
 
-        <span class="macro">assert_eq!</span>(expected, parsed);
+        <span class="kw">for </span>(input, expected) <span class="kw">in </span>test_cases {
+            <span class="kw">let </span>parsed = parse_gas_prices(input.to_string());
+            <span class="macro">assert_eq!</span>(expected, parsed);
+        }
     }
 }
 </code></pre></div></section></main></body></html>

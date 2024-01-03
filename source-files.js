@@ -300,7 +300,7 @@ var sourcesIndex = JSON.parse('{\
 "unicode_normalization":["",[],["__test_api.rs","decompose.rs","lib.rs","lookups.rs","no_std_prelude.rs","normalize.rs","perfect_hash.rs","quick_check.rs","recompose.rs","replace.rs","stream_safe.rs","tables.rs"]],\
 "unicode_width":["",[],["lib.rs","tables.rs"]],\
 "unicode_xid":["",[],["lib.rs","tables.rs"]],\
-"unsafe_libyaml":["",[],["api.rs","dumper.rs","emitter.rs","lib.rs","loader.rs","macros.rs","parser.rs","reader.rs","scanner.rs","success.rs","writer.rs","yaml.rs"]],\
+"unsafe_libyaml":["",[],["api.rs","dumper.rs","emitter.rs","lib.rs","loader.rs","macros.rs","ops.rs","parser.rs","reader.rs","scanner.rs","success.rs","writer.rs","yaml.rs"]],\
 "untrusted":["",[],["input.rs","lib.rs","no_panic.rs","reader.rs"]],\
 "url":["",[],["host.rs","lib.rs","origin.rs","parser.rs","path_segments.rs","quirks.rs","slicing.rs"]],\
 "urlencoding":["",[],["dec.rs","enc.rs","lib.rs"]],\
