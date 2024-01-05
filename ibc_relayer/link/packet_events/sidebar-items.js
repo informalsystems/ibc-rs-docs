@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["CHUNK_LENGTH"],"fn":["query_packet_events_with","query_send_packet_events","query_write_ack_events"]};
+window.SIDEBAR_ITEMS = {"fn":["query_packet_events_with","query_send_packet_events","query_write_ack_events"]};

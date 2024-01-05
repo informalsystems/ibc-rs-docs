@@ -1877,6 +1877,15 @@
 <a href="#1877" id="1877">1877</a>
 <a href="#1878" id="1878">1878</a>
 <a href="#1879" id="1879">1879</a>
+<a href="#1880" id="1880">1880</a>
+<a href="#1881" id="1881">1881</a>
+<a href="#1882" id="1882">1882</a>
+<a href="#1883" id="1883">1883</a>
+<a href="#1884" id="1884">1884</a>
+<a href="#1885" id="1885">1885</a>
+<a href="#1886" id="1886">1886</a>
+<a href="#1887" id="1887">1887</a>
+<a href="#1888" id="1888">1888</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::collections::VecDeque;
 <span class="kw">use </span>std::ops::Sub;
@@ -2297,9 +2306,14 @@
         <span class="kw">let </span>tracking_id = TrackingId::new_cleared_uuid();
         <span class="macro">telemetry!</span>(received_event_batch, tracking_id);
 
+        <span class="kw">let </span>src_config = <span class="self">self</span>.src_chain().config().map_err(LinkError::relayer)<span class="question-mark">?</span>;
+        <span class="kw">let </span>chunk_size = src_config.query_packets_chunk_size();
+
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..=MAX_RETRIES {
-            <span class="kw">let </span>cleared_recv = <span class="self">self</span>.schedule_recv_packet_and_timeout_msgs(height, tracking_id);
-            <span class="kw">let </span>cleared_ack = <span class="self">self</span>.schedule_packet_ack_msgs(height, tracking_id);
+            <span class="kw">let </span>cleared_recv =
+                <span class="self">self</span>.schedule_recv_packet_and_timeout_msgs(height, chunk_size, tracking_id);
+
+            <span class="kw">let </span>cleared_ack = <span class="self">self</span>.schedule_packet_ack_msgs(height, chunk_size, tracking_id);
 
             <span class="kw">match </span>cleared_recv.and(cleared_ack) {
                 <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
@@ -2973,6 +2987,7 @@
     </span><span class="kw">pub fn </span>schedule_recv_packet_and_timeout_msgs(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         opt_query_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
+        chunk_size: usize,
         tracking_id: TrackingId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
         <span class="kw">let </span>_span = <span class="macro">span!</span>(
@@ -3009,6 +3024,7 @@
             Qualified::SmallerEqual(query_height),
             <span class="self">self</span>.src_chain(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.path_id,
+            chunk_size,
             query_send_packet_events,
         ) {
             <span class="comment">// Update telemetry info
@@ -3032,6 +3048,7 @@
     </span><span class="kw">pub fn </span>schedule_packet_ack_msgs(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         opt_query_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
+        chunk_size: usize,
         tracking_id: TrackingId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
         <span class="kw">let </span>_span = <span class="macro">span!</span>(
@@ -3070,6 +3087,7 @@
             Qualified::SmallerEqual(query_height),
             <span class="self">self</span>.src_chain(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.path_id,
+            chunk_size,
             query_write_ack_events,
         ) {
             <span class="macro">telemetry!</span>(<span class="self">self</span>.record_cleared_acknowledgments(events_chunk.iter()));
