@@ -874,6 +874,18 @@
 <a href="#874" id="874">874</a>
 <a href="#875" id="875">875</a>
 <a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Relayer configuration
 
 </span><span class="kw">pub mod </span>compat_mode;
@@ -881,18 +893,18 @@
 <span class="kw">pub mod </span>filter;
 <span class="kw">pub mod </span>gas_multiplier;
 <span class="kw">pub mod </span>proof_specs;
+<span class="kw">pub mod </span>refresh_rate;
 <span class="kw">pub mod </span>types;
 
 <span class="kw">use </span>alloc::collections::BTreeMap;
-<span class="kw">use </span>byte_unit::Byte;
-<span class="kw">use </span>core::{
-    cmp::Ordering,
-    fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
-    str::FromStr,
-    time::Duration,
-};
-<span class="kw">use </span>serde_derive::{Deserialize, Serialize};
+<span class="kw">use </span>core::cmp::Ordering;
+<span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
+<span class="kw">use </span>core::str::FromStr;
+<span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>std::{fs, fs::File, io::Write, ops::Range, path::Path};
+
+<span class="kw">use </span>byte_unit::Byte;
+<span class="kw">use </span>serde_derive::{Deserialize, Serialize};
 <span class="kw">use </span>tendermint::block::Height <span class="kw">as </span>BlockHeight;
 <span class="kw">use </span>tendermint_rpc::Url;
 <span class="kw">use </span>tendermint_rpc::WebSocketClientUrl;
@@ -901,10 +913,11 @@
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 <span class="kw">use </span>ibc_relayer_types::timestamp::ZERO_DURATION;
 
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::config::CosmosSdkConfig;
+<span class="kw">use </span><span class="kw">crate</span>::config::types::TrustThreshold;
+<span class="kw">use </span><span class="kw">crate</span>::error::Error <span class="kw">as </span>RelayerError;
 <span class="kw">use </span><span class="kw">crate</span>::extension_options::ExtensionOptionDynamicFeeTx;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::Store;
-<span class="kw">use </span><span class="kw">crate</span>::keyring::{AnySigningKeyPair, KeyRing};
-<span class="kw">use crate</span>::{chain::cosmos::config::CosmosSdkConfig, error::Error <span class="kw">as </span>RelayerError};
+<span class="kw">use </span><span class="kw">crate</span>::keyring::{AnySigningKeyPair, KeyRing, Store};
 
 <span class="kw">use </span><span class="kw">crate</span>::keyring;
 
@@ -912,6 +925,7 @@
 <span class="kw">pub use </span>error::Error;
 
 <span class="kw">pub use </span>filter::PacketFilter;
+<span class="kw">pub use </span>refresh_rate::RefreshRate;
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>GasPrice {
@@ -1074,6 +1088,15 @@
 
     <span class="kw">pub fn </span>max_grpc_decoding_size() -&gt; Byte {
         Byte::from_bytes(<span class="number">33554432</span>)
+    }
+
+    <span class="kw">pub fn </span>trust_threshold() -&gt; TrustThreshold {
+        TrustThreshold::TWO_THIRDS
+    }
+
+    <span class="kw">pub fn </span>client_refresh_rate() -&gt; RefreshRate {
+        <span class="comment">// Refresh the client three times per trusting period
+        </span>RefreshRate::new(<span class="number">1</span>, <span class="number">3</span>)
     }
 
     <span class="kw">pub fn </span>latency_submitted() -&gt; HistogramConfig {
@@ -1522,6 +1545,7 @@
                     .collect()
             }
         };
+
         <span class="prelude-val">Ok</span>(keys)
     }
 

@@ -1912,6 +1912,20 @@
 <a href="#1912" id="1912">1912</a>
 <a href="#1913" id="1913">1913</a>
 <a href="#1914" id="1914">1914</a>
+<a href="#1915" id="1915">1915</a>
+<a href="#1916" id="1916">1916</a>
+<a href="#1917" id="1917">1917</a>
+<a href="#1918" id="1918">1918</a>
+<a href="#1919" id="1919">1919</a>
+<a href="#1920" id="1920">1920</a>
+<a href="#1921" id="1921">1921</a>
+<a href="#1922" id="1922">1922</a>
+<a href="#1923" id="1923">1923</a>
+<a href="#1924" id="1924">1924</a>
+<a href="#1925" id="1925">1925</a>
+<a href="#1926" id="1926">1926</a>
+<a href="#1927" id="1927">1927</a>
+<a href="#1928" id="1928">1928</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term &quot;foreign client&quot; refers to IBC light clients that are running on-chain,
@@ -2547,6 +2561,7 @@
                 e,
             )
         })<span class="question-mark">?</span>;
+
         <span class="kw">let </span>dst_config = <span class="self">self</span>.dst_chain.config().map_err(|e| {
             ForeignClientError::client_create(
                 <span class="self">self</span>.dst_chain.id(),
@@ -2554,6 +2569,7 @@
                 e,
             )
         })<span class="question-mark">?</span>;
+
         <span class="kw">let </span>settings = ClientSettings::for_create_command(options, <span class="kw-2">&amp;</span>src_config, <span class="kw-2">&amp;</span>dst_config);
 
         <span class="kw">let </span>client_state: AnyClientState = <span class="self">self
@@ -2808,15 +2824,27 @@
     <span class="kw">fn </span>try_refresh(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;IbcEvent&gt;&gt;, ForeignClientError&gt; {
         <span class="kw">let </span>(client_state, elapsed) = <span class="self">self</span>.validated_client_state()<span class="question-mark">?</span>;
 
-        <span class="comment">// The refresh_window is the maximum duration
-        // we can backoff between subsequent client updates.
-        </span><span class="kw">let </span>refresh_window = client_state.refresh_period();
+        <span class="kw">let </span>src_config = <span class="self">self</span>.src_chain.config().map_err(|e| {
+            ForeignClientError::client_create(
+                <span class="self">self</span>.src_chain.id(),
+                <span class="string">&quot;failed while querying the source chain for configuration&quot;</span>.to_string(),
+                e,
+            )
+        })<span class="question-mark">?</span>;
 
-        <span class="kw">match </span>(elapsed, refresh_window) {
-            (<span class="prelude-val">None</span>, <span class="kw">_</span>) | (<span class="kw">_</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            (<span class="prelude-val">Some</span>(elapsed), <span class="prelude-val">Some</span>(refresh_window)) =&gt; {
-                <span class="kw">if </span>elapsed &gt; refresh_window {
-                    <span class="macro">info!</span>(<span class="question-mark">?</span>elapsed, <span class="question-mark">?</span>refresh_window, <span class="string">&quot;client needs to be refreshed&quot;</span>);
+        <span class="kw">let </span>refresh_rate = <span class="kw">match </span>src_config {
+            ChainConfig::CosmosSdk(config) =&gt; config.client_refresh_rate,
+        };
+
+        <span class="kw">let </span>refresh_period = client_state
+            .trusting_period()
+            .mul_f64(refresh_rate.as_f64());
+
+        <span class="kw">match </span>(elapsed, refresh_period) {
+            (<span class="prelude-val">None</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            (<span class="prelude-val">Some</span>(elapsed), refresh_period) =&gt; {
+                <span class="kw">if </span>elapsed &gt; refresh_period {
+                    <span class="macro">info!</span>(<span class="question-mark">?</span>elapsed, <span class="question-mark">?</span>refresh_period, <span class="string">&quot;client needs to be refreshed&quot;</span>);
 
                     <span class="self">self</span>.build_latest_update_client_and_send()
                         .map_or_else(<span class="prelude-val">Err</span>, |ev| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(ev)))

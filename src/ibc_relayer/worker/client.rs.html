@@ -165,24 +165,11 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::convert::Infallible;
 <span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>crossbeam_channel::Receiver;
 <span class="kw">use </span>retry::delay::Fibonacci;
 <span class="kw">use </span>retry::retry_with_index;
-<span class="kw">use </span>std::time::Instant;
 <span class="kw">use </span>tracing::{debug, debug_span, error_span, trace, warn};
 
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::events::UpdateClient;
@@ -197,8 +184,8 @@
 
 <span class="kw">use </span><span class="kw">super</span>::WorkerCmd;
 
-<span class="kw">const </span>REFRESH_INTERVAL: Duration = Duration::from_secs(<span class="number">2</span>); <span class="comment">// 2 seconds
-</span><span class="kw">const </span>INITIAL_BACKOFF: Duration = Duration::from_secs(<span class="number">1</span>); <span class="comment">// 1 second
+<span class="kw">const </span>REFRESH_CHECK_INTERVAL: Duration = Duration::from_secs(<span class="number">5</span>); <span class="comment">// 5 seconds
+</span><span class="kw">const </span>INITIAL_BACKOFF: Duration = Duration::from_secs(<span class="number">5</span>); <span class="comment">// 5 seconds
 </span><span class="kw">const </span>MAX_REFRESH_DELAY: Duration = Duration::from_secs(<span class="number">60 </span>* <span class="number">60</span>); <span class="comment">// 1 hour
 </span><span class="kw">const </span>MAX_REFRESH_TOTAL_DELAY: Duration = Duration::from_secs(<span class="number">60 </span>* <span class="number">60 </span>* <span class="number">24</span>); <span class="comment">// 1 day
 
@@ -214,9 +201,6 @@
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
 
-    <span class="comment">// Compute the refresh interval as a fraction of the client&#39;s trusting period
-    // If the trusting period or the client state is not retrieved, fallback to a default value.
-    </span><span class="kw">let </span><span class="kw-2">mut </span>next_refresh = Instant::now() + REFRESH_INTERVAL;
     <span class="prelude-val">Some</span>(spawn_background_task(
         <span class="macro">error_span!</span>(
             <span class="string">&quot;worker.client.refresh&quot;</span>,
@@ -224,24 +208,16 @@
             src_chain = %client.src_chain.id(),
             dst_chain = %client.dst_chain.id(),
         ),
-        <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">1</span>)),
+        <span class="prelude-val">Some</span>(REFRESH_CHECK_INTERVAL),
         <span class="kw">move </span>|| {
-            <span class="comment">// This is used for integration tests until `spawn_background_task`
-            // uses async instead of threads
-            </span><span class="kw">if </span>Instant::now() &lt; next_refresh {
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(Next::Continue);
-            }
-
-            <span class="comment">// Use retry mechanism only if `client.refresh()` fails.
+            <span class="comment">// Try to refresh the client, but only if the refresh window has expired.
+            // If the refresh fails, retry according to the given strategy.
             </span><span class="kw">let </span>res = retry_with_index(refresh_strategy(), |<span class="kw">_</span>| client.refresh());
 
             <span class="kw">match </span>res {
-                <span class="comment">// If `client.refresh()` was successful, update the `next_refresh` call.
-                </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                    next_refresh = Instant::now() + REFRESH_INTERVAL;
+                <span class="comment">// If `client.refresh()` was successful, continue
+                </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Next::Continue),
 
-                    <span class="prelude-val">Ok</span>(Next::Continue)
-                }
                 <span class="comment">// If `client.refresh()` failed and the retry mechanism
                 // exceeded the maximum delay, return a fatal error.
                 </span><span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(TaskError::Fatal(e)),
