@@ -16,11 +16,11 @@ var sourcesIndex = JSON.parse('{\
 "backtrace":["",[["backtrace",[],["libunwind.rs","mod.rs"]],["symbolize",[["gimli",[],["elf.rs","libs_dl_iterate_phdr.rs","mmap_unix.rs","parse_running_mmaps_unix.rs","stash.rs"]]],["gimli.rs","mod.rs"]]],["capture.rs","lib.rs","print.rs","types.rs"]],\
 "base16ct":["",[],["display.rs","error.rs","lib.rs","lower.rs","mixed.rs","upper.rs"]],\
 "base64":["",[["engine",[["general_purpose",[],["decode.rs","decode_suffix.rs","mod.rs"]]],["mod.rs"]],["read",[],["decoder.rs","mod.rs"]],["write",[],["encoder.rs","encoder_string_writer.rs","mod.rs"]]],["alphabet.rs","chunked_encoder.rs","decode.rs","display.rs","encode.rs","lib.rs","prelude.rs"]],\
-"bech32":["",[],["lib.rs"]],\
+"bech32":["",[["primitives",[],["checksum.rs","decode.rs","encode.rs","gf32.rs","hrp.rs","iter.rs","mod.rs","segwit.rs"]]],["error.rs","hrp.rs","lib.rs","segwit.rs"]],\
 "bip39":["",[],["crypto.rs","error.rs","language.rs","lib.rs","mnemonic.rs","mnemonic_type.rs","seed.rs","util.rs"]],\
-"bitcoin":["",[["blockdata",[["locktime",[],["absolute.rs","mod.rs","relative.rs"]],["script",[],["borrowed.rs","builder.rs","instruction.rs","mod.rs","owned.rs","push_bytes.rs"]]],["block.rs","constants.rs","fee_rate.rs","mod.rs","opcodes.rs","transaction.rs","weight.rs","witness.rs"]],["consensus",[],["encode.rs","mod.rs","params.rs","serde.rs"]],["crypto",[],["ecdsa.rs","key.rs","mod.rs","sighash.rs","taproot.rs"]],["merkle_tree",[],["block.rs","mod.rs"]],["network",[],["address.rs","constants.rs","message.rs","message_blockdata.rs","message_bloom.rs","message_compact_blocks.rs","message_filter.rs","message_network.rs","mod.rs"]],["psbt",[["map",[],["global.rs","input.rs","mod.rs","output.rs"]]],["error.rs","macros.rs","mod.rs","raw.rs","serialize.rs"]],["util",[],["mod.rs"]]],["address.rs","amount.rs","base58.rs","bip152.rs","bip158.rs","bip32.rs","error.rs","hash_types.rs","internal_macros.rs","lib.rs","parse.rs","policy.rs","pow.rs","serde_utils.rs","sign_message.rs","string.rs","taproot.rs"]],\
-"bitcoin_hashes":["",[],["cmp.rs","error.rs","hash160.rs","hex.rs","hmac.rs","impls.rs","internal_macros.rs","lib.rs","ripemd160.rs","serde_macros.rs","sha1.rs","sha256.rs","sha256d.rs","sha256t.rs","sha512.rs","sha512_256.rs","siphash24.rs","util.rs"]],\
-"bitcoin_private":["",[["hex",[],["buf_encoder.rs","display.rs","mod.rs"]]],["error.rs","lib.rs","macros.rs"]],\
+"bitcoin":["",[["address",[],["error.rs","mod.rs"]],["blockdata",[["locktime",[],["absolute.rs","mod.rs","relative.rs"]],["script",[],["borrowed.rs","builder.rs","instruction.rs","mod.rs","owned.rs","push_bytes.rs","witness_program.rs","witness_version.rs"]]],["block.rs","constants.rs","fee_rate.rs","mod.rs","opcodes.rs","transaction.rs","weight.rs","witness.rs"]],["consensus",[],["encode.rs","mod.rs","params.rs","serde.rs"]],["crypto",[],["ecdsa.rs","key.rs","mod.rs","sighash.rs","taproot.rs"]],["merkle_tree",[],["block.rs","mod.rs"]],["p2p",[],["address.rs","message.rs","message_blockdata.rs","message_bloom.rs","message_compact_blocks.rs","message_filter.rs","message_network.rs","mod.rs"]],["psbt",[["map",[],["global.rs","input.rs","mod.rs","output.rs"]]],["error.rs","macros.rs","mod.rs","raw.rs","serialize.rs"]]],["amount.rs","base58.rs","bip152.rs","bip158.rs","bip32.rs","error.rs","hash_types.rs","internal_macros.rs","lib.rs","network.rs","parse.rs","policy.rs","pow.rs","serde_utils.rs","sign_message.rs","string.rs","taproot.rs"]],\
+"bitcoin_hashes":["",[],["cmp.rs","hash160.rs","hmac.rs","impls.rs","internal_macros.rs","lib.rs","ripemd160.rs","serde_macros.rs","sha1.rs","sha256.rs","sha256d.rs","sha256t.rs","sha512.rs","sha512_256.rs","siphash24.rs","util.rs"]],\
+"bitcoin_internals":["",[["error",[],["input_string.rs","parse_error.rs"]],["hex",[],["buf_encoder.rs","display.rs","mod.rs"]]],["error.rs","lib.rs","macros.rs","parse.rs","serde.rs"]],\
 "bitflags":["",[],["external.rs","internal.rs","iter.rs","lib.rs","parser.rs","public.rs","traits.rs"]],\
 "block_buffer":["",[],["lib.rs","sealed.rs"]],\
 "bs58":["",[],["alphabet.rs","decode.rs","encode.rs","lib.rs"]],\
@@ -97,6 +97,7 @@ var sourcesIndex = JSON.parse('{\
 "heck":["",[],["kebab.rs","lib.rs","lower_camel.rs","shouty_kebab.rs","shouty_snake.rs","snake.rs","title.rs","train.rs","upper_camel.rs"]],\
 "hermes":["",[],["main.rs"]],\
 "hex":["",[],["error.rs","lib.rs"]],\
+"hex_conservative":["",[],["buf_encoder.rs","display.rs","error.rs","iter.rs","lib.rs","parse.rs"]],\
 "hex_lit":["",[],["lib.rs"]],\
 "hmac":["",[],["lib.rs","optim.rs","simple.rs"]],\
 "http":["",[["header",[],["map.rs","mod.rs","name.rs","value.rs"]],["uri",[],["authority.rs","builder.rs","mod.rs","path.rs","port.rs","scheme.rs"]]],["byte_str.rs","convert.rs","error.rs","extensions.rs","lib.rs","method.rs","request.rs","response.rs","status.rs","version.rs"]],\
@@ -209,7 +210,7 @@ var sourcesIndex = JSON.parse('{\
 "scopeguard":["",[],["lib.rs"]],\
 "sct":["",[],["lib.rs"]],\
 "sec1":["",[],["error.rs","lib.rs","parameters.rs","point.rs","private_key.rs","traits.rs"]],\
-"secp256k1":["",[["ecdsa",[],["mod.rs","recovery.rs","serialized_signature.rs"]]],["constants.rs","context.rs","ecdh.rs","key.rs","lib.rs","macros.rs","scalar.rs","schnorr.rs","secret.rs","serde_util.rs"]],\
+"secp256k1":["",[["ecdsa",[],["mod.rs","recovery.rs","serialized_signature.rs"]]],["constants.rs","context.rs","ecdh.rs","ellswift.rs","key.rs","lib.rs","macros.rs","scalar.rs","schnorr.rs","secret.rs","serde_util.rs"]],\
 "secp256k1_sys":["",[],["lib.rs","macros.rs","recovery.rs","types.rs"]],\
 "secrecy":["",[],["boxed.rs","lib.rs","string.rs","vec.rs"]],\
 "semver":["",[],["backport.rs","display.rs","error.rs","eval.rs","identifier.rs","impls.rs","lib.rs","parse.rs","serde.rs"]],\

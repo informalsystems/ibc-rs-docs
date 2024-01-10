@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["ParseIntError"]};
+window.SIDEBAR_ITEMS = {"struct":["ParseIntError"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ChildNumber","Error"],"struct":["ChainCode","DerivationPath","DerivationPathIterator","ExtendedPrivKey","ExtendedPubKey","Fingerprint"],"trait":["IntoDerivationPath"],"type":["KeySource"]};
+window.SIDEBAR_ITEMS = {"enum":["ChildNumber","Error"],"struct":["ChainCode","DerivationPath","DerivationPathIterator","Fingerprint","XKeyIdentifier","Xpriv","Xpub","XpubIdentifier"],"trait":["IntoDerivationPath"],"type":["ExtendendPrivKey","ExtendendPubKey","KeySource"]};

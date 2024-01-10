@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Bip34Error"],"struct":["Block","Header","Version"]};
+window.SIDEBAR_ITEMS = {"enum":["Bip34Error","ValidationError"],"struct":["Block","Header","Version"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["address","constants","message","message_blockdata","message_bloom","message_compact_blocks","message_filter","message_network"]};
+window.SIDEBAR_ITEMS = {"enum":["Network"],"mod":["as_core_arg"],"struct":["ParseNetworkError","UnknownChainHashError"]};

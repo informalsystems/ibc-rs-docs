@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["PROTOCOL_VERSION"],"enum":["Network"],"struct":["Magic","ParseMagicError","ParseNetworkError","ServiceFlags","UnknownChainHash","UnknownMagic"]};

@@ -321,8 +321,8 @@
 
 <span class="kw">use </span>bip39::{Language, Mnemonic, Seed};
 <span class="kw">use </span>bitcoin::{
-    bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey},
-    network::constants::Network,
+    bip32::{ChildNumber, DerivationPath, Xpriv, Xpub},
+    network::Network,
 };
 <span class="kw">use </span>digest::Digest;
 <span class="kw">use </span>generic_array::{typenum::U32, GenericArray};
@@ -344,16 +344,15 @@
 <span class="kw">pub fn </span>private_key_from_mnemonic(
     mnemonic_words: <span class="kw-2">&amp;</span>str,
     hd_path: <span class="kw-2">&amp;</span>StandardHDPath,
-) -&gt; <span class="prelude-ty">Result</span>&lt;ExtendedPrivKey, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;Xpriv, Error&gt; {
     <span class="kw">let </span>mnemonic = Mnemonic::from_phrase(mnemonic_words, Language::English)
         .map_err(Error::invalid_mnemonic)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>seed = Seed::new(<span class="kw-2">&amp;</span>mnemonic, <span class="string">&quot;&quot;</span>);
 
-    <span class="kw">let </span>base_key =
-        ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes()).map_err(|err| {
-            Error::bip32_key_generation_failed(Secp256k1KeyPair::KEY_TYPE, err.into())
-        })<span class="question-mark">?</span>;
+    <span class="kw">let </span>base_key = Xpriv::new_master(Network::Bitcoin, seed.as_bytes()).map_err(|err| {
+        Error::bip32_key_generation_failed(Secp256k1KeyPair::KEY_TYPE, err.into())
+    })<span class="question-mark">?</span>;
 
     <span class="kw">let </span>private_key = base_key
         .derive_priv(
@@ -464,8 +463,8 @@
 <span class="comment">// The old `KeyEntry` type
 </span><span class="attr">#[derive(Debug, Deserialize)]
 </span><span class="kw">struct </span>KeyPairV1 {
-    public_key: ExtendedPubKey,
-    private_key: ExtendedPrivKey,
+    public_key: Xpub,
+    private_key: Xpriv,
     account: String,
     address: Vec&lt;u8&gt;,
 }
@@ -536,7 +535,7 @@
         account_prefix: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">let </span>private_key = private_key_from_mnemonic(mnemonic, hd_path)<span class="question-mark">?</span>;
-        <span class="kw">let </span>public_key = ExtendedPubKey::from_priv(<span class="kw-2">&amp;</span>Secp256k1::signing_only(), <span class="kw-2">&amp;</span>private_key);
+        <span class="kw">let </span>public_key = Xpub::from_priv(<span class="kw-2">&amp;</span>Secp256k1::signing_only(), <span class="kw-2">&amp;</span>private_key);
         <span class="kw">let </span>address = get_address(<span class="kw-2">&amp;</span>public_key.public_key, address_type);
         <span class="kw">let </span>account = encode_address(account_prefix, <span class="kw-2">&amp;</span>address)<span class="question-mark">?</span>;
 
@@ -563,7 +562,7 @@
 
         <span class="comment">// Decode the private key from the mnemonic
         </span><span class="kw">let </span>private_key = private_key_from_mnemonic(<span class="kw-2">&amp;</span>key_file.mnemonic, hd_path)<span class="question-mark">?</span>;
-        <span class="kw">let </span>derived_pubkey = ExtendedPubKey::from_priv(<span class="kw-2">&amp;</span>Secp256k1::signing_only(), <span class="kw-2">&amp;</span>private_key);
+        <span class="kw">let </span>derived_pubkey = Xpub::from_priv(<span class="kw-2">&amp;</span>Secp256k1::signing_only(), <span class="kw-2">&amp;</span>private_key);
         <span class="kw">let </span>derived_pubkey_bytes = derived_pubkey.public_key.serialize().to_vec();
         <span class="macro">assert!</span>(derived_pubkey_bytes.len() &lt;= keyfile_pubkey_bytes.len());
 
@@ -622,9 +621,10 @@
             Secp256k1AddressType::Cosmos =&gt; Sha256::digest(message),
         };
 
-        <span class="comment">// SAFETY: hashed_message is 32 bytes, as expected in `Message::from_slice`,
-        // so `unwrap` is safe.
-        </span><span class="kw">let </span>message = Message::from_slice(<span class="kw-2">&amp;</span>hashed_message).unwrap();
+        <span class="macro">assert!</span>(hashed_message.len() == <span class="number">32</span>);
+
+        <span class="comment">// SAFETY: hashed_message is 32 bytes, as expected in `Message::from_slice`.
+        </span><span class="kw">let </span>message = Message::from_digest_slice(<span class="kw-2">&amp;</span>hashed_message).unwrap();
 
         <span class="prelude-val">Ok</span>(Secp256k1::signing_only()
             .sign_ecdsa(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span><span class="self">self</span>.private_key)
