@@ -561,54 +561,6 @@
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>serde::Serialize;
 <span class="kw">use </span>tendermint::abci::Event <span class="kw">as </span>AbciEvent;
@@ -1076,8 +1028,6 @@
     <span class="kw">use </span>ibc_proto::Protobuf;
     <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::header::test_util::get_dummy_ics07_header;
     <span class="kw">use </span>ibc_relayer_types::core::ics02_client::header::{decode_header, AnyHeader};
-    <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
-    <span class="kw">use </span>ibc_relayer_types::timestamp::Timestamp;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>extract_header() {
@@ -1167,52 +1117,6 @@
                     IbcEvent::CloseConfirmChannel(e) =&gt; {
                         <span class="macro">assert_eq!</span>(ChannelAttributes::from(e), close_confirm.clone().into())
                     }
-                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected event type&quot;</span>),
-                },
-                <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;converted event was wrong&quot;</span>),
-            }
-        }
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>packet_event_to_abci_event() {
-        <span class="kw">let </span>packet = Packet {
-            sequence: Sequence::from(<span class="number">10</span>),
-            source_port: <span class="string">&quot;a_test_port&quot;</span>.parse().unwrap(),
-            source_channel: <span class="string">&quot;channel-0&quot;</span>.parse().unwrap(),
-            destination_port: <span class="string">&quot;b_test_port&quot;</span>.parse().unwrap(),
-            destination_channel: <span class="string">&quot;channel-1&quot;</span>.parse().unwrap(),
-            data: <span class="string">&quot;test_data&quot;</span>.as_bytes().to_vec(),
-            timeout_height: Height::new(<span class="number">1</span>, <span class="number">10</span>).unwrap().into(),
-            timeout_timestamp: Timestamp::now(),
-        };
-        <span class="kw">let </span><span class="kw-2">mut </span>abci_events = <span class="macro">vec!</span>[];
-        <span class="kw">let </span>send_packet = channel_events::SendPacket {
-            packet: packet.clone(),
-        };
-        abci_events.push(AbciEvent::try_from(send_packet.clone()).unwrap());
-        <span class="kw">let </span>write_ack = channel_events::WriteAcknowledgement {
-            packet: packet.clone(),
-            ack: <span class="string">&quot;test_ack&quot;</span>.as_bytes().to_vec(),
-        };
-        abci_events.push(AbciEvent::try_from(write_ack.clone()).unwrap());
-        <span class="kw">let </span>ack_packet = channel_events::AcknowledgePacket {
-            packet: packet.clone(),
-        };
-        abci_events.push(AbciEvent::try_from(ack_packet.clone()).unwrap());
-        <span class="kw">let </span>timeout_packet = channel_events::TimeoutPacket { packet };
-        abci_events.push(AbciEvent::try_from(timeout_packet.clone()).unwrap());
-
-        <span class="kw">for </span>abci_event <span class="kw">in </span>abci_events {
-            <span class="kw">match </span>ibc_event_try_from_abci_event(<span class="kw-2">&amp;</span>abci_event).ok() {
-                <span class="prelude-val">Some</span>(ibc_event) =&gt; <span class="kw">match </span>ibc_event {
-                    IbcEvent::SendPacket(e) =&gt; <span class="macro">assert_eq!</span>(e.packet, send_packet.packet),
-                    IbcEvent::WriteAcknowledgement(e) =&gt; {
-                        <span class="macro">assert_eq!</span>(e.packet, write_ack.packet);
-                        <span class="macro">assert_eq!</span>(e.ack, write_ack.ack);
-                    }
-                    IbcEvent::AcknowledgePacket(e) =&gt; <span class="macro">assert_eq!</span>(e.packet, ack_packet.packet),
-                    IbcEvent::TimeoutPacket(e) =&gt; <span class="macro">assert_eq!</span>(e.packet, timeout_packet.packet),
                     <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unexpected event type&quot;</span>),
                 },
                 <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;converted event was wrong&quot;</span>),

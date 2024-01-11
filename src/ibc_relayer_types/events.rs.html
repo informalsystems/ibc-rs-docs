@@ -512,50 +512,13 @@
 <a href="#512" id="512">512</a>
 <a href="#513" id="513">513</a>
 <a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::utils::pretty::PrettySlice;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
+<span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>std::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
+<span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>flex_error::{define_error, TraceError};
 <span class="kw">use </span>serde_derive::{Deserialize, Serialize};
-<span class="kw">use </span>std::borrow::Cow;
-<span class="kw">use </span>std::convert::{TryFrom, TryInto};
-<span class="kw">use </span>std::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
-<span class="kw">use </span>std::str::FromStr;
 <span class="kw">use </span>tendermint::abci;
 
 <span class="kw">use </span><span class="kw">crate</span>::applications::ics29_fee::error::Error <span class="kw">as </span>FeeError;
@@ -574,6 +537,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::core::ics04_channel::packet::Packet;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics24_host::error::ValidationError;
 <span class="kw">use </span><span class="kw">crate</span>::timestamp::ParseTimestampError;
+<span class="kw">use </span><span class="kw">crate</span>::utils::pretty::PrettySlice;
 
 <span class="macro">define_error! </span>{
     Error {
@@ -872,42 +836,6 @@
 
             IbcEvent::ChainError(ev) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;ChainError({ev})&quot;</span>),
         }
-    }
-}
-
-<span class="kw">impl </span>TryFrom&lt;IbcEvent&gt; <span class="kw">for </span>abci::Event {
-    <span class="kw">type </span>Error = Error;
-
-    <span class="kw">fn </span>try_from(event: IbcEvent) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="prelude-val">Ok</span>(<span class="kw">match </span>event {
-            IbcEvent::CreateClient(event) =&gt; event.into(),
-            IbcEvent::UpdateClient(event) =&gt; event.into(),
-            IbcEvent::UpgradeClient(event) =&gt; event.into(),
-            IbcEvent::ClientMisbehaviour(event) =&gt; event.into(),
-            IbcEvent::OpenInitConnection(event) =&gt; event.into(),
-            IbcEvent::OpenTryConnection(event) =&gt; event.into(),
-            IbcEvent::OpenAckConnection(event) =&gt; event.into(),
-            IbcEvent::OpenConfirmConnection(event) =&gt; event.into(),
-            IbcEvent::OpenInitChannel(event) =&gt; event.into(),
-            IbcEvent::OpenTryChannel(event) =&gt; event.into(),
-            IbcEvent::OpenAckChannel(event) =&gt; event.into(),
-            IbcEvent::OpenConfirmChannel(event) =&gt; event.into(),
-            IbcEvent::CloseInitChannel(event) =&gt; event.into(),
-            IbcEvent::CloseConfirmChannel(event) =&gt; event.into(),
-            IbcEvent::SendPacket(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
-            IbcEvent::ReceivePacket(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
-            IbcEvent::WriteAcknowledgement(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
-            IbcEvent::AcknowledgePacket(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
-            IbcEvent::TimeoutPacket(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
-            IbcEvent::TimeoutOnClosePacket(event) =&gt; event.try_into().map_err(Error::channel)<span class="question-mark">?</span>,
-            IbcEvent::IncentivizedPacket(event) =&gt; event.into(),
-            IbcEvent::CrossChainQueryPacket(event) =&gt; event.into(),
-            IbcEvent::DistributeFeePacket(event) =&gt; event.into(),
-            IbcEvent::AppModule(event) =&gt; event.try_into()<span class="question-mark">?</span>,
-            IbcEvent::NewBlock(<span class="kw">_</span>) | IbcEvent::ChainError(<span class="kw">_</span>) =&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::incorrect_event_type(event.to_string()));
-            }
-        })
     }
 }
 
