@@ -201,14 +201,62 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt;
+
+<span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 <span class="kw">use </span>serde::Serialize;
 
 <span class="kw">use </span>ibc_relayer::chain::counterparty::{
     channel_on_destination, pending_packet_summary, PendingPackets,
 };
-<span class="kw">use </span>ibc_relayer::chain::handle::BaseChainHandle;
+<span class="kw">use </span>ibc_relayer::chain::handle::{BaseChainHandle, ChainHandle};
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 
 <span class="kw">use </span><span class="kw">crate</span>::cli_utils::spawn_chain_counterparty;
@@ -222,8 +270,15 @@
 /// at both ends of a channel.
 </span><span class="attr">#[derive(Debug, Serialize)]
 </span><span class="kw">struct </span>Summary&lt;P&gt; {
+    <span class="doccomment">/// Source chain
+    </span>src_chain: ChainId,
+
+    <span class="doccomment">/// Destination chain
+    </span>dst_chain: ChainId,
+
     <span class="doccomment">/// The packets sent on the source chain as identified by the command.
     </span>src: P,
+
     <span class="doccomment">/// The packets sent on the counterparty chain.
     </span>dst: P,
 }
@@ -231,9 +286,44 @@
 <span class="kw">impl </span>Summary&lt;PendingPackets&gt; {
     <span class="kw">fn </span>collate(<span class="self">self</span>) -&gt; Summary&lt;CollatedPendingPackets&gt; {
         Summary {
+            src_chain: <span class="self">self</span>.src_chain,
+            dst_chain: <span class="self">self</span>.dst_chain,
+
             src: CollatedPendingPackets::new(<span class="self">self</span>.src),
             dst: CollatedPendingPackets::new(<span class="self">self</span>.dst),
         }
+    }
+}
+
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>Summary&lt;CollatedPendingPackets&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;Summary of pending packets:&quot;</span>)<span class="question-mark">?</span>;
+
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;Packets pending on source chain ({}):&quot;</span>, <span class="self">self</span>.src_chain)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;  Unreceived packets:&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>seq <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.src.unreceived_packets {
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;    {}&quot;</span>, seq)<span class="question-mark">?</span>;
+        }
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;  Unreceived acks:&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>seq <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.src.unreceived_acks {
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;    {}&quot;</span>, seq)<span class="question-mark">?</span>;
+        }
+
+        <span class="macro">writeln!</span>(
+            f,
+            <span class="string">&quot;Packets pending on destination chain ({}):&quot;</span>,
+            <span class="self">self</span>.dst_chain
+        )<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;  Unreceived packets:&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>seq <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.dst.unreceived_packets {
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;    {}&quot;</span>, seq)<span class="question-mark">?</span>;
+        }
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;  Unreceived acks:&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>seq <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.dst.unreceived_acks {
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;    {}&quot;</span>, seq)<span class="question-mark">?</span>;
+        }
+
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
@@ -305,6 +395,8 @@
             .map_err(Error::supervisor)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Summary {
+            src_chain: chains.src.id(),
+            dst_chain: chains.dst.id(),
             src: src_summary,
             dst: dst_summary,
         })
@@ -317,7 +409,7 @@
 
         <span class="kw">match </span><span class="self">self</span>.execute() {
             <span class="prelude-val">Ok</span>(summary) <span class="kw">if </span>json() =&gt; Output::success(summary).exit(),
-            <span class="prelude-val">Ok</span>(summary) =&gt; Output::success(summary.collate()).exit(),
+            <span class="prelude-val">Ok</span>(summary) =&gt; Output::success_msg(summary.collate().to_string()).exit(),
             <span class="prelude-val">Err</span>(e) =&gt; Output::error(e).exit(),
         }
     }

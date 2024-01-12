@@ -414,12 +414,53 @@
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::height::Height;
+<span class="kw">use </span>std::ops::RangeInclusive;
 
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer::link::{Link, LinkParameters};
+<span class="kw">use </span>ibc_relayer::util::seq_range::parse_seq_range;
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 <span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
 
@@ -468,6 +509,19 @@
     </span>src_channel_id: ChannelId,
 
     <span class="attr">#[clap(
+    long = <span class="string">&quot;packet-sequences&quot;</span>,
+    help = <span class="string">&quot;Sequences of packets to be cleared on `dst-chain`. \
+            Either a single sequence or a range of sequences can be specified. \
+            If not provided, all pending recv or timeout packets will be cleared. \
+            Each element of the comma-separated list must be either a single \
+            sequence or a range of sequences. \
+            Example: `1,10..20` will clear packets with sequences 1, 10, 11, ..., 20&quot;</span>,
+    value_delimiter = <span class="string">&#39;,&#39;</span>,
+    value_parser = parse_seq_range
+    )]
+    </span>packet_sequences: Vec&lt;RangeInclusive&lt;Sequence&gt;&gt;,
+
+    <span class="attr">#[clap(
         long = <span class="string">&quot;packet-data-query-height&quot;</span>,
         help = <span class="string">&quot;Exact height at which the packet data is queried via block_results RPC&quot;
     </span>)]
@@ -498,6 +552,7 @@
 
         <span class="kw">let </span>res: <span class="prelude-ty">Result</span>&lt;Vec&lt;IbcEvent&gt;, Error&gt; = link
             .relay_recv_packet_and_timeout_messages_with_packet_data_query_height(
+                <span class="self">self</span>.packet_sequences.clone(),
                 packet_data_query_height,
             )
             .map_err(Error::link);
@@ -549,6 +604,19 @@
     </span>src_channel_id: ChannelId,
 
     <span class="attr">#[clap(
+        long = <span class="string">&quot;packet-sequences&quot;</span>,
+        help = <span class="string">&quot;Sequences of packets to be cleared on `dst-chain`. \
+                Either a single sequence or a range of sequences can be specified. \
+                If not provided, all pending ack packets will be cleared. \
+                Each element of the comma-separated list must be either a single \
+                sequence or a range of sequences. \
+                Example: `1,10..20` will clear packets with sequences 1, 10, 11, ..., 20&quot;</span>,
+        value_delimiter = <span class="string">&#39;,&#39;</span>,
+        value_parser = parse_seq_range
+    )]
+    </span>packet_sequences: Vec&lt;RangeInclusive&lt;Sequence&gt;&gt;,
+
+    <span class="attr">#[clap(
         long = <span class="string">&quot;packet-data-query-height&quot;</span>,
         help = <span class="string">&quot;Exact height at which the packet data is queried via block_results RPC&quot;
     </span>)]
@@ -578,7 +646,10 @@
             .map(|height| Height::new(link.a_to_b.src_chain().id().version(), height).unwrap());
 
         <span class="kw">let </span>res: <span class="prelude-ty">Result</span>&lt;Vec&lt;IbcEvent&gt;, Error&gt; = link
-            .relay_ack_packet_messages_with_packet_data_query_height(packet_data_query_height)
+            .relay_ack_packet_messages_with_packet_data_query_height(
+                <span class="self">self</span>.packet_sequences.clone(),
+                packet_data_query_height,
+            )
             .map_err(Error::link);
 
         <span class="kw">match </span>res {
@@ -605,6 +676,7 @@
                 src_chain_id: ChainId::from_string(<span class="string">&quot;chain_sender&quot;</span>),
                 src_port_id: PortId::from_str(<span class="string">&quot;port_sender&quot;</span>).unwrap(),
                 src_channel_id: ChannelId::from_str(<span class="string">&quot;channel_sender&quot;</span>).unwrap(),
+                packet_sequences: <span class="macro">vec!</span>[],
                 packet_data_query_height: <span class="prelude-val">None
             </span>},
             TxPacketRecvCmd::parse_from([
@@ -629,6 +701,7 @@
                 src_chain_id: ChainId::from_string(<span class="string">&quot;chain_sender&quot;</span>),
                 src_port_id: PortId::from_str(<span class="string">&quot;port_sender&quot;</span>).unwrap(),
                 src_channel_id: ChannelId::from_str(<span class="string">&quot;channel_sender&quot;</span>).unwrap(),
+                packet_sequences: <span class="macro">vec!</span>[],
                 packet_data_query_height: <span class="prelude-val">None
             </span>},
             TxPacketRecvCmd::parse_from([
@@ -652,6 +725,7 @@
                 src_chain_id: ChainId::from_string(<span class="string">&quot;chain_sender&quot;</span>),
                 src_port_id: PortId::from_str(<span class="string">&quot;port_sender&quot;</span>).unwrap(),
                 src_channel_id: ChannelId::from_str(<span class="string">&quot;channel_sender&quot;</span>).unwrap(),
+                packet_sequences: <span class="macro">vec!</span>[],
                 packet_data_query_height: <span class="prelude-val">Some</span>(<span class="number">5</span>),
             },
             TxPacketRecvCmd::parse_from([
@@ -734,6 +808,7 @@
                 src_chain_id: ChainId::from_string(<span class="string">&quot;chain_sender&quot;</span>),
                 src_port_id: PortId::from_str(<span class="string">&quot;port_sender&quot;</span>).unwrap(),
                 src_channel_id: ChannelId::from_str(<span class="string">&quot;channel_sender&quot;</span>).unwrap(),
+                packet_sequences: <span class="macro">vec!</span>[],
                 packet_data_query_height: <span class="prelude-val">None
             </span>},
             TxPacketAckCmd::parse_from([
@@ -758,6 +833,7 @@
                 src_chain_id: ChainId::from_string(<span class="string">&quot;chain_sender&quot;</span>),
                 src_port_id: PortId::from_str(<span class="string">&quot;port_sender&quot;</span>).unwrap(),
                 src_channel_id: ChannelId::from_str(<span class="string">&quot;channel_sender&quot;</span>).unwrap(),
+                packet_sequences: <span class="macro">vec!</span>[],
                 packet_data_query_height: <span class="prelude-val">None
             </span>},
             TxPacketAckCmd::parse_from([
