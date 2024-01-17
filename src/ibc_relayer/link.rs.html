@@ -197,6 +197,14 @@
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ibc_relayer_types::core::{
     ics03_connection::connection::State <span class="kw">as </span>ConnectionState,
     ics04_channel::channel::State <span class="kw">as </span>ChannelState,
@@ -204,11 +212,14 @@
 };
 <span class="kw">use </span>tracing::info;
 
-<span class="kw">use </span><span class="kw">crate</span>::chain::requests::{QueryChannelRequest, QueryHeight};
 <span class="kw">use </span><span class="kw">crate</span>::chain::{counterparty::check_channel_counterparty, requests::QueryConnectionRequest};
 <span class="kw">use </span><span class="kw">crate</span>::chain::{handle::ChainHandle, requests::IncludeProof};
 <span class="kw">use </span><span class="kw">crate</span>::channel::{Channel, ChannelSide};
 <span class="kw">use </span><span class="kw">crate</span>::link::error::LinkError;
+<span class="kw">use crate</span>::{
+    chain::requests::{QueryChannelRequest, QueryHeight},
+    config::types::ics20_field_size_limit::Ics20FieldSizeLimit,
+};
 
 <span class="kw">pub mod </span>cli;
 <span class="kw">pub mod </span>error;
@@ -232,6 +243,8 @@
 </span><span class="kw">pub struct </span>LinkParameters {
     <span class="kw">pub </span>src_port_id: PortId,
     <span class="kw">pub </span>src_channel_id: ChannelId,
+    <span class="kw">pub </span>max_memo_size: Ics20FieldSizeLimit,
+    <span class="kw">pub </span>max_receiver_size: Ics20FieldSizeLimit,
 }
 
 <span class="kw">pub struct </span>Link&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt; {
@@ -242,9 +255,10 @@
     <span class="kw">pub fn </span>new(
         channel: Channel&lt;ChainA, ChainB&gt;,
         with_tx_confirmation: bool,
+        link_parameters: LinkParameters,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, LinkError&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            a_to_b: RelayPath::new(channel, with_tx_confirmation)<span class="question-mark">?</span>,
+            a_to_b: RelayPath::new(channel, with_tx_confirmation, link_parameters)<span class="question-mark">?</span>,
         })
     }
 
@@ -339,7 +353,7 @@
                 a_connection.client_id().clone(),
                 a_connection_id,
                 opts.src_port_id.clone(),
-                <span class="prelude-val">Some</span>(opts.src_channel_id),
+                <span class="prelude-val">Some</span>(opts.src_channel_id.clone()),
                 <span class="prelude-val">None</span>,
             ),
             b_side: ChannelSide::new(
@@ -368,7 +382,7 @@
                 .map_err(LinkError::relayer)<span class="question-mark">?</span>;
         }
 
-        Link::new(channel, with_tx_confirmation)
+        Link::new(channel, with_tx_confirmation, opts)
     }
 
     <span class="doccomment">/// Constructs a link around the channel that is reverse to the channel
@@ -381,6 +395,8 @@
         <span class="kw">let </span>opts = LinkParameters {
             src_port_id: <span class="self">self</span>.a_to_b.dst_port_id().clone(),
             src_channel_id: <span class="self">self</span>.a_to_b.dst_channel_id().clone(),
+            max_memo_size: <span class="self">self</span>.a_to_b.max_memo_size,
+            max_receiver_size: <span class="self">self</span>.a_to_b.max_receiver_size,
         };
         <span class="kw">let </span>chain_b = <span class="self">self</span>.a_to_b.dst_chain().clone();
         <span class="kw">let </span>chain_a = <span class="self">self</span>.a_to_b.src_chain().clone();

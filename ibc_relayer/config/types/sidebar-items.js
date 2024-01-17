@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["max_msg_num","max_tx_size","memo"],"struct":["TrustThreshold"]};
+window.SIDEBAR_ITEMS = {"mod":["ics20_field_size_limit","max_msg_num","max_tx_size","memo"],"struct":["TrustThreshold"]};
