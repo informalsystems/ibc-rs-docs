@@ -1367,6 +1367,42 @@
 <a href="#1367" id="1367">1367</a>
 <a href="#1368" id="1368">1368</a>
 <a href="#1369" id="1369">1369</a>
+<a href="#1370" id="1370">1370</a>
+<a href="#1371" id="1371">1371</a>
+<a href="#1372" id="1372">1372</a>
+<a href="#1373" id="1373">1373</a>
+<a href="#1374" id="1374">1374</a>
+<a href="#1375" id="1375">1375</a>
+<a href="#1376" id="1376">1376</a>
+<a href="#1377" id="1377">1377</a>
+<a href="#1378" id="1378">1378</a>
+<a href="#1379" id="1379">1379</a>
+<a href="#1380" id="1380">1380</a>
+<a href="#1381" id="1381">1381</a>
+<a href="#1382" id="1382">1382</a>
+<a href="#1383" id="1383">1383</a>
+<a href="#1384" id="1384">1384</a>
+<a href="#1385" id="1385">1385</a>
+<a href="#1386" id="1386">1386</a>
+<a href="#1387" id="1387">1387</a>
+<a href="#1388" id="1388">1388</a>
+<a href="#1389" id="1389">1389</a>
+<a href="#1390" id="1390">1390</a>
+<a href="#1391" id="1391">1391</a>
+<a href="#1392" id="1392">1392</a>
+<a href="#1393" id="1393">1393</a>
+<a href="#1394" id="1394">1394</a>
+<a href="#1395" id="1395">1395</a>
+<a href="#1396" id="1396">1396</a>
+<a href="#1397" id="1397">1397</a>
+<a href="#1398" id="1398">1398</a>
+<a href="#1399" id="1399">1399</a>
+<a href="#1400" id="1400">1400</a>
+<a href="#1401" id="1401">1401</a>
+<a href="#1402" id="1402">1402</a>
+<a href="#1403" id="1403">1403</a>
+<a href="#1404" id="1404">1404</a>
+<a href="#1405" id="1405">1405</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>std::{
     ops::Range,
@@ -1569,6 +1605,9 @@
 
     <span class="doccomment">/// Number of errors observed by Hermes when broadcasting a Tx
     </span>broadcast_errors: Counter&lt;u64&gt;,
+
+    <span class="doccomment">/// Number of ICS-20 packets filtered because the memo and/or the receiver fields were exceeding the configured limits
+    </span>filtered_packets: Counter&lt;u64&gt;,
 }
 
 <span class="kw">impl </span>TelemetryState {
@@ -1749,6 +1788,11 @@
                 .with_description(
                     <span class="string">&quot;Number of errors observed by Hermes when broadcasting a Tx&quot;</span>,
                 )
+                .init(),
+
+                filtered_packets: meter
+                .u64_counter(<span class="string">&quot;filtered_packets&quot;</span>)
+                .with_description(<span class="string">&quot;Number of ICS-20 packets filtered because the memo and/or the receiver fields were exceeding the configured limits&quot;</span>)
                 .init(),
         }
     }
@@ -2495,6 +2539,34 @@
         ];
 
         <span class="self">self</span>.broadcast_errors.add(<span class="kw-2">&amp;</span>cx, <span class="number">1</span>, labels);
+    }
+
+    <span class="doccomment">/// Increment number of packets filtered because the memo field is too big
+    </span><span class="attr">#[allow(clippy::too_many_arguments)]
+    </span><span class="kw">pub fn </span>filtered_packets(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        src_chain: <span class="kw-2">&amp;</span>ChainId,
+        dst_chain: <span class="kw-2">&amp;</span>ChainId,
+        src_channel: <span class="kw-2">&amp;</span>ChannelId,
+        dst_channel: <span class="kw-2">&amp;</span>ChannelId,
+        src_port: <span class="kw-2">&amp;</span>PortId,
+        dst_port: <span class="kw-2">&amp;</span>PortId,
+        count: u64,
+    ) {
+        <span class="kw">let </span>cx = Context::current();
+
+        <span class="kw">if </span>count &gt; <span class="number">0 </span>{
+            <span class="kw">let </span>labels = <span class="kw-2">&amp;</span>[
+                KeyValue::new(<span class="string">&quot;src_chain&quot;</span>, src_chain.to_string()),
+                KeyValue::new(<span class="string">&quot;dst_chain&quot;</span>, dst_chain.to_string()),
+                KeyValue::new(<span class="string">&quot;src_channel&quot;</span>, src_channel.to_string()),
+                KeyValue::new(<span class="string">&quot;dst_channel&quot;</span>, dst_channel.to_string()),
+                KeyValue::new(<span class="string">&quot;src_port&quot;</span>, src_port.to_string()),
+                KeyValue::new(<span class="string">&quot;dst_port&quot;</span>, dst_port.to_string()),
+            ];
+
+            <span class="self">self</span>.filtered_packets.add(<span class="kw-2">&amp;</span>cx, count, labels);
+        }
     }
 }
 
