@@ -928,6 +928,36 @@
 <a href="#928" id="928">928</a>
 <a href="#929" id="929">929</a>
 <a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Relayer configuration
 
 </span><span class="kw">pub mod </span>compat_mode;
@@ -1548,18 +1578,14 @@
     },
 }
 
-<span class="comment">// NOTE:
-// To work around a limitation of serde, which does not allow
-// to specify a default variant if not tag is present,
-// every underlying chain config MUST have a field `r#type` of
-// type `monotstate::MustBe!(&quot;VariantName&quot;)`.
+<span class="comment">// NOTE: To work around a limitation of serde, which does not allow
+// to specify a default variant if not tag is present, we use
+// a custom Deserializer impl.
 //
-// For chains other than CosmosSdk, this field MUST NOT be annotated
-// with `#[serde(default)]`.
-//
-// See https://github.com/serde-rs/serde/issues/2231
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(untagged)]
+// IMPORTANT: Do not forget to update the `Deserializer` impl
+// below when adding a new chain type.
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(tag = <span class="string">&quot;type&quot;</span>)]
 </span><span class="kw">pub enum </span>ChainConfig {
     CosmosSdk(CosmosSdkConfig),
 }
@@ -1630,6 +1656,41 @@
     <span class="kw">pub fn </span>set_query_packets_chunk_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, query_packets_chunk_size: usize) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::CosmosSdk(config) =&gt; config.query_packets_chunk_size = query_packets_chunk_size,
+        }
+    }
+}
+
+<span class="comment">// /!\ Update me when adding a new chain type!
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>ChainConfig {
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>value = serde_json::Value::deserialize(deserializer)<span class="question-mark">?</span>;
+
+        <span class="comment">// Remove the `type` key from the TOML value in order for deserialization to work,
+        // otherwise it would fail with: `unknown field `type`.
+        </span><span class="kw">let </span>type_value = value
+            .as_object_mut()
+            .ok_or_else(|| serde::de::Error::custom(<span class="string">&quot;invalid chain config, must be a table&quot;</span>))<span class="question-mark">?
+            </span>.remove(<span class="string">&quot;type&quot;</span>)
+            .unwrap_or_else(|| <span class="macro">serde_json::json!</span>(<span class="string">&quot;CosmosSdk&quot;</span>));
+
+        <span class="kw">let </span>type_str = type_value
+            .as_str()
+            .ok_or_else(|| serde::de::Error::custom(<span class="string">&quot;invalid chain type, must be a string&quot;</span>))<span class="question-mark">?</span>;
+
+        <span class="kw">match </span>type_str {
+            <span class="string">&quot;CosmosSdk&quot; </span>=&gt; CosmosSdkConfig::deserialize(value)
+                .map(<span class="self">Self</span>::CosmosSdk)
+                .map_err(|e| serde::de::Error::custom(<span class="macro">format!</span>(<span class="string">&quot;invalid CosmosSdk config: {e}&quot;</span>))),
+
+            <span class="comment">//
+            // &lt;-- Add new chain types here --&gt;
+            //
+            </span>chain_type =&gt; <span class="prelude-val">Err</span>(serde::de::Error::custom(<span class="macro">format!</span>(
+                <span class="string">&quot;unknown chain type: {chain_type}&quot;</span>,
+            ))),
         }
     }
 }
@@ -1709,7 +1770,6 @@
 
     <span class="kw">use super</span>::{load, parse_gas_prices, store_writer};
     <span class="kw">use </span><span class="kw">crate</span>::config::GasPrice;
-    <span class="kw">use </span>monostate::MustBe;
     <span class="kw">use </span>test_log::test;
 
     <span class="attr">#[test]
@@ -1780,9 +1840,9 @@
         <span class="kw">let </span>config = load(path).expect(<span class="string">&quot;could not parse config&quot;</span>);
 
         <span class="kw">match </span>config.chains[<span class="number">0</span>] {
-            <span class="kw">super</span>::ChainConfig::CosmosSdk(<span class="kw-2">ref </span>config) =&gt; {
-                <span class="macro">assert_eq!</span>(config.r#type, <span class="macro">MustBe!</span>(<span class="string">&quot;CosmosSdk&quot;</span>));
-            }
+            <span class="kw">super</span>::ChainConfig::CosmosSdk(<span class="kw">_</span>) =&gt; {
+                <span class="comment">// all good
+            </span>}
         }
     }
 
