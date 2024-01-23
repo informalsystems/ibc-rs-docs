@@ -221,9 +221,13 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::chain_registry::get_configs;
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
+<span class="kw">use </span>itertools::Itertools;
 
 <span class="kw">use </span><span class="kw">crate</span>::conclude::Output;
 
@@ -248,7 +252,7 @@
 /// If a is specified then it will be used without verifying that it exists.
 </span><span class="attr">#[derive(Clone, Command, Debug, Parser, PartialEq, Eq)]
 #[clap(
-    override_usage = <span class="string">&quot;hermes config auto [OPTIONS] --output &lt;PATH&gt; --chains &lt;CHAIN_NAME:OPTIONAL_KEY_NAME&gt;&quot;
+    override_usage = <span class="string">&quot;hermes config auto [OPTIONS] --output &lt;PATH&gt; --chain &lt;CHAIN1_NAME:OPTIONAL_KEY_NAME&gt; --chain &lt;CHAIN2_NAME:OPTIONAL_KEY_NAME&gt;&quot;
 </span>)]
 </span><span class="kw">pub struct </span>AutoCmd {
     <span class="attr">#[clap(
@@ -262,11 +266,14 @@
 
     <span class="attr">#[clap(
         long = <span class="string">&quot;chains&quot;</span>,
+        alias = <span class="string">&quot;chain&quot;</span>,
         required = <span class="bool-val">true</span>,
         multiple = <span class="bool-val">true</span>,
         value_name = <span class="string">&quot;CHAIN_NAME:OPTIONAL_KEY_NAME&quot;</span>,
         help_heading = <span class="string">&quot;REQUIRED&quot;</span>,
-        help = <span class="string">&quot;Names of the chains to include in the config. Every chain must be in the chain registry.&quot;
+        help = <span class="string">&quot;Names of the chains to include in the configuration, together with an optional key name. \
+                Either repeat this argument for every chain or pass a space-separated list of chains. \
+                Every chain must be found in the chain registry.&quot;
     </span>)]
     </span>chain_names: Vec&lt;String&gt;,
 
@@ -372,23 +379,22 @@
         };
 
         <span class="kw">match </span>store(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.path) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="kw">if </span>missing_chains_set.is_empty() =&gt; {
+                Output::success_msg(<span class="macro">format!</span>(
+                    <span class="string">&quot;Config file written successfully at &#39;{}&#39;&quot;</span>,
+                    <span class="self">self</span>.path.display()
+                ))
+                .exit()
+            },
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                <span class="kw">if </span>missing_chains_set.is_empty() {
-                    Output::success_msg(<span class="macro">format!</span>(
-                        <span class="string">&quot;Config file written successfully at &#39;{}&#39;&quot;</span>,
-                        <span class="self">self</span>.path.display()
-                    ))
-                    .exit()
-                } <span class="kw">else </span>{
-                    Output::success_msg(<span class="macro">format!</span>(
-                        <span class="string">&quot;Config file written successfully at &#39;{}&#39;.
-                        However, configurations for the following chains were not able to be generated: {:?}&quot;</span>,
-                        <span class="self">self</span>.path.display(),
-                        missing_chains_set,
-                    ))
-                    .exit()
-                }
-            }
+                Output::success_msg(<span class="macro">format!</span>(
+                    <span class="string">&quot;Config file written successfully at &#39;{}&#39;. \
+                    However, configurations for the following chains were not able to be generated: {}&quot;</span>,
+                    <span class="self">self</span>.path.display(),
+                    missing_chains_set.iter().join(<span class="string">&quot;, &quot;</span>),
+                ))
+                .exit()
+            },
             <span class="prelude-val">Err</span>(e) =&gt; Output::error(<span class="macro">format!</span>(
                 <span class="string">&quot;An error occurred while attempting to write the config file: {}&quot;</span>,
                 e

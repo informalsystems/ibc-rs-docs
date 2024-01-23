@@ -167,9 +167,18 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::{Fee, Tx};
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
+<span class="kw">use </span>tendermint_rpc::Url;
 <span class="kw">use </span>tonic::codegen::http::Uri;
 <span class="kw">use </span>tracing::{debug, error, span, warn, Level};
 
@@ -213,8 +222,14 @@
         signatures: signed_tx.signatures,
     };
 
-    <span class="kw">let </span>estimated_fee =
-        estimate_fee_with_tx(gas_config, <span class="kw-2">&amp;</span>config.grpc_address, <span class="kw-2">&amp;</span>config.chain_id, tx).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>estimated_fee = estimate_fee_with_tx(
+        gas_config,
+        <span class="kw-2">&amp;</span>config.grpc_address,
+        <span class="kw-2">&amp;</span>config.rpc_address,
+        <span class="kw-2">&amp;</span>config.chain_id,
+        tx,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(estimated_fee)
 }
@@ -222,6 +237,7 @@
 <span class="kw">async fn </span>estimate_fee_with_tx(
     gas_config: <span class="kw-2">&amp;</span>GasConfig,
     grpc_address: <span class="kw-2">&amp;</span>Uri,
+    rpc_address: <span class="kw-2">&amp;</span>Url,
     chain_id: <span class="kw-2">&amp;</span>ChainId,
     tx: Tx,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Fee, Error&gt; {
@@ -249,7 +265,7 @@
         ));
     }
 
-    <span class="kw">let </span>adjusted_fee = gas_amount_to_fee(gas_config, estimated_gas);
+    <span class="kw">let </span>adjusted_fee = gas_amount_to_fee(gas_config, estimated_gas, chain_id, rpc_address).<span class="kw">await</span>;
 
     <span class="macro">debug!</span>(
         id = %chain_id,

@@ -481,6 +481,15 @@
 <a href="#481" id="481">481</a>
 <a href="#482" id="482">482</a>
 <a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains functions to generate a relayer config for a given chain
 
 </span><span class="kw">use </span>std::collections::HashMap;
@@ -489,6 +498,7 @@
 
 <span class="kw">use </span>futures::future::join_all;
 <span class="kw">use </span>http::Uri;
+<span class="kw">use </span>ibc_relayer::config::dynamic_gas::DynamicGasPrice;
 <span class="kw">use </span>tokio::task::{JoinError, JoinHandle};
 <span class="kw">use </span>tracing::trace;
 
@@ -603,6 +613,13 @@
         <span class="number">0.1
     </span>};
 
+    <span class="comment">// Use EIP-1559 dynamic gas price for Osmosis
+    </span><span class="kw">let </span>dynamic_gas_price = <span class="kw">if </span>chain_data.chain_id.as_str() == <span class="string">&quot;osmosis-1&quot; </span>{
+        DynamicGasPrice::unsafe_new(<span class="bool-val">true</span>, <span class="number">1.1</span>, <span class="number">0.6</span>)
+    } <span class="kw">else </span>{
+        DynamicGasPrice::disabled()
+    };
+
     <span class="prelude-val">Ok</span>(ChainConfig::CosmosSdk(CosmosSdkConfig {
         id: chain_data.chain_id,
         rpc_addr: rpc_data.rpc_address,
@@ -623,6 +640,7 @@
         max_gas: <span class="prelude-val">Some</span>(<span class="number">400000</span>),
         gas_adjustment: <span class="prelude-val">None</span>,
         gas_multiplier: <span class="prelude-val">Some</span>(GasMultiplier::new(<span class="number">1.1</span>).unwrap()),
+        dynamic_gas_price,
         fee_granter: <span class="prelude-val">None</span>,
         max_msg_num: MaxMsgNum::default(),
         max_tx_size: MaxTxSize::default(),
