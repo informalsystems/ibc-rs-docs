@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["EnumType","FieldPresence","JsonFormat","MessageEncoding","RepeatedFieldEncoding","StringFieldValidation"]};
+window.SIDEBAR_ITEMS = {"enum":["EnumType","FieldPresence","JsonFormat","MessageEncoding","RepeatedFieldEncoding","Utf8Validation"]};
