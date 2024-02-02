@@ -490,6 +490,35 @@
 <a href="#490" id="490">490</a>
 <a href="#491" id="491">491</a>
 <a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains functions to generate a relayer config for a given chain
 
 </span><span class="kw">use </span>std::collections::HashMap;
@@ -500,7 +529,7 @@
 <span class="kw">use </span>http::Uri;
 <span class="kw">use </span>ibc_relayer::config::dynamic_gas::DynamicGasPrice;
 <span class="kw">use </span>tokio::task::{JoinError, JoinHandle};
-<span class="kw">use </span>tracing::trace;
+<span class="kw">use </span>tracing::{error, trace};
 
 <span class="kw">use </span>ibc_chain_registry::asset_list::AssetList;
 <span class="kw">use </span>ibc_chain_registry::chain::ChainData;
@@ -705,15 +734,21 @@
 /// Returns a vector of handles that need to be awaited in order to access the fetched data, or the
 /// error that occurred while fetching.
 </span><span class="kw">async fn </span>get_handles&lt;T: Fetchable + Send + <span class="lifetime">&#39;static</span>&gt;(
-    resources: <span class="kw-2">&amp;</span>[String],
+    chain_ids: <span class="kw-2">&amp;</span>[String],
     commit: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;,
-) -&gt; Vec&lt;JoinHandle&lt;<span class="prelude-ty">Result</span>&lt;T, RegistryError&gt;&gt;&gt; {
-    <span class="kw">let </span>handles = resources
+) -&gt; Vec&lt;(String, JoinHandle&lt;<span class="prelude-ty">Result</span>&lt;T, RegistryError&gt;&gt;)&gt; {
+    <span class="kw">let </span>handles = chain_ids
         .iter()
-        .map(|resource| {
-            <span class="kw">let </span>resource = resource.to_string();
+        .map(|chain_id| {
             <span class="kw">let </span>commit = commit.clone();
-            tokio::spawn(<span class="kw">async move </span>{ T::fetch(resource, commit).<span class="kw">await </span>})
+            <span class="kw">let </span>handle = {
+                <span class="kw">let </span>chain_id = chain_id.to_string();
+                tokio::spawn(<span class="kw">async move </span>{
+                    <span class="macro">tracing::info!</span>(<span class="string">&quot;{chain_id}: Fetching {}...&quot;</span>, T::DESC);
+                    T::fetch(chain_id, commit).<span class="kw">await
+                </span>})
+            };
+            (chain_id.to_string(), handle)
         })
         .collect();
     handles
@@ -722,14 +757,18 @@
 <span class="doccomment">/// Given a vector of handles, awaits them and returns a vector of results. Any errors
 /// that occurred are mapped to a `RegistryError`.
 </span><span class="kw">async fn </span>get_data_from_handles&lt;T&gt;(
-    handles: Vec&lt;JoinHandle&lt;<span class="prelude-ty">Result</span>&lt;T, RegistryError&gt;&gt;&gt;,
+    handles: Vec&lt;(String, JoinHandle&lt;<span class="prelude-ty">Result</span>&lt;T, RegistryError&gt;&gt;)&gt;,
     error_task: <span class="kw-2">&amp;</span>str,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;T, RegistryError&gt;&gt;, RegistryError&gt; {
-    join_all(handles)
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(String, <span class="prelude-ty">Result</span>&lt;T, RegistryError&gt;)&gt;, RegistryError&gt; {
+    <span class="kw">let </span>(names, tasks): (Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;) = handles.into_iter().unzip();
+
+    <span class="kw">let </span>results = join_all(tasks)
         .<span class="kw">await
         </span>.into_iter()
         .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, JoinError&gt;&gt;()
-        .map_err(|e| RegistryError::join_error(error_task.to_string(), e))
+        .map_err(|e| RegistryError::join_error(error_task.to_string(), e))<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(names.into_iter().zip(results).collect())
 }
 
 <span class="doccomment">/// Fetches a list of ChainConfigs specified by the given slice of chain names. These
@@ -752,16 +791,16 @@
 </span><span class="kw">pub async fn </span>get_configs(
     chains: <span class="kw-2">&amp;</span>[String],
     commit: <span class="prelude-ty">Option</span>&lt;String&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="prelude-ty">Result</span>&lt;ChainConfig, RegistryError&gt;&gt;, RegistryError&gt; {
-    <span class="kw">let </span>n = chains.len();
-
-    <span class="kw">if </span>n == <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(Vec::new());
+) -&gt; <span class="prelude-ty">Result</span>&lt;HashMap&lt;String, <span class="prelude-ty">Result</span>&lt;ChainConfig, RegistryError&gt;&gt;, RegistryError&gt; {
+    <span class="kw">if </span>chains.is_empty() {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(HashMap::new());
     }
 
     <span class="comment">// Spawn tasks to fetch data from the chain-registry
     </span><span class="kw">let </span>chain_data_handle = get_handles::&lt;ChainData&gt;(chains, <span class="kw-2">&amp;</span>commit).<span class="kw">await</span>;
     <span class="kw">let </span>asset_lists_handle = get_handles::&lt;AssetList&gt;(chains, <span class="kw-2">&amp;</span>commit).<span class="kw">await</span>;
+
+    <span class="kw">let </span>n = chains.len();
 
     <span class="kw">let </span><span class="kw-2">mut </span>path_handles = Vec::with_capacity(n * (n - <span class="number">1</span>) / <span class="number">2</span>);
 
@@ -782,44 +821,66 @@
     <span class="kw">let </span>asset_list_results =
         get_data_from_handles::&lt;AssetList&gt;(asset_lists_handle, <span class="string">&quot;asset_handle_join&quot;</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
-    <span class="kw">let </span>chain_data_array: Vec&lt;ChainData&gt; = chain_data_results
+    <span class="kw">let </span>chain_data_array: Vec&lt;(String, ChainData)&gt; = chain_data_results
         .into_iter()
-        .filter_map(|chain_data| chain_data.ok())
+        .filter_map(|(name, data)| <span class="kw">match </span>data {
+            <span class="prelude-val">Ok</span>(data) =&gt; <span class="prelude-val">Some</span>((name, data)),
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(<span class="string">&quot;Error while fetching chain data for chain {name}: {e}&quot;</span>);
+                <span class="prelude-val">None
+            </span>}
+        })
         .collect();
-    <span class="kw">let </span>asset_lists: Vec&lt;AssetList&gt; = asset_list_results
+
+    <span class="kw">let </span>asset_lists: Vec&lt;(String, AssetList)&gt; = asset_list_results
         .into_iter()
-        .filter_map(|asset_list| asset_list.ok())
+        .filter_map(|(name, assets)| <span class="kw">match </span>assets {
+            <span class="prelude-val">Ok</span>(assets) =&gt; <span class="prelude-val">Some</span>((name, assets)),
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(<span class="string">&quot;Error while fetching asset list for chain {name}: {e}&quot;</span>);
+                <span class="prelude-val">None
+            </span>}
+        })
         .collect();
 
     <span class="kw">let </span>path_data: <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, JoinError&gt; = join_all(path_handles).<span class="kw">await</span>.into_iter().collect();
-    <span class="kw">let </span>path_data: Vec&lt;IBCPath&gt; = path_data
+    <span class="kw">let </span>path_data: Vec&lt;<span class="kw">_</span>&gt; = path_data
         .map_err(|e| RegistryError::join_error(<span class="string">&quot;path_handle_join&quot;</span>.to_string(), e))<span class="question-mark">?
         </span>.into_iter()
-        .filter_map(|path| path.ok())
+        .filter_map(|path| <span class="kw">match </span>path {
+            <span class="prelude-val">Ok</span>(path) =&gt; <span class="prelude-val">Some</span>(path),
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">error!</span>(<span class="string">&quot;Error while fetching path data: {e}&quot;</span>);
+                <span class="prelude-val">None
+            </span>}
+        })
         .collect();
 
     <span class="kw">let </span><span class="kw-2">mut </span>packet_filters = construct_packet_filters(path_data);
 
     <span class="comment">// Construct ChainConfig
-    </span><span class="kw">let </span>config_handles: Vec&lt;JoinHandle&lt;<span class="prelude-ty">Result</span>&lt;ChainConfig, RegistryError&gt;&gt;&gt; = chain_data_array
+    </span><span class="kw">let </span>config_handles: Vec&lt;<span class="kw">_</span>&gt; = chain_data_array
         .into_iter()
         .zip(asset_lists.into_iter())
-        .zip(chains.iter())
-        .map(|((chain_data, assets), chain_name)| {
-            <span class="kw">let </span>packet_filter = packet_filters.remove(chain_name);
-            tokio::spawn(<span class="kw">async move </span>{
-                hermes_config::&lt;
-                        GrpcHealthCheckQuerier,
-                        SimpleHermesRpcQuerier,
-                        SimpleGrpcFormatter,
-                    &gt;(chain_data, assets, packet_filter)
-                    .<span class="kw">await
-            </span>})
+        .map(|((chain_name, chain_data), (<span class="kw">_</span>, assets))| {
+            <span class="kw">let </span>packet_filter = packet_filters.remove(<span class="kw-2">&amp;</span>chain_name);
+            <span class="kw">let </span>handle = tokio::spawn(hermes_config::&lt;
+                GrpcHealthCheckQuerier,
+                SimpleHermesRpcQuerier,
+                SimpleGrpcFormatter,
+            &gt;(chain_data, assets, packet_filter));
+
+            (chain_name, handle)
         })
         .collect();
 
-    get_data_from_handles::&lt;ChainConfig&gt;(config_handles, <span class="string">&quot;config_handle_join&quot;</span>).<span class="kw">await
-</span>}
+    <span class="kw">let </span>result = get_data_from_handles::&lt;ChainConfig&gt;(config_handles, <span class="string">&quot;config_handle_join&quot;</span>)
+        .<span class="kw">await</span><span class="question-mark">?
+        </span>.into_iter()
+        .collect();
+
+    <span class="prelude-val">Ok</span>(result)
+}
 
 <span class="doccomment">/// Concurrent RPC and GRPC queries are likely to fail.
 /// Since the RPC and GRPC endpoints are queried to confirm they are healthy,
@@ -842,7 +903,7 @@
     </span><span class="kw">async fn </span>should_have_no_filter(test_chains: <span class="kw-2">&amp;</span>[String]) -&gt; <span class="prelude-ty">Result</span>&lt;(), RegistryError&gt; {
         <span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">Some</span>(TEST_COMMIT.to_owned())).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">for </span>config <span class="kw">in </span>configs {
+        <span class="kw">for </span>(_name, config) <span class="kw">in </span>configs {
             <span class="kw">match </span>config {
                 <span class="prelude-val">Ok</span>(config) =&gt; {
                     <span class="macro">assert_eq!</span>(
@@ -850,10 +911,7 @@
                         ChannelPolicy::AllowAll
                     );
                 }
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">panic!</span>(
-                    <span class="string">&quot;Encountered an unexpected error in chain registry test: {}&quot;</span>,
-                    e
-                ),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Encountered an unexpected error in chain registry test: {e}&quot;</span>),
             }
         }
 
@@ -872,7 +930,7 @@
 
         </span><span class="kw">let </span>configs = get_configs(test_chains, <span class="prelude-val">Some</span>(TEST_COMMIT.to_owned())).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">for </span>config <span class="kw">in </span>configs {
+        <span class="kw">for </span>(_name, config) <span class="kw">in </span>configs {
             <span class="kw">match </span>config {
                 <span class="prelude-val">Ok</span>(config) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>config.packet_filter().channel_policy {
                     ChannelPolicy::Allow(channel_filter) =&gt; {

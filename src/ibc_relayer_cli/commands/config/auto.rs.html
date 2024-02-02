@@ -224,6 +224,9 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::chain_registry::get_configs;
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>abscissa_core::{Command, Runnable};
@@ -307,18 +310,17 @@
 
         <span class="comment">// Extract keys and sort chains by name
         </span><span class="kw">let </span>names_and_keys = extract_chains_and_keys(<span class="kw-2">&amp;</span><span class="self">self</span>.chain_names);
-        <span class="kw">let </span>sorted_names = names_and_keys
+
+        <span class="kw">let </span>chain_names = names_and_keys
             .iter()
-            .map(|n| <span class="kw-2">&amp;</span>n.<span class="number">0</span>)
+            .map(|(n, <span class="kw">_</span>)| n)
             .cloned()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
-        <span class="kw">let </span>sorted_names_set: HashSet&lt;String&gt; = HashSet::from_iter(sorted_names.iter().cloned());
 
         <span class="kw">let </span>commit = <span class="self">self</span>.commit.clone();
 
         <span class="comment">// Fetch chain configs from the chain registry
-        </span><span class="kw">let </span>config_results = runtime.block_on(get_configs(<span class="kw-2">&amp;</span>sorted_names, commit));
+        </span><span class="kw">let </span>config_results = runtime.block_on(get_configs(<span class="kw-2">&amp;</span>chain_names, commit));
 
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = config_results {
             <span class="kw">let </span>config = Config::default();
@@ -339,22 +341,26 @@
             }
         };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>chain_configs: Vec&lt;ChainConfig&gt; = config_results
+        <span class="kw">let </span><span class="kw-2">mut </span>chain_configs: Vec&lt;(String, ChainConfig)&gt; = config_results
             .unwrap()
             .into_iter()
-            .filter_map(|r| r.ok())
+            .filter_map(|(name, config)| config.ok().map(|c| (name, c)))
             .collect();
 
         <span class="comment">// Determine which chains were not fetched
-        </span><span class="kw">let </span>fetched_chains_set = HashSet::from_iter(chain_configs.iter().map(|c| c.id().name()));
-        <span class="kw">let </span>missing_chains_set: HashSet&lt;<span class="kw">_</span>&gt; =
-            sorted_names_set.difference(<span class="kw-2">&amp;</span>fetched_chains_set).collect();
+        </span><span class="kw">let </span>fetched_chains_set: HashSet&lt;<span class="kw">_</span>&gt; =
+            HashSet::from_iter(chain_configs.iter().map(|(name, <span class="kw">_</span>)| name).cloned());
+        <span class="kw">let </span>expected_chains_set: HashSet&lt;<span class="kw">_</span>&gt; = HashSet::from_iter(chain_names.iter().cloned());
+
+        <span class="kw">let </span>missing_chains_set: HashSet&lt;<span class="kw">_</span>&gt; = expected_chains_set
+            .difference(<span class="kw-2">&amp;</span>fetched_chains_set)
+            .collect();
 
         <span class="kw">let </span>configs_and_keys = chain_configs
             .iter_mut()
-            .zip(names_and_keys.iter().map(|n| <span class="kw-2">&amp;</span>n.<span class="number">1</span>).cloned());
+            .zip(names_and_keys.iter().map(|(<span class="kw">_</span>, keys)| keys).cloned());
 
-        <span class="kw">for </span>(chain_config, key_option) <span class="kw">in </span>configs_and_keys {
+        <span class="kw">for </span>((_name, chain_config), key_option) <span class="kw">in </span>configs_and_keys {
             <span class="comment">// If a key is provided, use it
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(key_name) = key_option {
                 <span class="macro">info!</span>(<span class="string">&quot;{}: uses key \&quot;{}\&quot;&quot;</span>, <span class="kw-2">&amp;</span>chain_config.id(), <span class="kw-2">&amp;</span>key_name);
@@ -374,7 +380,7 @@
         }
 
         <span class="kw">let </span>config = Config {
-            chains: chain_configs,
+            chains: chain_configs.into_iter().map(|(<span class="kw">_</span>, c)| c).collect(),
             ..Config::default()
         };
 

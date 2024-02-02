@@ -2518,6 +2518,79 @@
 <a href="#2518" id="2518">2518</a>
 <a href="#2519" id="2519">2519</a>
 <a href="#2520" id="2520">2520</a>
+<a href="#2521" id="2521">2521</a>
+<a href="#2522" id="2522">2522</a>
+<a href="#2523" id="2523">2523</a>
+<a href="#2524" id="2524">2524</a>
+<a href="#2525" id="2525">2525</a>
+<a href="#2526" id="2526">2526</a>
+<a href="#2527" id="2527">2527</a>
+<a href="#2528" id="2528">2528</a>
+<a href="#2529" id="2529">2529</a>
+<a href="#2530" id="2530">2530</a>
+<a href="#2531" id="2531">2531</a>
+<a href="#2532" id="2532">2532</a>
+<a href="#2533" id="2533">2533</a>
+<a href="#2534" id="2534">2534</a>
+<a href="#2535" id="2535">2535</a>
+<a href="#2536" id="2536">2536</a>
+<a href="#2537" id="2537">2537</a>
+<a href="#2538" id="2538">2538</a>
+<a href="#2539" id="2539">2539</a>
+<a href="#2540" id="2540">2540</a>
+<a href="#2541" id="2541">2541</a>
+<a href="#2542" id="2542">2542</a>
+<a href="#2543" id="2543">2543</a>
+<a href="#2544" id="2544">2544</a>
+<a href="#2545" id="2545">2545</a>
+<a href="#2546" id="2546">2546</a>
+<a href="#2547" id="2547">2547</a>
+<a href="#2548" id="2548">2548</a>
+<a href="#2549" id="2549">2549</a>
+<a href="#2550" id="2550">2550</a>
+<a href="#2551" id="2551">2551</a>
+<a href="#2552" id="2552">2552</a>
+<a href="#2553" id="2553">2553</a>
+<a href="#2554" id="2554">2554</a>
+<a href="#2555" id="2555">2555</a>
+<a href="#2556" id="2556">2556</a>
+<a href="#2557" id="2557">2557</a>
+<a href="#2558" id="2558">2558</a>
+<a href="#2559" id="2559">2559</a>
+<a href="#2560" id="2560">2560</a>
+<a href="#2561" id="2561">2561</a>
+<a href="#2562" id="2562">2562</a>
+<a href="#2563" id="2563">2563</a>
+<a href="#2564" id="2564">2564</a>
+<a href="#2565" id="2565">2565</a>
+<a href="#2566" id="2566">2566</a>
+<a href="#2567" id="2567">2567</a>
+<a href="#2568" id="2568">2568</a>
+<a href="#2569" id="2569">2569</a>
+<a href="#2570" id="2570">2570</a>
+<a href="#2571" id="2571">2571</a>
+<a href="#2572" id="2572">2572</a>
+<a href="#2573" id="2573">2573</a>
+<a href="#2574" id="2574">2574</a>
+<a href="#2575" id="2575">2575</a>
+<a href="#2576" id="2576">2576</a>
+<a href="#2577" id="2577">2577</a>
+<a href="#2578" id="2578">2578</a>
+<a href="#2579" id="2579">2579</a>
+<a href="#2580" id="2580">2580</a>
+<a href="#2581" id="2581">2581</a>
+<a href="#2582" id="2582">2582</a>
+<a href="#2583" id="2583">2583</a>
+<a href="#2584" id="2584">2584</a>
+<a href="#2585" id="2585">2585</a>
+<a href="#2586" id="2586">2586</a>
+<a href="#2587" id="2587">2587</a>
+<a href="#2588" id="2588">2588</a>
+<a href="#2589" id="2589">2589</a>
+<a href="#2590" id="2590">2590</a>
+<a href="#2591" id="2591">2591</a>
+<a href="#2592" id="2592">2592</a>
+<a href="#2593" id="2593">2593</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2536,6 +2609,8 @@
 <span class="kw">use </span>tracing::{debug, error, info, instrument, trace, warn};
 
 <span class="kw">use </span>ibc_proto::cosmos::base::node::v1beta1::ConfigResponse;
+<span class="kw">use </span>ibc_proto::cosmos::base::tendermint::v1beta1::service_client::ServiceClient;
+<span class="kw">use </span>ibc_proto::cosmos::base::tendermint::v1beta1::{GetSyncingRequest, GetSyncingResponse};
 <span class="kw">use </span>ibc_proto::cosmos::staking::v1beta1::Params <span class="kw">as </span>StakingParams;
 <span class="kw">use </span>ibc_proto::ibc::apps::fee::v1::{
     QueryIncentivizedPacketRequest, QueryIncentivizedPacketResponse,
@@ -3148,6 +3223,70 @@
     ///
     /// Returns an error if the node is still syncing and has not caught up,
     /// ie. if `sync_info.catching_up` is `true`.
+    </span><span class="kw">fn </span>chain_rpc_status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;status::Response, Error&gt; {
+        <span class="macro">crate::time!</span>(
+            <span class="string">&quot;chain_rpc_status&quot;</span>,
+            {
+                <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.config().id.to_string(),
+            }
+        );
+        <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;rpc_status&quot;</span>);
+
+        <span class="kw">let </span>status = <span class="self">self
+            </span>.block_on(<span class="self">self</span>.rpc_client.status())
+            .map_err(|e| Error::rpc(<span class="self">self</span>.config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>status.sync_info.catching_up {
+            <span class="prelude-val">Err</span>(Error::chain_not_caught_up(
+                <span class="self">self</span>.config.rpc_addr.to_string(),
+                <span class="self">self</span>.config().id.clone(),
+            ))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(status)
+        }
+    }
+
+    <span class="doccomment">/// Query the chain syncing status via a gRPC query.
+    ///
+    /// Returns an error if the node is still syncing and has not caught up,
+    /// ie. if `sync_info.syncing` is `true`.
+    </span><span class="kw">fn </span>chain_grpc_status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;GetSyncingResponse, Error&gt; {
+        <span class="macro">crate::time!</span>(
+            <span class="string">&quot;chain_grpc_status&quot;</span>,
+            {
+                <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.config().id.to_string(),
+            }
+        );
+        <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;grpc_status&quot;</span>);
+
+        <span class="kw">let </span>grpc_addr = <span class="self">self</span>.grpc_addr.clone();
+        <span class="kw">let </span>grpc_addr_string = grpc_addr.to_string();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>client = <span class="self">self
+            </span>.block_on(ServiceClient::connect(grpc_addr.clone()))
+            .map_err(Error::grpc_transport)
+            .unwrap();
+
+        <span class="kw">let </span>request = tonic::Request::new(GetSyncingRequest {});
+
+        <span class="kw">let </span>sync_info = <span class="self">self
+            </span>.block_on(client.get_syncing(request))
+            .map_err(|e| Error::grpc_status(e, <span class="string">&quot;get_syncing&quot;</span>.to_string()))<span class="question-mark">?
+            </span>.into_inner();
+
+        <span class="kw">if </span>sync_info.syncing {
+            <span class="prelude-val">Err</span>(Error::chain_not_caught_up(
+                grpc_addr_string,
+                <span class="self">self</span>.config().id.clone(),
+            ))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(sync_info)
+        }
+    }
+
+    <span class="doccomment">/// Query the chain status of the RPC and gRPC nodes.
+    ///
+    /// Returns an error if any of the node is still syncing and has not caught up.
     </span><span class="kw">fn </span>chain_status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;status::Response, Error&gt; {
         <span class="macro">crate::time!</span>(
             <span class="string">&quot;chain_status&quot;</span>,
@@ -3157,18 +3296,25 @@
         );
         <span class="macro">crate::telemetry!</span>(query, <span class="self">self</span>.id(), <span class="string">&quot;status&quot;</span>);
 
-        <span class="kw">let </span>status = <span class="self">self
-            </span>.block_on(<span class="self">self</span>.rpc_client.status())
-            .map_err(|e| Error::rpc(<span class="self">self</span>.config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
+        <span class="kw">let </span>rpc_status = <span class="self">self</span>.chain_rpc_status()<span class="question-mark">?</span>;
 
-        <span class="kw">if </span>status.sync_info.catching_up {
+        <span class="kw">if </span>rpc_status.sync_info.catching_up {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::chain_not_caught_up(
                 <span class="self">self</span>.config.rpc_addr.to_string(),
                 <span class="self">self</span>.config().id.clone(),
             ));
         }
 
-        <span class="prelude-val">Ok</span>(status)
+        <span class="kw">let </span>grpc_status = <span class="self">self</span>.chain_grpc_status()<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>grpc_status.syncing {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::chain_not_caught_up(
+                <span class="self">self</span>.config.grpc_addr.to_string(),
+                <span class="self">self</span>.config().id.clone(),
+            ));
+        }
+
+        <span class="prelude-val">Ok</span>(rpc_status)
     }
 
     <span class="doccomment">/// Query the chain&#39;s latest height
