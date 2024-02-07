@@ -6,6 +6,8 @@ var sourcesIndex = JSON.parse('{\
 "aho_corasick":["",[["nfa",[],["contiguous.rs","mod.rs","noncontiguous.rs"]],["packed",[["teddy",[],["builder.rs","generic.rs","mod.rs"]]],["api.rs","ext.rs","mod.rs","pattern.rs","rabinkarp.rs","vector.rs"]],["util",[],["alphabet.rs","buffer.rs","byte_frequencies.rs","debug.rs","error.rs","int.rs","mod.rs","prefilter.rs","primitives.rs","remapper.rs","search.rs","special.rs"]]],["ahocorasick.rs","automaton.rs","dfa.rs","lib.rs","macros.rs"]],\
 "anyhow":["",[],["backtrace.rs","chain.rs","context.rs","ensure.rs","error.rs","fmt.rs","kind.rs","lib.rs","macros.rs","ptr.rs","wrapper.rs"]],\
 "arc_swap":["",[["debt",[],["fast.rs","helping.rs","list.rs","mod.rs"]],["docs",[],["internal.rs","limitations.rs","mod.rs","patterns.rs","performance.rs"]],["strategy",[],["hybrid.rs","mod.rs","rw_lock.rs"]]],["access.rs","as_raw.rs","cache.rs","compile_fail_tests.rs","lib.rs","ref_cnt.rs"]],\
+"arrayref":["",[],["lib.rs"]],\
+"arrayvec":["",[],["array_string.rs","arrayvec.rs","arrayvec_impl.rs","char.rs","errors.rs","lib.rs","utils.rs"]],\
 "async_stream":["",[],["async_stream.rs","lib.rs","next.rs","yielder.rs"]],\
 "async_stream_impl":["",[],["lib.rs"]],\
 "async_trait":["",[],["args.rs","bound.rs","expand.rs","lib.rs","lifetime.rs","parse.rs","receiver.rs","verbatim.rs"]],\
@@ -22,6 +24,8 @@ var sourcesIndex = JSON.parse('{\
 "bitcoin_hashes":["",[],["cmp.rs","hash160.rs","hmac.rs","impls.rs","internal_macros.rs","lib.rs","ripemd160.rs","serde_macros.rs","sha1.rs","sha256.rs","sha256d.rs","sha256t.rs","sha512.rs","sha512_256.rs","siphash24.rs","util.rs"]],\
 "bitcoin_internals":["",[["error",[],["input_string.rs","parse_error.rs"]],["hex",[],["buf_encoder.rs","display.rs","mod.rs"]]],["error.rs","lib.rs","macros.rs","parse.rs","serde.rs"]],\
 "bitflags":["",[],["external.rs","internal.rs","iter.rs","lib.rs","parser.rs","public.rs","traits.rs"]],\
+"blake2":["",[["simd",[],["simd_opt.rs","simdint.rs","simdop.rs","simdty.rs"]]],["as_bytes.rs","consts.rs","lib.rs","macros.rs","simd.rs"]],\
+"blake3":["",[],["ffi_avx2.rs","ffi_avx512.rs","ffi_sse2.rs","ffi_sse41.rs","guts.rs","io.rs","join.rs","lib.rs","platform.rs","portable.rs"]],\
 "block_buffer":["",[],["lib.rs","sealed.rs"]],\
 "bs58":["",[],["alphabet.rs","decode.rs","encode.rs","lib.rs"]],\
 "byte_unit":["",[["u64",[],["constants.rs","mod.rs"]]],["adjusted_byte.rs","byte.rs","byte_error.rs","byte_unit.rs","lib.rs","macros.rs"]],\
@@ -37,6 +41,7 @@ var sourcesIndex = JSON.parse('{\
 "color_spantrace":["",[],["lib.rs"]],\
 "console":["",[],["ansi.rs","common_term.rs","kb.rs","lib.rs","term.rs","unix_term.rs","utils.rs"]],\
 "const_oid":["",[],["arcs.rs","checked.rs","encoder.rs","error.rs","lib.rs","parser.rs"]],\
+"constant_time_eq":["",[],["lib.rs"]],\
 "contracts":["",[["implementation",[],["codegen.rs","doc.rs","ensures.rs","invariant.rs","mod.rs","parse.rs","requires.rs","traits.rs"]]],["lib.rs"]],\
 "cpufeatures":["",[],["lib.rs","x86.rs"]],\
 "crossbeam_channel":["",[["flavors",[],["array.rs","at.rs","list.rs","mod.rs","never.rs","tick.rs","zero.rs"]]],["channel.rs","context.rs","counter.rs","err.rs","lib.rs","select.rs","select_macro.rs","utils.rs","waker.rs"]],\

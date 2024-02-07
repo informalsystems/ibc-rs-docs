@@ -1,4 +1,5 @@
 (function() {var implementors = {
+"blake2":[],
 "digest":[],
 "ripemd":[],
 "sha1":[],
