@@ -561,8 +561,13 @@
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>serde::Serialize;
+<span class="kw">use </span>subtle_encoding::hex;
 <span class="kw">use </span>tendermint::abci::Event <span class="kw">as </span>AbciEvent;
 
 <span class="kw">use </span>ibc_relayer_types::{
@@ -891,8 +896,8 @@
 <span class="kw">pub fn </span>extract_header_from_tx(event: <span class="kw-2">&amp;</span>AbciEvent) -&gt; <span class="prelude-ty">Result</span>&lt;AnyHeader, ClientError&gt; {
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
         <span class="kw">if </span>tag.key == HEADER_ATTRIBUTE_KEY {
-            <span class="kw">let </span>header_bytes =
-                hex::decode(<span class="kw-2">&amp;</span>tag.value).map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?</span>;
+            <span class="kw">let </span>header_bytes = hex::decode(tag.value.to_lowercase())
+                .map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?</span>;
             <span class="kw">return </span>decode_header(<span class="kw-2">&amp;</span>header_bytes);
         }
     }
@@ -965,9 +970,11 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Packet, Vec&lt;u8&gt;), ChannelError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>packet = Packet::default();
     <span class="kw">let </span><span class="kw-2">mut </span>write_ack: Vec&lt;u8&gt; = Vec::new();
+
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
         <span class="kw">let </span>key = tag.key.as_str();
         <span class="kw">let </span>value = tag.value.as_str();
+
         <span class="kw">match </span>key {
             channel_events::PKT_SRC_PORT_ATTRIBUTE_KEY =&gt; {
                 packet.source_port = value.parse().map_err(ChannelError::identifier)<span class="question-mark">?</span>;
@@ -994,7 +1001,8 @@
                 packet.timeout_timestamp = value.parse().unwrap();
             }
             channel_events::PKT_DATA_ATTRIBUTE_KEY =&gt; {
-                packet.data = Vec::from(value.as_bytes());
+                packet.data = hex::decode(value.to_lowercase())
+                    .map_err(|<span class="kw">_</span>| ChannelError::invalid_packet_data(value.to_string()))<span class="question-mark">?</span>;
             }
             channel_events::PKT_ACK_ATTRIBUTE_KEY =&gt; {
                 write_ack = Vec::from(value.as_bytes());

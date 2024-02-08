@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["MsgRegisterInterchainAccount"]};
+window.SIDEBAR_ITEMS = {"constant":["TYPE_URL"],"struct":["LegacyMsgRegisterInterchainAccount","LegacyRawMsgRegisterInterchainAccount","MsgRegisterInterchainAccount"]};
