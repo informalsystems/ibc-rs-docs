@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.4/src/sync/segment.rs`."><title>segment.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.5/src/sync/segment.rs`."><title>segment.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2010,11 +2012,16 @@
 <a href="#2010" id="2010">2010</a>
 <a href="#2011" id="2011">2011</a>
 <a href="#2012" id="2012">2012</a>
+<a href="#2013" id="2013">2013</a>
+<a href="#2014" id="2014">2014</a>
+<a href="#2015" id="2015">2015</a>
+<a href="#2016" id="2016">2016</a>
+<a href="#2017" id="2017">2017</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{cache::Cache, CacheBuilder, OwnedKeyEntrySelector, RefKeyEntrySelector};
 <span class="kw">use crate</span>::{
     common::concurrent::Weigher,
     notification::EvictionListener,
-    policy::ExpirationPolicy,
+    policy::{EvictionPolicy, ExpirationPolicy},
     sync_base::iter::{Iter, ScanningGet},
     Entry, Policy, PredicateError,
 };
@@ -2073,12 +2080,12 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; fmt::Debug <span class="kw">for </span>SegmentedCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: fmt::Debug + Eq + Hash + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: fmt::Debug + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: fmt::Debug + Eq + Hash + Send + Sync + <span class="lifetime">'static</span>,
+    V: fmt::Debug + Clone + Send + Sync + <span class="lifetime">'static</span>,
     <span class="comment">// TODO: Remove these bounds from S.
-    </span>S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">let </span><span class="kw-2">mut </span>d_map = f.debug_map();
 
         <span class="kw">for </span>(k, v) <span class="kw">in </span><span class="self">self </span>{
@@ -2091,8 +2098,8 @@
 
 <span class="kw">impl</span>&lt;K, V&gt; SegmentedCache&lt;K, V, RandomState&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="doccomment">/// Constructs a new `SegmentedCache&lt;K, V&gt;` that has multiple internal
     /// segments and will store up to the `max_capacity`.
@@ -2114,6 +2121,7 @@
             num_segments,
             build_hasher,
             <span class="prelude-val">None</span>,
+            EvictionPolicy::default(),
             <span class="prelude-val">None</span>,
             ExpirationPolicy::default(),
             <span class="bool-val">false</span>,
@@ -2159,24 +2167,24 @@
     /// use moka::sync::SegmentedCache;
     ///
     /// let cache = SegmentedCache::new(10, 4);
-    /// cache.insert(&#39;n&#39;, &quot;Netherland Dwarf&quot;);
-    /// cache.insert(&#39;l&#39;, &quot;Lop Eared&quot;);
-    /// cache.insert(&#39;d&#39;, &quot;Dutch&quot;);
+    /// cache.insert('n', "Netherland Dwarf");
+    /// cache.insert('l', "Lop Eared");
+    /// cache.insert('d', "Dutch");
     ///
     /// // Ensure an entry exists.
-    /// assert!(cache.contains_key(&amp;&#39;n&#39;));
+    /// assert!(cache.contains_key(&amp;'n'));
     ///
     /// // However, followings may print stale number zeros instead of threes.
-    /// println!(&quot;{}&quot;, cache.entry_count());   // -&gt; 0
-    /// println!(&quot;{}&quot;, cache.weighted_size()); // -&gt; 0
+    /// println!("{}", cache.entry_count());   // -&gt; 0
+    /// println!("{}", cache.weighted_size()); // -&gt; 0
     ///
     /// // To mitigate the inaccuracy, call `run_pending_tasks` method to run
     /// // pending internal tasks.
     /// cache.run_pending_tasks();
     ///
     /// // Followings will print the actual numbers.
-    /// println!(&quot;{}&quot;, cache.entry_count());   // -&gt; 3
-    /// println!(&quot;{}&quot;, cache.weighted_size()); // -&gt; 3
+    /// println!("{}", cache.entry_count());   // -&gt; 3
+    /// println!("{}", cache.weighted_size()); // -&gt; 3
     /// ```
     ///
     </span><span class="kw">pub fn </span>entry_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
@@ -2204,9 +2212,9 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; SegmentedCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="doccomment">/// # Panics
     ///
@@ -2219,6 +2227,7 @@
         num_segments: usize,
         build_hasher: S,
         weigher: <span class="prelude-ty">Option</span>&lt;Weigher&lt;K, V&gt;&gt;,
+        eviction_policy: EvictionPolicy,
         eviction_listener: <span class="prelude-ty">Option</span>&lt;EvictionListener&lt;K, V&gt;&gt;,
         expiration_policy: ExpirationPolicy&lt;K, V&gt;,
         invalidator_enabled: bool,
@@ -2231,6 +2240,7 @@
                 num_segments,
                 build_hasher,
                 weigher,
+                eviction_policy,
                 eviction_listener,
                 expiration_policy,
                 invalidator_enabled,
@@ -2244,7 +2254,7 @@
     /// so it does not update the historic popularity estimator or reset the idle
     /// timer for the key.
     ///
-    /// The key may be any borrowed form of the cache&#39;s key type, but `Hash` and `Eq`
+    /// The key may be any borrowed form of the cache's key type, but `Hash` and `Eq`
     /// on the borrowed form _must_ match those for the key type.
     </span><span class="kw">pub fn </span>contains_key&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; bool
     <span class="kw">where
@@ -2261,7 +2271,7 @@
     /// `std::sync::Arc` before storing in a cache. [`Arc`][rustdoc-std-arc] is a
     /// thread-safe reference-counted pointer and its `clone()` method is cheap.
     ///
-    /// The key may be any borrowed form of the cache&#39;s key type, but `Hash` and `Eq`
+    /// The key may be any borrowed form of the cache's key type, but `Hash` and `Eq`
     /// on the borrowed form _must_ match those for the key type.
     ///
     /// [rustdoc-std-arc]: https://doc.rust-lang.org/stable/std/sync/struct.Arc.html
@@ -2277,7 +2287,7 @@
             .map(Entry::into_value)
     }
 
-    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;</span><span class="self">self</span>, key: K) -&gt; OwnedKeyEntrySelector&lt;<span class="lifetime">&#39;_</span>, K, V, S&gt;
+    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;</span><span class="self">self</span>, key: K) -&gt; OwnedKeyEntrySelector&lt;<span class="lifetime">'_</span>, K, V, S&gt;
     <span class="kw">where
         </span>K: Hash + Eq,
     {
@@ -2286,7 +2296,7 @@
         OwnedKeyEntrySelector::new(key, hash, cache)
     }
 
-    <span class="kw">pub fn </span>entry_by_ref&lt;<span class="lifetime">&#39;a</span>, Q&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Q) -&gt; RefKeyEntrySelector&lt;<span class="lifetime">&#39;a</span>, K, Q, V, S&gt;
+    <span class="kw">pub fn </span>entry_by_ref&lt;<span class="lifetime">'a</span>, Q&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q) -&gt; RefKeyEntrySelector&lt;<span class="lifetime">'a</span>, K, Q, V, S&gt;
     <span class="kw">where
         </span>K: Borrow&lt;Q&gt;,
         Q: ToOwned&lt;Owned = K&gt; + Hash + Eq + <span class="question-mark">?</span>Sized,
@@ -2298,18 +2308,18 @@
 
     <span class="doccomment">/// TODO: Remove this in v0.13.0.
     /// Deprecated, replaced with [`get_with`](#method.get_with)
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.8.0&quot;</span>, note = <span class="string">&quot;Replaced with `get_with`&quot;</span>)]
+    </span><span class="attr">#[deprecated(since = <span class="string">"0.8.0"</span>, note = <span class="string">"Replaced with `get_with`"</span>)]
     </span><span class="kw">pub fn </span>get_or_insert_with(<span class="kw-2">&amp;</span><span class="self">self</span>, key: K, init: <span class="kw">impl </span>FnOnce() -&gt; V) -&gt; V {
         <span class="self">self</span>.get_with(key, init)
     }
 
     <span class="doccomment">/// TODO: Remove this in v0.13.0.
     /// Deprecated, replaced with [`try_get_with`](#method.try_get_with)
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.8.0&quot;</span>, note = <span class="string">&quot;Replaced with `try_get_with`&quot;</span>)]
+    </span><span class="attr">#[deprecated(since = <span class="string">"0.8.0"</span>, note = <span class="string">"Replaced with `try_get_with`"</span>)]
     </span><span class="kw">pub fn </span>get_or_try_insert_with&lt;F, E&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: K, init: F) -&gt; <span class="prelude-ty">Result</span>&lt;V, Arc&lt;E&gt;&gt;
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;V, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="self">self</span>.try_get_with(key, init)
     }
@@ -2434,7 +2444,7 @@
     </span><span class="kw">pub fn </span>try_get_with&lt;F, E&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: K, init: F) -&gt; <span class="prelude-ty">Result</span>&lt;V, Arc&lt;E&gt;&gt;
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;V, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>hash = <span class="self">self</span>.inner.hash(<span class="kw-2">&amp;</span>key);
         <span class="kw">let </span>key = Arc::new(key);
@@ -2450,7 +2460,7 @@
     </span><span class="kw">pub fn </span>try_get_with_by_ref&lt;F, E, Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q, init: F) -&gt; <span class="prelude-ty">Result</span>&lt;V, Arc&lt;E&gt;&gt;
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;V, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
         K: Borrow&lt;Q&gt;,
         Q: ToOwned&lt;Owned = K&gt; + Hash + Eq + <span class="question-mark">?</span>Sized,
     {
@@ -2475,7 +2485,7 @@
     /// If you need to get a the value that has been discarded, use the
     /// [`remove`](#method.remove) method instead.
     ///
-    /// The key may be any borrowed form of the cache&#39;s key type, but `Hash` and `Eq`
+    /// The key may be any borrowed form of the cache's key type, but `Hash` and `Eq`
     /// on the borrowed form _must_ match those for the key type.
     </span><span class="kw">pub fn </span>invalidate&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q)
     <span class="kw">where
@@ -2493,7 +2503,7 @@
     /// If you do not need to get the value that has been discarded, use the
     /// [`invalidate`](#method.invalidate) method instead.
     ///
-    /// The key may be any borrowed form of the cache&#39;s key type, but `Hash` and `Eq`
+    /// The key may be any borrowed form of the cache's key type, but `Hash` and `Eq`
     /// on the borrowed form _must_ match those for the key type.
     </span><span class="kw">pub fn </span>remove&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt;
     <span class="kw">where
@@ -2549,7 +2559,7 @@
     /// [invalidation-disabled-error]: ../enum.PredicateError.html#variant.InvalidationClosuresDisabled
     </span><span class="kw">pub fn </span>invalidate_entries_if&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, predicate: F) -&gt; <span class="prelude-ty">Result</span>&lt;(), PredicateError&gt;
     <span class="kw">where
-        </span>F: Fn(<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>V) -&gt; bool + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>F: Fn(<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>V) -&gt; bool + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>pred = Arc::new(predicate);
         <span class="kw">for </span>segment <span class="kw">in </span><span class="self">self</span>.inner.segments.iter() {
@@ -2571,12 +2581,12 @@
     ///
     /// # Guarantees
     ///
-    /// In order to allow concurrent access to the cache, iterator&#39;s `next` method
+    /// In order to allow concurrent access to the cache, iterator's `next` method
     /// does _not_ guarantee the following:
     ///
     /// - It does not guarantee to return a key-value pair (an entry) if its key has
     ///   been inserted to the cache _after_ the iterator was created.
-    ///   - Such an entry may or may not be returned depending on key&#39;s hash and
+    ///   - Such an entry may or may not be returned depending on key's hash and
     ///     timing.
     ///
     /// and the `next` method guarantees the followings:
@@ -2595,17 +2605,17 @@
     /// use moka::sync::SegmentedCache;
     ///
     /// let cache = SegmentedCache::new(100, 4);
-    /// cache.insert(&quot;Julia&quot;, 14);
+    /// cache.insert("Julia", 14);
     ///
     /// let mut iter = cache.iter();
     /// let (k, v) = iter.next().unwrap(); // (Arc&lt;K&gt;, V)
-    /// assert_eq!(*k, &quot;Julia&quot;);
+    /// assert_eq!(*k, "Julia");
     /// assert_eq!(v, 14);
     ///
     /// assert!(iter.next().is_none());
     /// ```
     ///
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, K, V&gt; {
         <span class="kw">let </span>num_cht_segments = <span class="self">self</span>.inner.segments[<span class="number">0</span>].num_cht_segments();
         <span class="kw">let </span>segments = <span class="self">self
             </span>.inner
@@ -2634,15 +2644,15 @@
     // }
 </span>}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>SegmentedCache&lt;K, V, S&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, S&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>SegmentedCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">type </span>Item = (Arc&lt;K&gt;, V);
 
-    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
+    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">'a</span>, K, V&gt;;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.iter()
@@ -2660,9 +2670,9 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">impl</span>&lt;K, V, S&gt; SegmentedCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">fn </span>invalidation_predicate_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner
@@ -2674,7 +2684,7 @@
 
     <span class="kw">fn </span>reconfigure_for_testing(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">let </span>inner = Arc::get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>.inner)
-            .expect(<span class="string">&quot;There are other strong reference to self.inner Arc&quot;</span>);
+            .expect(<span class="string">"There are other strong reference to self.inner Arc"</span>);
 
         <span class="kw">for </span>segment <span class="kw">in </span>inner.segments.iter_mut() {
             segment.reconfigure_for_testing();
@@ -2726,9 +2736,9 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; Inner&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="doccomment">/// # Panics
     ///
@@ -2741,6 +2751,7 @@
         num_segments: usize,
         build_hasher: S,
         weigher: <span class="prelude-ty">Option</span>&lt;Weigher&lt;K, V&gt;&gt;,
+        eviction_policy: EvictionPolicy,
         eviction_listener: <span class="prelude-ty">Option</span>&lt;EvictionListener&lt;K, V&gt;&gt;,
         expiration_policy: ExpirationPolicy&lt;K, V&gt;,
         invalidator_enabled: bool,
@@ -2763,6 +2774,7 @@
                     seg_init_capacity,
                     build_hasher.clone(),
                     weigher.as_ref().map(Arc::clone),
+                    eviction_policy.clone(),
                     eviction_listener.as_ref().map(Arc::clone),
                     expiration_policy.clone(),
                     invalidator_enabled,
@@ -2850,67 +2862,67 @@
         <span class="comment">// Make the cache exterior immutable.
         </span><span class="kw">let </span>cache = cache;
 
-        cache.insert(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;alice&quot;</span>);
-        cache.insert(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;bob&quot;</span>);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alice&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;bob&quot;</span>));
+        cache.insert(<span class="string">"a"</span>, <span class="string">"alice"</span>);
+        cache.insert(<span class="string">"b"</span>, <span class="string">"bob"</span>);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(<span class="string">"alice"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(<span class="string">"bob"</span>));
         cache.run_pending_tasks();
         <span class="comment">// counts: a -&gt; 1, b -&gt; 1
 
-        </span>cache.insert(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;cindy&quot;</span>);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;cindy&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>));
+        </span>cache.insert(<span class="string">"c"</span>, <span class="string">"cindy"</span>);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"c"</span>), <span class="prelude-val">Some</span>(<span class="string">"cindy"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"c"</span>));
         <span class="comment">// counts: a -&gt; 1, b -&gt; 1, c -&gt; 1
         </span>cache.run_pending_tasks();
 
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alice&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;bob&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(<span class="string">"alice"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(<span class="string">"bob"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
         cache.run_pending_tasks();
         <span class="comment">// counts: a -&gt; 2, b -&gt; 2, c -&gt; 1
 
-        // &quot;d&quot; should not be admitted because its frequency is too low.
-        </span>cache.insert(<span class="string">&quot;d&quot;</span>, <span class="string">&quot;david&quot;</span>); <span class="comment">//   count: d -&gt; 0
-        </span>expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), <span class="string">&quot;david&quot;</span>, RemovalCause::Size));
+        // "d" should not be admitted because its frequency is too low.
+        </span>cache.insert(<span class="string">"d"</span>, <span class="string">"david"</span>); <span class="comment">//   count: d -&gt; 0
+        </span>expected.push((Arc::new(<span class="string">"d"</span>), <span class="string">"david"</span>, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 1
-        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 1
+        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
-        cache.insert(<span class="string">&quot;d&quot;</span>, <span class="string">&quot;david&quot;</span>);
-        expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), <span class="string">&quot;david&quot;</span>, RemovalCause::Size));
+        cache.insert(<span class="string">"d"</span>, <span class="string">"david"</span>);
+        expected.push((Arc::new(<span class="string">"d"</span>), <span class="string">"david"</span>, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 2
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 2
 
-        // &quot;d&quot; should be admitted and &quot;c&quot; should be evicted
-        // because d&#39;s frequency is higher than c&#39;s.
-        </span>cache.insert(<span class="string">&quot;d&quot;</span>, <span class="string">&quot;dennis&quot;</span>);
-        expected.push((Arc::new(<span class="string">&quot;c&quot;</span>), <span class="string">&quot;cindy&quot;</span>, RemovalCause::Size));
+        // "d" should be admitted and "c" should be evicted
+        // because d's frequency is higher than c's.
+        </span>cache.insert(<span class="string">"d"</span>, <span class="string">"dennis"</span>);
+        expected.push((Arc::new(<span class="string">"c"</span>), <span class="string">"cindy"</span>, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alice&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;bob&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;dennis&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(<span class="string">"alice"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(<span class="string">"bob"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"c"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">Some</span>(<span class="string">"dennis"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"c"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
-        cache.invalidate(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>);
-        expected.push((Arc::new(<span class="string">&quot;b&quot;</span>), <span class="string">&quot;bob&quot;</span>, RemovalCause::Explicit));
+        cache.invalidate(<span class="kw-2">&amp;</span><span class="string">"b"</span>);
+        expected.push((Arc::new(<span class="string">"b"</span>), <span class="string">"bob"</span>, RemovalCause::Explicit));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
 
-        <span class="macro">assert!</span>(cache.remove(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>).is_none());
-        <span class="macro">assert_eq!</span>(cache.remove(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;dennis&quot;</span>));
-        expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), <span class="string">&quot;dennis&quot;</span>, RemovalCause::Explicit));
+        <span class="macro">assert!</span>(cache.remove(<span class="kw-2">&amp;</span><span class="string">"b"</span>).is_none());
+        <span class="macro">assert_eq!</span>(cache.remove(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">Some</span>(<span class="string">"dennis"</span>));
+        expected.push((Arc::new(<span class="string">"d"</span>), <span class="string">"dennis"</span>, RemovalCause::Explicit));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
         verify_notification_vec(<span class="kw-2">&amp;</span>cache, actual, <span class="kw-2">&amp;</span>expected);
         <span class="macro">assert!</span>(cache.key_locks_map_is_empty());
@@ -2926,9 +2938,9 @@
 
         <span class="macro">assert_eq!</span>(cache.iter().count(), <span class="number">0</span>);
 
-        cache.insert(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;alice&quot;</span>);
-        cache.insert(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;bob&quot;</span>);
-        cache.insert(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;cindy&quot;</span>);
+        cache.insert(<span class="string">"a"</span>, <span class="string">"alice"</span>);
+        cache.insert(<span class="string">"b"</span>, <span class="string">"bob"</span>);
+        cache.insert(<span class="string">"c"</span>, <span class="string">"cindy"</span>);
 
         <span class="macro">assert_eq!</span>(cache.iter().count(), <span class="number">3</span>);
         cache.run_pending_tasks();
@@ -2939,12 +2951,12 @@
     </span><span class="kw">fn </span>size_aware_eviction() {
         <span class="kw">let </span>weigher = |_k: &amp;&amp;str, v: <span class="kw-2">&amp;</span>(<span class="kw-2">&amp;</span>str, u32)| v.<span class="number">1</span>;
 
-        <span class="kw">let </span>alice = (<span class="string">&quot;alice&quot;</span>, <span class="number">10</span>);
-        <span class="kw">let </span>bob = (<span class="string">&quot;bob&quot;</span>, <span class="number">15</span>);
-        <span class="kw">let </span>bill = (<span class="string">&quot;bill&quot;</span>, <span class="number">20</span>);
-        <span class="kw">let </span>cindy = (<span class="string">&quot;cindy&quot;</span>, <span class="number">5</span>);
-        <span class="kw">let </span>david = (<span class="string">&quot;david&quot;</span>, <span class="number">15</span>);
-        <span class="kw">let </span>dennis = (<span class="string">&quot;dennis&quot;</span>, <span class="number">15</span>);
+        <span class="kw">let </span>alice = (<span class="string">"alice"</span>, <span class="number">10</span>);
+        <span class="kw">let </span>bob = (<span class="string">"bob"</span>, <span class="number">15</span>);
+        <span class="kw">let </span>bill = (<span class="string">"bill"</span>, <span class="number">20</span>);
+        <span class="kw">let </span>cindy = (<span class="string">"cindy"</span>, <span class="number">5</span>);
+        <span class="kw">let </span>david = (<span class="string">"david"</span>, <span class="number">15</span>);
+        <span class="kw">let </span>dennis = (<span class="string">"dennis"</span>, <span class="number">15</span>);
 
         <span class="comment">// The following `Vec`s will hold actual and expected notifications.
         </span><span class="kw">let </span>actual = Arc::new(Mutex::new(Vec::new()));
@@ -2965,90 +2977,90 @@
         <span class="comment">// Make the cache exterior immutable.
         </span><span class="kw">let </span>cache = cache;
 
-        cache.insert(<span class="string">&quot;a&quot;</span>, alice);
-        cache.insert(<span class="string">&quot;b&quot;</span>, bob);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(alice));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(bob));
+        cache.insert(<span class="string">"a"</span>, alice);
+        cache.insert(<span class="string">"b"</span>, bob);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(alice));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(bob));
         cache.run_pending_tasks();
         <span class="comment">// order (LRU -&gt; MRU) and counts: a -&gt; 1, b -&gt; 1
 
-        </span>cache.insert(<span class="string">&quot;c&quot;</span>, cindy);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>), <span class="prelude-val">Some</span>(cindy));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>));
+        </span>cache.insert(<span class="string">"c"</span>, cindy);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"c"</span>), <span class="prelude-val">Some</span>(cindy));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"c"</span>));
         <span class="comment">// order and counts: a -&gt; 1, b -&gt; 1, c -&gt; 1
         </span>cache.run_pending_tasks();
 
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(alice));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(bob));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(alice));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(bob));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
         cache.run_pending_tasks();
         <span class="comment">// order and counts: c -&gt; 1, a -&gt; 2, b -&gt; 2
 
-        // To enter &quot;d&quot; (weight: 15), it needs to evict &quot;c&quot; (w: 5) and &quot;a&quot; (w: 10).
-        // &quot;d&quot; must have higher count than 3, which is the aggregated count
-        // of &quot;a&quot; and &quot;c&quot;.
-        </span>cache.insert(<span class="string">&quot;d&quot;</span>, david); <span class="comment">//   count: d -&gt; 0
-        </span>expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), david, RemovalCause::Size));
+        // To enter "d" (weight: 15), it needs to evict "c" (w: 5) and "a" (w: 10).
+        // "d" must have higher count than 3, which is the aggregated count
+        // of "a" and "c".
+        </span>cache.insert(<span class="string">"d"</span>, david); <span class="comment">//   count: d -&gt; 0
+        </span>expected.push((Arc::new(<span class="string">"d"</span>), david, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 1
-        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 1
+        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
-        cache.insert(<span class="string">&quot;d&quot;</span>, david);
-        expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), david, RemovalCause::Size));
+        cache.insert(<span class="string">"d"</span>, david);
+        expected.push((Arc::new(<span class="string">"d"</span>), david, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 2
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 2
 
-        </span>cache.insert(<span class="string">&quot;d&quot;</span>, david);
-        expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), david, RemovalCause::Size));
+        </span>cache.insert(<span class="string">"d"</span>, david);
+        expected.push((Arc::new(<span class="string">"d"</span>), david, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 3
-        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 3
+        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
-        cache.insert(<span class="string">&quot;d&quot;</span>, david);
-        expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), david, RemovalCause::Size));
+        cache.insert(<span class="string">"d"</span>, david);
+        expected.push((Arc::new(<span class="string">"d"</span>), david, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 4
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>); <span class="comment">//   d -&gt; 4
 
-        // Finally &quot;d&quot; should be admitted by evicting &quot;c&quot; and &quot;a&quot;.
-        </span>cache.insert(<span class="string">&quot;d&quot;</span>, dennis);
-        expected.push((Arc::new(<span class="string">&quot;c&quot;</span>), cindy, RemovalCause::Size));
-        expected.push((Arc::new(<span class="string">&quot;a&quot;</span>), alice, RemovalCause::Size));
+        // Finally "d" should be admitted by evicting "c" and "a".
+        </span>cache.insert(<span class="string">"d"</span>, dennis);
+        expected.push((Arc::new(<span class="string">"c"</span>), cindy, RemovalCause::Size));
+        expected.push((Arc::new(<span class="string">"a"</span>), alice, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(bob));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">Some</span>(dennis));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(bob));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"c"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">Some</span>(dennis));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"c"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
-        <span class="comment">// Update &quot;b&quot; with &quot;bill&quot; (w: 15 -&gt; 20). This should evict &quot;d&quot; (w: 15).
-        </span>cache.insert(<span class="string">&quot;b&quot;</span>, bill);
-        expected.push((Arc::new(<span class="string">&quot;b&quot;</span>), bob, RemovalCause::Replaced));
-        expected.push((Arc::new(<span class="string">&quot;d&quot;</span>), dennis, RemovalCause::Size));
+        <span class="comment">// Update "b" with "bill" (w: 15 -&gt; 20). This should evict "d" (w: 15).
+        </span>cache.insert(<span class="string">"b"</span>, bill);
+        expected.push((Arc::new(<span class="string">"b"</span>), bob, RemovalCause::Replaced));
+        expected.push((Arc::new(<span class="string">"d"</span>), dennis, RemovalCause::Size));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(bill));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(bill));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
-        <span class="comment">// Re-add &quot;a&quot; (w: 10) and update &quot;b&quot; with &quot;bob&quot; (w: 20 -&gt; 15).
-        </span>cache.insert(<span class="string">&quot;a&quot;</span>, alice);
-        cache.insert(<span class="string">&quot;b&quot;</span>, bob);
-        expected.push((Arc::new(<span class="string">&quot;b&quot;</span>), bill, RemovalCause::Replaced));
+        <span class="comment">// Re-add "a" (w: 10) and update "b" with "bob" (w: 20 -&gt; 15).
+        </span>cache.insert(<span class="string">"a"</span>, alice);
+        cache.insert(<span class="string">"b"</span>, bob);
+        expected.push((Arc::new(<span class="string">"b"</span>), bill, RemovalCause::Replaced));
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(alice));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(bob));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(alice));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(bob));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
         <span class="comment">// Verify the sizes.
         </span><span class="macro">assert_eq!</span>(cache.entry_count(), <span class="number">2</span>);
@@ -3074,16 +3086,16 @@
             .map(|id| {
                 <span class="kw">let </span>cache = cache.clone();
                 std::thread::spawn(<span class="kw">move </span>|| {
-                    cache.insert(<span class="number">10</span>, <span class="macro">format!</span>(<span class="string">&quot;{id}-100&quot;</span>));
+                    cache.insert(<span class="number">10</span>, <span class="macro">format!</span>(<span class="string">"{id}-100"</span>));
                     cache.get(<span class="kw-2">&amp;</span><span class="number">10</span>);
                     cache.run_pending_tasks();
-                    cache.insert(<span class="number">20</span>, <span class="macro">format!</span>(<span class="string">&quot;{id}-200&quot;</span>));
+                    cache.insert(<span class="number">20</span>, <span class="macro">format!</span>(<span class="string">"{id}-200"</span>));
                     cache.invalidate(<span class="kw-2">&amp;</span><span class="number">10</span>);
                 })
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        handles.into_iter().for_each(|h| h.join().expect(<span class="string">&quot;Failed&quot;</span>));
+        handles.into_iter().for_each(|h| h.join().expect(<span class="string">"Failed"</span>));
 
         cache.run_pending_tasks();
 
@@ -3118,37 +3130,37 @@
         <span class="comment">// Make the cache exterior immutable.
         </span><span class="kw">let </span>cache = cache;
 
-        cache.insert(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;alice&quot;</span>);
-        cache.insert(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;bob&quot;</span>);
-        cache.insert(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;cindy&quot;</span>);
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alice&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;bob&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;cindy&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>));
+        cache.insert(<span class="string">"a"</span>, <span class="string">"alice"</span>);
+        cache.insert(<span class="string">"b"</span>, <span class="string">"bob"</span>);
+        cache.insert(<span class="string">"c"</span>, <span class="string">"cindy"</span>);
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>), <span class="prelude-val">Some</span>(<span class="string">"alice"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>), <span class="prelude-val">Some</span>(<span class="string">"bob"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"c"</span>), <span class="prelude-val">Some</span>(<span class="string">"cindy"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"c"</span>));
 
         <span class="comment">// `cache.run_pending_tasks()` is no longer needed here before invalidating. The last
         // modified timestamp of the entries were updated when they were inserted.
         // https://github.com/moka-rs/moka/issues/155
 
         </span>cache.invalidate_all();
-        expected.insert(Arc::new(<span class="string">&quot;a&quot;</span>), (<span class="string">&quot;alice&quot;</span>, RemovalCause::Explicit));
-        expected.insert(Arc::new(<span class="string">&quot;b&quot;</span>), (<span class="string">&quot;bob&quot;</span>, RemovalCause::Explicit));
-        expected.insert(Arc::new(<span class="string">&quot;c&quot;</span>), (<span class="string">&quot;cindy&quot;</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="string">"a"</span>), (<span class="string">"alice"</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="string">"b"</span>), (<span class="string">"bob"</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="string">"c"</span>), (<span class="string">"cindy"</span>, RemovalCause::Explicit));
         cache.run_pending_tasks();
 
-        cache.insert(<span class="string">&quot;d&quot;</span>, <span class="string">&quot;david&quot;</span>);
+        cache.insert(<span class="string">"d"</span>, <span class="string">"david"</span>);
         cache.run_pending_tasks();
 
-        <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>).is_none());
-        <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>).is_none());
-        <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>).is_none());
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;david&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;b&quot;</span>));
-        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;c&quot;</span>));
-        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">&quot;d&quot;</span>));
+        <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"a"</span>).is_none());
+        <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"b"</span>).is_none());
+        <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"c"</span>).is_none());
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="string">"d"</span>), <span class="prelude-val">Some</span>(<span class="string">"david"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"a"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"b"</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"c"</span>));
+        <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="string">"d"</span>));
 
         verify_notification_map(<span class="kw-2">&amp;</span>cache, actual, <span class="kw-2">&amp;</span>expected);
     }
@@ -3183,29 +3195,29 @@
         <span class="comment">// Make the cache exterior immutable.
         </span><span class="kw">let </span>cache = cache;
 
-        cache.insert(<span class="number">0</span>, <span class="string">&quot;alice&quot;</span>);
-        cache.insert(<span class="number">1</span>, <span class="string">&quot;bob&quot;</span>);
-        cache.insert(<span class="number">2</span>, <span class="string">&quot;alex&quot;</span>);
+        cache.insert(<span class="number">0</span>, <span class="string">"alice"</span>);
+        cache.insert(<span class="number">1</span>, <span class="string">"bob"</span>);
+        cache.insert(<span class="number">2</span>, <span class="string">"alex"</span>);
         cache.run_pending_tasks();
         mock.increment(Duration::from_secs(<span class="number">5</span>)); <span class="comment">// 5 secs from the start.
         </span>cache.run_pending_tasks();
 
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">0</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alice&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;bob&quot;</span>));
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">2</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alex&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">0</span>), <span class="prelude-val">Some</span>(<span class="string">"alice"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="string">"bob"</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">2</span>), <span class="prelude-val">Some</span>(<span class="string">"alex"</span>));
         <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="number">0</span>));
         <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="number">1</span>));
         <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="number">2</span>));
 
-        <span class="kw">let </span>names = [<span class="string">&quot;alice&quot;</span>, <span class="string">&quot;alex&quot;</span>].iter().cloned().collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>names = [<span class="string">"alice"</span>, <span class="string">"alex"</span>].iter().cloned().collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
         cache.invalidate_entries_if(<span class="kw">move </span>|_k, <span class="kw-2">&amp;</span>v| names.contains(v))<span class="question-mark">?</span>;
         <span class="macro">assert_eq!</span>(cache.invalidation_predicate_count(), SEGMENTS);
-        expected.insert(Arc::new(<span class="number">0</span>), (<span class="string">&quot;alice&quot;</span>, RemovalCause::Explicit));
-        expected.insert(Arc::new(<span class="number">2</span>), (<span class="string">&quot;alex&quot;</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="number">0</span>), (<span class="string">"alice"</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="number">2</span>), (<span class="string">"alex"</span>, RemovalCause::Explicit));
 
         mock.increment(Duration::from_secs(<span class="number">5</span>)); <span class="comment">// 10 secs from the start.
 
-        </span>cache.insert(<span class="number">3</span>, <span class="string">&quot;alice&quot;</span>);
+        </span>cache.insert(<span class="number">3</span>, <span class="string">"alice"</span>);
 
         <span class="comment">// Run the invalidation task and wait for it to finish. (TODO: Need a better way than sleeping)
         </span>cache.run_pending_tasks(); <span class="comment">// To submit the invalidation task.
@@ -3215,9 +3227,9 @@
 
         <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">0</span>).is_none());
         <span class="macro">assert!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">2</span>).is_none());
-        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;bob&quot;</span>));
+        <span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="string">"bob"</span>));
         <span class="comment">// This should survive as it was inserted after calling invalidate_entries_if.
-        </span><span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;alice&quot;</span>));
+        </span><span class="macro">assert_eq!</span>(cache.get(<span class="kw-2">&amp;</span><span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="string">"alice"</span>));
 
         <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="number">0</span>));
         <span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="number">1</span>));
@@ -3229,11 +3241,11 @@
 
         mock.increment(Duration::from_secs(<span class="number">5</span>)); <span class="comment">// 15 secs from the start.
 
-        </span>cache.invalidate_entries_if(|_k, <span class="kw-2">&amp;</span>v| v == <span class="string">&quot;alice&quot;</span>)<span class="question-mark">?</span>;
-        cache.invalidate_entries_if(|_k, <span class="kw-2">&amp;</span>v| v == <span class="string">&quot;bob&quot;</span>)<span class="question-mark">?</span>;
+        </span>cache.invalidate_entries_if(|_k, <span class="kw-2">&amp;</span>v| v == <span class="string">"alice"</span>)<span class="question-mark">?</span>;
+        cache.invalidate_entries_if(|_k, <span class="kw-2">&amp;</span>v| v == <span class="string">"bob"</span>)<span class="question-mark">?</span>;
         <span class="macro">assert_eq!</span>(cache.invalidation_predicate_count(), SEGMENTS * <span class="number">2</span>);
-        expected.insert(Arc::new(<span class="number">1</span>), (<span class="string">&quot;bob&quot;</span>, RemovalCause::Explicit));
-        expected.insert(Arc::new(<span class="number">3</span>), (<span class="string">&quot;alice&quot;</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="number">1</span>), (<span class="string">"bob"</span>, RemovalCause::Explicit));
+        expected.insert(Arc::new(<span class="number">3</span>), (<span class="string">"alice"</span>, RemovalCause::Explicit));
 
         <span class="comment">// Run the invalidation task and wait for it to finish. (TODO: Need a better way than sleeping)
         </span>cache.run_pending_tasks(); <span class="comment">// To submit the invalidation task.
@@ -3260,7 +3272,7 @@
         <span class="kw">const </span>NUM_KEYS: usize = <span class="number">50</span>;
 
         <span class="kw">fn </span>make_value(key: usize) -&gt; String {
-            <span class="macro">format!</span>(<span class="string">&quot;val: {key}&quot;</span>)
+            <span class="macro">format!</span>(<span class="string">"val: {key}"</span>)
         }
 
         <span class="comment">// let cache = SegmentedCache::builder(5)
@@ -3298,7 +3310,7 @@
         <span class="kw">const </span>NUM_THREADS: usize = <span class="number">16</span>;
 
         <span class="kw">fn </span>make_value(key: usize) -&gt; String {
-            <span class="macro">format!</span>(<span class="string">&quot;val: {key}&quot;</span>)
+            <span class="macro">format!</span>(<span class="string">"val: {key}"</span>)
         }
 
         <span class="kw">let </span>cache = SegmentedCache::builder(<span class="number">4</span>)
@@ -3351,7 +3363,7 @@
         <span class="comment">// Let these threads to run by releasing the write lock.
         </span>std::mem::drop(write_lock);
 
-        handles.into_iter().for_each(|h| h.join().expect(<span class="string">&quot;Failed&quot;</span>));
+        handles.into_iter().for_each(|h| h.join().expect(<span class="string">"Failed"</span>));
 
         <span class="comment">// Ensure there are no missing or duplicate keys in the iteration.
         </span><span class="kw">let </span>key_set = cache.iter().map(|(k, _v)| <span class="kw-2">*</span>k).collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;();
@@ -3368,7 +3380,7 @@
         <span class="comment">// This test will run five threads:
         //
         // Thread1 will be the first thread to call `get_with` for a key, so its init
-        // closure will be evaluated and then a &amp;str value &quot;thread1&quot; will be inserted
+        // closure will be evaluated and then a &amp;str value "thread1" will be inserted
         // to the cache.
         </span><span class="kw">let </span>thread1 = {
             <span class="kw">let </span>cache1 = cache.clone();
@@ -3377,29 +3389,29 @@
                 </span><span class="kw">let </span>v = cache1.get_with(KEY, || {
                     <span class="comment">// Wait for 300 ms and return a &amp;str value.
                     </span>sleep(Duration::from_millis(<span class="number">300</span>));
-                    <span class="string">&quot;thread1&quot;
+                    <span class="string">"thread1"
                 </span>});
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread1&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread1"</span>);
             })
         };
 
         <span class="comment">// Thread2 will be the second thread to call `get_with` for the same key, so
-        // its init closure will not be evaluated. Once thread1&#39;s init closure
-        // finishes, it will get the value inserted by thread1&#39;s init closure.
+        // its init closure will not be evaluated. Once thread1's init closure
+        // finishes, it will get the value inserted by thread1's init closure.
         </span><span class="kw">let </span>thread2 = {
             <span class="kw">let </span>cache2 = cache.clone();
             spawn(<span class="kw">move </span>|| {
                 <span class="comment">// Wait for 100 ms before calling `get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">100</span>));
                 <span class="kw">let </span>v = cache2.get_with(KEY, || <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread1&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread1"</span>);
             })
         };
 
         <span class="comment">// Thread3 will be the third thread to call `get_with` for the same key. By
-        // the time it calls, thread1&#39;s init closure should have finished already and
+        // the time it calls, thread1's init closure should have finished already and
         // the value should be already inserted to the cache. So its init closure
-        // will not be evaluated and will get the value insert by thread1&#39;s init
+        // will not be evaluated and will get the value insert by thread1's init
         // closure immediately.
         </span><span class="kw">let </span>thread3 = {
             <span class="kw">let </span>cache3 = cache.clone();
@@ -3407,11 +3419,11 @@
                 <span class="comment">// Wait for 400 ms before calling `get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">400</span>));
                 <span class="kw">let </span>v = cache3.get_with(KEY, || <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread1&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread1"</span>);
             })
         };
 
-        <span class="comment">// Thread4 will call `get` for the same key. It will call when thread1&#39;s init
+        <span class="comment">// Thread4 will call `get` for the same key. It will call when thread1's init
         // closure is still running, so it will get none for the key.
         </span><span class="kw">let </span>thread4 = {
             <span class="kw">let </span>cache4 = cache.clone();
@@ -3423,20 +3435,20 @@
             })
         };
 
-        <span class="comment">// Thread5 will call `get` for the same key. It will call after thread1&#39;s init
-        // closure finished, so it will get the value insert by thread1&#39;s init closure.
+        <span class="comment">// Thread5 will call `get` for the same key. It will call after thread1's init
+        // closure finished, so it will get the value insert by thread1's init closure.
         </span><span class="kw">let </span>thread5 = {
             <span class="kw">let </span>cache5 = cache.clone();
             spawn(<span class="kw">move </span>|| {
                 <span class="comment">// Wait for 400 ms before calling `get`.
                 </span>sleep(Duration::from_millis(<span class="number">400</span>));
                 <span class="kw">let </span>maybe_v = cache5.get(<span class="kw-2">&amp;</span>KEY);
-                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">&quot;thread1&quot;</span>));
+                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">"thread1"</span>));
             })
         };
 
         <span class="kw">for </span>t <span class="kw">in </span>[thread1, thread2, thread3, thread4, thread5] {
-            t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
+            t.join().expect(<span class="string">"Failed to join"</span>);
         }
 
         <span class="macro">assert!</span>(cache.is_waiter_map_empty());
@@ -3452,7 +3464,7 @@
         <span class="comment">// This test will run seven threads:
         //
         // Thread1 will be the first thread to call `get_with_if` for a key, so its
-        // init closure will be evaluated and then a &amp;str value &quot;thread1&quot; will be
+        // init closure will be evaluated and then a &amp;str value "thread1" will be
         // inserted to the cache.
         </span><span class="kw">let </span>thread1 = {
             <span class="kw">let </span>cache1 = cache.clone();
@@ -3463,32 +3475,32 @@
                     || {
                         <span class="comment">// Wait for 300 ms and return a &amp;str value.
                         </span>sleep(Duration::from_millis(<span class="number">300</span>));
-                        <span class="string">&quot;thread1&quot;
+                        <span class="string">"thread1"
                     </span>},
                     |_v| <span class="macro">unreachable!</span>(),
                 );
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread1&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread1"</span>);
             })
         };
 
         <span class="comment">// Thread2 will be the second thread to call `get_with_if` for the same key,
-        // so its init closure will not be evaluated. Once thread1&#39;s init closure
-        // finishes, it will get the value inserted by thread1&#39;s init closure.
+        // so its init closure will not be evaluated. Once thread1's init closure
+        // finishes, it will get the value inserted by thread1's init closure.
         </span><span class="kw">let </span>thread2 = {
             <span class="kw">let </span>cache2 = cache.clone();
             spawn(<span class="kw">move </span>|| {
                 <span class="comment">// Wait for 100 ms before calling `get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">100</span>));
                 <span class="kw">let </span>v = cache2.get_with_if(KEY, || <span class="macro">unreachable!</span>(), |_v| <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread1&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread1"</span>);
             })
         };
 
         <span class="comment">// Thread3 will be the third thread to call `get_with_if` for the same
-        // key. By the time it calls, thread1&#39;s init closure should have finished
+        // key. By the time it calls, thread1's init closure should have finished
         // already and the value should be already inserted to the cache. Also
-        // thread3&#39;s `replace_if` closure returns `false`. So its init closure will
-        // not be evaluated and will get the value inserted by thread1&#39;s init closure
+        // thread3's `replace_if` closure returns `false`. So its init closure will
+        // not be evaluated and will get the value inserted by thread1's init closure
         // immediately.
         </span><span class="kw">let </span>thread3 = {
             <span class="kw">let </span>cache3 = cache.clone();
@@ -3499,17 +3511,17 @@
                     KEY,
                     || <span class="macro">unreachable!</span>(),
                     |v| {
-                        <span class="macro">assert_eq!</span>(v, <span class="kw-2">&amp;</span><span class="string">&quot;thread1&quot;</span>);
+                        <span class="macro">assert_eq!</span>(v, <span class="kw-2">&amp;</span><span class="string">"thread1"</span>);
                         <span class="bool-val">false
                     </span>},
                 );
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread1&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread1"</span>);
             })
         };
 
         <span class="comment">// Thread4 will be the fourth thread to call `get_with_if` for the same
         // key. The value should have been already inserted to the cache by
-        // thread1. However thread4&#39;s `replace_if` closure returns `true`. So its
+        // thread1. However thread4's `replace_if` closure returns `true`. So its
         // init closure will be evaluated to replace the current value.
         </span><span class="kw">let </span>thread4 = {
             <span class="kw">let </span>cache4 = cache.clone();
@@ -3518,17 +3530,17 @@
                 </span>sleep(Duration::from_millis(<span class="number">400</span>));
                 <span class="kw">let </span>v = cache4.get_with_if(
                     KEY,
-                    || <span class="string">&quot;thread4&quot;</span>,
+                    || <span class="string">"thread4"</span>,
                     |v| {
-                        <span class="macro">assert_eq!</span>(v, <span class="kw-2">&amp;</span><span class="string">&quot;thread1&quot;</span>);
+                        <span class="macro">assert_eq!</span>(v, <span class="kw-2">&amp;</span><span class="string">"thread1"</span>);
                         <span class="bool-val">true
                     </span>},
                 );
-                <span class="macro">assert_eq!</span>(v, <span class="string">&quot;thread4&quot;</span>);
+                <span class="macro">assert_eq!</span>(v, <span class="string">"thread4"</span>);
             })
         };
 
-        <span class="comment">// Thread5 will call `get` for the same key. It will call when thread1&#39;s init
+        <span class="comment">// Thread5 will call `get` for the same key. It will call when thread1's init
         // closure is still running, so it will get none for the key.
         </span><span class="kw">let </span>thread5 = {
             <span class="kw">let </span>cache5 = cache.clone();
@@ -3540,7 +3552,7 @@
             })
         };
 
-        <span class="comment">// Thread6 will call `get` for the same key. It will call when thread1&#39;s init
+        <span class="comment">// Thread6 will call `get` for the same key. It will call when thread1's init
         // closure is still running, so it will get none for the key.
         </span><span class="kw">let </span>thread6 = {
             <span class="kw">let </span>cache6 = cache.clone();
@@ -3548,26 +3560,26 @@
                 <span class="comment">// Wait for 200 ms before calling `get`.
                 </span>sleep(Duration::from_millis(<span class="number">350</span>));
                 <span class="kw">let </span>maybe_v = cache6.get(<span class="kw-2">&amp;</span>KEY);
-                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">&quot;thread1&quot;</span>));
+                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">"thread1"</span>));
             })
         };
 
-        <span class="comment">// Thread7 will call `get` for the same key. It will call after thread1&#39;s init
-        // closure finished, so it will get the value insert by thread1&#39;s init closure.
+        <span class="comment">// Thread7 will call `get` for the same key. It will call after thread1's init
+        // closure finished, so it will get the value insert by thread1's init closure.
         </span><span class="kw">let </span>thread7 = {
             <span class="kw">let </span>cache7 = cache.clone();
             spawn(<span class="kw">move </span>|| {
                 <span class="comment">// Wait for 400 ms before calling `get`.
                 </span>sleep(Duration::from_millis(<span class="number">450</span>));
                 <span class="kw">let </span>maybe_v = cache7.get(<span class="kw-2">&amp;</span>KEY);
-                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">&quot;thread4&quot;</span>));
+                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">"thread4"</span>));
             })
         };
 
         <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7,
         ] {
-            t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
+            t.join().expect(<span class="string">"Failed to join"</span>);
         }
 
         <span class="macro">assert!</span>(cache.is_waiter_map_empty());
@@ -3581,7 +3593,7 @@
         };
 
         <span class="attr">#[derive(thiserror::Error, Debug)]
-        #[error(<span class="string">&quot;{}&quot;</span>, _0)]
+        #[error(<span class="string">"{}"</span>, _0)]
         </span><span class="kw">pub struct </span>MyError(String);
 
         <span class="kw">type </span>MyResult&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, Arc&lt;MyError&gt;&gt;;
@@ -3601,15 +3613,15 @@
                 </span><span class="kw">let </span>v = cache1.try_get_with(KEY, || {
                     <span class="comment">// Wait for 300 ms and return an error.
                     </span>sleep(Duration::from_millis(<span class="number">300</span>));
-                    <span class="prelude-val">Err</span>(MyError(<span class="string">&quot;thread1 error&quot;</span>.into()))
+                    <span class="prelude-val">Err</span>(MyError(<span class="string">"thread1 error"</span>.into()))
                 });
                 <span class="macro">assert!</span>(v.is_err());
             })
         };
 
         <span class="comment">// Thread2 will be the second thread to call `try_get_with` for the same key,
-        // so its init closure will not be evaluated. Once thread1&#39;s init closure
-        // finishes, it will get the same error value returned by thread1&#39;s init
+        // so its init closure will not be evaluated. Once thread1's init closure
+        // finishes, it will get the same error value returned by thread1's init
         // closure.
         </span><span class="kw">let </span>thread2 = {
             <span class="kw">let </span>cache2 = cache.clone();
@@ -3622,7 +3634,7 @@
         };
 
         <span class="comment">// Thread3 will be the third thread to call `get_with` for the same key. By
-        // the time it calls, thread1&#39;s init closure should have finished already,
+        // the time it calls, thread1's init closure should have finished already,
         // but the key still does not exist in the cache. So its init closure will be
         // evaluated and then an okay &amp;str value will be returned. That value will be
         // inserted to the cache.
@@ -3634,14 +3646,14 @@
                 <span class="kw">let </span>v: MyResult&lt;<span class="kw">_</span>&gt; = cache3.try_get_with(KEY, || {
                     <span class="comment">// Wait for 300 ms and return an Ok(&amp;str) value.
                     </span>sleep(Duration::from_millis(<span class="number">300</span>));
-                    <span class="prelude-val">Ok</span>(<span class="string">&quot;thread3&quot;</span>)
+                    <span class="prelude-val">Ok</span>(<span class="string">"thread3"</span>)
                 });
-                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">&quot;thread3&quot;</span>);
+                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">"thread3"</span>);
             })
         };
 
         <span class="comment">// thread4 will be the fourth thread to call `try_get_with` for the same
-        // key. So its init closure will not be evaluated. Once thread3&#39;s init
+        // key. So its init closure will not be evaluated. Once thread3's init
         // closure finishes, it will get the same okay &amp;str value.
         </span><span class="kw">let </span>thread4 = {
             <span class="kw">let </span>cache4 = cache.clone();
@@ -3649,14 +3661,14 @@
                 <span class="comment">// Wait for 500 ms before calling `try_get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">500</span>));
                 <span class="kw">let </span>v: MyResult&lt;<span class="kw">_</span>&gt; = cache4.try_get_with(KEY, || <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">&quot;thread3&quot;</span>);
+                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">"thread3"</span>);
             })
         };
 
         <span class="comment">// Thread5 will be the fifth thread to call `try_get_with` for the same
         // key. So its init closure will not be evaluated. By the time it calls,
-        // thread3&#39;s init closure should have finished already, so its init closure
-        // will not be evaluated and will get the value insert by thread3&#39;s init
+        // thread3's init closure should have finished already, so its init closure
+        // will not be evaluated and will get the value insert by thread3's init
         // closure immediately.
         </span><span class="kw">let </span>thread5 = {
             <span class="kw">let </span>cache5 = cache.clone();
@@ -3664,11 +3676,11 @@
                 <span class="comment">// Wait for 800 ms before calling `try_get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">800</span>));
                 <span class="kw">let </span>v: MyResult&lt;<span class="kw">_</span>&gt; = cache5.try_get_with(KEY, || <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">&quot;thread3&quot;</span>);
+                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">"thread3"</span>);
             })
         };
 
-        <span class="comment">// Thread6 will call `get` for the same key. It will call when thread1&#39;s init
+        <span class="comment">// Thread6 will call `get` for the same key. It will call when thread1's init
         // closure is still running, so it will get none for the key.
         </span><span class="kw">let </span>thread6 = {
             <span class="kw">let </span>cache6 = cache.clone();
@@ -3680,7 +3692,7 @@
             })
         };
 
-        <span class="comment">// Thread7 will call `get` for the same key. It will call after thread1&#39;s init
+        <span class="comment">// Thread7 will call `get` for the same key. It will call after thread1's init
         // closure finished with an error. So it will get none for the key.
         </span><span class="kw">let </span>thread7 = {
             <span class="kw">let </span>cache7 = cache.clone();
@@ -3692,22 +3704,22 @@
             })
         };
 
-        <span class="comment">// Thread8 will call `get` for the same key. It will call after thread3&#39;s init
-        // closure finished, so it will get the value insert by thread3&#39;s init closure.
+        <span class="comment">// Thread8 will call `get` for the same key. It will call after thread3's init
+        // closure finished, so it will get the value insert by thread3's init closure.
         </span><span class="kw">let </span>thread8 = {
             <span class="kw">let </span>cache8 = cache.clone();
             spawn(<span class="kw">move </span>|| {
                 <span class="comment">// Wait for 800 ms before calling `get`.
                 </span>sleep(Duration::from_millis(<span class="number">800</span>));
                 <span class="kw">let </span>maybe_v = cache8.get(<span class="kw-2">&amp;</span>KEY);
-                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">&quot;thread3&quot;</span>));
+                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">"thread3"</span>));
             })
         };
 
         <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7, thread8,
         ] {
-            t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
+            t.join().expect(<span class="string">"Failed to join"</span>);
         }
 
         <span class="macro">assert!</span>(cache.is_waiter_map_empty());
@@ -3739,8 +3751,8 @@
         };
 
         <span class="comment">// Thread2 will be the second thread to call `optionally_get_with` for the same key,
-        // so its init closure will not be evaluated. Once thread1&#39;s init closure
-        // finishes, it will get the same error value returned by thread1&#39;s init
+        // so its init closure will not be evaluated. Once thread1's init closure
+        // finishes, it will get the same error value returned by thread1's init
         // closure.
         </span><span class="kw">let </span>thread2 = {
             <span class="kw">let </span>cache2 = cache.clone();
@@ -3753,7 +3765,7 @@
         };
 
         <span class="comment">// Thread3 will be the third thread to call `get_with` for the same key. By
-        // the time it calls, thread1&#39;s init closure should have finished already,
+        // the time it calls, thread1's init closure should have finished already,
         // but the key still does not exist in the cache. So its init closure will be
         // evaluated and then an okay &amp;str value will be returned. That value will be
         // inserted to the cache.
@@ -3765,14 +3777,14 @@
                 <span class="kw">let </span>v = cache3.optionally_get_with(KEY, || {
                     <span class="comment">// Wait for 300 ms and return an Ok(&amp;str) value.
                     </span>sleep(Duration::from_millis(<span class="number">300</span>));
-                    <span class="prelude-val">Some</span>(<span class="string">&quot;thread3&quot;</span>)
+                    <span class="prelude-val">Some</span>(<span class="string">"thread3"</span>)
                 });
-                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">&quot;thread3&quot;</span>);
+                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">"thread3"</span>);
             })
         };
 
         <span class="comment">// thread4 will be the fourth thread to call `optionally_get_with` for the same
-        // key. So its init closure will not be evaluated. Once thread3&#39;s init
+        // key. So its init closure will not be evaluated. Once thread3's init
         // closure finishes, it will get the same okay &amp;str value.
         </span><span class="kw">let </span>thread4 = {
             <span class="kw">let </span>cache4 = cache.clone();
@@ -3780,14 +3792,14 @@
                 <span class="comment">// Wait for 500 ms before calling `optionally_get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">500</span>));
                 <span class="kw">let </span>v = cache4.optionally_get_with(KEY, || <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">&quot;thread3&quot;</span>);
+                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">"thread3"</span>);
             })
         };
 
         <span class="comment">// Thread5 will be the fifth thread to call `optionally_get_with` for the same
         // key. So its init closure will not be evaluated. By the time it calls,
-        // thread3&#39;s init closure should have finished already, so its init closure
-        // will not be evaluated and will get the value insert by thread3&#39;s init
+        // thread3's init closure should have finished already, so its init closure
+        // will not be evaluated and will get the value insert by thread3's init
         // closure immediately.
         </span><span class="kw">let </span>thread5 = {
             <span class="kw">let </span>cache5 = cache.clone();
@@ -3795,11 +3807,11 @@
                 <span class="comment">// Wait for 800 ms before calling `optionally_get_with`.
                 </span>sleep(Duration::from_millis(<span class="number">800</span>));
                 <span class="kw">let </span>v = cache5.optionally_get_with(KEY, || <span class="macro">unreachable!</span>());
-                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">&quot;thread3&quot;</span>);
+                <span class="macro">assert_eq!</span>(v.unwrap(), <span class="string">"thread3"</span>);
             })
         };
 
-        <span class="comment">// Thread6 will call `get` for the same key. It will call when thread1&#39;s init
+        <span class="comment">// Thread6 will call `get` for the same key. It will call when thread1's init
         // closure is still running, so it will get none for the key.
         </span><span class="kw">let </span>thread6 = {
             <span class="kw">let </span>cache6 = cache.clone();
@@ -3811,7 +3823,7 @@
             })
         };
 
-        <span class="comment">// Thread7 will call `get` for the same key. It will call after thread1&#39;s init
+        <span class="comment">// Thread7 will call `get` for the same key. It will call after thread1's init
         // closure finished with an error. So it will get none for the key.
         </span><span class="kw">let </span>thread7 = {
             <span class="kw">let </span>cache7 = cache.clone();
@@ -3823,22 +3835,22 @@
             })
         };
 
-        <span class="comment">// Thread8 will call `get` for the same key. It will call after thread3&#39;s init
-        // closure finished, so it will get the value insert by thread3&#39;s init closure.
+        <span class="comment">// Thread8 will call `get` for the same key. It will call after thread3's init
+        // closure finished, so it will get the value insert by thread3's init closure.
         </span><span class="kw">let </span>thread8 = {
             <span class="kw">let </span>cache8 = cache.clone();
             spawn(<span class="kw">move </span>|| {
                 <span class="comment">// Wait for 800 ms before calling `get`.
                 </span>sleep(Duration::from_millis(<span class="number">800</span>));
                 <span class="kw">let </span>maybe_v = cache8.get(<span class="kw-2">&amp;</span>KEY);
-                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">&quot;thread3&quot;</span>));
+                <span class="macro">assert_eq!</span>(maybe_v, <span class="prelude-val">Some</span>(<span class="string">"thread3"</span>));
             })
         };
 
         <span class="kw">for </span>t <span class="kw">in </span>[
             thread1, thread2, thread3, thread4, thread5, thread6, thread7, thread8,
         ] {
-            t.join().expect(<span class="string">&quot;Failed to join&quot;</span>);
+            t.join().expect(<span class="string">"Failed to join"</span>);
         }
 
         <span class="macro">assert!</span>(cache.is_waiter_map_empty());
@@ -3908,11 +3920,11 @@
         <span class="kw">let </span>eviction_count = KEYS - MAX_CAPACITY;
 
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(counters.inserted(), KEYS, <span class="string">&quot;inserted&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.value_created(), KEYS, <span class="string">&quot;value_created&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.evicted(), eviction_count, <span class="string">&quot;evicted&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.invalidated(), <span class="number">0</span>, <span class="string">&quot;invalidated&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.value_dropped(), eviction_count, <span class="string">&quot;value_dropped&quot;</span>);
+        <span class="macro">assert_eq!</span>(counters.inserted(), KEYS, <span class="string">"inserted"</span>);
+        <span class="macro">assert_eq!</span>(counters.value_created(), KEYS, <span class="string">"value_created"</span>);
+        <span class="macro">assert_eq!</span>(counters.evicted(), eviction_count, <span class="string">"evicted"</span>);
+        <span class="macro">assert_eq!</span>(counters.invalidated(), <span class="number">0</span>, <span class="string">"invalidated"</span>);
+        <span class="macro">assert_eq!</span>(counters.value_dropped(), eviction_count, <span class="string">"value_dropped"</span>);
 
         <span class="kw">for </span>key <span class="kw">in </span><span class="number">0</span>..KEYS {
             cache.invalidate(<span class="kw-2">&amp;</span>key);
@@ -3920,29 +3932,29 @@
         }
 
         cache.run_pending_tasks();
-        <span class="macro">assert_eq!</span>(counters.inserted(), KEYS, <span class="string">&quot;inserted&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.value_created(), KEYS, <span class="string">&quot;value_created&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.evicted(), eviction_count, <span class="string">&quot;evicted&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.invalidated(), MAX_CAPACITY, <span class="string">&quot;invalidated&quot;</span>);
-        <span class="macro">assert_eq!</span>(counters.value_dropped(), KEYS, <span class="string">&quot;value_dropped&quot;</span>);
+        <span class="macro">assert_eq!</span>(counters.inserted(), KEYS, <span class="string">"inserted"</span>);
+        <span class="macro">assert_eq!</span>(counters.value_created(), KEYS, <span class="string">"value_created"</span>);
+        <span class="macro">assert_eq!</span>(counters.evicted(), eviction_count, <span class="string">"evicted"</span>);
+        <span class="macro">assert_eq!</span>(counters.invalidated(), MAX_CAPACITY, <span class="string">"invalidated"</span>);
+        <span class="macro">assert_eq!</span>(counters.value_dropped(), KEYS, <span class="string">"value_dropped"</span>);
 
         std::mem::drop(cache);
-        <span class="macro">assert_eq!</span>(counters.value_dropped(), KEYS, <span class="string">&quot;value_dropped&quot;</span>);
+        <span class="macro">assert_eq!</span>(counters.value_dropped(), KEYS, <span class="string">"value_dropped"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_debug_format() {
         <span class="kw">let </span>cache = SegmentedCache::new(<span class="number">10</span>, <span class="number">4</span>);
-        cache.insert(<span class="string">&#39;a&#39;</span>, <span class="string">&quot;alice&quot;</span>);
-        cache.insert(<span class="string">&#39;b&#39;</span>, <span class="string">&quot;bob&quot;</span>);
-        cache.insert(<span class="string">&#39;c&#39;</span>, <span class="string">&quot;cindy&quot;</span>);
+        cache.insert(<span class="string">'a'</span>, <span class="string">"alice"</span>);
+        cache.insert(<span class="string">'b'</span>, <span class="string">"bob"</span>);
+        cache.insert(<span class="string">'c'</span>, <span class="string">"cindy"</span>);
 
-        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">&quot;{cache:?}&quot;</span>);
-        <span class="macro">assert!</span>(debug_str.starts_with(<span class="string">&#39;{&#39;</span>));
-        <span class="macro">assert!</span>(debug_str.contains(<span class="string">r#&quot;&#39;a&#39;: &quot;alice&quot;&quot;#</span>));
-        <span class="macro">assert!</span>(debug_str.contains(<span class="string">r#&quot;&#39;b&#39;: &quot;bob&quot;&quot;#</span>));
-        <span class="macro">assert!</span>(debug_str.contains(<span class="string">r#&quot;&#39;c&#39;: &quot;cindy&quot;&quot;#</span>));
-        <span class="macro">assert!</span>(debug_str.ends_with(<span class="string">&#39;}&#39;</span>));
+        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{cache:?}"</span>);
+        <span class="macro">assert!</span>(debug_str.starts_with(<span class="string">'{'</span>));
+        <span class="macro">assert!</span>(debug_str.contains(<span class="string">r#"'a': "alice""#</span>));
+        <span class="macro">assert!</span>(debug_str.contains(<span class="string">r#"'b': "bob""#</span>));
+        <span class="macro">assert!</span>(debug_str.contains(<span class="string">r#"'c': "cindy""#</span>));
+        <span class="macro">assert!</span>(debug_str.ends_with(<span class="string">'}'</span>));
     }
 
     <span class="kw">type </span>NotificationPair&lt;V&gt; = (V, RemovalCause);
@@ -3953,9 +3965,9 @@
         actual: Arc&lt;Mutex&lt;Vec&lt;NotificationTriple&lt;K, V&gt;&gt;&gt;&gt;,
         expected: <span class="kw-2">&amp;</span>[NotificationTriple&lt;K, V&gt;],
     ) <span class="kw">where
-        </span>K: std::hash::Hash + Eq + std::fmt::Debug + Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Eq + std::fmt::Debug + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-        S: std::hash::BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>K: std::hash::Hash + Eq + std::fmt::Debug + Send + Sync + <span class="lifetime">'static</span>,
+        V: Eq + std::fmt::Debug + Clone + Send + Sync + <span class="lifetime">'static</span>,
+        S: std::hash::BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="comment">// Retries will be needed when testing in a QEMU VM.
         </span><span class="kw">const </span>MAX_RETRIES: usize = <span class="number">5</span>;
@@ -3971,12 +3983,12 @@
                     cache.run_pending_tasks();
                     <span class="kw">continue</span>;
                 } <span class="kw">else </span>{
-                    <span class="macro">assert_eq!</span>(actual.len(), expected.len(), <span class="string">&quot;Retries exhausted&quot;</span>);
+                    <span class="macro">assert_eq!</span>(actual.len(), expected.len(), <span class="string">"Retries exhausted"</span>);
                 }
             }
 
             <span class="kw">for </span>(i, (actual, expected)) <span class="kw">in </span>actual.iter().zip(expected).enumerate() {
-                <span class="macro">assert_eq!</span>(actual, expected, <span class="string">&quot;expected[{i}]&quot;</span>);
+                <span class="macro">assert_eq!</span>(actual, expected, <span class="string">"expected[{i}]"</span>);
             }
 
             <span class="kw">break</span>;
@@ -3988,9 +4000,9 @@
         actual: Arc&lt;Mutex&lt;std::collections::HashMap&lt;Arc&lt;K&gt;, NotificationPair&lt;V&gt;&gt;&gt;&gt;,
         expected: <span class="kw-2">&amp;</span>std::collections::HashMap&lt;Arc&lt;K&gt;, NotificationPair&lt;V&gt;&gt;,
     ) <span class="kw">where
-        </span>K: std::hash::Hash + Eq + std::fmt::Display + Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Eq + std::fmt::Debug + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-        S: std::hash::BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>K: std::hash::Hash + Eq + std::fmt::Display + Send + Sync + <span class="lifetime">'static</span>,
+        V: Eq + std::fmt::Debug + Clone + Send + Sync + <span class="lifetime">'static</span>,
+        S: std::hash::BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="comment">// Retries will be needed when testing in a QEMU VM.
         </span><span class="kw">const </span>MAX_RETRIES: usize = <span class="number">5</span>;
@@ -4006,7 +4018,7 @@
                     cache.run_pending_tasks();
                     <span class="kw">continue</span>;
                 } <span class="kw">else </span>{
-                    <span class="macro">assert_eq!</span>(actual.len(), expected.len(), <span class="string">&quot;Retries exhausted&quot;</span>);
+                    <span class="macro">assert_eq!</span>(actual.len(), expected.len(), <span class="string">"Retries exhausted"</span>);
                 }
             }
 
@@ -4014,7 +4026,7 @@
                 <span class="macro">assert_eq!</span>(
                     actual.get(actual_key),
                     expected.get(actual_key),
-                    <span class="string">&quot;expected[{actual_key}]&quot;</span>,
+                    <span class="string">"expected[{actual_key}]"</span>,
                 );
             }
 

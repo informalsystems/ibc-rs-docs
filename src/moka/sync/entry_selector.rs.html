@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.4/src/sync/entry_selector.rs`."><title>entry_selector.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.5/src/sync/entry_selector.rs`."><title>entry_selector.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1114,19 +1116,19 @@
 ///
 /// [`Entry`]: ../struct.Entry.html
 /// [entry-method]: ./struct.Cache.html#method.entry
-</span><span class="kw">pub struct </span>OwnedKeyEntrySelector&lt;<span class="lifetime">&#39;a</span>, K, V, S&gt; {
+</span><span class="kw">pub struct </span>OwnedKeyEntrySelector&lt;<span class="lifetime">'a</span>, K, V, S&gt; {
     owned_key: K,
     hash: u64,
-    cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Cache&lt;K, V, S&gt;,
+    cache: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Cache&lt;K, V, S&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S&gt; OwnedKeyEntrySelector&lt;<span class="lifetime">&#39;a</span>, K, V, S&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, S&gt; OwnedKeyEntrySelector&lt;<span class="lifetime">'a</span>, K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(owned_key: K, hash: u64, cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Cache&lt;K, V, S&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(owned_key: K, hash: u64, cache: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Cache&lt;K, V, S&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             owned_key,
             hash,
@@ -1181,7 +1183,7 @@
     /// };
     ///
     /// let cache: Cache&lt;String, u64&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// /// Increment a cached `u64` counter. If the counter is greater than or
     /// /// equal to 2, remove it.
@@ -1209,14 +1211,14 @@
     /// // value with the kind of the operation performed.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::Inserted(entry) = result else {
-    ///     panic!(&quot;`Inserted` should be returned: {result:?}&quot;);
+    ///     panic!("`Inserted` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 1);
     ///
     /// // This should increment the cached counter value by 1.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::ReplacedWith(entry) = result else {
-    ///     panic!(&quot;`ReplacedWith` should be returned: {result:?}&quot;);
+    ///     panic!("`ReplacedWith` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 2);
     ///
@@ -1224,7 +1226,7 @@
     /// // _removed_ value.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::Removed(entry) = result else {
-    ///     panic!(&quot;`Removed` should be returned: {result:?}&quot;);
+    ///     panic!("`Removed` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 2);
     ///
@@ -1234,7 +1236,7 @@
     /// // This should start over; insert a new counter value 1 to the cache.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::Inserted(entry) = result else {
-    ///     panic!(&quot;`Inserted` should be returned: {result:?}&quot;);
+    ///     panic!("`Inserted` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 1);
     /// ```
@@ -1307,14 +1309,14 @@
     </span><span class="kw">pub fn </span>and_try_compute_with&lt;F, E&gt;(<span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;compute::CompResult&lt;K, V&gt;, E&gt;
     <span class="kw">where
         </span>F: FnOnce(<span class="prelude-ty">Option</span>&lt;Entry&lt;K, V&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;compute::Op&lt;V&gt;, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>key = Arc::new(<span class="self">self</span>.owned_key);
         <span class="self">self</span>.cache.try_compute_with_hash_and_fun(key, <span class="self">self</span>.hash, f)
     }
 
     <span class="doccomment">/// Performs an upsert of an [`Entry`] by using the given closure `f`. The word
-    /// &quot;upsert&quot; here means &quot;update&quot; or &quot;insert&quot;.
+    /// "upsert" here means "update" or "insert".
     ///
     /// The closure `f` should take the current entry of `Option&lt;Entry&lt;K, V&gt;&gt;` for
     /// the key, and return a new value `V`.
@@ -1344,7 +1346,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u64&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache
     ///     .entry(key.clone())
@@ -1402,7 +1404,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, Option&lt;u32&gt;&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache.entry(key.clone()).or_default();
     /// assert!(entry.is_fresh());
@@ -1434,7 +1436,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u32&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache.entry(key.clone()).or_insert(3);
     /// assert!(entry.is_fresh());
@@ -1464,28 +1466,28 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, String&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache
     ///     .entry(key.clone())
-    ///     .or_insert_with(|| &quot;value1&quot;.to_string());
+    ///     .or_insert_with(|| "value1".to_string());
     /// assert!(entry.is_fresh());
     /// assert_eq!(entry.key(), &amp;key);
-    /// assert_eq!(entry.into_value(), &quot;value1&quot;);
+    /// assert_eq!(entry.into_value(), "value1");
     ///
     /// let entry = cache
     ///     .entry(key)
-    ///     .or_insert_with(|| &quot;value2&quot;.to_string());
+    ///     .or_insert_with(|| "value2".to_string());
     /// // Not fresh because the value was already in the cache.
     /// assert!(!entry.is_fresh());
-    /// assert_eq!(entry.into_value(), &quot;value1&quot;);
+    /// assert_eq!(entry.into_value(), "value1");
     /// ```
     ///
     /// # Concurrent calls on the same key
     ///
     /// This method guarantees that concurrent calls on the same not-existing entry
     /// are coalesced into one evaluation of the `init` closure. Only one of the
-    /// calls evaluates its closure (thus returned entry&#39;s `is_fresh` method returns
+    /// calls evaluates its closure (thus returned entry's `is_fresh` method returns
     /// `true`), and other calls wait for that closure to complete (and their
     /// `is_fresh` return `false`).
     ///
@@ -1532,7 +1534,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u32&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let none_entry = cache
     ///     .entry(key.clone())
@@ -1561,7 +1563,7 @@
     ///
     /// This method guarantees that concurrent calls on the same not-existing entry
     /// are coalesced into one evaluation of the `init` closure. Only one of the
-    /// calls evaluates its closure (thus returned entry&#39;s `is_fresh` method returns
+    /// calls evaluates its closure (thus returned entry's `is_fresh` method returns
     /// `true`), and other calls wait for that closure to complete (and their
     /// `is_fresh` return `false`).
     ///
@@ -1593,11 +1595,11 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u32&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let error_entry = cache
     ///     .entry(key.clone())
-    ///     .or_try_insert_with(|| Err(&quot;error&quot;));
+    ///     .or_try_insert_with(|| Err("error"));
     /// assert!(error_entry.is_err());
     ///
     /// let ok_entry = cache
@@ -1623,7 +1625,7 @@
     /// This method guarantees that concurrent calls on the same not-existing entry
     /// are coalesced into one evaluation of the `init` closure (as long as these
     /// closures return the same error type). Only one of the calls evaluates its
-    /// closure (thus returned entry&#39;s `is_fresh` method returns `true`), and other
+    /// closure (thus returned entry's `is_fresh` method returns `true`), and other
     /// calls wait for that closure to complete (and their `is_fresh` return
     /// `false`).
     ///
@@ -1634,7 +1636,7 @@
     </span><span class="kw">pub fn </span>or_try_insert_with&lt;F, E&gt;(<span class="self">self</span>, init: F) -&gt; <span class="prelude-ty">Result</span>&lt;Entry&lt;K, V&gt;, Arc&lt;E&gt;&gt;
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;V, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>key = Arc::new(<span class="self">self</span>.owned_key);
         <span class="self">self</span>.cache
@@ -1652,23 +1654,23 @@
 ///
 /// [`Entry`]: ../struct.Entry.html
 /// [entry-by-ref-method]: ./struct.Cache.html#method.entry_by_ref
-</span><span class="kw">pub struct </span>RefKeyEntrySelector&lt;<span class="lifetime">&#39;a</span>, K, Q, V, S&gt;
+</span><span class="kw">pub struct </span>RefKeyEntrySelector&lt;<span class="lifetime">'a</span>, K, Q, V, S&gt;
 <span class="kw">where
     </span>Q: <span class="question-mark">?</span>Sized,
 {
-    ref_key: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Q,
+    ref_key: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q,
     hash: u64,
-    cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Cache&lt;K, V, S&gt;,
+    cache: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Cache&lt;K, V, S&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, Q, V, S&gt; RefKeyEntrySelector&lt;<span class="lifetime">&#39;a</span>, K, Q, V, S&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, Q, V, S&gt; RefKeyEntrySelector&lt;<span class="lifetime">'a</span>, K, Q, V, S&gt;
 <span class="kw">where
-    </span>K: Borrow&lt;Q&gt; + Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Borrow&lt;Q&gt; + Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
     Q: ToOwned&lt;Owned = K&gt; + Hash + Eq + <span class="question-mark">?</span>Sized,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(ref_key: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Q, hash: u64, cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Cache&lt;K, V, S&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(ref_key: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q, hash: u64, cache: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Cache&lt;K, V, S&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             ref_key,
             hash,
@@ -1723,7 +1725,7 @@
     /// };
     ///
     /// let cache: Cache&lt;String, u64&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// /// Increment a cached `u64` counter. If the counter is greater than or
     /// /// equal to 2, remove it.
@@ -1751,14 +1753,14 @@
     /// // value with the kind of the operation performed.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::Inserted(entry) = result else {
-    ///     panic!(&quot;`Inserted` should be returned: {result:?}&quot;);
+    ///     panic!("`Inserted` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 1);
     ///
     /// // This should increment the cached counter value by 1.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::ReplacedWith(entry) = result else {
-    ///     panic!(&quot;`ReplacedWith` should be returned: {result:?}&quot;);
+    ///     panic!("`ReplacedWith` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 2);
     ///
@@ -1766,7 +1768,7 @@
     /// // _removed_ value.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::Removed(entry) = result else {
-    ///     panic!(&quot;`Removed` should be returned: {result:?}&quot;);
+    ///     panic!("`Removed` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 2);
     ///
@@ -1776,7 +1778,7 @@
     /// // This should start over; insert a new counter value 1 to the cache.
     /// let result = inclement_or_remove_counter(&amp;cache, &amp;key);
     /// let CompResult::Inserted(entry) = result else {
-    ///     panic!(&quot;`Inserted` should be returned: {result:?}&quot;);
+    ///     panic!("`Inserted` should be returned: {result:?}");
     /// };
     /// assert_eq!(entry.into_value(), 1);
     /// ```
@@ -1849,14 +1851,14 @@
     </span><span class="kw">pub fn </span>and_try_compute_with&lt;F, E&gt;(<span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;compute::CompResult&lt;K, V&gt;, E&gt;
     <span class="kw">where
         </span>F: FnOnce(<span class="prelude-ty">Option</span>&lt;Entry&lt;K, V&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;compute::Op&lt;V&gt;, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>key = Arc::new(<span class="self">self</span>.ref_key.to_owned());
         <span class="self">self</span>.cache.try_compute_with_hash_and_fun(key, <span class="self">self</span>.hash, f)
     }
 
     <span class="doccomment">/// Performs an upsert of an [`Entry`] by using the given closure `f`. The word
-    /// &quot;upsert&quot; here means &quot;update&quot; or &quot;insert&quot;.
+    /// "upsert" here means "update" or "insert".
     ///
     /// The closure `f` should take the current entry of `Option&lt;Entry&lt;K, V&gt;&gt;` for
     /// the key, and return a new value `V`.
@@ -1886,7 +1888,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u64&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache
     ///     .entry_by_ref(&amp;key)
@@ -1945,7 +1947,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, Option&lt;u32&gt;&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache.entry_by_ref(&amp;key).or_default();
     /// assert!(entry.is_fresh());
@@ -1976,7 +1978,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u32&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache.entry_by_ref(&amp;key).or_insert(3);
     /// assert!(entry.is_fresh());
@@ -2006,28 +2008,28 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, String&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let entry = cache
     ///     .entry_by_ref(&amp;key)
-    ///     .or_insert_with(|| &quot;value1&quot;.to_string());
+    ///     .or_insert_with(|| "value1".to_string());
     /// assert!(entry.is_fresh());
     /// assert_eq!(entry.key(), &amp;key);
-    /// assert_eq!(entry.into_value(), &quot;value1&quot;);
+    /// assert_eq!(entry.into_value(), "value1");
     ///
     /// let entry = cache
     ///     .entry_by_ref(&amp;key)
-    ///     .or_insert_with(|| &quot;value2&quot;.to_string());
+    ///     .or_insert_with(|| "value2".to_string());
     /// // Not fresh because the value was already in the cache.
     /// assert!(!entry.is_fresh());
-    /// assert_eq!(entry.into_value(), &quot;value1&quot;);
+    /// assert_eq!(entry.into_value(), "value1");
     /// ```
     ///
     /// # Concurrent calls on the same key
     ///
     /// This method guarantees that concurrent calls on the same not-existing entry
     /// are coalesced into one evaluation of the `init` closure. Only one of the
-    /// calls evaluates its closure (thus returned entry&#39;s `is_fresh` method returns
+    /// calls evaluates its closure (thus returned entry's `is_fresh` method returns
     /// `true`), and other calls wait for that closure to complete (and their
     /// `is_fresh` return `false`).
     ///
@@ -2082,7 +2084,7 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u32&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let none_entry = cache
     ///     .entry_by_ref(&amp;key)
@@ -2111,7 +2113,7 @@
     ///
     /// This method guarantees that concurrent calls on the same not-existing entry
     /// are coalesced into one evaluation of the `init` closure. Only one of the
-    /// calls evaluates its closure (thus returned entry&#39;s `is_fresh` method returns
+    /// calls evaluates its closure (thus returned entry's `is_fresh` method returns
     /// `true`), and other calls wait for that closure to complete (and their
     /// `is_fresh` return `false`).
     ///
@@ -2143,11 +2145,11 @@
     /// use moka::sync::Cache;
     ///
     /// let cache: Cache&lt;String, u32&gt; = Cache::new(100);
-    /// let key = &quot;key1&quot;.to_string();
+    /// let key = "key1".to_string();
     ///
     /// let error_entry = cache
     ///     .entry_by_ref(&amp;key)
-    ///     .or_try_insert_with(|| Err(&quot;error&quot;));
+    ///     .or_try_insert_with(|| Err("error"));
     /// assert!(error_entry.is_err());
     ///
     /// let ok_entry = cache
@@ -2173,7 +2175,7 @@
     /// This method guarantees that concurrent calls on the same not-existing entry
     /// are coalesced into one evaluation of the `init` closure (as long as these
     /// closures return the same error type). Only one of the calls evaluates its
-    /// closure (thus returned entry&#39;s `is_fresh` method returns `true`), and other
+    /// closure (thus returned entry's `is_fresh` method returns `true`), and other
     /// calls wait for that closure to complete (and their `is_fresh` return
     /// `false`).
     ///
@@ -2184,7 +2186,7 @@
     </span><span class="kw">pub fn </span>or_try_insert_with&lt;F, E&gt;(<span class="self">self</span>, init: F) -&gt; <span class="prelude-ty">Result</span>&lt;Entry&lt;K, V&gt;, Arc&lt;E&gt;&gt;
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;V, E&gt;,
-        E: Send + Sync + <span class="lifetime">&#39;static</span>,
+        E: Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="self">self</span>.cache
             .get_or_try_insert_with_hash_by_ref_and_fun(<span class="self">self</span>.ref_key, <span class="self">self</span>.hash, init, <span class="bool-val">true</span>)

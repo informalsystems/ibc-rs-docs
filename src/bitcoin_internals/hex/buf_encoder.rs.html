@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-internals-0.2.0/src/hex/buf_encoder.rs`."><title>buf_encoder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bitcoin_internals" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../bitcoin_internals/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-internals-0.2.0/src/hex/buf_encoder.rs`."><title>buf_encoder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bitcoin_internals" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../bitcoin_internals/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -399,7 +401,7 @@
 </span><span class="doccomment">//! Implements a buffered encoder.
 //!
 //! The main type of this module is [`BufEncoder`] which provides buffered hex encoding. Such is
-//! faster than the usual `write!(f, &quot;{02x}&quot;, b)?` in a for loop because it reduces dynamic
+//! faster than the usual `write!(f, "{02x}", b)?` in a for loop because it reduces dynamic
 //! dispatch and decreases the number of allocations if a `String` is being created.
 
 </span><span class="kw">use </span>core::borrow::Borrow;
@@ -430,7 +432,7 @@
 
 <span class="doccomment">/// A buffer with compile-time-known length.
 ///
-/// This is essentially `Default + AsOutBytes` but supports lengths 1.41 doesn&#39;t.
+/// This is essentially `Default + AsOutBytes` but supports lengths 1.41 doesn't.
 </span><span class="kw">pub trait </span>FixedLenBuf: Sized + AsOutBytes {
     <span class="doccomment">/// Creates an uninitialized buffer.
     ///
@@ -447,10 +449,10 @@
 
     <span class="doccomment">/// A byte buffer that can only be written-into.
     ///
-    /// You shouldn&#39;t concern yourself with this, just call `BufEncoder::new` with your array.
+    /// You shouldn't concern yourself with this, just call `BufEncoder::new` with your array.
     ///
-    /// This prepares the API for potential future support of `[MaybeUninit&lt;u8&gt;]`. We don&#39;t want to use
-    /// `unsafe` until it&#39;s proven to be needed but if it does we have an easy, compatible upgrade
+    /// This prepares the API for potential future support of `[MaybeUninit&lt;u8&gt;]`. We don't want to use
+    /// `unsafe` until it's proven to be needed but if it does we have an easy, compatible upgrade
     /// option.
     ///
     /// Warning: `repr(transparent)` is an internal implementation detail and **must not** be
@@ -461,7 +463,7 @@
     <span class="kw">impl </span>OutBytes {
         <span class="doccomment">/// Returns the first `len` bytes as initialized.
         ///
-        /// Not `unsafe` because we don&#39;t use `unsafe` (yet).
+        /// Not `unsafe` because we don't use `unsafe` (yet).
         ///
         /// ## Panics
         ///
@@ -473,7 +475,7 @@
         ///
         /// ## Panics
         ///
-        /// The method panics if pos is out of bounds or `bytes` don&#39;t fit into the buffer.
+        /// The method panics if pos is out of bounds or `bytes` don't fit into the buffer.
         </span><span class="attr">#[track_caller]
         </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pos: usize, bytes: <span class="kw-2">&amp;</span>[u8]) {
             <span class="self">self</span>.<span class="number">0</span>[pos..(pos + bytes.len())].copy_from_slice(bytes);
@@ -488,7 +490,7 @@
             // including in unsized types.
             // Thanks to repr(transparent) the types have the same layout making the other
             // conversion sound.
-            // The pointer was just created from a reference that&#39;s still alive so dereferencing is
+            // The pointer was just created from a reference that's still alive so dereferencing is
             // sound.
             </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(slice <span class="kw">as </span><span class="kw-2">*const </span>[u8] <span class="kw">as </span><span class="kw-2">*const </span><span class="self">Self</span>) }
         }
@@ -499,7 +501,7 @@
             // including in unsized types.
             // Thanks to repr(transparent) the types have the same layout making the other
             // conversion sound.
-            // The pointer was just created from a reference that&#39;s still alive so dereferencing is
+            // The pointer was just created from a reference that's still alive so dereferencing is
             // sound.
             </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span>(slice <span class="kw">as </span><span class="kw-2">*mut </span>[u8] <span class="kw">as </span><span class="kw-2">*mut </span><span class="self">Self</span>) }
         }
@@ -526,8 +528,8 @@
 
                 <span class="kw">impl </span>Sealed <span class="kw">for </span>[u8; <span class="macro-nonterminal">$len</span>] {}
 
-                <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">super</span>::<span class="kw">super</span>::display::DisplayHex <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8; <span class="macro-nonterminal">$len </span>/ <span class="number">2</span>] {
-                    <span class="kw">type </span>Display = <span class="kw">super</span>::<span class="kw">super</span>::display::DisplayArray&lt;core::slice::Iter&lt;<span class="lifetime">&#39;a</span>, u8&gt;, [u8; <span class="macro-nonterminal">$len</span>]&gt;;
+                <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; <span class="kw">super</span>::<span class="kw">super</span>::display::DisplayHex <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8; <span class="macro-nonterminal">$len </span>/ <span class="number">2</span>] {
+                    <span class="kw">type </span>Display = <span class="kw">super</span>::<span class="kw">super</span>::display::DisplayArray&lt;core::slice::Iter&lt;<span class="lifetime">'a</span>, u8&gt;, [u8; <span class="macro-nonterminal">$len</span>]&gt;;
                     <span class="kw">fn </span>as_hex(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Display {
                         <span class="kw">super</span>::<span class="kw">super</span>::display::DisplayArray::new(<span class="self">self</span>.iter())
                     }
@@ -540,13 +542,13 @@
         }
     }
 
-    <span class="kw">impl</span>&lt;T: AsOutBytes + <span class="question-mark">?</span>Sized&gt; AsOutBytes <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>T {
+    <span class="kw">impl</span>&lt;T: AsOutBytes + <span class="question-mark">?</span>Sized&gt; AsOutBytes <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="kw-2">mut </span>T {
         <span class="kw">fn </span>as_out_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>OutBytes { (<span class="kw-2">**</span><span class="self">self</span>).as_out_bytes() }
 
         <span class="kw">fn </span>as_mut_out_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>OutBytes { (<span class="kw-2">**</span><span class="self">self</span>).as_mut_out_bytes() }
     }
 
-    <span class="kw">impl</span>&lt;T: AsOutBytes + <span class="question-mark">?</span>Sized&gt; Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>T {}
+    <span class="kw">impl</span>&lt;T: AsOutBytes + <span class="question-mark">?</span>Sized&gt; Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="kw-2">mut </span>T {}
 
     <span class="kw">impl </span>AsOutBytes <span class="kw">for </span>OutBytes {
         <span class="kw">fn </span>as_out_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>OutBytes { <span class="self">self </span>}
@@ -570,7 +572,7 @@
 <span class="doccomment">/// Hex-encodes bytes into the provided buffer.
 ///
 /// This is an important building block for fast hex-encoding. Because string writing tools
-/// provided by `core::fmt` involve dynamic dispatch and don&#39;t allow reserving capacity in strings
+/// provided by `core::fmt` involve dynamic dispatch and don't allow reserving capacity in strings
 /// buffering the hex and then formatting it is significantly faster.
 </span><span class="kw">pub struct </span>BufEncoder&lt;T: AsOutBytes&gt; {
     buf: T,
@@ -601,7 +603,7 @@
     ///
     /// ## Panics
     ///
-    /// The method panics if the bytes wouldn&#39;t fit the buffer.
+    /// The method panics if the bytes wouldn't fit the buffer.
     </span><span class="attr">#[inline]
     #[track_caller]
     </span><span class="kw">pub fn </span>put_bytes&lt;I&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytes: I, case: Case)
@@ -632,10 +634,10 @@
     ///
     /// This method works just like `put_bytes` but instead of panicking it returns the unwritten
     /// bytes. The method returns an empty slice if all bytes were written
-    </span><span class="attr">#[must_use = <span class="string">&quot;this may write only part of the input buffer&quot;</span>]
+    </span><span class="attr">#[must_use = <span class="string">"this may write only part of the input buffer"</span>]
     #[inline]
     #[track_caller]
-    </span><span class="kw">pub fn </span>put_bytes_min&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], case: Case) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] {
+    </span><span class="kw">pub fn </span>put_bytes_min&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], case: Case) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] {
         <span class="kw">let </span>to_write = <span class="self">self</span>.space_remaining().min(bytes.len());
         <span class="self">self</span>.put_bytes(<span class="kw-2">&amp;</span>bytes[..to_write], case);
         <span class="kw-2">&amp;</span>bytes[to_write..]
@@ -649,7 +651,7 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
         core::str::from_utf8(<span class="self">self</span>.buf.as_out_bytes().assume_init(<span class="self">self</span>.pos))
-            .expect(<span class="string">&quot;we only write ASCII&quot;</span>)
+            .expect(<span class="string">"we only write ASCII"</span>)
     }
 
     <span class="doccomment">/// Resets the buffer to become empty.
@@ -671,7 +673,7 @@
     </span><span class="kw">fn </span>empty() {
         <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0u8</span>; <span class="number">2</span>];
         <span class="kw">let </span>encoder = BufEncoder::new(<span class="kw-2">&amp;mut </span>buf);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">""</span>);
         <span class="macro">assert!</span>(!encoder.is_full());
     }
 
@@ -681,14 +683,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>encoder = BufEncoder::new(<span class="kw-2">&amp;mut </span>buf);
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">1</span>);
         encoder.put_byte(<span class="number">42</span>, Case::Lower);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2a&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2a"</span>);
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">0</span>);
         <span class="macro">assert!</span>(encoder.is_full());
         encoder.clear();
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">1</span>);
         <span class="macro">assert!</span>(!encoder.is_full());
         encoder.put_byte(<span class="number">42</span>, Case::Upper);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2A&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2A"</span>);
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">0</span>);
         <span class="macro">assert!</span>(encoder.is_full());
     }
@@ -700,12 +702,12 @@
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">2</span>);
         encoder.put_byte(<span class="number">42</span>, Case::Lower);
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2a&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2a"</span>);
         <span class="macro">assert!</span>(!encoder.is_full());
         encoder.clear();
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">2</span>);
         encoder.put_byte(<span class="number">42</span>, Case::Upper);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2A&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2A"</span>);
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">1</span>);
         <span class="macro">assert!</span>(!encoder.is_full());
     }
@@ -718,13 +720,13 @@
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">1</span>);
         encoder.put_byte(<span class="number">255</span>, Case::Lower);
         <span class="macro">assert_eq!</span>(encoder.space_remaining(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2aff&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2aff"</span>);
         <span class="macro">assert!</span>(encoder.is_full());
         encoder.clear();
         <span class="macro">assert!</span>(!encoder.is_full());
         encoder.put_byte(<span class="number">42</span>, Case::Upper);
         encoder.put_byte(<span class="number">255</span>, Case::Upper);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2AFF&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2AFF"</span>);
         <span class="macro">assert!</span>(encoder.is_full());
     }
 
@@ -732,16 +734,16 @@
     </span><span class="kw">fn </span>put_bytes_min() {
         <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0u8</span>; <span class="number">2</span>];
         <span class="kw">let </span><span class="kw-2">mut </span>encoder = BufEncoder::new(<span class="kw-2">&amp;mut </span>buf);
-        <span class="kw">let </span>remainder = encoder.put_bytes_min(<span class="string">b&quot;&quot;</span>, Case::Lower);
-        <span class="macro">assert_eq!</span>(remainder, <span class="string">b&quot;&quot;</span>);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;&quot;</span>);
-        <span class="kw">let </span>remainder = encoder.put_bytes_min(<span class="string">b&quot;*&quot;</span>, Case::Lower);
-        <span class="macro">assert_eq!</span>(remainder, <span class="string">b&quot;&quot;</span>);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2a&quot;</span>);
+        <span class="kw">let </span>remainder = encoder.put_bytes_min(<span class="string">b""</span>, Case::Lower);
+        <span class="macro">assert_eq!</span>(remainder, <span class="string">b""</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">""</span>);
+        <span class="kw">let </span>remainder = encoder.put_bytes_min(<span class="string">b"*"</span>, Case::Lower);
+        <span class="macro">assert_eq!</span>(remainder, <span class="string">b""</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2a"</span>);
         encoder.clear();
         <span class="kw">let </span>remainder = encoder.put_bytes_min(<span class="kw-2">&amp;</span>[<span class="number">42</span>, <span class="number">255</span>], Case::Lower);
         <span class="macro">assert_eq!</span>(remainder, <span class="kw-2">&amp;</span>[<span class="number">255</span>]);
-        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">&quot;2a&quot;</span>);
+        <span class="macro">assert_eq!</span>(encoder.as_str(), <span class="string">"2a"</span>);
     }
 
     <span class="attr">#[test]
@@ -775,14 +777,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>encoder = BufEncoder::new(<span class="kw-2">&amp;mut </span>buf);
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=<span class="number">255 </span>{
-            <span class="macro">write!</span>(writer, <span class="string">&quot;{:02x}&quot;</span>, i).unwrap();
+            <span class="macro">write!</span>(writer, <span class="string">"{:02x}"</span>, i).unwrap();
             encoder.put_byte(i, Case::Lower);
             <span class="macro">assert_eq!</span>(encoder.as_str(), writer.as_str());
             writer.pos = <span class="number">0</span>;
             encoder.clear();
         }
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=<span class="number">255 </span>{
-            <span class="macro">write!</span>(writer, <span class="string">&quot;{:02X}&quot;</span>, i).unwrap();
+            <span class="macro">write!</span>(writer, <span class="string">"{:02X}"</span>, i).unwrap();
             encoder.put_byte(i, Case::Upper);
             <span class="macro">assert_eq!</span>(encoder.as_str(), writer.as_str());
             writer.pos = <span class="number">0</span>;

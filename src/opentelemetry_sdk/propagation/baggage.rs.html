@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/propagation/baggage.rs`."><title>baggage.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../opentelemetry_sdk/index.html"><img src="https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/propagation/baggage.rs`."><title>baggage.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../opentelemetry_sdk/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -345,7 +347,7 @@
 //! information to metrics, traces, and logs. It is an abstract data type
 //! represented by a set of name-value pairs describing user-defined properties.
 //! Each name in a [`Baggage`] is associated with exactly one value.
-//! `Baggage`s are serialized according to the editor&#39;s draft of
+//! `Baggage`s are serialized according to the editor's draft of
 //! the [W3C Baggage] specification.
 //!
 //! [`Baggage`]: opentelemetry_api::baggage::Baggage
@@ -360,7 +362,7 @@
 //!
 //! // Example baggage value passed in externally via http headers
 //! let mut headers = HashMap::new();
-//! headers.insert(&quot;baggage&quot;.to_string(), &quot;user_id=1&quot;.to_string());
+//! headers.insert("baggage".to_string(), "user_id=1".to_string());
 //!
 //! let propagator = BaggagePropagator::new();
 //! // can extract from any type that impls `Extractor`, usually an HTTP header map
@@ -372,14 +374,14 @@
 //! }
 //!
 //! // Add new baggage
-//! let cx_with_additions = cx.with_baggage(vec![Key::new(&quot;server_id&quot;).i64(42)]);
+//! let cx_with_additions = cx.with_baggage(vec![Key::new("server_id").i64(42)]);
 //!
 //! // Inject baggage into http request
 //! propagator.inject_context(&amp;cx_with_additions, &amp;mut headers);
 //!
-//! let header_value = headers.get(&quot;baggage&quot;).expect(&quot;header is injected&quot;);
-//! assert!(header_value.contains(&quot;user_id=1&quot;), &quot;still contains previous name-value&quot;);
-//! assert!(header_value.contains(&quot;server_id=42&quot;), &quot;contains new name-value pair&quot;);
+//! let header_value = headers.get("baggage").expect("header is injected");
+//! assert!(header_value.contains("user_id=1"), "still contains previous name-value");
+//! assert!(header_value.contains("server_id=42"), "contains new name-value pair");
 //! ```
 </span><span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>opentelemetry_api::{
@@ -390,8 +392,8 @@
 <span class="kw">use </span>percent_encoding::{percent_decode_str, utf8_percent_encode, AsciiSet, CONTROLS};
 <span class="kw">use </span>std::iter;
 
-<span class="kw">static </span>BAGGAGE_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;baggage&quot;</span>;
-<span class="kw">const </span>FRAGMENT: <span class="kw-2">&amp;</span>AsciiSet = <span class="kw-2">&amp;</span>CONTROLS.add(<span class="string">b&#39; &#39;</span>).add(<span class="string">b&#39;&quot;&#39;</span>).add(<span class="string">b&#39;;&#39;</span>).add(<span class="string">b&#39;,&#39;</span>).add(<span class="string">b&#39;=&#39;</span>);
+<span class="kw">static </span>BAGGAGE_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">"baggage"</span>;
+<span class="kw">const </span>FRAGMENT: <span class="kw-2">&amp;</span>AsciiSet = <span class="kw-2">&amp;</span>CONTROLS.add(<span class="string">b' '</span>).add(<span class="string">b'"'</span>).add(<span class="string">b';'</span>).add(<span class="string">b','</span>).add(<span class="string">b'='</span>);
 <span class="kw">static </span>BAGGAGE_FIELDS: Lazy&lt;[String; <span class="number">1</span>]&gt; = Lazy::new(|| [BAGGAGE_HEADER.to_owned()]);
 
 <span class="doccomment">/// Propagates name-value pairs in [W3C Baggage] format.
@@ -400,7 +402,7 @@
 /// information to metrics, traces, and logs. It is an abstract data type
 /// represented by a set of name-value pairs describing user-defined properties.
 /// Each name in a [`Baggage`] is associated with exactly one value.
-/// `Baggage`s are serialized according to the editor&#39;s draft of
+/// `Baggage`s are serialized according to the editor's draft of
 /// the [W3C Baggage] specification.
 ///
 /// # Examples
@@ -412,7 +414,7 @@
 ///
 /// // Example baggage value passed in externally via http headers
 /// let mut headers = HashMap::new();
-/// headers.insert(&quot;baggage&quot;.to_string(), &quot;user_id=1&quot;.to_string());
+/// headers.insert("baggage".to_string(), "user_id=1".to_string());
 ///
 /// let propagator = BaggagePropagator::new();
 /// // can extract from any type that impls `Extractor`, usually an HTTP header map
@@ -424,14 +426,14 @@
 /// }
 ///
 /// // Add new baggage
-/// let cx_with_additions = cx.with_baggage(vec![Key::new(&quot;server_id&quot;).i64(42)]);
+/// let cx_with_additions = cx.with_baggage(vec![Key::new("server_id").i64(42)]);
 ///
 /// // Inject baggage into http request
 /// propagator.inject_context(&amp;cx_with_additions, &amp;mut headers);
 ///
-/// let header_value = headers.get(&quot;baggage&quot;).expect(&quot;header is injected&quot;);
-/// assert!(header_value.contains(&quot;user_id=1&quot;), &quot;still contains previous name-value&quot;);
-/// assert!(header_value.contains(&quot;server_id=42&quot;), &quot;contains new name-value pair&quot;);
+/// let header_value = headers.get("baggage").expect("header is injected");
+/// assert!(header_value.contains("user_id=1"), "still contains previous name-value");
+/// assert!(header_value.contains("server_id=42"), "contains new name-value pair");
 /// ```
 ///
 /// [W3C Baggage]: https://w3c.github.io/baggage
@@ -457,16 +459,16 @@
                 .iter()
                 .map(|(name, (value, metadata))| {
                     <span class="kw">let </span>metadata_str = metadata.as_str().trim();
-                    <span class="kw">let </span>metadata_prefix = <span class="kw">if </span>metadata_str.is_empty() { <span class="string">&quot;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;;&quot; </span>};
+                    <span class="kw">let </span>metadata_prefix = <span class="kw">if </span>metadata_str.is_empty() { <span class="string">"" </span>} <span class="kw">else </span>{ <span class="string">";" </span>};
                     utf8_percent_encode(name.as_str().trim(), FRAGMENT)
-                        .chain(iter::once(<span class="string">&quot;=&quot;</span>))
+                        .chain(iter::once(<span class="string">"="</span>))
                         .chain(utf8_percent_encode(value.as_str().trim(), FRAGMENT))
                         .chain(iter::once(metadata_prefix))
                         .chain(iter::once(metadata_str))
                         .collect()
                 })
                 .collect::&lt;Vec&lt;String&gt;&gt;()
-                .join(<span class="string">&quot;,&quot;</span>);
+                .join(<span class="string">","</span>);
             injector.set(BAGGAGE_HEADER, header_value);
         }
     }
@@ -474,25 +476,25 @@
     <span class="doccomment">/// Extracts a `Context` with baggage values from a `Extractor`.
     </span><span class="kw">fn </span>extract_with_context(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>Context, extractor: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Extractor) -&gt; Context {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(header_value) = extractor.get(BAGGAGE_HEADER) {
-            <span class="kw">let </span>baggage = header_value.split(<span class="string">&#39;,&#39;</span>).flat_map(|context_value| {
+            <span class="kw">let </span>baggage = header_value.split(<span class="string">','</span>).flat_map(|context_value| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>((name_and_value, props)) = context_value
-                    .split(<span class="string">&#39;;&#39;</span>)
+                    .split(<span class="string">';'</span>)
                     .collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()
                     .split_first()
                 {
-                    <span class="kw">let </span><span class="kw-2">mut </span>iter = name_and_value.split(<span class="string">&#39;=&#39;</span>);
+                    <span class="kw">let </span><span class="kw-2">mut </span>iter = name_and_value.split(<span class="string">'='</span>);
                     <span class="kw">if let </span>(<span class="prelude-val">Some</span>(name), <span class="prelude-val">Some</span>(value)) = (iter.next(), iter.next()) {
                         <span class="kw">let </span>name = percent_decode_str(name).decode_utf8().map_err(|<span class="kw">_</span>| ())<span class="question-mark">?</span>;
                         <span class="kw">let </span>value = percent_decode_str(value).decode_utf8().map_err(|<span class="kw">_</span>| ())<span class="question-mark">?</span>;
 
-                        <span class="comment">// Here we don&#39;t store the first ; into baggage since it should be treated
+                        <span class="comment">// Here we don't store the first ; into baggage since it should be treated
                         // as separator rather part of metadata
                         </span><span class="kw">let </span>decoded_props = props
                             .iter()
                             .flat_map(|prop| percent_decode_str(prop).decode_utf8())
                             .map(|prop| prop.trim().to_string())
                             .collect::&lt;Vec&lt;String&gt;&gt;()
-                            .join(<span class="string">&quot;;&quot;</span>); <span class="comment">// join with ; because we deleted all ; when calling split above
+                            .join(<span class="string">";"</span>); <span class="comment">// join with ; because we deleted all ; when calling split above
 
                         </span><span class="prelude-val">Ok</span>(KeyValueMetadata::new(
                             name.trim().to_owned(),
@@ -514,7 +516,7 @@
         }
     }
 
-    <span class="kw">fn </span>fields(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FieldIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>fields(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FieldIter&lt;<span class="lifetime">'_</span>&gt; {
         FieldIter::new(BAGGAGE_FIELDS.as_ref())
     }
 }
@@ -528,87 +530,87 @@
     <span class="kw">use </span>std::collections::HashMap;
 
     <span class="attr">#[rustfmt::skip]
-    </span><span class="kw">fn </span>valid_extract_data() -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, HashMap&lt;Key, Value&gt;)&gt; {
+    </span><span class="kw">fn </span>valid_extract_data() -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, HashMap&lt;Key, Value&gt;)&gt; {
         <span class="macro">vec!</span>[
-            <span class="comment">// &quot;valid w3cHeader&quot;
-            </span>(<span class="string">&quot;key1=val1,key2=val2&quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), Value::from(<span class="string">&quot;val1&quot;</span>)), (Key::new(<span class="string">&quot;key2&quot;</span>), Value::from(<span class="string">&quot;val2&quot;</span>))].into_iter().collect()),
-            <span class="comment">// &quot;valid w3cHeader with spaces&quot;
-            </span>(<span class="string">&quot;key1 =   val1,  key2 =val2   &quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), Value::from(<span class="string">&quot;val1&quot;</span>)), (Key::new(<span class="string">&quot;key2&quot;</span>), Value::from(<span class="string">&quot;val2&quot;</span>))].into_iter().collect()),
-            <span class="comment">// &quot;valid header with url-escaped comma&quot;
-            </span>(<span class="string">&quot;key1=val1,key2=val2%2Cval3&quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), Value::from(<span class="string">&quot;val1&quot;</span>)), (Key::new(<span class="string">&quot;key2&quot;</span>), Value::from(<span class="string">&quot;val2,val3&quot;</span>))].into_iter().collect()),
-            <span class="comment">// &quot;valid header with an invalid header&quot;
-            </span>(<span class="string">&quot;key1=val1,key2=val2,a,val3&quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), Value::from(<span class="string">&quot;val1&quot;</span>)), (Key::new(<span class="string">&quot;key2&quot;</span>), Value::from(<span class="string">&quot;val2&quot;</span>))].into_iter().collect()),
-            <span class="comment">// &quot;valid header with no value&quot;
-            </span>(<span class="string">&quot;key1=,key2=val2&quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), Value::from(<span class="string">&quot;&quot;</span>)), (Key::new(<span class="string">&quot;key2&quot;</span>), Value::from(<span class="string">&quot;val2&quot;</span>))].into_iter().collect()),
+            <span class="comment">// "valid w3cHeader"
+            </span>(<span class="string">"key1=val1,key2=val2"</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), Value::from(<span class="string">"val1"</span>)), (Key::new(<span class="string">"key2"</span>), Value::from(<span class="string">"val2"</span>))].into_iter().collect()),
+            <span class="comment">// "valid w3cHeader with spaces"
+            </span>(<span class="string">"key1 =   val1,  key2 =val2   "</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), Value::from(<span class="string">"val1"</span>)), (Key::new(<span class="string">"key2"</span>), Value::from(<span class="string">"val2"</span>))].into_iter().collect()),
+            <span class="comment">// "valid header with url-escaped comma"
+            </span>(<span class="string">"key1=val1,key2=val2%2Cval3"</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), Value::from(<span class="string">"val1"</span>)), (Key::new(<span class="string">"key2"</span>), Value::from(<span class="string">"val2,val3"</span>))].into_iter().collect()),
+            <span class="comment">// "valid header with an invalid header"
+            </span>(<span class="string">"key1=val1,key2=val2,a,val3"</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), Value::from(<span class="string">"val1"</span>)), (Key::new(<span class="string">"key2"</span>), Value::from(<span class="string">"val2"</span>))].into_iter().collect()),
+            <span class="comment">// "valid header with no value"
+            </span>(<span class="string">"key1=,key2=val2"</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), Value::from(<span class="string">""</span>)), (Key::new(<span class="string">"key2"</span>), Value::from(<span class="string">"val2"</span>))].into_iter().collect()),
         ]
     }
 
     <span class="attr">#[rustfmt::skip]
     #[allow(clippy::type_complexity)]
-    </span><span class="kw">fn </span>valid_extract_data_with_metadata() -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, HashMap&lt;Key, (Value, BaggageMetadata)&gt;)&gt; {
+    </span><span class="kw">fn </span>valid_extract_data_with_metadata() -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, HashMap&lt;Key, (Value, BaggageMetadata)&gt;)&gt; {
         <span class="macro">vec!</span>[
-            <span class="comment">// &quot;valid w3cHeader with properties&quot;
-            </span>(<span class="string">&quot;key1=val1,key2=val2;prop=1&quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), (Value::from(<span class="string">&quot;val1&quot;</span>), BaggageMetadata::default())), (Key::new(<span class="string">&quot;key2&quot;</span>), (Value::from(<span class="string">&quot;val2&quot;</span>), BaggageMetadata::from(<span class="string">&quot;prop=1&quot;</span>)))].into_iter().collect()),
-            <span class="comment">// prop can don&#39;t need to be key value pair
-            </span>(<span class="string">&quot;key1=val1,key2=val2;prop1&quot;</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">&quot;key1&quot;</span>), (Value::from(<span class="string">&quot;val1&quot;</span>), BaggageMetadata::default())), (Key::new(<span class="string">&quot;key2&quot;</span>), (Value::from(<span class="string">&quot;val2&quot;</span>), BaggageMetadata::from(<span class="string">&quot;prop1&quot;</span>)))].into_iter().collect()),
-            (<span class="string">&quot;key1=value1;property1;property2, key2 = value2, key3=value3; propertyKey=propertyValue&quot;</span>,
+            <span class="comment">// "valid w3cHeader with properties"
+            </span>(<span class="string">"key1=val1,key2=val2;prop=1"</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), (Value::from(<span class="string">"val1"</span>), BaggageMetadata::default())), (Key::new(<span class="string">"key2"</span>), (Value::from(<span class="string">"val2"</span>), BaggageMetadata::from(<span class="string">"prop=1"</span>)))].into_iter().collect()),
+            <span class="comment">// prop can don't need to be key value pair
+            </span>(<span class="string">"key1=val1,key2=val2;prop1"</span>, <span class="macro">vec!</span>[(Key::new(<span class="string">"key1"</span>), (Value::from(<span class="string">"val1"</span>), BaggageMetadata::default())), (Key::new(<span class="string">"key2"</span>), (Value::from(<span class="string">"val2"</span>), BaggageMetadata::from(<span class="string">"prop1"</span>)))].into_iter().collect()),
+            (<span class="string">"key1=value1;property1;property2, key2 = value2, key3=value3; propertyKey=propertyValue"</span>,
              <span class="macro">vec!</span>[
-                 (Key::new(<span class="string">&quot;key1&quot;</span>), (Value::from(<span class="string">&quot;value1&quot;</span>), BaggageMetadata::from(<span class="string">&quot;property1;property2&quot;</span>))),
-                 (Key::new(<span class="string">&quot;key2&quot;</span>), (Value::from(<span class="string">&quot;value2&quot;</span>), BaggageMetadata::default())),
-                 (Key::new(<span class="string">&quot;key3&quot;</span>), (Value::from(<span class="string">&quot;value3&quot;</span>), BaggageMetadata::from(<span class="string">&quot;propertyKey=propertyValue&quot;</span>)))
+                 (Key::new(<span class="string">"key1"</span>), (Value::from(<span class="string">"value1"</span>), BaggageMetadata::from(<span class="string">"property1;property2"</span>))),
+                 (Key::new(<span class="string">"key2"</span>), (Value::from(<span class="string">"value2"</span>), BaggageMetadata::default())),
+                 (Key::new(<span class="string">"key3"</span>), (Value::from(<span class="string">"value3"</span>), BaggageMetadata::from(<span class="string">"propertyKey=propertyValue"</span>)))
              ].into_iter().collect()),
         ]
     }
 
     <span class="attr">#[rustfmt::skip]
-    </span><span class="kw">fn </span>valid_inject_data() -&gt; Vec&lt;(Vec&lt;KeyValue&gt;, Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;)&gt; {
+    </span><span class="kw">fn </span>valid_inject_data() -&gt; Vec&lt;(Vec&lt;KeyValue&gt;, Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;)&gt; {
         <span class="macro">vec!</span>[
-            <span class="comment">// &quot;two simple values&quot;
-            </span>(<span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;key1&quot;</span>, <span class="string">&quot;val1&quot;</span>), KeyValue::new(<span class="string">&quot;key2&quot;</span>, <span class="string">&quot;val2&quot;</span>)], <span class="macro">vec!</span>[<span class="string">&quot;key1=val1&quot;</span>, <span class="string">&quot;key2=val2&quot;</span>]),
-            <span class="comment">// &quot;two values with escaped chars&quot;
-            </span>(<span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;key1&quot;</span>, <span class="string">&quot;val1,val2&quot;</span>), KeyValue::new(<span class="string">&quot;key2&quot;</span>, <span class="string">&quot;val3=4&quot;</span>)], <span class="macro">vec!</span>[<span class="string">&quot;key1=val1%2Cval2&quot;</span>, <span class="string">&quot;key2=val3%3D4&quot;</span>]),
-            <span class="comment">// &quot;values of non-string non-array types&quot;
+            <span class="comment">// "two simple values"
+            </span>(<span class="macro">vec!</span>[KeyValue::new(<span class="string">"key1"</span>, <span class="string">"val1"</span>), KeyValue::new(<span class="string">"key2"</span>, <span class="string">"val2"</span>)], <span class="macro">vec!</span>[<span class="string">"key1=val1"</span>, <span class="string">"key2=val2"</span>]),
+            <span class="comment">// "two values with escaped chars"
+            </span>(<span class="macro">vec!</span>[KeyValue::new(<span class="string">"key1"</span>, <span class="string">"val1,val2"</span>), KeyValue::new(<span class="string">"key2"</span>, <span class="string">"val3=4"</span>)], <span class="macro">vec!</span>[<span class="string">"key1=val1%2Cval2"</span>, <span class="string">"key2=val3%3D4"</span>]),
+            <span class="comment">// "values of non-string non-array types"
             </span>(
                 <span class="macro">vec!</span>[
-                    KeyValue::new(<span class="string">&quot;key1&quot;</span>, <span class="bool-val">true</span>),
-                    KeyValue::new(<span class="string">&quot;key2&quot;</span>, Value::I64(<span class="number">123</span>)),
-                    KeyValue::new(<span class="string">&quot;key3&quot;</span>, Value::F64(<span class="number">123.567</span>)),
+                    KeyValue::new(<span class="string">"key1"</span>, <span class="bool-val">true</span>),
+                    KeyValue::new(<span class="string">"key2"</span>, Value::I64(<span class="number">123</span>)),
+                    KeyValue::new(<span class="string">"key3"</span>, Value::F64(<span class="number">123.567</span>)),
                 ],
                 <span class="macro">vec!</span>[
-                    <span class="string">&quot;key1=true&quot;</span>,
-                    <span class="string">&quot;key2=123&quot;</span>,
-                    <span class="string">&quot;key3=123.567&quot;</span>,
+                    <span class="string">"key1=true"</span>,
+                    <span class="string">"key2=123"</span>,
+                    <span class="string">"key3=123.567"</span>,
                 ],
             ),
-            <span class="comment">// &quot;values of array types&quot;
+            <span class="comment">// "values of array types"
             </span>(
                 <span class="macro">vec!</span>[
-                    KeyValue::new(<span class="string">&quot;key1&quot;</span>, Value::Array(<span class="macro">vec!</span>[<span class="bool-val">true</span>, <span class="bool-val">false</span>].into())),
-                    KeyValue::new(<span class="string">&quot;key2&quot;</span>, Value::Array(<span class="macro">vec!</span>[<span class="number">123</span>, <span class="number">456</span>].into())),
-                    KeyValue::new(<span class="string">&quot;key3&quot;</span>, Value::Array(<span class="macro">vec!</span>[StringValue::from(<span class="string">&quot;val1&quot;</span>), StringValue::from(<span class="string">&quot;val2&quot;</span>)].into())),
+                    KeyValue::new(<span class="string">"key1"</span>, Value::Array(<span class="macro">vec!</span>[<span class="bool-val">true</span>, <span class="bool-val">false</span>].into())),
+                    KeyValue::new(<span class="string">"key2"</span>, Value::Array(<span class="macro">vec!</span>[<span class="number">123</span>, <span class="number">456</span>].into())),
+                    KeyValue::new(<span class="string">"key3"</span>, Value::Array(<span class="macro">vec!</span>[StringValue::from(<span class="string">"val1"</span>), StringValue::from(<span class="string">"val2"</span>)].into())),
                 ],
                 <span class="macro">vec!</span>[
-                    <span class="string">&quot;key1=[true%2Cfalse]&quot;</span>,
-                    <span class="string">&quot;key2=[123%2C456]&quot;</span>,
-                    <span class="string">&quot;key3=[%22val1%22%2C%22val2%22]&quot;</span>,
+                    <span class="string">"key1=[true%2Cfalse]"</span>,
+                    <span class="string">"key2=[123%2C456]"</span>,
+                    <span class="string">"key3=[%22val1%22%2C%22val2%22]"</span>,
                 ],
             ),
         ]
     }
 
     <span class="attr">#[rustfmt::skip]
-    </span><span class="kw">fn </span>valid_inject_data_metadata() -&gt; Vec&lt;(Vec&lt;KeyValueMetadata&gt;, Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;)&gt; {
+    </span><span class="kw">fn </span>valid_inject_data_metadata() -&gt; Vec&lt;(Vec&lt;KeyValueMetadata&gt;, Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;)&gt; {
         <span class="macro">vec!</span>[
             (
                 <span class="macro">vec!</span>[
-                    KeyValueMetadata::new(<span class="string">&quot;key1&quot;</span>, <span class="string">&quot;val1&quot;</span>, <span class="string">&quot;prop1&quot;</span>),
-                    KeyValue::new(<span class="string">&quot;key2&quot;</span>, <span class="string">&quot;val2&quot;</span>).into(),
-                    KeyValueMetadata::new(<span class="string">&quot;key3&quot;</span>, <span class="string">&quot;val3&quot;</span>, <span class="string">&quot;anykey=anyvalue&quot;</span>)
+                    KeyValueMetadata::new(<span class="string">"key1"</span>, <span class="string">"val1"</span>, <span class="string">"prop1"</span>),
+                    KeyValue::new(<span class="string">"key2"</span>, <span class="string">"val2"</span>).into(),
+                    KeyValueMetadata::new(<span class="string">"key3"</span>, <span class="string">"val3"</span>, <span class="string">"anykey=anyvalue"</span>)
                 ],
                 <span class="macro">vec!</span>[
-                    <span class="string">&quot;key1=val1;prop1&quot;</span>,
-                    <span class="string">&quot;key2=val2&quot;</span>,
-                    <span class="string">&quot;key3=val3;anykey=anyvalue&quot;
+                    <span class="string">"key1=val1;prop1"</span>,
+                    <span class="string">"key2=val2"</span>,
+                    <span class="string">"key3=val3;anykey=anyvalue"
                 </span>],
             )
         ]
@@ -640,7 +642,7 @@
             <span class="kw">let </span>cx = Context::current_with_baggage(kvm);
             propagator.inject_context(<span class="kw-2">&amp;</span>cx, <span class="kw-2">&amp;mut </span>injector);
             <span class="kw">let </span>header_value = injector.get(BAGGAGE_HEADER).unwrap();
-            <span class="macro">assert_eq!</span>(header_parts.join(<span class="string">&quot;,&quot;</span>).len(), header_value.len(),);
+            <span class="macro">assert_eq!</span>(header_parts.join(<span class="string">","</span>).len(), header_value.len(),);
             <span class="kw">for </span>header_part <span class="kw">in </span><span class="kw-2">&amp;</span>header_parts {
                 <span class="macro">assert!</span>(header_value.contains(header_part),)
             }
@@ -673,7 +675,7 @@
             propagator.inject_context(<span class="kw-2">&amp;</span>cx, <span class="kw-2">&amp;mut </span>injector);
             <span class="kw">let </span>header_value = injector.get(BAGGAGE_HEADER).unwrap();
 
-            <span class="macro">assert_eq!</span>(header_parts.join(<span class="string">&quot;,&quot;</span>).len(), header_value.len());
+            <span class="macro">assert_eq!</span>(header_parts.join(<span class="string">","</span>).len(), header_value.len());
             <span class="kw">for </span>header_part <span class="kw">in </span><span class="kw-2">&amp;</span>header_parts {
                 <span class="macro">assert!</span>(header_value.contains(header_part),)
             }

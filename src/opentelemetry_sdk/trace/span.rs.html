@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/trace/span.rs`."><title>span.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../opentelemetry_sdk/index.html"><img src="https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/trace/span.rs`."><title>span.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../opentelemetry_sdk/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -590,10 +592,10 @@
 //! tree. Each trace contains a root span, which typically describes the end-to-end latency and,
 //! optionally, one or more sub-spans for its sub-operations.
 //!
-//! The `Span`&#39;s start and end timestamps reflect the elapsed real time of the operation. A `Span`&#39;s
+//! The `Span`'s start and end timestamps reflect the elapsed real time of the operation. A `Span`'s
 //! start time is set to the current time on span creation. After the `Span` is created, it
 //! is possible to change its name, set its `Attributes`, and add `Links` and `Events`.
-//! These cannot be changed after the `Span`&#39;s end time has been set.
+//! These cannot be changed after the `Span`'s end time has been set.
 </span><span class="kw">use </span><span class="kw">crate</span>::trace::SpanLimits;
 <span class="kw">use </span><span class="kw">crate</span>::Resource;
 <span class="kw">use </span>opentelemetry_api::trace::{Event, SpanContext, SpanId, SpanKind, Status};
@@ -617,7 +619,7 @@
     <span class="doccomment">/// Span kind
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) span_kind: SpanKind,
     <span class="doccomment">/// Span name
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) name: Cow&lt;<span class="lifetime">&#39;static</span>, str&gt;,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) name: Cow&lt;<span class="lifetime">'static</span>, str&gt;,
     <span class="doccomment">/// Span start time
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) start_time: SystemTime,
     <span class="doccomment">/// Span end time
@@ -671,8 +673,8 @@
 <span class="kw">impl </span>opentelemetry_api::trace::Span <span class="kw">for </span>Span {
     <span class="doccomment">/// Records events at a specific time in the context of a given `Span`.
     ///
-    /// Note that the OpenTelemetry project documents certain [&quot;standard event names and
-    /// keys&quot;](https://github.com/open-telemetry/opentelemetry-specification/tree/v0.5.0/specification/trace/semantic_conventions/README.md)
+    /// Note that the OpenTelemetry project documents certain ["standard event names and
+    /// keys"](https://github.com/open-telemetry/opentelemetry-specification/tree/v0.5.0/specification/trace/semantic_conventions/README.md)
     /// which have prescribed semantic meanings.
     </span><span class="kw">fn </span>add_event_with_timestamp&lt;T&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
@@ -680,7 +682,7 @@
         timestamp: SystemTime,
         <span class="kw-2">mut </span>attributes: Vec&lt;KeyValue&gt;,
     ) <span class="kw">where
-        </span>T: Into&lt;Cow&lt;<span class="lifetime">&#39;static</span>, str&gt;&gt;,
+        </span>T: Into&lt;Cow&lt;<span class="lifetime">'static</span>, str&gt;&gt;,
     {
         <span class="kw">let </span>event_attributes_limit = <span class="self">self</span>.span_limits.max_attributes_per_event <span class="kw">as </span>usize;
         <span class="self">self</span>.with_data(|data| {
@@ -710,8 +712,8 @@
 
     <span class="doccomment">/// Sets a single `Attribute` where the attribute properties are passed as arguments.
     ///
-    /// Note that the OpenTelemetry project documents certain [&quot;standard
-    /// attributes&quot;](https://github.com/open-telemetry/opentelemetry-specification/tree/v0.5.0/specification/trace/semantic_conventions/README.md)
+    /// Note that the OpenTelemetry project documents certain ["standard
+    /// attributes"](https://github.com/open-telemetry/opentelemetry-specification/tree/v0.5.0/specification/trace/semantic_conventions/README.md)
     /// that have prescribed semantic meanings.
     </span><span class="kw">fn </span>set_attribute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attribute: KeyValue) {
         <span class="self">self</span>.with_data(|data| {
@@ -732,10 +734,10 @@
         });
     }
 
-    <span class="doccomment">/// Updates the `Span`&#39;s name.
+    <span class="doccomment">/// Updates the `Span`'s name.
     </span><span class="kw">fn </span>update_name&lt;T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_name: T)
     <span class="kw">where
-        </span>T: Into&lt;Cow&lt;<span class="lifetime">&#39;static</span>, str&gt;&gt;,
+        </span>T: Into&lt;Cow&lt;<span class="lifetime">'static</span>, str&gt;&gt;,
     {
         <span class="self">self</span>.with_data(|data| {
             data.name = new_name.into();
@@ -804,7 +806,7 @@
 <span class="kw">fn </span>build_export_data(
     data: SpanData,
     span_context: SpanContext,
-    resource: Cow&lt;<span class="lifetime">&#39;static</span>, Resource&gt;,
+    resource: Cow&lt;<span class="lifetime">'static</span>, Resource&gt;,
     tracer: <span class="kw-2">&amp;</span><span class="kw">crate</span>::trace::Tracer,
 ) -&gt; <span class="kw">crate</span>::export::trace::SpanData {
     <span class="kw">crate</span>::export::trace::SpanData {
@@ -823,7 +825,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;testing&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"testing"</span>))]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::testing::trace::NoopSpanExporter;
@@ -837,11 +839,11 @@
     <span class="kw">fn </span>init() -&gt; (<span class="kw">crate</span>::trace::Tracer, SpanData) {
         <span class="kw">let </span>provider = <span class="kw">crate</span>::trace::TracerProvider::default();
         <span class="kw">let </span>config = provider.config();
-        <span class="kw">let </span>tracer = provider.tracer(<span class="string">&quot;opentelemetry&quot;</span>);
+        <span class="kw">let </span>tracer = provider.tracer(<span class="string">"opentelemetry"</span>);
         <span class="kw">let </span>data = SpanData {
             parent_span_id: SpanId::from_u64(<span class="number">0</span>),
             span_kind: trace::SpanKind::Internal,
-            name: <span class="string">&quot;opentelemetry&quot;</span>.into(),
+            name: <span class="string">"opentelemetry"</span>.into(),
             start_time: opentelemetry_api::time::now(),
             end_time: opentelemetry_api::time::now(),
             attributes: <span class="kw">crate</span>::trace::EvictedHashMap::new(
@@ -874,7 +876,7 @@
             tracer,
             Default::default(),
         );
-        span.with_data(|_data| <span class="macro">panic!</span>(<span class="string">&quot;there are data&quot;</span>));
+        span.with_data(|_data| <span class="macro">panic!</span>(<span class="string">"there are data"</span>));
     }
 
     <span class="attr">#[test]
@@ -892,15 +894,15 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>add_event() {
         <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
-        <span class="kw">let </span>name = <span class="string">&quot;some_event&quot;</span>;
-        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;v&quot;</span>)];
+        <span class="kw">let </span>name = <span class="string">"some_event"</span>;
+        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[KeyValue::new(<span class="string">"k"</span>, <span class="string">"v"</span>)];
         span.add_event(name, attributes.clone());
         span.with_data(|data| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(event) = data.events.iter().next() {
                 <span class="macro">assert_eq!</span>(event.name, name);
                 <span class="macro">assert_eq!</span>(event.attributes, attributes);
             } <span class="kw">else </span>{
-                <span class="macro">panic!</span>(<span class="string">&quot;no event&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"no event"</span>);
             }
         });
     }
@@ -908,8 +910,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>add_event_with_timestamp() {
         <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
-        <span class="kw">let </span>name = <span class="string">&quot;some_event&quot;</span>;
-        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;v&quot;</span>)];
+        <span class="kw">let </span>name = <span class="string">"some_event"</span>;
+        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[KeyValue::new(<span class="string">"k"</span>, <span class="string">"v"</span>)];
         <span class="kw">let </span>timestamp = opentelemetry_api::time::now();
         span.add_event_with_timestamp(name, timestamp, attributes.clone());
         span.with_data(|data| {
@@ -918,7 +920,7 @@
                 <span class="macro">assert_eq!</span>(event.name, name);
                 <span class="macro">assert_eq!</span>(event.attributes, attributes);
             } <span class="kw">else </span>{
-                <span class="macro">panic!</span>(<span class="string">&quot;no event&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"no event"</span>);
             }
         });
     }
@@ -930,13 +932,13 @@
         span.record_error(<span class="kw-2">&amp;</span>err);
         span.with_data(|data| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(event) = data.events.iter().next() {
-                <span class="macro">assert_eq!</span>(event.name, <span class="string">&quot;exception&quot;</span>);
+                <span class="macro">assert_eq!</span>(event.name, <span class="string">"exception"</span>);
                 <span class="macro">assert_eq!</span>(
                     event.attributes,
-                    <span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;exception.message&quot;</span>, err.to_string())]
+                    <span class="macro">vec!</span>[KeyValue::new(<span class="string">"exception.message"</span>, err.to_string())]
                 );
             } <span class="kw">else </span>{
-                <span class="macro">panic!</span>(<span class="string">&quot;no event&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"no event"</span>);
             }
         });
     }
@@ -944,13 +946,13 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>set_attribute() {
         <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
-        <span class="kw">let </span>attributes = KeyValue::new(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;v&quot;</span>);
+        <span class="kw">let </span>attributes = KeyValue::new(<span class="string">"k"</span>, <span class="string">"v"</span>);
         span.set_attribute(attributes.clone());
         span.with_data(|data| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(val) = data.attributes.get(<span class="kw-2">&amp;</span>attributes.key) {
                 <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>val, attributes.value);
             } <span class="kw">else </span>{
-                <span class="macro">panic!</span>(<span class="string">&quot;no attribute&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"no attribute"</span>);
             }
         });
     }
@@ -958,7 +960,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>set_attributes() {
         <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
-        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>), KeyValue::new(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;v2&quot;</span>)];
+        <span class="kw">let </span>attributes = <span class="macro">vec!</span>[KeyValue::new(<span class="string">"k1"</span>, <span class="string">"v1"</span>), KeyValue::new(<span class="string">"k2"</span>, <span class="string">"v2"</span>)];
         span.set_attributes(attributes.to_vec());
         span.with_data(|data| {
             <span class="kw">for </span>kv <span class="kw">in </span>attributes {
@@ -983,7 +985,7 @@
         }
         {
             <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
-            <span class="kw">let </span>status = Status::error(<span class="string">&quot;error&quot;</span>);
+            <span class="kw">let </span>status = Status::error(<span class="string">"error"</span>);
             span.set_status(status.clone());
             span.with_data(|data| <span class="macro">assert_eq!</span>(data.status, status));
         }
@@ -991,14 +993,14 @@
             <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
             <span class="comment">// ok status should be final
             </span>span.set_status(Status::Ok);
-            span.set_status(Status::error(<span class="string">&quot;error&quot;</span>));
+            span.set_status(Status::error(<span class="string">"error"</span>));
             span.with_data(|data| <span class="macro">assert_eq!</span>(data.status, Status::Ok));
         }
         {
             <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
             <span class="comment">// error status should be able to override unset
             </span>span.set_status(Status::Unset);
-            span.set_status(Status::error(<span class="string">&quot;error&quot;</span>));
+            span.set_status(Status::error(<span class="string">"error"</span>));
             span.with_data(|data| <span class="macro">assert_ne!</span>(data.status, Status::Ok));
         }
     }
@@ -1006,7 +1008,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>update_name() {
         <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
-        <span class="kw">let </span>name = <span class="string">&quot;new_name&quot;</span>;
+        <span class="kw">let </span>name = <span class="string">"new_name"</span>;
         span.update_name(name);
         span.with_data(|data| {
             <span class="macro">assert_eq!</span>(data.name, name);
@@ -1048,17 +1050,17 @@
         <span class="kw">let </span><span class="kw-2">mut </span>span = create_span();
         <span class="kw">let </span>initial = span.with_data(|data| data.clone()).unwrap();
         span.end();
-        span.add_event(<span class="string">&quot;some_event&quot;</span>, <span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;v&quot;</span>)]);
+        span.add_event(<span class="string">"some_event"</span>, <span class="macro">vec!</span>[KeyValue::new(<span class="string">"k"</span>, <span class="string">"v"</span>)]);
         span.add_event_with_timestamp(
-            <span class="string">&quot;some_event&quot;</span>,
+            <span class="string">"some_event"</span>,
             opentelemetry_api::time::now(),
-            <span class="macro">vec!</span>[KeyValue::new(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;v&quot;</span>)],
+            <span class="macro">vec!</span>[KeyValue::new(<span class="string">"k"</span>, <span class="string">"v"</span>)],
         );
         <span class="kw">let </span>err = std::io::Error::from(std::io::ErrorKind::Other);
         span.record_error(<span class="kw-2">&amp;</span>err);
-        span.set_attribute(KeyValue::new(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;v&quot;</span>));
-        span.set_status(Status::error(<span class="string">&quot;ERROR&quot;</span>));
-        span.update_name(<span class="string">&quot;new_name&quot;</span>);
+        span.set_attribute(KeyValue::new(<span class="string">"k"</span>, <span class="string">"v"</span>));
+        span.set_status(Status::error(<span class="string">"ERROR"</span>));
+        span.update_name(<span class="string">"new_name"</span>);
         span.with_data(|data| {
             <span class="macro">assert_eq!</span>(data.events, initial.events);
             <span class="macro">assert_eq!</span>(data.attributes, initial.attributes);
@@ -1086,31 +1088,31 @@
         <span class="kw">let </span>provider_builder =
             <span class="kw">crate</span>::trace::TracerProvider::builder().with_simple_exporter(exporter);
         <span class="kw">let </span>provider = provider_builder.build();
-        <span class="kw">let </span>tracer = provider.tracer(<span class="string">&quot;opentelemetry-test&quot;</span>);
+        <span class="kw">let </span>tracer = provider.tracer(<span class="string">"opentelemetry-test"</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>event1 = Event::with_name(<span class="string">&quot;test event&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>event1 = Event::with_name(<span class="string">"test event"</span>);
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(DEFAULT_MAX_ATTRIBUTES_PER_EVENT * <span class="number">2</span>) {
             event1
                 .attributes
-                .push(KeyValue::new(<span class="macro">format!</span>(<span class="string">&quot;key {}&quot;</span>, i), i.to_string()))
+                .push(KeyValue::new(<span class="macro">format!</span>(<span class="string">"key {}"</span>, i), i.to_string()))
         }
         <span class="kw">let </span>event2 = event1.clone();
 
         <span class="comment">// add event when build
-        </span><span class="kw">let </span>span_builder = tracer.span_builder(<span class="string">&quot;test&quot;</span>).with_events(<span class="macro">vec!</span>[event1]);
+        </span><span class="kw">let </span>span_builder = tracer.span_builder(<span class="string">"test"</span>).with_events(<span class="macro">vec!</span>[event1]);
         <span class="kw">let </span><span class="kw-2">mut </span>span = tracer.build(span_builder);
 
         <span class="comment">// add event after build
-        </span>span.add_event(<span class="string">&quot;another test event&quot;</span>, event2.attributes);
+        </span>span.add_event(<span class="string">"another test event"</span>, event2.attributes);
 
         <span class="kw">let </span>event_queue = span
             .data
             .clone()
-            .expect(<span class="string">&quot;span data should not be empty as we already set it before&quot;</span>)
+            .expect(<span class="string">"span data should not be empty as we already set it before"</span>)
             .events;
         <span class="kw">let </span>event_vec: Vec&lt;<span class="kw">_</span>&gt; = event_queue.iter().take(<span class="number">2</span>).collect();
-        <span class="kw">let </span>processed_event_1 = event_vec.get(<span class="number">0</span>).expect(<span class="string">&quot;should have at least two events&quot;</span>);
-        <span class="kw">let </span>processed_event_2 = event_vec.get(<span class="number">1</span>).expect(<span class="string">&quot;should have at least two events&quot;</span>);
+        <span class="kw">let </span>processed_event_1 = event_vec.get(<span class="number">0</span>).expect(<span class="string">"should have at least two events"</span>);
+        <span class="kw">let </span>processed_event_2 = event_vec.get(<span class="number">1</span>).expect(<span class="string">"should have at least two events"</span>);
         <span class="macro">assert_eq!</span>(processed_event_1.attributes.len(), <span class="number">128</span>);
         <span class="macro">assert_eq!</span>(processed_event_2.attributes.len(), <span class="number">128</span>);
     }
@@ -1121,7 +1123,7 @@
         <span class="kw">let </span>provider_builder =
             <span class="kw">crate</span>::trace::TracerProvider::builder().with_simple_exporter(exporter);
         <span class="kw">let </span>provider = provider_builder.build();
-        <span class="kw">let </span>tracer = provider.tracer(<span class="string">&quot;opentelemetry-test&quot;</span>);
+        <span class="kw">let </span>tracer = provider.tracer(<span class="string">"opentelemetry-test"</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>link = Link::new(
             SpanContext::new(
@@ -1135,18 +1137,18 @@
         );
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(DEFAULT_MAX_ATTRIBUTES_PER_LINK * <span class="number">2</span>) {
             link.attributes
-                .push(KeyValue::new(<span class="macro">format!</span>(<span class="string">&quot;key {}&quot;</span>, i), i.to_string()));
+                .push(KeyValue::new(<span class="macro">format!</span>(<span class="string">"key {}"</span>, i), i.to_string()));
         }
 
-        <span class="kw">let </span>span_builder = tracer.span_builder(<span class="string">&quot;test&quot;</span>).with_links(<span class="macro">vec!</span>[link]);
+        <span class="kw">let </span>span_builder = tracer.span_builder(<span class="string">"test"</span>).with_links(<span class="macro">vec!</span>[link]);
         <span class="kw">let </span>span = tracer.build(span_builder);
         <span class="kw">let </span>link_queue = span
             .data
             .clone()
-            .expect(<span class="string">&quot;span data should not be empty as we already set it before&quot;</span>)
+            .expect(<span class="string">"span data should not be empty as we already set it before"</span>)
             .links;
         <span class="kw">let </span>link_vec: Vec&lt;<span class="kw">_</span>&gt; = link_queue.iter().collect();
-        <span class="kw">let </span>processed_link = link_vec.get(<span class="number">0</span>).expect(<span class="string">&quot;should have at least one link&quot;</span>);
+        <span class="kw">let </span>processed_link = link_vec.get(<span class="number">0</span>).expect(<span class="string">"should have at least one link"</span>);
         <span class="macro">assert_eq!</span>(processed_link.attributes.len(), <span class="number">128</span>);
     }
 
@@ -1155,17 +1157,17 @@
         <span class="kw">let </span>provider = <span class="kw">crate</span>::trace::TracerProvider::builder()
             .with_simple_exporter(NoopSpanExporter::new())
             .build();
-        <span class="kw">let </span>tracer = provider.tracer(<span class="string">&quot;test&quot;</span>);
+        <span class="kw">let </span>tracer = provider.tracer(<span class="string">"test"</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>span = tracer.start(<span class="string">&quot;test_span&quot;</span>);
-        span.add_event(<span class="string">&quot;test_event&quot;</span>, <span class="macro">vec!</span>[]);
-        span.set_status(Status::error(<span class="string">&quot;&quot;</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>span = tracer.start(<span class="string">"test_span"</span>);
+        span.add_event(<span class="string">"test_event"</span>, <span class="macro">vec!</span>[]);
+        span.set_status(Status::error(<span class="string">""</span>));
 
         <span class="kw">let </span>exported_data = span.exported_data();
         <span class="macro">assert!</span>(exported_data.is_some());
 
         drop(provider);
-        <span class="kw">let </span>dropped_span = tracer.start(<span class="string">&quot;span_with_dropped_provider&quot;</span>);
+        <span class="kw">let </span>dropped_span = tracer.start(<span class="string">"span_with_dropped_provider"</span>);
         <span class="comment">// return none if the provider has already been dropped
         </span><span class="macro">assert!</span>(dropped_span.exported_data().is_none());
     }

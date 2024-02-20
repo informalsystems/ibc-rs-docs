@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-0.31.1/src/merkle_tree/block.rs`."><title>block.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bitcoin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../bitcoin/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-0.31.1/src/merkle_tree/block.rs`."><title>block.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bitcoin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../bitcoin/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -841,12 +843,12 @@
 //! use bitcoin::{Block, MerkleBlock};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
-//! // $ TXID=&quot;5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2&quot;
-//! // $ bitcoin-cli gettxoutproof [\&quot;$TXID\&quot;]
-//! let mb_bytes = Vec::from_hex(&quot;01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
+//! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
+//! // $ bitcoin-cli gettxoutproof [\"$TXID\"]
+//! let mb_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
 //!     0000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33a5914ce6ed5b\
 //!     1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
-//!     2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105&quot;).unwrap();
+//!     2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
 //! let mb: MerkleBlock = bitcoin::consensus::deserialize(&amp;mb_bytes).unwrap();
 //!
 //! // Authenticate and extract matched transaction ids
@@ -855,7 +857,7 @@
 //! assert!(mb.extract_matches(&amp;mut matches, &amp;mut index).is_ok());
 //! assert_eq!(1, matches.len());
 //! assert_eq!(
-//!     &quot;5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2&quot;.parse::&lt;Txid&gt;().unwrap(),
+//!     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::&lt;Txid&gt;().unwrap(),
 //!     matches[0]
 //! );
 //! assert_eq!(1, index.len());
@@ -901,7 +903,7 @@
     /// use bitcoin::{Block, MerkleBlock};
     ///
     /// // Block 80000
-    /// let block_bytes = Vec::from_hex(&quot;01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
+    /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
     ///     7b9137190000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33\
     ///     a5914ce6ed5b1b01e32f5702010000000100000000000000000000000000000000000000000000000000\
     ///     00000000000000ffffffff0704e6ed5b1b014effffffff0100f2052a01000000434104b68a50eaa0287e\
@@ -910,11 +912,11 @@
     ///     c12d9f7b91a5911c9030a439eed8f5000000004948304502206e21798a42fae0e854281abd38bacd1aee\
     ///     d3ee3738d9e1446618c4571d1090db022100e2ac980643b0b82c0e88ffdfec6b64e3e6ba35e7ba5fdd7d\
     ///     5d6cc8d25c6b241501ffffffff0100f2052a010000001976a914404371705fa9bd789a2fcd52d2c580b6\
-    ///     5d35549d88ac00000000&quot;).unwrap();
+    ///     5d35549d88ac00000000").unwrap();
     /// let block: Block = bitcoin::consensus::deserialize(&amp;block_bytes).unwrap();
     ///
     /// // Create a merkle block containing a single transaction
-    /// let txid = &quot;5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2&quot;.parse::&lt;Txid&gt;().unwrap();
+    /// let txid = "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::&lt;Txid&gt;().unwrap();
     /// let match_txids: Vec&lt;Txid&gt; = vec![txid].into_iter().collect();
     /// let mb = MerkleBlock::from_block_with_predicate(&amp;block, |t| match_txids.contains(t));
     ///
@@ -932,7 +934,7 @@
         <span class="self">Self</span>::from_header_txids_with_predicate(<span class="kw-2">&amp;</span>block.header, <span class="kw-2">&amp;</span>block_txids, match_txids)
     }
 
-    <span class="doccomment">/// Create a MerkleBlock from the block&#39;s header and txids, that contain proofs for specific txids.
+    <span class="doccomment">/// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
     /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
@@ -950,7 +952,7 @@
         MerkleBlock { header: <span class="kw-2">*</span>header, txn: pmt }
     }
 
-    <span class="doccomment">/// Extract the matching txid&#39;s represented by this partial merkle tree
+    <span class="doccomment">/// Extract the matching txid's represented by this partial merkle tree
     /// and their respective indices within the partial tree.
     /// returns Ok(()) on success, or error in case of failure
     </span><span class="kw">pub fn </span>extract_matches(
@@ -986,8 +988,8 @@
 
 <span class="doccomment">/// Data structure that represents a partial merkle tree.
 ///
-/// It represents a subset of the txid&#39;s of a known block, in a way that
-/// allows recovery of the list of txid&#39;s and the merkle root, in an
+/// It represents a subset of the txid's of a known block, in a way that
+/// allows recovery of the list of txid's and the merkle root, in an
 /// authenticated way.
 ///
 /// The encoding works as follows: we traverse the tree in depth-first order,
@@ -1052,8 +1054,8 @@
     ///
     /// // Block 80000
     /// let txids: Vec&lt;Txid&gt; = [
-    ///     &quot;c06fbab289f723c6261d3030ddb6be121f7d2508d77862bb1e484f5cd7f92b25&quot;,
-    ///     &quot;5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2&quot;,
+    ///     "c06fbab289f723c6261d3030ddb6be121f7d2508d77862bb1e484f5cd7f92b25",
+    ///     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2",
     /// ]
     /// .iter()
     /// .map(|hex| hex.parse::&lt;Txid&gt;().unwrap())
@@ -1081,7 +1083,7 @@
         pmt
     }
 
-    <span class="doccomment">/// Extract the matching txid&#39;s represented by this partial merkle tree
+    <span class="doccomment">/// Extract the matching txid's represented by this partial merkle tree
     /// and their respective indices within the partial tree.
     /// returns the merkle root, or error in case of failure
     </span><span class="kw">pub fn </span>extract_matches(
@@ -1143,7 +1145,7 @@
         (<span class="self">self</span>.num_transactions + (<span class="number">1 </span>&lt;&lt; height) - <span class="number">1</span>) &gt;&gt; height
     }
 
-    <span class="doccomment">/// Calculate the hash of a node in the merkle tree (at leaf level: the txid&#39;s themselves)
+    <span class="doccomment">/// Calculate the hash of a node in the merkle tree (at leaf level: the txid's themselves)
     </span><span class="kw">fn </span>calc_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, height: u32, pos: u32, txids: <span class="kw-2">&amp;</span>[Txid]) -&gt; TxMerkleNode {
         <span class="kw">if </span>height == <span class="number">0 </span>{
             <span class="comment">// Hash at height 0 is the txid itself
@@ -1179,7 +1181,7 @@
             </span><span class="kw">let </span>hash = <span class="self">self</span>.calc_hash(height, pos, txids);
             <span class="self">self</span>.hashes.push(hash);
         } <span class="kw">else </span>{
-            <span class="comment">// Otherwise, don&#39;t store any hash, but descend into the subtrees
+            <span class="comment">// Otherwise, don't store any hash, but descend into the subtrees
             </span><span class="self">self</span>.traverse_and_build(height - <span class="number">1</span>, pos * <span class="number">2</span>, txids, matches);
             <span class="kw">if </span>pos * <span class="number">2 </span>+ <span class="number">1 </span>&lt; <span class="self">self</span>.calc_tree_width(height - <span class="number">1</span>) {
                 <span class="self">self</span>.traverse_and_build(height - <span class="number">1</span>, pos * <span class="number">2 </span>+ <span class="number">1</span>, txids, matches);
@@ -1252,8 +1254,8 @@
     <span class="doccomment">/// Helper method to produce SHA256D(left + right)
     </span><span class="kw">fn </span>parent_hash(left: TxMerkleNode, right: TxMerkleNode) -&gt; TxMerkleNode {
         <span class="kw">let </span><span class="kw-2">mut </span>encoder = TxMerkleNode::engine();
-        left.consensus_encode(<span class="kw-2">&amp;mut </span>encoder).expect(<span class="string">&quot;engines don&#39;t error&quot;</span>);
-        right.consensus_encode(<span class="kw-2">&amp;mut </span>encoder).expect(<span class="string">&quot;engines don&#39;t error&quot;</span>);
+        left.consensus_encode(<span class="kw-2">&amp;mut </span>encoder).expect(<span class="string">"engines don't error"</span>);
+        right.consensus_encode(<span class="kw-2">&amp;mut </span>encoder).expect(<span class="string">"engines don't error"</span>);
         TxMerkleNode::from_engine(encoder)
     }
 }
@@ -1300,7 +1302,7 @@
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 </span><span class="kw">pub enum </span>MerkleBlockError {
-    <span class="doccomment">/// Merkle root in the header doesn&#39;t match to the root calculated from partial merkle tree.
+    <span class="doccomment">/// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
     </span>MerkleRootMismatch,
     <span class="doccomment">/// Partial merkle tree contains no transactions.
     </span>NoTransactions,
@@ -1328,23 +1330,23 @@
         <span class="kw">use </span>MerkleBlockError::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            MerkleRootMismatch =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;merkle header root doesn&#39;t match to the root calculated from the partial merkle tree&quot;</span>),
-            NoTransactions =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;partial merkle tree contains no transactions&quot;</span>),
-            TooManyTransactions =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;too many transactions&quot;</span>),
-            TooManyHashes =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;proof contains more hashes than transactions&quot;</span>),
-            NotEnoughBits =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;proof contains less bits than hashes&quot;</span>),
-            NotAllBitsConsumed =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;not all bit were consumed&quot;</span>),
-            NotAllHashesConsumed =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;not all hashes were consumed&quot;</span>),
-            BitsArrayOverflow =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;overflowed the bits array&quot;</span>),
-            HashesArrayOverflow =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;overflowed the hashes array&quot;</span>),
-            IdenticalHashesFound =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;found identical transaction hashes&quot;</span>),
+            MerkleRootMismatch =&gt; <span class="macro">write!</span>(f, <span class="string">"merkle header root doesn't match to the root calculated from the partial merkle tree"</span>),
+            NoTransactions =&gt; <span class="macro">write!</span>(f, <span class="string">"partial merkle tree contains no transactions"</span>),
+            TooManyTransactions =&gt; <span class="macro">write!</span>(f, <span class="string">"too many transactions"</span>),
+            TooManyHashes =&gt; <span class="macro">write!</span>(f, <span class="string">"proof contains more hashes than transactions"</span>),
+            NotEnoughBits =&gt; <span class="macro">write!</span>(f, <span class="string">"proof contains less bits than hashes"</span>),
+            NotAllBitsConsumed =&gt; <span class="macro">write!</span>(f, <span class="string">"not all bit were consumed"</span>),
+            NotAllHashesConsumed =&gt; <span class="macro">write!</span>(f, <span class="string">"not all hashes were consumed"</span>),
+            BitsArrayOverflow =&gt; <span class="macro">write!</span>(f, <span class="string">"overflowed the bits array"</span>),
+            HashesArrayOverflow =&gt; <span class="macro">write!</span>(f, <span class="string">"overflowed the hashes array"</span>),
+            IdenticalHashesFound =&gt; <span class="macro">write!</span>(f, <span class="string">"found identical transaction hashes"</span>),
         }
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>MerkleBlockError {
-    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">'static</span>)&gt; {
         <span class="kw">use </span>MerkleBlockError::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
@@ -1357,19 +1359,19 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">use </span>hashes::Hash;
     <span class="kw">use </span>hex::test_hex_unwrap <span class="kw">as </span>hex;
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">use </span>secp256k1::rand::prelude::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::consensus::encode::{deserialize, serialize};
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">use </span><span class="kw">crate</span>::hash_types::TxMerkleNode;
     <span class="kw">use crate</span>::{Block, Txid};
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="macro">macro_rules! </span>pmt_tests {
         ($(<span class="macro-nonterminal">$name</span>:ident),* $(,)<span class="question-mark">?</span>) =&gt; {
             $(
@@ -1381,7 +1383,7 @@
         }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="macro">pmt_tests!</span>(
         pmt_test_1,
         pmt_test_4,
@@ -1398,10 +1400,10 @@
     );
 
     <span class="doccomment">/// Parses the transaction count out of `name` with form: `pmt_test_$num`.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>pmt_test_from_name(name: <span class="kw-2">&amp;</span>str) { pmt_test(name[<span class="number">9</span>..].parse().unwrap()) }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>pmt_test(tx_count: usize) {
         <span class="kw">use </span>core::cmp::min;
 
@@ -1410,13 +1412,13 @@
         <span class="kw">let </span><span class="kw-2">mut </span>rng = thread_rng();
         <span class="comment">// Create some fake tx ids
         </span><span class="kw">let </span>tx_ids = (<span class="number">1</span>..=tx_count)
-            .map(|i| <span class="macro">format!</span>(<span class="string">&quot;{:064x}&quot;</span>, i).parse::&lt;Txid&gt;().unwrap())
+            .map(|i| <span class="macro">format!</span>(<span class="string">"{:064x}"</span>, i).parse::&lt;Txid&gt;().unwrap())
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="comment">// Calculate the merkle root and height
         </span><span class="kw">let </span>hashes = tx_ids.iter().map(|t| t.to_raw_hash());
         <span class="kw">let </span>merkle_root_1: TxMerkleNode =
-            merkle_tree::calculate_root(hashes).expect(<span class="string">&quot;hashes is not empty&quot;</span>).into();
+            merkle_tree::calculate_root(hashes).expect(<span class="string">"hashes is not empty"</span>).into();
         <span class="kw">let </span><span class="kw-2">mut </span>height = <span class="number">1</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>ntx = tx_count;
         <span class="kw">while </span>ntx &gt; <span class="number">1 </span>{
@@ -1446,20 +1448,20 @@
             </span><span class="kw">let </span>pmt1 = PartialMerkleTree::from_txids(<span class="kw-2">&amp;</span>tx_ids, <span class="kw-2">&amp;</span>matches);
             <span class="kw">let </span>serialized = serialize(<span class="kw-2">&amp;</span>pmt1);
 
-            <span class="comment">// Verify PartialMerkleTree&#39;s size guarantees
+            <span class="comment">// Verify PartialMerkleTree's size guarantees
             </span><span class="kw">let </span>n = min(tx_count, <span class="number">1 </span>+ match_txid1.len() * height);
             <span class="macro">assert!</span>(serialized.len() &lt;= <span class="number">10 </span>+ (<span class="number">258 </span>* n + <span class="number">7</span>) / <span class="number">8</span>);
 
             <span class="comment">// Deserialize into a tester copy
             </span><span class="kw">let </span>pmt2: PartialMerkleTree =
-                deserialize(<span class="kw-2">&amp;</span>serialized).expect(<span class="string">&quot;Could not deserialize own data&quot;</span>);
+                deserialize(<span class="kw-2">&amp;</span>serialized).expect(<span class="string">"Could not deserialize own data"</span>);
 
             <span class="comment">// Extract merkle root and matched txids from copy
             </span><span class="kw">let </span><span class="kw-2">mut </span>match_txid2: Vec&lt;Txid&gt; = <span class="macro">vec!</span>[];
             <span class="kw">let </span><span class="kw-2">mut </span>indexes = <span class="macro">vec!</span>[];
             <span class="kw">let </span>merkle_root_2 = pmt2
                 .extract_matches(<span class="kw-2">&amp;mut </span>match_txid2, <span class="kw-2">&amp;mut </span>indexes)
-                .expect(<span class="string">&quot;Could not extract matches&quot;</span>);
+                .expect(<span class="string">"Could not extract matches"</span>);
 
             <span class="comment">// Check that it has the same merkle root as the original, and a valid one
             </span><span class="macro">assert_eq!</span>(merkle_root_1, merkle_root_2);
@@ -1484,7 +1486,7 @@
         <span class="comment">// Create some fake tx ids with the last 2 hashes repeating
         </span><span class="kw">let </span>txids: Vec&lt;Txid&gt; = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">9</span>, <span class="number">10</span>]
             .iter()
-            .map(|i| <span class="macro">format!</span>(<span class="string">&quot;{:064x}&quot;</span>, i).parse::&lt;Txid&gt;().unwrap())
+            .map(|i| <span class="macro">format!</span>(<span class="string">"{:064x}"</span>, i).parse::&lt;Txid&gt;().unwrap())
             .collect();
 
         <span class="kw">let </span>matches =
@@ -1499,8 +1501,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>merkleblock_serialization() {
         <span class="comment">// Got it by running the rpc call
-        // `gettxoutproof &#39;[&quot;220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a&quot;]&#39;`
-        </span><span class="kw">let </span>mb_hex = <span class="macro">include_str!</span>(<span class="string">&quot;../../tests/data/merkle_block.hex&quot;</span>);
+        // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
+        </span><span class="kw">let </span>mb_hex = <span class="macro">include_str!</span>(<span class="string">"../../tests/data/merkle_block.hex"</span>);
 
         <span class="kw">let </span>mb: MerkleBlock = deserialize(<span class="kw-2">&amp;</span><span class="macro">hex!</span>(mb_hex)).unwrap();
         <span class="macro">assert_eq!</span>(get_block_13b8a().block_hash(), mb.header.block_hash());
@@ -1519,8 +1521,8 @@
         <span class="kw">let </span>block = get_block_13b8a();
 
         <span class="kw">let </span>txids: Vec&lt;Txid&gt; = [
-            <span class="string">&quot;74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20&quot;</span>,
-            <span class="string">&quot;f9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07&quot;</span>,
+            <span class="string">"74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20"</span>,
+            <span class="string">"f9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07"</span>,
         ]
         .iter()
         .map(|hex| hex.parse::&lt;Txid&gt;().unwrap())
@@ -1555,7 +1557,7 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>merkleblock_construct_from_txids_not_found() {
         <span class="kw">let </span>block = get_block_13b8a();
-        <span class="kw">let </span>txids: Vec&lt;Txid&gt; = [<span class="string">&quot;c0ffee00003bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20&quot;</span>]
+        <span class="kw">let </span>txids: Vec&lt;Txid&gt; = [<span class="string">"c0ffee00003bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20"</span>]
             .iter()
             .map(|hex| hex.parse::&lt;Txid&gt;().unwrap())
             .collect();
@@ -1575,7 +1577,7 @@
         <span class="macro">assert_eq!</span>(index.len(), <span class="number">0</span>);
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">impl </span>PartialMerkleTree {
         <span class="doccomment">/// Flip one bit in one of the hashes - this should break the authentication
         </span><span class="kw">fn </span>damage(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rng: <span class="kw-2">&amp;mut </span>ThreadRng) {
@@ -1592,7 +1594,7 @@
     /// with 9 txs.
     </span><span class="kw">fn </span>get_block_13b8a() -&gt; Block {
         <span class="kw">use </span>hex::FromHex;
-        <span class="kw">let </span>block_hex = <span class="macro">include_str!</span>(<span class="string">&quot;../../tests/data/block_13b8a.hex&quot;</span>);
+        <span class="kw">let </span>block_hex = <span class="macro">include_str!</span>(<span class="string">"../../tests/data/block_13b8a.hex"</span>);
         deserialize(<span class="kw-2">&amp;</span>Vec::from_hex(block_hex).unwrap()).unwrap()
     }
 

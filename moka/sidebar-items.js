@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["PredicateError"],"mod":["notification","ops","sync"],"struct":["Entry","Policy"],"trait":["Expiry"]};
+window.SIDEBAR_ITEMS = {"enum":["PredicateError"],"mod":["notification","ops","policy","sync"],"struct":["Entry"]};

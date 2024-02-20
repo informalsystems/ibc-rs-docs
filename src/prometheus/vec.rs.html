@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/prometheus-0.13.3/src/vec.rs`."><title>vec.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prometheus" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../prometheus/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/prometheus-0.13.3/src/vec.rs`."><title>vec.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prometheus" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../prometheus/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -509,7 +511,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>children = <span class="self">self</span>.children.write();
         <span class="kw">if </span>children.remove(<span class="kw-2">&amp;</span>h).is_none() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(<span class="string">&quot;missing label values {:?}&quot;</span>, vals)));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(<span class="string">"missing label values {:?}"</span>, vals)));
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -520,7 +522,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>children = <span class="self">self</span>.children.write();
         <span class="kw">if </span>children.remove(<span class="kw-2">&amp;</span>h).is_none() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(<span class="string">&quot;missing labels {:?}&quot;</span>, labels)));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(<span class="string">"missing labels {:?}"</span>, labels)));
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -561,7 +563,7 @@
                 <span class="prelude-val">Some</span>(val) =&gt; h.write(val.as_bytes()),
                 <span class="prelude-val">None </span>=&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-                        <span class="string">&quot;label name {} missing in label map&quot;</span>,
+                        <span class="string">"label name {} missing in label map"</span>,
                         name
                     )));
                 }
@@ -571,14 +573,14 @@
         <span class="prelude-val">Ok</span>(h.finish())
     }
 
-    <span class="kw">fn </span>get_label_values&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, labels: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>HashMap&lt;<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;&gt; {
+    <span class="kw">fn </span>get_label_values&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, labels: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>HashMap&lt;<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>values = Vec::new();
         <span class="kw">for </span>name <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.desc.variable_labels {
             <span class="kw">match </span>labels.get(<span class="kw-2">&amp;</span>name.as_ref()) {
                 <span class="prelude-val">Some</span>(val) =&gt; values.push(<span class="kw-2">*</span>val),
                 <span class="prelude-val">None </span>=&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-                        <span class="string">&quot;label name {} missing in label map&quot;</span>,
+                        <span class="string">"label name {} missing in label map"</span>,
                         name
                     )));
                 }
@@ -611,8 +613,8 @@
 }
 
 <span class="kw">impl</span>&lt;T: MetricVecBuilder&gt; std::fmt::Debug <span class="kw">for </span>MetricVec&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;MetricVec&quot;</span>)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"MetricVec"</span>)
     }
 }
 
@@ -683,10 +685,10 @@
     /// ```
     /// use prometheus::{CounterVec, Opts};
     /// let vec = CounterVec::new(
-    ///     Opts::new(&quot;requests_total&quot;, &quot;Number of requests.&quot;),
-    ///     &amp;[&quot;code&quot;, &quot;http_method&quot;]
+    ///     Opts::new("requests_total", "Number of requests."),
+    ///     &amp;["code", "http_method"]
     /// ).unwrap();
-    /// vec.with_label_values(&amp;[&quot;404&quot;, &quot;POST&quot;]).inc()
+    /// vec.with_label_values(&amp;["404", "POST"]).inc()
     /// ```
     </span><span class="kw">pub fn </span>with_label_values(<span class="kw-2">&amp;</span><span class="self">self</span>, vals: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; T::M {
         <span class="self">self</span>.get_metric_with_label_values(vals).unwrap()
@@ -694,7 +696,7 @@
 
     <span class="doccomment">/// `with` works as `get_metric_with`, but panics if an error occurs. The method allows
     /// neat syntax like:
-    ///     httpReqs.with(Labels{&quot;status&quot;:&quot;404&quot;, &quot;method&quot;:&quot;POST&quot;}).inc()
+    ///     httpReqs.with(Labels{"status":"404", "method":"POST"}).inc()
     </span><span class="kw">pub fn </span>with(<span class="kw-2">&amp;</span><span class="self">self</span>, labels: <span class="kw-2">&amp;</span>HashMap&lt;<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str&gt;) -&gt; T::M {
         <span class="self">self</span>.get_metric_with(labels).unwrap()
     }
@@ -754,14 +756,14 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_counter_vec_with_labels() {
         <span class="kw">let </span>vec = CounterVec::new(
-            Opts::new(<span class="string">&quot;test_couter_vec&quot;</span>, <span class="string">&quot;test counter vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>],
+            Opts::new(<span class="string">"test_couter_vec"</span>, <span class="string">"test counter vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"l1"</span>, <span class="string">"l2"</span>],
         )
         .unwrap();
 
         <span class="kw">let </span><span class="kw-2">mut </span>labels = HashMap::new();
-        labels.insert(<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;v1&quot;</span>);
-        labels.insert(<span class="string">&quot;l2&quot;</span>, <span class="string">&quot;v2&quot;</span>);
+        labels.insert(<span class="string">"l1"</span>, <span class="string">"v1"</span>);
+        labels.insert(<span class="string">"l2"</span>, <span class="string">"v2"</span>);
         <span class="macro">assert!</span>(vec.remove(<span class="kw-2">&amp;</span>labels).is_err());
 
         vec.with(<span class="kw-2">&amp;</span>labels).inc();
@@ -769,8 +771,8 @@
         <span class="macro">assert!</span>(vec.remove(<span class="kw-2">&amp;</span>labels).is_err());
 
         <span class="kw">let </span><span class="kw-2">mut </span>labels2 = HashMap::new();
-        labels2.insert(<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;v2&quot;</span>);
-        labels2.insert(<span class="string">&quot;l2&quot;</span>, <span class="string">&quot;v1&quot;</span>);
+        labels2.insert(<span class="string">"l1"</span>, <span class="string">"v2"</span>);
+        labels2.insert(<span class="string">"l2"</span>, <span class="string">"v1"</span>);
 
         vec.with(<span class="kw-2">&amp;</span>labels).inc();
         <span class="macro">assert!</span>(vec.remove(<span class="kw-2">&amp;</span>labels2).is_err());
@@ -778,38 +780,38 @@
         vec.with(<span class="kw-2">&amp;</span>labels).inc();
 
         <span class="kw">let </span><span class="kw-2">mut </span>labels3 = HashMap::new();
-        labels3.insert(<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;v1&quot;</span>);
+        labels3.insert(<span class="string">"l1"</span>, <span class="string">"v1"</span>);
         <span class="macro">assert!</span>(vec.remove(<span class="kw-2">&amp;</span>labels3).is_err());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_counter_vec_with_label_values() {
         <span class="kw">let </span>vec = CounterVec::new(
-            Opts::new(<span class="string">&quot;test_vec&quot;</span>, <span class="string">&quot;test counter vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>],
+            Opts::new(<span class="string">"test_vec"</span>, <span class="string">"test counter vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"l1"</span>, <span class="string">"l2"</span>],
         )
         .unwrap();
 
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).is_err());
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).inc();
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).is_ok());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).is_err());
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).inc();
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).is_ok());
 
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).inc();
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>]).is_err());
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v3&quot;</span>]).is_err());
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).inc();
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>]).is_err());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v3"</span>]).is_err());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_gauge_vec_with_labels() {
         <span class="kw">let </span>vec = GaugeVec::new(
-            Opts::new(<span class="string">&quot;test_gauge_vec&quot;</span>, <span class="string">&quot;test gauge vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>],
+            Opts::new(<span class="string">"test_gauge_vec"</span>, <span class="string">"test gauge vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"l1"</span>, <span class="string">"l2"</span>],
         )
         .unwrap();
 
         <span class="kw">let </span><span class="kw-2">mut </span>labels = HashMap::new();
-        labels.insert(<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;v1&quot;</span>);
-        labels.insert(<span class="string">&quot;l2&quot;</span>, <span class="string">&quot;v2&quot;</span>);
+        labels.insert(<span class="string">"l1"</span>, <span class="string">"v1"</span>);
+        labels.insert(<span class="string">"l2"</span>, <span class="string">"v2"</span>);
         <span class="macro">assert!</span>(vec.remove(<span class="kw-2">&amp;</span>labels).is_err());
 
         vec.with(<span class="kw-2">&amp;</span>labels).inc();
@@ -825,38 +827,38 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_gauge_vec_with_label_values() {
         <span class="kw">let </span>vec = GaugeVec::new(
-            Opts::new(<span class="string">&quot;test_gauge_vec&quot;</span>, <span class="string">&quot;test gauge vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>],
+            Opts::new(<span class="string">"test_gauge_vec"</span>, <span class="string">"test gauge vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"l1"</span>, <span class="string">"l2"</span>],
         )
         .unwrap();
 
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).is_err());
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).inc();
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).is_ok());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).is_err());
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).inc();
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).is_ok());
 
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).inc();
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).dec();
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).add(<span class="number">42.0</span>);
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).sub(<span class="number">42.0</span>);
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).set(<span class="number">42.0</span>);
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).inc();
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).dec();
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).add(<span class="number">42.0</span>);
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).sub(<span class="number">42.0</span>);
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).set(<span class="number">42.0</span>);
 
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>]).is_err());
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v3&quot;</span>]).is_err());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>]).is_err());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v3"</span>]).is_err());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_vec_get_metric_with() {
         <span class="kw">let </span>vec = CounterVec::new(
-            Opts::new(<span class="string">&quot;test_vec&quot;</span>, <span class="string">&quot;test counter vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="string">&quot;a&quot;</span>],
+            Opts::new(<span class="string">"test_vec"</span>, <span class="string">"test counter vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"b"</span>, <span class="string">"c"</span>, <span class="string">"a"</span>],
         )
         .unwrap();
 
-        <span class="comment">// create a new metric that labels are {b&quot; =&gt; &quot;c&quot;, &quot;c&quot; =&gt; &quot;a&quot; &quot;a&quot; =&gt; &quot;b&quot;}.
+        <span class="comment">// create a new metric that labels are {b" =&gt; "c", "c" =&gt; "a" "a" =&gt; "b"}.
         </span><span class="kw">let </span><span class="kw-2">mut </span>labels = HashMap::new();
-        labels.insert(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>);
-        labels.insert(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>);
-        labels.insert(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;a&quot;</span>);
+        labels.insert(<span class="string">"a"</span>, <span class="string">"b"</span>);
+        labels.insert(<span class="string">"b"</span>, <span class="string">"c"</span>);
+        labels.insert(<span class="string">"c"</span>, <span class="string">"a"</span>);
         <span class="kw">let </span>c = vec.get_metric_with(<span class="kw-2">&amp;</span>labels).unwrap();
         <span class="kw">let </span>m = c.metric();
         <span class="kw">let </span>label_pairs = m.get_label();

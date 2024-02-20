@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/connection.rs`."><title>connection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../ibc_relayer/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/connection.rs`."><title>connection.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../ibc_relayer/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1468,7 +1470,7 @@
 }
 
 <span class="attr">#[derive(Clone, Debug, Serialize)]
-#[serde(bound(serialize = <span class="string">&quot;(): Serialize&quot;</span>))]
+#[serde(bound(serialize = <span class="string">"(): Serialize"</span>))]
 </span><span class="kw">pub struct </span>ConnectionSide&lt;Chain: ChainHandle&gt; {
     <span class="attr">#[serde(skip)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) chain: Chain,
@@ -1477,16 +1479,16 @@
 }
 
 <span class="kw">impl</span>&lt;Chain: ChainHandle&gt; Display <span class="kw">for </span>ConnectionSide&lt;Chain&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.connection_id {
             <span class="prelude-val">Some</span>(connection_id) =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;ConnectionSide {{ chain: {}, client_id: {}, connection_id: {} }}&quot;</span>,
+                <span class="string">"ConnectionSide {{ chain: {}, client_id: {}, connection_id: {} }}"</span>,
                 <span class="self">self</span>.chain, <span class="self">self</span>.client_id, connection_id
             ),
             <span class="prelude-val">None </span>=&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;ConnectionSide {{ chain: {}, client_id: {}, connection_id: None }}&quot;</span>,
+                <span class="string">"ConnectionSide {{ chain: {}, client_id: {}, connection_id: None }}"</span>,
                 <span class="self">self</span>.chain, <span class="self">self</span>.client_id
             ),
         }
@@ -1519,7 +1521,7 @@
 }
 
 <span class="attr">#[derive(Clone, Debug, Serialize)]
-#[serde(bound(serialize = <span class="string">&quot;(): Serialize&quot;</span>))]
+#[serde(bound(serialize = <span class="string">"(): Serialize"</span>))]
 </span><span class="kw">pub struct </span>Connection&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt; {
     <span class="kw">pub </span>delay_period: Duration,
     <span class="kw">pub </span>a_side: ConnectionSide&lt;ChainA&gt;,
@@ -1527,10 +1529,10 @@
 }
 
 <span class="kw">impl</span>&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt; Display <span class="kw">for </span>Connection&lt;ChainA, ChainB&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Connection {{ delay_period: {}, a_side: {}, b_side: {} }}&quot;</span>,
+            <span class="string">"Connection {{ delay_period: {}, a_side: {}, b_side: {} }}"</span>,
             PrettyDuration(<span class="kw-2">&amp;</span><span class="self">self</span>.delay_period),
             <span class="self">self</span>.a_side,
             <span class="self">self</span>.b_side
@@ -1605,7 +1607,7 @@
         })
     }
 
-    <span class="doccomment">/// Recreates a &#39;Connection&#39; object from the worker&#39;s object built from chain state scanning.
+    <span class="doccomment">/// Recreates a 'Connection' object from the worker's object built from chain state scanning.
     /// The connection must exist on chain.
     </span><span class="kw">pub fn </span>restore_from_state(
         chain: ChainA,
@@ -1860,9 +1862,9 @@
     /// handshake steps.
     /// This is required because of crossing handshake messages in the presence of multiple relayers.
     ///
-    /// Chain a is queried with the relayer&#39;s `a_side.connection_id` (`relayer_a_id`) with result
+    /// Chain a is queried with the relayer's `a_side.connection_id` (`relayer_a_id`) with result
     /// `a_connection`. If the counterparty id of this connection, `a_counterparty_id`,
-    /// is some id then it must match the relayer&#39;s `b_side.connection_id` (`relayer_b_id`).
+    /// is some id then it must match the relayer's `b_side.connection_id` (`relayer_b_id`).
     /// A similar check is done for the `b_side` of the connection.
     ///
     ///  a                                 relayer                                    b
@@ -1908,9 +1910,9 @@
 
         <span class="kw">if </span>a_counterparty_id.is_some() &amp;&amp; a_counterparty_id != relayer_b_id.as_ref() {
             <span class="macro">warn!</span>(
-                <span class="string">&quot;updating the expected {} of side_b({}) since it is different than the \
+                <span class="string">"updating the expected {} of side_b({}) since it is different than the \
                 counterparty of {}: {}, on {}. This is typically caused by crossing handshake \
-                messages in the presence of multiple relayers.&quot;</span>,
+                messages in the presence of multiple relayers."</span>,
                 PrettyOption(<span class="kw-2">&amp;</span>relayer_b_id),
                 <span class="self">self</span>.b_chain().id(),
                 PrettyOption(<span class="kw-2">&amp;</span>relayer_a_id),
@@ -1927,9 +1929,9 @@
         <span class="kw">if </span>b_counterparty_id.is_some() &amp;&amp; b_counterparty_id != relayer_a_id {
             <span class="kw">if </span>updated_relayer_b_id == relayer_b_id.as_ref() {
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;updating the expected {} of side_a({}) since it is different than the \
+                    <span class="string">"updating the expected {} of side_a({}) since it is different than the \
                     counterparty of {}: {}, on {}. This is typically caused by crossing handshake \
-                    messages in the presence of multiple relayers.&quot;</span>,
+                    messages in the presence of multiple relayers."</span>,
                     PrettyOption(<span class="kw-2">&amp;</span>relayer_a_id),
                     <span class="self">self</span>.a_chain().id(),
                     PrettyOption(<span class="kw-2">&amp;</span>updated_relayer_b_id),
@@ -1939,7 +1941,7 @@
                 <span class="self">self</span>.a_side.connection_id = b_counterparty_id.cloned();
             } <span class="kw">else </span>{
                 <span class="macro">panic!</span>(
-                    <span class="string">&quot;mismatched connection ids in connection ends: {} - {:?} and {} - {:?}&quot;</span>,
+                    <span class="string">"mismatched connection ids in connection ends: {} - {:?} and {} - {:?}"</span>,
                     <span class="self">self</span>.a_chain().id(),
                     a_connection,
                     <span class="self">self</span>.b_chain().id(),
@@ -1955,7 +1957,7 @@
     </span><span class="kw">fn </span>do_conn_open_handshake(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), ConnectionError&gt; {
         <span class="kw">let </span>(a_state, b_state) = <span class="self">self</span>.update_connection_and_query_states()<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
-            <span class="string">&quot;do_conn_open_handshake with connection end states: {}, {}&quot;</span>,
+            <span class="string">"do_conn_open_handshake with connection end states: {}, {}"</span>,
             a_state, b_state
         );
 
@@ -1963,7 +1965,7 @@
             <span class="comment">// send the Init message to chain a (source)
             </span>(State::Uninitialized, State::Uninitialized) =&gt; {
                 <span class="kw">let </span>event = <span class="self">self</span>.flipped().build_conn_init_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenInit {}: {}&quot;</span>, <span class="self">self</span>.a_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenInit {}: {}"</span>, <span class="self">self</span>.a_side, e);
                     e
                 })<span class="question-mark">?</span>;
                 <span class="kw">let </span>connection_id = extract_connection_id(<span class="kw-2">&amp;</span>event)<span class="question-mark">?</span>;
@@ -1973,7 +1975,7 @@
             <span class="comment">// send the Try message to chain a (source)
             </span>(State::Uninitialized, State::Init) | (State::Init, State::Init) =&gt; {
                 <span class="kw">let </span>event = <span class="self">self</span>.flipped().build_conn_try_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenTry {}: {}&quot;</span>, <span class="self">self</span>.a_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenTry {}: {}"</span>, <span class="self">self</span>.a_side, e);
                     e
                 })<span class="question-mark">?</span>;
 
@@ -1984,7 +1986,7 @@
             <span class="comment">// send the Try message to chain b (destination)
             </span>(State::Init, State::Uninitialized) =&gt; {
                 <span class="kw">let </span>event = <span class="self">self</span>.build_conn_try_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenTry {}: {}&quot;</span>, <span class="self">self</span>.b_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenTry {}: {}"</span>, <span class="self">self</span>.b_side, e);
                     e
                 })<span class="question-mark">?</span>;
 
@@ -1995,7 +1997,7 @@
             <span class="comment">// send the Ack message to chain a (source)
             </span>(State::Init, State::TryOpen) | (State::TryOpen, State::TryOpen) =&gt; {
                 <span class="self">self</span>.flipped().build_conn_ack_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenAck {}: {}&quot;</span>, <span class="self">self</span>.a_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenAck {}: {}"</span>, <span class="self">self</span>.a_side, e);
                     e
                 })<span class="question-mark">?</span>;
             }
@@ -2003,7 +2005,7 @@
             <span class="comment">// send the Ack message to chain b (destination)
             </span>(State::TryOpen, State::Init) =&gt; {
                 <span class="self">self</span>.build_conn_ack_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenAck {}: {}&quot;</span>, <span class="self">self</span>.b_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenAck {}: {}"</span>, <span class="self">self</span>.b_side, e);
                     e
                 })<span class="question-mark">?</span>;
             }
@@ -2011,7 +2013,7 @@
             <span class="comment">// send the Confirm message to chain b (destination)
             </span>(State::Open, State::TryOpen) =&gt; {
                 <span class="self">self</span>.build_conn_confirm_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenConfirm {}: {}&quot;</span>, <span class="self">self</span>.b_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenConfirm {}: {}"</span>, <span class="self">self</span>.b_side, e);
                     e
                 })<span class="question-mark">?</span>;
             }
@@ -2019,20 +2021,20 @@
             <span class="comment">// send the Confirm message to chain a (source)
             </span>(State::TryOpen, State::Open) =&gt; {
                 <span class="self">self</span>.flipped().build_conn_confirm_and_send().map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;failed ConnOpenConfirm {}: {}&quot;</span>, <span class="self">self</span>.a_side, e);
+                    <span class="macro">error!</span>(<span class="string">"failed ConnOpenConfirm {}: {}"</span>, <span class="self">self</span>.a_side, e);
                     e
                 })<span class="question-mark">?</span>;
             }
 
             (State::Open, State::Open) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;connection handshake already finished for {}&quot;</span>, <span class="self">self</span>);
+                <span class="macro">info!</span>(<span class="string">"connection handshake already finished for {}"</span>, <span class="self">self</span>);
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             }
 
             (a_state, b_state) =&gt; {
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;do_conn_open_handshake does not handle connection end state combination: \
-                    {}-{}, {}-{}. will retry to account for RPC node data availability issues.&quot;</span>,
+                    <span class="string">"do_conn_open_handshake does not handle connection end state combination: \
+                    {}-{}, {}-{}. will retry to account for RPC node data availability issues."</span>,
                     <span class="self">self</span>.a_chain().id(),
                     a_state,
                     <span class="self">self</span>.b_chain().id(),
@@ -2059,11 +2061,11 @@
             }
         })
         .map_err(|err| {
-            <span class="macro">error!</span>(<span class="string">&quot;failed to open connection after {} retries&quot;</span>, err.tries);
+            <span class="macro">error!</span>(<span class="string">"failed to open connection after {} retries"</span>, err.tries);
 
             handshake_retry::from_retry_error(
                 err,
-                <span class="macro">format!</span>(<span class="string">&quot;failed to finish connection handshake for {self:?}&quot;</span>),
+                <span class="macro">format!</span>(<span class="string">"failed to finish connection handshake for {self:?}"</span>),
             )
         })<span class="question-mark">?</span>;
 
@@ -2129,17 +2131,17 @@
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="kw">if </span>e.is_expired_or_frozen_error() {
                     <span class="macro">error!</span>(
-                        <span class="string">&quot;failed to establish connection handshake on frozen client: {}&quot;</span>,
+                        <span class="string">"failed to establish connection handshake on frozen client: {}"</span>,
                         e
                     );
                     RetryResult::Err(index)
                 } <span class="kw">else </span>{
-                    <span class="macro">error!</span>(<span class="string">&quot;failed {} with error {}&quot;</span>, state, e);
+                    <span class="macro">error!</span>(<span class="string">"failed {} with error {}"</span>, state, e);
                     RetryResult::Retry(index)
                 }
             }
             <span class="prelude-val">Ok</span>((<span class="prelude-val">Some</span>(ev), handshake_completed)) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;connection handshake step completed with events: {}&quot;</span>, ev);
+                <span class="macro">info!</span>(<span class="string">"connection handshake step completed with events: {}"</span>, ev);
                 RetryResult::Ok(handshake_completed)
             }
             <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, handshake_completed)) =&gt; RetryResult::Ok(handshake_completed),
@@ -2287,7 +2289,7 @@
     <span class="kw">pub fn </span>build_conn_init_and_send(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;IbcEvent, ConnectionError&gt; {
         <span class="kw">let </span>dst_msgs = <span class="self">self</span>.build_conn_init()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">&quot;ConnectionOpenInit&quot;</span>);
+        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">"ConnectionOpenInit"</span>);
 
         <span class="kw">let </span>events = <span class="self">self
             </span>.dst_chain()
@@ -2306,7 +2308,7 @@
         <span class="comment">// TODO - make chainError an actual error
         </span><span class="kw">match </span><span class="kw-2">&amp;</span>result.event {
             IbcEvent::OpenInitConnection(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.dst_chain().id(), result);
+                <span class="macro">info!</span>(<span class="string">"🥂 {} =&gt; {}"</span>, <span class="self">self</span>.dst_chain().id(), result);
                 <span class="prelude-val">Ok</span>(result.event)
             }
             IbcEvent::ChainError(e) =&gt; <span class="prelude-val">Err</span>(ConnectionError::tx_response(e.clone())),
@@ -2320,10 +2322,10 @@
         consensus_height: Height,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ConnectionError&gt; {
         <span class="macro">crate::time!</span>(
-            <span class="string">&quot;wait_for_dest_app_height&quot;</span>,
+            <span class="string">"wait_for_dest_app_height"</span>,
             {
-                <span class="string">&quot;src_chain&quot;</span>: <span class="self">self</span>.src_chain().id(),
-                <span class="string">&quot;dst_chain&quot;</span>: <span class="self">self</span>.dst_chain().id(),
+                <span class="string">"src_chain"</span>: <span class="self">self</span>.src_chain().id(),
+                <span class="string">"dst_chain"</span>: <span class="self">self</span>.dst_chain().id(),
             }
         );
         <span class="kw">let </span>dst_application_latest_height = || {
@@ -2334,8 +2336,8 @@
 
         <span class="kw">while </span>consensus_height &gt;= dst_application_latest_height()<span class="question-mark">? </span>{
             <span class="macro">warn!</span>(
-                <span class="string">&quot;client consensus proof height too high, \
-                 waiting for destination chain to advance beyond {}&quot;</span>,
+                <span class="string">"client consensus proof height too high, \
+                 waiting for destination chain to advance beyond {}"</span>,
                 consensus_height
             );
 
@@ -2369,11 +2371,11 @@
 
         // Cross-check the delay_period
         </span><span class="kw">let </span>delay = <span class="kw">if </span>src_connection.delay_period() != <span class="self">self</span>.delay_period {
-            <span class="macro">warn!</span>(<span class="string">&quot;`delay_period` for ConnectionEnd @{} is {}s; delay period on local Connection object is set to {}s&quot;</span>,
+            <span class="macro">warn!</span>(<span class="string">"`delay_period` for ConnectionEnd @{} is {}s; delay period on local Connection object is set to {}s"</span>,
                 <span class="self">self</span>.src_chain().id(), src_connection.delay_period().as_secs_f64(), <span class="self">self</span>.delay_period.as_secs_f64());
 
             <span class="macro">warn!</span>(
-                <span class="string">&quot;Overriding delay period for local connection object to {}s&quot;</span>,
+                <span class="string">"Overriding delay period for local connection object to {}s"</span>,
                 src_connection.delay_period().as_secs_f64()
             );
 
@@ -2391,7 +2393,7 @@
         <span class="kw">let </span>client_msgs = <span class="self">self</span>.build_update_client_on_src(src_client_target_height)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>tm =
-            TrackedMsgs::new_static(client_msgs, <span class="string">&quot;update client on source for ConnectionOpenTry&quot;</span>);
+            TrackedMsgs::new_static(client_msgs, <span class="string">"update client on source for ConnectionOpenTry"</span>);
         <span class="self">self</span>.src_chain()
             .send_messages_and_wait_commit(tm)
             .map_err(|e| ConnectionError::submit(<span class="self">self</span>.src_chain().id(), e))<span class="question-mark">?</span>;
@@ -2467,7 +2469,7 @@
         // the height of the consensus state included in the proofs.
         </span><span class="self">self</span>.wait_for_dest_app_height_higher_than_consensus_proof_height(src_client_target_height)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">&quot;ConnectionOpenTry&quot;</span>);
+        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">"ConnectionOpenTry"</span>);
 
         <span class="kw">let </span>events = <span class="self">self
             </span>.dst_chain()
@@ -2485,7 +2487,7 @@
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>result.event {
             IbcEvent::OpenTryConnection(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.dst_chain().id(), result);
+                <span class="macro">info!</span>(<span class="string">"🥂 {} =&gt; {}"</span>, <span class="self">self</span>.dst_chain().id(), result);
                 <span class="prelude-val">Ok</span>(result.event)
             }
             IbcEvent::ChainError(e) =&gt; <span class="prelude-val">Err</span>(ConnectionError::tx_response(e.clone())),
@@ -2531,7 +2533,7 @@
         <span class="kw">let </span>client_msgs = <span class="self">self</span>.build_update_client_on_src(src_client_target_height)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>tm =
-            TrackedMsgs::new_static(client_msgs, <span class="string">&quot;update client on source for ConnectionOpenAck&quot;</span>);
+            TrackedMsgs::new_static(client_msgs, <span class="string">"update client on source for ConnectionOpenAck"</span>);
 
         <span class="self">self</span>.src_chain()
             .send_messages_and_wait_commit(tm)
@@ -2582,7 +2584,7 @@
         // the height of the consensus state included in the proofs.
         </span><span class="self">self</span>.wait_for_dest_app_height_higher_than_consensus_proof_height(src_client_target_height)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">&quot;ConnectionOpenAck&quot;</span>);
+        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">"ConnectionOpenAck"</span>);
 
         <span class="kw">let </span>events = <span class="self">self
             </span>.dst_chain()
@@ -2600,7 +2602,7 @@
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>result.event {
             IbcEvent::OpenAckConnection(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.dst_chain().id(), result);
+                <span class="macro">info!</span>(<span class="string">"🥂 {} =&gt; {}"</span>, <span class="self">self</span>.dst_chain().id(), result);
                 <span class="prelude-val">Ok</span>(result.event)
             }
             IbcEvent::ChainError(e) =&gt; <span class="prelude-val">Err</span>(ConnectionError::tx_response(e.clone())),
@@ -2670,7 +2672,7 @@
     <span class="kw">pub fn </span>build_conn_confirm_and_send(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;IbcEvent, ConnectionError&gt; {
         <span class="kw">let </span>dst_msgs = <span class="self">self</span>.build_conn_confirm()<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">&quot;ConnectionOpenConfirm&quot;</span>);
+        <span class="kw">let </span>tm = TrackedMsgs::new_static(dst_msgs, <span class="string">"ConnectionOpenConfirm"</span>);
 
         <span class="kw">let </span>events = <span class="self">self
             </span>.dst_chain()
@@ -2688,7 +2690,7 @@
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>result.event {
             IbcEvent::OpenConfirmConnection(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;🥂 {} =&gt; {}&quot;</span>, <span class="self">self</span>.dst_chain().id(), result);
+                <span class="macro">info!</span>(<span class="string">"🥂 {} =&gt; {}"</span>, <span class="self">self</span>.dst_chain().id(), result);
                 <span class="prelude-val">Ok</span>(result.event)
             }
             IbcEvent::ChainError(e) =&gt; <span class="prelude-val">Err</span>(ConnectionError::tx_response(e.clone())),

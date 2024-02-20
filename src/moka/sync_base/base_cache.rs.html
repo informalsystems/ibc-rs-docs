@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.4/src/sync_base/base_cache.rs`."><title>base_cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../moka/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.5/src/sync_base/base_cache.rs`."><title>base_cache.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -3289,6 +3291,26 @@
 <a href="#3289" id="3289">3289</a>
 <a href="#3290" id="3290">3290</a>
 <a href="#3291" id="3291">3291</a>
+<a href="#3292" id="3292">3292</a>
+<a href="#3293" id="3293">3293</a>
+<a href="#3294" id="3294">3294</a>
+<a href="#3295" id="3295">3295</a>
+<a href="#3296" id="3296">3296</a>
+<a href="#3297" id="3297">3297</a>
+<a href="#3298" id="3298">3298</a>
+<a href="#3299" id="3299">3299</a>
+<a href="#3300" id="3300">3300</a>
+<a href="#3301" id="3301">3301</a>
+<a href="#3302" id="3302">3302</a>
+<a href="#3303" id="3303">3303</a>
+<a href="#3304" id="3304">3304</a>
+<a href="#3305" id="3305">3305</a>
+<a href="#3306" id="3306">3306</a>
+<a href="#3307" id="3307">3307</a>
+<a href="#3308" id="3308">3308</a>
+<a href="#3309" id="3309">3309</a>
+<a href="#3310" id="3310">3310</a>
+<a href="#3311" id="3311">3311</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     invalidator::{GetOrRemoveEntry, Invalidator, KeyDateLite, PredicateFun},
     iter::ScanningGet,
@@ -3317,7 +3339,7 @@
         CacheRegion,
     },
     notification::{notifier::RemovalNotifier, EvictionListener, RemovalCause},
-    policy::ExpirationPolicy,
+    policy::{EvictionPolicy, EvictionPolicyConfig, ExpirationPolicy},
     Entry, Expiry, Policy, PredicateError,
 };
 
@@ -3402,8 +3424,8 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>notify_invalidate(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;, entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;)
     <span class="kw">where
-        </span>K: Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>K: Send + Sync + <span class="lifetime">'static</span>,
+        V: Clone + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="self">self</span>.inner.notify_invalidate(key, entry);
     }
@@ -3414,16 +3436,16 @@
     </span>K: Hash + Eq,
     S: BuildHasher,
 {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>maybe_key_lock(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;KeyLock&lt;<span class="lifetime">&#39;_</span>, K, S&gt;&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>maybe_key_lock(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;KeyLock&lt;<span class="lifetime">'_</span>, K, S&gt;&gt; {
         <span class="self">self</span>.inner.maybe_key_lock(key)
     }
 }
 
 <span class="kw">impl</span>&lt;K, V, S&gt; BaseCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="comment">// https://rust-lang.github.io/rust-clippy/master/index.html#too_many_arguments
     </span><span class="attr">#[allow(clippy::too_many_arguments)]
@@ -3433,6 +3455,7 @@
         initial_capacity: <span class="prelude-ty">Option</span>&lt;usize&gt;,
         build_hasher: S,
         weigher: <span class="prelude-ty">Option</span>&lt;Weigher&lt;K, V&gt;&gt;,
+        eviction_policy: EvictionPolicy,
         eviction_listener: <span class="prelude-ty">Option</span>&lt;EvictionListener&lt;K, V&gt;&gt;,
         expiration_policy: ExpirationPolicy&lt;K, V&gt;,
         invalidator_enabled: bool,
@@ -3452,6 +3475,7 @@
             initial_capacity,
             build_hasher,
             weigher,
+            eviction_policy,
             eviction_listener,
             r_rcv,
             w_rcv,
@@ -3504,7 +3528,7 @@
         <span class="comment">// Define a closure to record a read op.
         </span><span class="kw">let </span>record = |op, now| {
             <span class="self">self</span>.record_read_op(op, now)
-                .expect(<span class="string">&quot;Failed to record a get op&quot;</span>);
+                .expect(<span class="string">"Failed to record a get op"</span>);
         };
         <span class="kw">let </span>ignore_if = <span class="prelude-val">None </span><span class="kw">as </span><span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span><span class="kw">fn</span>(<span class="kw-2">&amp;</span>V) -&gt; bool&gt;;
         <span class="self">self</span>.do_get_with_hash(key, hash, record, ignore_if, need_key)
@@ -3525,7 +3549,7 @@
         <span class="comment">// Define a closure to record a read op.
         </span><span class="kw">let </span>record = |op, now| {
             <span class="self">self</span>.record_read_op(op, now)
-                .expect(<span class="string">&quot;Failed to record a get op&quot;</span>);
+                .expect(<span class="string">"Failed to record a get op"</span>);
         };
         <span class="self">self</span>.do_get_with_hash(key, hash, record, ignore_if, need_key)
     }
@@ -3599,7 +3623,7 @@
 
             <span class="comment">// Call the user supplied `expire_after_read` method if any.
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(expiry) = <span class="kw-2">&amp;</span><span class="self">self</span>.inner.expiration_policy.expiry() {
-                <span class="kw">let </span>lm = entry.last_modified().expect(<span class="string">&quot;Last modified is not set&quot;</span>);
+                <span class="kw">let </span>lm = entry.last_modified().expect(<span class="string">"Last modified is not set"</span>);
                 <span class="comment">// Check if the `last_modified` of entry is earlier than or equals to
                 // `now`. If not, update the `now` to `last_modified`. This is needed
                 // because there is a small chance that other threads have inserted
@@ -3708,9 +3732,9 @@
 //
 </span><span class="kw">impl</span>&lt;K, V, S&gt; ScanningGet&lt;K, V&gt; <span class="kw">for </span>BaseCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">fn </span>num_cht_segments(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner.num_cht_segments()
@@ -3747,9 +3771,9 @@
 //
 </span><span class="kw">impl</span>&lt;K, V, S&gt; BaseCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>record_read_op(
@@ -3813,7 +3837,7 @@
                 <span class="kw">let </span>old_weight = old_entry.policy_weight();
 
                 <span class="comment">// Create this OldEntryInfo _before_ creating a new ValueEntry, so
-                // that the OldEntryInfo can preserve the old EntryInfo&#39;s
+                // that the OldEntryInfo can preserve the old EntryInfo's
                 // last_accessed and last_modified timestamps.
                 </span><span class="kw">let </span>old_info = OldEntryInfo::new(old_entry);
                 <span class="kw">let </span>(entry, gen) = <span class="self">self</span>.new_value_entry_from(value.clone(), ts, weight, old_entry);
@@ -3940,7 +3964,7 @@
     }
 
     <span class="kw">fn </span>expire_after_create(
-        expiry: <span class="kw-2">&amp;</span>Arc&lt;<span class="kw">dyn </span>Expiry&lt;K, V&gt; + Send + Sync + <span class="lifetime">&#39;static</span>&gt;,
+        expiry: <span class="kw-2">&amp;</span>Arc&lt;<span class="kw">dyn </span>Expiry&lt;K, V&gt; + Send + Sync + <span class="lifetime">'static</span>&gt;,
         key: <span class="kw-2">&amp;</span>K,
         value_entry: <span class="kw-2">&amp;</span>ValueEntry&lt;K, V&gt;,
         ts: Instant,
@@ -3948,7 +3972,7 @@
     ) {
         <span class="kw">let </span>duration =
             expiry.expire_after_create(key, <span class="kw-2">&amp;</span>value_entry.value, clocks.to_std_instant(ts));
-        <span class="kw">let </span>expiration_time = duration.map(|duration| ts.checked_add(duration).expect(<span class="string">&quot;Overflow&quot;</span>));
+        <span class="kw">let </span>expiration_time = duration.map(|duration| ts.checked_add(duration).expect(<span class="string">"Overflow"</span>));
         value_entry
             .entry_info()
             .set_expiration_time(expiration_time);
@@ -3983,7 +4007,7 @@
 
         <span class="kw">if </span>duration != current_duration {
             <span class="kw">let </span>expiration_time =
-                duration.map(|duration| ts.checked_add(duration).expect(<span class="string">&quot;Overflow&quot;</span>));
+                duration.map(|duration| ts.checked_add(duration).expect(<span class="string">"Overflow"</span>));
             value_entry
                 .entry_info()
                 .set_expiration_time(expiration_time);
@@ -4001,9 +4025,9 @@
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">impl</span>&lt;K, V, S&gt; BaseCache&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>invalidation_predicate_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner.invalidation_predicate_count()
@@ -4031,16 +4055,16 @@
     }
 }
 
-<span class="kw">struct </span>EvictionState&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+<span class="kw">struct </span>EvictionState&lt;<span class="lifetime">'a</span>, K, V&gt; {
     counters: EvictionCounters,
-    notifier: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RemovalNotifier&lt;K, V&gt;&gt;,
+    notifier: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>RemovalNotifier&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; EvictionState&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; EvictionState&lt;<span class="lifetime">'a</span>, K, V&gt; {
     <span class="kw">fn </span>new(
         entry_count: u64,
         weighted_size: u64,
-        notifier: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>RemovalNotifier&lt;K, V&gt;&gt;,
+        notifier: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>RemovalNotifier&lt;K, V&gt;&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             counters: EvictionCounters::new(entry_count, weighted_size),
@@ -4058,8 +4082,8 @@
         entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
         cause: RemovalCause,
     ) <span class="kw">where
-        </span>K: Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>K: Send + Sync + <span class="lifetime">'static</span>,
+        V: Clone + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="macro">debug_assert!</span>(<span class="self">self</span>.is_notifier_enabled());
 
@@ -4166,7 +4190,7 @@
         <span class="kw">let </span>(origin, origin_std) = <span class="kw">if </span><span class="self">self</span>.has_expiration_clock.load(Ordering::Relaxed) {
             <span class="self">self</span>.mutable_origin
                 .read()
-                .expect(<span class="string">&quot;mutable_origin is not set&quot;</span>)
+                .expect(<span class="string">"mutable_origin is not set"</span>)
         } <span class="kw">else </span>{
             (<span class="self">self</span>.origin, <span class="self">self</span>.origin_std)
         };
@@ -4192,6 +4216,7 @@
     frequency_sketch_enabled: AtomicBool,
     read_op_ch: Receiver&lt;ReadOp&lt;K, V&gt;&gt;,
     write_op_ch: Receiver&lt;WriteOp&lt;K, V&gt;&gt;,
+    eviction_policy: EvictionPolicyConfig,
     expiration_policy: ExpirationPolicy&lt;K, V&gt;,
     valid_after: AtomicInstant,
     weigher: <span class="prelude-ty">Option</span>&lt;Weigher&lt;K, V&gt;&gt;,
@@ -4245,7 +4270,7 @@
         <span class="self">self</span>.removal_notifier.is_some()
     }
 
-    <span class="kw">fn </span>maybe_key_lock(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;KeyLock&lt;<span class="lifetime">&#39;_</span>, K, S&gt;&gt;
+    <span class="kw">fn </span>maybe_key_lock(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;KeyLock&lt;<span class="lifetime">'_</span>, K, S&gt;&gt;
     <span class="kw">where
         </span>K: Hash + Eq,
         S: BuildHasher,
@@ -4261,7 +4286,7 @@
                     .expiration_clock
                     .read()
                     .as_ref()
-                    .expect(<span class="string">&quot;Cannot get the expiration clock&quot;</span>)
+                    .expect(<span class="string">"Cannot get the expiration clock"</span>)
                     .now(),
             )
         } <span class="kw">else </span>{
@@ -4316,8 +4341,8 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; Inner&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Send + Sync + <span class="lifetime">'static</span>,
     S: BuildHasher + Clone,
 {
     <span class="comment">// Disable a Clippy warning for having more than seven arguments.
@@ -4329,6 +4354,7 @@
         initial_capacity: <span class="prelude-ty">Option</span>&lt;usize&gt;,
         build_hasher: S,
         weigher: <span class="prelude-ty">Option</span>&lt;Weigher&lt;K, V&gt;&gt;,
+        eviction_policy: EvictionPolicy,
         eviction_listener: <span class="prelude-ty">Option</span>&lt;EvictionListener&lt;K, V&gt;&gt;,
         read_op_ch: Receiver&lt;ReadOp&lt;K, V&gt;&gt;,
         write_op_ch: Receiver&lt;WriteOp&lt;K, V&gt;&gt;,
@@ -4385,6 +4411,7 @@
             frequency_sketch_enabled: AtomicBool::default(),
             read_op_ch,
             write_op_ch,
+            eviction_policy: eviction_policy.config,
             expiration_policy,
             valid_after: AtomicInstant::default(),
             weigher,
@@ -4495,8 +4522,8 @@
         condition: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Arc&lt;K&gt;, <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; bool,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;&gt;
     <span class="kw">where
-        </span>K: Send + Sync + <span class="lifetime">&#39;static</span>,
-        V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>K: Send + Sync + <span class="lifetime">'static</span>,
+        V: Clone + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="comment">// Lock the key for removal if blocking removal notification is enabled.
         </span><span class="kw">let </span>kl = <span class="self">self</span>.maybe_key_lock(key);
@@ -4515,13 +4542,13 @@
 <span class="comment">// TODO: Calculate the batch size based on the number of entries in the cache (or an
 // estimated number of entries to evict)
 
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;unstable-debug-counters&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"unstable-debug-counters"</span>)]
 </span><span class="kw">mod </span>batch_size {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>EVICTION_BATCH_SIZE: usize = <span class="number">10_000</span>;
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>INVALIDATION_BATCH_SIZE: usize = <span class="number">10_000</span>;
 }
 
-<span class="attr">#[cfg(not(feature = <span class="string">&quot;unstable-debug-counters&quot;</span>))]
+<span class="attr">#[cfg(not(feature = <span class="string">"unstable-debug-counters"</span>))]
 </span><span class="kw">mod </span>batch_size {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>EVICTION_BATCH_SIZE: usize = <span class="number">500</span>;
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>INVALIDATION_BATCH_SIZE: usize = <span class="number">500</span>;
@@ -4529,9 +4556,9 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; InnerSync <span class="kw">for </span>Inner&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">fn </span>run_pending_tasks(<span class="kw-2">&amp;</span><span class="self">self</span>, max_repeats: usize) {
         <span class="self">self</span>.do_run_pending_tasks(max_repeats);
@@ -4544,9 +4571,9 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; Inner&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">fn </span>do_run_pending_tasks(<span class="kw-2">&amp;</span><span class="self">self</span>, max_repeats: usize) {
         <span class="kw">if </span><span class="self">self</span>.max_capacity == <span class="prelude-val">Some</span>(<span class="number">0</span>) {
@@ -4576,7 +4603,9 @@
                 <span class="self">self</span>.apply_writes(<span class="kw-2">&amp;mut </span>deqs, <span class="kw-2">&amp;mut </span>timer_wheel, w_len, <span class="kw-2">&amp;mut </span>eviction_state);
             }
 
-            <span class="kw">if </span><span class="self">self</span>.should_enable_frequency_sketch(<span class="kw-2">&amp;</span>eviction_state.counters) {
+            <span class="kw">if </span><span class="self">self</span>.eviction_policy == EvictionPolicyConfig::TinyLfu
+                &amp;&amp; <span class="self">self</span>.should_enable_frequency_sketch(<span class="kw-2">&amp;</span>eviction_state.counters)
+            {
                 <span class="self">self</span>.enable_frequency_sketch(<span class="kw-2">&amp;</span>eviction_state.counters);
             }
 
@@ -4651,9 +4680,9 @@
 //
 </span><span class="kw">impl</span>&lt;K, V, S&gt; Inner&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Send + Sync + <span class="lifetime">&#39;static</span>,
-    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Hash + Eq + Send + Sync + <span class="lifetime">'static</span>,
+    V: Send + Sync + <span class="lifetime">'static</span>,
+    S: BuildHasher + Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">fn </span>has_enough_capacity(<span class="kw-2">&amp;</span><span class="self">self</span>, candidate_weight: u32, counters: <span class="kw-2">&amp;</span>EvictionCounters) -&gt; bool {
         <span class="self">self</span>.max_capacity.map_or(<span class="bool-val">true</span>, |limit| {
@@ -4736,7 +4765,7 @@
         deqs: <span class="kw-2">&amp;mut </span>Deques&lt;K&gt;,
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         count: usize,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -4791,7 +4820,7 @@
         deqs: <span class="kw-2">&amp;mut </span>Deques&lt;K&gt;,
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         freq: <span class="kw-2">&amp;</span>FrequencySketch,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -4845,11 +4874,22 @@
             }
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>candidate = EntrySizeAndFrequency::new(new_weight);
-        candidate.add_frequency(freq, kh.hash);
+        <span class="comment">// TODO: Refactoring the policy implementations.
+        // https://github.com/moka-rs/moka/issues/389
 
-        <span class="comment">// Try to admit the candidate.
-        </span><span class="kw">match </span><span class="self">Self</span>::admit(<span class="kw-2">&amp;</span>candidate, <span class="kw-2">&amp;</span><span class="self">self</span>.cache, deqs, freq) {
+        // Try to admit the candidate.
+        </span><span class="kw">let </span>admission_result = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.eviction_policy {
+            EvictionPolicyConfig::TinyLfu =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>candidate = EntrySizeAndFrequency::new(new_weight);
+                candidate.add_frequency(freq, kh.hash);
+                <span class="self">Self</span>::admit(<span class="kw-2">&amp;</span>candidate, <span class="kw-2">&amp;</span><span class="self">self</span>.cache, deqs, freq)
+            }
+            EvictionPolicyConfig::Lru =&gt; AdmissionResult::Admitted {
+                victim_keys: SmallVec::default(),
+            },
+        };
+
+        <span class="kw">match </span>admission_result {
             AdmissionResult::Admitted { victim_keys } =&gt; {
                 <span class="comment">// Try to remove the victims from the hash map.
                 </span><span class="kw">for </span>(vic_kh, vic_la) <span class="kw">in </span>victim_keys {
@@ -4936,7 +4976,7 @@
     /// [size-aware-cache-paper]: https://arxiv.org/abs/2105.08770
     ///
     /// There are some modifications in this implementation:
-    /// - To admit to the main space, candidate&#39;s frequency must be higher than
+    /// - To admit to the main space, candidate's frequency must be higher than
     ///   the aggregated frequencies of the potential victims. (In the paper,
     ///   `&gt;=` operator is used rather than `&gt;`)  The `&gt;` operator will do a better
     ///   job to prevent the main space from polluting.
@@ -4944,7 +4984,7 @@
     ///   position of the probation access-order queue. (In the paper, they will be
     ///   promoted (to the MRU position?) to force the eviction policy to select a
     ///   different set of victims for the next candidate). We may implement the
-    ///   paper&#39;s behavior later?
+    ///   paper's behavior later?
     ///
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>admit(
@@ -5004,7 +5044,7 @@
         <span class="comment">// Admit or reject the candidate.
 
         // TODO: Implement some randomness to mitigate hash DoS attack.
-        // See Caffeine&#39;s implementation.
+        // See Caffeine's implementation.
 
         </span><span class="kw">if </span>victims.policy_weight &gt;= candidate.policy_weight &amp;&amp; candidate.freq &gt; victims.freq {
             AdmissionResult::Admitted { victim_keys }
@@ -5145,7 +5185,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         deqs: <span class="kw-2">&amp;mut </span>Deques&lt;K&gt;,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -5216,7 +5256,7 @@
         deqs: <span class="kw-2">&amp;mut </span>Deques&lt;K&gt;,
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         batch_size: usize,
-        state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -5244,7 +5284,7 @@
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         batch_size: usize,
         now: Instant,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -5363,7 +5403,7 @@
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         batch_size: usize,
         now: Instant,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -5427,7 +5467,7 @@
         deqs: <span class="kw-2">&amp;mut </span>Deques&lt;K&gt;,
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         batch_size: usize,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -5486,7 +5526,7 @@
         timer_wheel: <span class="kw-2">&amp;mut </span>TimerWheel&lt;K&gt;,
         batch_size: usize,
         weights_to_evict: u64,
-        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">&#39;_</span>, K, V&gt;,
+        eviction_state: <span class="kw-2">&amp;mut </span>EvictionState&lt;<span class="lifetime">'_</span>, K, V&gt;,
     ) <span class="kw">where
         </span>V: Clone,
     {
@@ -5561,8 +5601,8 @@
 
 <span class="kw">impl</span>&lt;K, V, S&gt; Inner&lt;K, V, S&gt;
 <span class="kw">where
-    </span>K: Send + Sync + <span class="lifetime">&#39;static</span>,
-    V: Clone + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>K: Send + Sync + <span class="lifetime">'static</span>,
+    V: Clone + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="kw">fn </span>notify_single_removal(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -5765,7 +5805,7 @@
     now: Instant,
 ) -&gt; bool {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(tti) = time_to_idle {
-        <span class="kw">let </span>checked_add = entry_last_accessed.checked_add(<span class="kw-2">*</span>tti).expect(<span class="string">&quot;tti overflow&quot;</span>);
+        <span class="kw">let </span>checked_add = entry_last_accessed.checked_add(<span class="kw-2">*</span>tti).expect(<span class="string">"tti overflow"</span>);
         checked_add &lt;= now
     } <span class="kw">else </span>{
         <span class="bool-val">false
@@ -5779,7 +5819,7 @@
     now: Instant,
 ) -&gt; bool {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(ttl) = time_to_live {
-        <span class="kw">let </span>checked_add = entry_last_modified.checked_add(<span class="kw-2">*</span>ttl).expect(<span class="string">&quot;tti overflow&quot;</span>);
+        <span class="kw">let </span>checked_add = entry_last_modified.checked_add(<span class="kw-2">*</span>ttl).expect(<span class="string">"tti overflow"</span>);
         checked_add &lt;= now
     } <span class="kw">else </span>{
         <span class="bool-val">false
@@ -5788,11 +5828,11 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">crate</span>::policy::ExpirationPolicy;
+    <span class="kw">use </span><span class="kw">crate</span>::policy::{EvictionPolicy, ExpirationPolicy};
 
     <span class="kw">use </span><span class="kw">super</span>::BaseCache;
 
-    <span class="attr">#[cfg_attr(target_pointer_width = <span class="string">&quot;16&quot;</span>, ignore)]
+    <span class="attr">#[cfg_attr(target_pointer_width = <span class="string">"16"</span>, ignore)]
     #[test]
     </span><span class="kw">fn </span>test_skt_capacity_will_not_overflow() {
         <span class="kw">use </span>std::collections::hash_map::RandomState;
@@ -5807,48 +5847,49 @@
                 <span class="prelude-val">None</span>,
                 RandomState::default(),
                 <span class="prelude-val">None</span>,
+                EvictionPolicy::default(),
                 <span class="prelude-val">None</span>,
-                Default::default(),
+                ExpirationPolicy::default(),
                 <span class="bool-val">false</span>,
             );
             cache.inner.enable_frequency_sketch_for_testing();
             <span class="macro">assert_eq!</span>(
                 cache.inner.frequency_sketch.read().table_len(),
                 len <span class="kw">as </span>usize,
-                <span class="string">&quot;{name}&quot;
+                <span class="string">"{name}"
             </span>);
         };
 
-        <span class="kw">if </span><span class="macro">cfg!</span>(target_pointer_width = <span class="string">&quot;32&quot;</span>) {
+        <span class="kw">if </span><span class="macro">cfg!</span>(target_pointer_width = <span class="string">"32"</span>) {
             <span class="kw">let </span>pot24 = pot(<span class="number">24</span>);
             <span class="kw">let </span>pot16 = pot(<span class="number">16</span>);
-            ensure_sketch_len(<span class="number">0</span>, <span class="number">128</span>, <span class="string">&quot;0&quot;</span>);
-            ensure_sketch_len(<span class="number">128</span>, <span class="number">128</span>, <span class="string">&quot;128&quot;</span>);
-            ensure_sketch_len(pot16, pot16, <span class="string">&quot;pot16&quot;</span>);
+            ensure_sketch_len(<span class="number">0</span>, <span class="number">128</span>, <span class="string">"0"</span>);
+            ensure_sketch_len(<span class="number">128</span>, <span class="number">128</span>, <span class="string">"128"</span>);
+            ensure_sketch_len(pot16, pot16, <span class="string">"pot16"</span>);
             <span class="comment">// due to ceiling to next_power_of_two
-            </span>ensure_sketch_len(pot16 + <span class="number">1</span>, pot(<span class="number">17</span>), <span class="string">&quot;pot16 + 1&quot;</span>);
+            </span>ensure_sketch_len(pot16 + <span class="number">1</span>, pot(<span class="number">17</span>), <span class="string">"pot16 + 1"</span>);
             <span class="comment">// due to ceiling to next_power_of_two
-            </span>ensure_sketch_len(pot24 - <span class="number">1</span>, pot24, <span class="string">&quot;pot24 - 1&quot;</span>);
-            ensure_sketch_len(pot24, pot24, <span class="string">&quot;pot24&quot;</span>);
-            ensure_sketch_len(pot(<span class="number">27</span>), pot24, <span class="string">&quot;pot(27)&quot;</span>);
-            ensure_sketch_len(u32::MAX <span class="kw">as </span>u64, pot24, <span class="string">&quot;u32::MAX&quot;</span>);
+            </span>ensure_sketch_len(pot24 - <span class="number">1</span>, pot24, <span class="string">"pot24 - 1"</span>);
+            ensure_sketch_len(pot24, pot24, <span class="string">"pot24"</span>);
+            ensure_sketch_len(pot(<span class="number">27</span>), pot24, <span class="string">"pot(27)"</span>);
+            ensure_sketch_len(u32::MAX <span class="kw">as </span>u64, pot24, <span class="string">"u32::MAX"</span>);
         } <span class="kw">else </span>{
             <span class="comment">// target_pointer_width: 64 or larger.
             </span><span class="kw">let </span>pot30 = pot(<span class="number">30</span>);
             <span class="kw">let </span>pot16 = pot(<span class="number">16</span>);
-            ensure_sketch_len(<span class="number">0</span>, <span class="number">128</span>, <span class="string">&quot;0&quot;</span>);
-            ensure_sketch_len(<span class="number">128</span>, <span class="number">128</span>, <span class="string">&quot;128&quot;</span>);
-            ensure_sketch_len(pot16, pot16, <span class="string">&quot;pot16&quot;</span>);
+            ensure_sketch_len(<span class="number">0</span>, <span class="number">128</span>, <span class="string">"0"</span>);
+            ensure_sketch_len(<span class="number">128</span>, <span class="number">128</span>, <span class="string">"128"</span>);
+            ensure_sketch_len(pot16, pot16, <span class="string">"pot16"</span>);
             <span class="comment">// due to ceiling to next_power_of_two
-            </span>ensure_sketch_len(pot16 + <span class="number">1</span>, pot(<span class="number">17</span>), <span class="string">&quot;pot16 + 1&quot;</span>);
+            </span>ensure_sketch_len(pot16 + <span class="number">1</span>, pot(<span class="number">17</span>), <span class="string">"pot16 + 1"</span>);
 
             <span class="comment">// The following tests will allocate large memory (~8GiB).
             // Skip when running on Circle CI.
             </span><span class="kw">if </span>!<span class="macro">cfg!</span>(circleci) {
                 <span class="comment">// due to ceiling to next_power_of_two
-                </span>ensure_sketch_len(pot30 - <span class="number">1</span>, pot30, <span class="string">&quot;pot30- 1&quot;</span>);
-                ensure_sketch_len(pot30, pot30, <span class="string">&quot;pot30&quot;</span>);
-                ensure_sketch_len(u64::MAX, pot30, <span class="string">&quot;u64::MAX&quot;</span>);
+                </span>ensure_sketch_len(pot30 - <span class="number">1</span>, pot30, <span class="string">"pot30- 1"</span>);
+                ensure_sketch_len(pot30, pot30, <span class="string">"pot30"</span>);
+                ensure_sketch_len(u64::MAX, pot30, <span class="string">"u64::MAX"</span>);
             }
         };
     }
@@ -5876,14 +5917,14 @@
 
         <span class="kw">fn </span>insert(cache: <span class="kw-2">&amp;</span>BaseCache&lt;Key, Value&gt;, key: Key, hash: u64, value: Value) {
             <span class="kw">let </span>(op, _now) = cache.do_insert_with_hash(Arc::new(key), hash, value);
-            cache.write_op_ch.send(op).expect(<span class="string">&quot;Failed to send&quot;</span>);
+            cache.write_op_ch.send(op).expect(<span class="string">"Failed to send"</span>);
         }
 
         <span class="macro">macro_rules! </span>assert_params_eq {
             (<span class="macro-nonterminal">$left</span>:expr, <span class="macro-nonterminal">$right</span>:expr, <span class="macro-nonterminal">$param_name</span>:expr, <span class="macro-nonterminal">$line</span>:expr) =&gt; {
                 <span class="macro">assert_eq!</span>(
                     <span class="macro-nonterminal">$left</span>, <span class="macro-nonterminal">$right</span>,
-                    <span class="string">&quot;Mismatched `{}`s. line: {}&quot;</span>,
+                    <span class="string">"Mismatched `{}`s. line: {}"</span>,
                     <span class="macro-nonterminal">$param_name</span>, <span class="macro-nonterminal">$line
                 </span>);
             };
@@ -6021,19 +6062,19 @@
                         current_time,
                         new_duration_secs: new_duration,
                     } =&gt; {
-                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_key, key, <span class="string">&quot;key&quot;</span>, caller_line);
-                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_value, value, <span class="string">&quot;value&quot;</span>, caller_line);
+                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_key, key, <span class="string">"key"</span>, caller_line);
+                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_value, value, <span class="string">"value"</span>, caller_line);
                         <span class="macro">assert_params_eq!</span>(
                             actual_current_time,
                             current_time,
-                            <span class="string">&quot;current_time&quot;</span>,
+                            <span class="string">"current_time"</span>,
                             caller_line
                         );
                         new_duration.map(Duration::from_secs)
                     }
                     expected =&gt; {
                         <span class="macro">panic!</span>(
-                            <span class="string">&quot;Unexpected call to expire_after_create: caller_line {}, expected: {expected:?}&quot;</span>,
+                            <span class="string">"Unexpected call to expire_after_create: caller_line {}, expected: {expected:?}"</span>,
                             <span class="macro">line!</span>()
                         );
                     }
@@ -6062,31 +6103,31 @@
                         last_modified_at,
                         new_duration_secs,
                     } =&gt; {
-                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_key, key, <span class="string">&quot;key&quot;</span>, caller_line);
-                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_value, value, <span class="string">&quot;value&quot;</span>, caller_line);
+                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_key, key, <span class="string">"key"</span>, caller_line);
+                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_value, value, <span class="string">"value"</span>, caller_line);
                         <span class="macro">assert_params_eq!</span>(
                             actual_current_time,
                             current_time,
-                            <span class="string">&quot;current_time&quot;</span>,
+                            <span class="string">"current_time"</span>,
                             caller_line
                         );
                         <span class="macro">assert_params_eq!</span>(
                             actual_current_duration,
                             current_duration_secs.map(Duration::from_secs),
-                            <span class="string">&quot;current_duration&quot;</span>,
+                            <span class="string">"current_duration"</span>,
                             caller_line
                         );
                         <span class="macro">assert_params_eq!</span>(
                             actual_last_modified_at,
                             last_modified_at,
-                            <span class="string">&quot;last_modified_at&quot;</span>,
+                            <span class="string">"last_modified_at"</span>,
                             caller_line
                         );
                         new_duration_secs.map(Duration::from_secs)
                     }
                     expected =&gt; {
                         <span class="macro">panic!</span>(
-                            <span class="string">&quot;Unexpected call to expire_after_read: caller_line {}, expected: {expected:?}&quot;</span>,
+                            <span class="string">"Unexpected call to expire_after_read: caller_line {}, expected: {expected:?}"</span>,
                             <span class="macro">line!</span>()
                         );
                     }
@@ -6113,25 +6154,25 @@
                         current_duration_secs,
                         new_duration_secs,
                     } =&gt; {
-                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_key, key, <span class="string">&quot;key&quot;</span>, caller_line);
-                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_value, value, <span class="string">&quot;value&quot;</span>, caller_line);
+                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_key, key, <span class="string">"key"</span>, caller_line);
+                        <span class="macro">assert_params_eq!</span>(<span class="kw-2">*</span>actual_value, value, <span class="string">"value"</span>, caller_line);
                         <span class="macro">assert_params_eq!</span>(
                             actual_current_time,
                             current_time,
-                            <span class="string">&quot;current_time&quot;</span>,
+                            <span class="string">"current_time"</span>,
                             caller_line
                         );
                         <span class="macro">assert_params_eq!</span>(
                             actual_current_duration,
                             current_duration_secs.map(Duration::from_secs),
-                            <span class="string">&quot;current_duration&quot;</span>,
+                            <span class="string">"current_duration"</span>,
                             caller_line
                         );
                         new_duration_secs.map(Duration::from_secs)
                     }
                     expected =&gt; {
                         <span class="macro">panic!</span>(
-                            <span class="string">&quot;Unexpected call to expire_after_update: caller_line {}, expected: {expected:?}&quot;</span>,
+                            <span class="string">"Unexpected call to expire_after_update: caller_line {}, expected: {expected:?}"</span>,
                             <span class="macro">line!</span>()
                         );
                     }
@@ -6141,7 +6182,7 @@
 
         <span class="kw">const </span>TTL: u64 = <span class="number">16</span>;
         <span class="kw">const </span>TTI: u64 = <span class="number">7</span>;
-        <span class="kw">let </span>expiry: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Expiry&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt; + Send + Sync + <span class="lifetime">&#39;static</span>&gt;&gt; =
+        <span class="kw">let </span>expiry: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>Expiry&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt; + Send + Sync + <span class="lifetime">'static</span>&gt;&gt; =
             <span class="prelude-val">Some</span>(Arc::new(MyExpiry {
                 expectation: Arc::clone(<span class="kw-2">&amp;</span>expectation),
             }));
@@ -6152,6 +6193,7 @@
             <span class="prelude-val">None</span>,
             RandomState::default(),
             <span class="prelude-val">None</span>,
+            EvictionPolicy::default(),
             <span class="prelude-val">None</span>,
             ExpirationPolicy::new(
                 <span class="prelude-val">Some</span>(Duration::from_secs(TTL)),
@@ -6180,7 +6222,7 @@
         // Insert an entry (1). It will have a per-entry TTL of 1 second.
         </span><span class="kw">let </span>key = <span class="number">1</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;a&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'a'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">Some</span>(<span class="number">1</span>));
@@ -6204,7 +6246,7 @@
         // Insert an entry (1).
         </span><span class="kw">let </span>key = <span class="number">2</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;b&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'b'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">None</span>);
@@ -6250,7 +6292,7 @@
         // Insert an entry (1).
         </span><span class="kw">let </span>key = <span class="number">3</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;c&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'c'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">None</span>);
@@ -6316,7 +6358,7 @@
         // Insert an entry (1).
         </span><span class="kw">let </span>key = <span class="number">4</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;d&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'d'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">None</span>);
@@ -6382,7 +6424,7 @@
         // Insert an entry.
         </span><span class="kw">let </span>key = <span class="number">5</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;e&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'e'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">Some</span>(<span class="number">8</span>));
@@ -6429,7 +6471,7 @@
         // Insert an entry.
         </span><span class="kw">let </span>key = <span class="number">6</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;f&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'f'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">Some</span>(<span class="number">8</span>));
@@ -6500,7 +6542,7 @@
         // Insert an entry.
         </span><span class="kw">let </span>key = <span class="number">7</span>;
         <span class="kw">let </span>hash = cache.hash(<span class="kw-2">&amp;</span>key);
-        <span class="kw">let </span>value = <span class="string">&#39;g&#39;</span>;
+        <span class="kw">let </span>value = <span class="string">'g'</span>;
 
         <span class="kw-2">*</span>expectation.lock().unwrap() =
             ExpiryExpectation::after_create(<span class="macro">line!</span>(), key, value, current_time(<span class="kw-2">&amp;</span>cache), <span class="prelude-val">Some</span>(<span class="number">9</span>));

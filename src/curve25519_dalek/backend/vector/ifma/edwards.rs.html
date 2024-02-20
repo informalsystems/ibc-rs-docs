@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/curve25519-dalek-4.1.1/src/backend/vector/ifma/edwards.rs`."><title>edwards.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="curve25519_dalek" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/curve25519-dalek-4.1.2/src/backend/vector/ifma/edwards.rs`."><title>edwards.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="curve25519_dalek" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../../curve25519_dalek/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -358,7 +360,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::edwards;
 <span class="kw">use </span><span class="kw">crate</span>::window::{LookupTable, NafLookupTable5};
 
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;precomputed-tables&quot;</span>, feature = <span class="string">&quot;alloc&quot;</span>))]
+<span class="attr">#[cfg(any(feature = <span class="string">"precomputed-tables"</span>, feature = <span class="string">"alloc"</span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::window::NafLookupTable8;
 
 <span class="kw">use </span><span class="kw">super</span>::constants;
@@ -370,14 +372,14 @@
 <span class="attr">#[derive(Copy, Clone, Debug)]
 </span><span class="kw">pub struct </span>CachedPoint(<span class="kw">pub</span>(<span class="kw">super</span>) F51x4Reduced);
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>From&lt;edwards::EdwardsPoint&gt; <span class="kw">for </span>ExtendedPoint {
     <span class="kw">fn </span>from(P: edwards::EdwardsPoint) -&gt; ExtendedPoint {
         ExtendedPoint(F51x4Unreduced::new(<span class="kw-2">&amp;</span>P.X, <span class="kw-2">&amp;</span>P.Y, <span class="kw-2">&amp;</span>P.Z, <span class="kw-2">&amp;</span>P.T))
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>From&lt;ExtendedPoint&gt; <span class="kw">for </span>edwards::EdwardsPoint {
     <span class="kw">fn </span>from(P: ExtendedPoint) -&gt; edwards::EdwardsPoint {
         <span class="kw">let </span>reduced = F51x4Reduced::from(P.<span class="number">0</span>);
@@ -391,7 +393,7 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>From&lt;ExtendedPoint&gt; <span class="kw">for </span>CachedPoint {
     <span class="kw">fn </span>from(P: ExtendedPoint) -&gt; CachedPoint {
         <span class="kw">let </span><span class="kw-2">mut </span>x = P.<span class="number">0</span>;
@@ -404,21 +406,21 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>Default <span class="kw">for </span>ExtendedPoint {
     <span class="kw">fn </span>default() -&gt; ExtendedPoint {
         ExtendedPoint::identity()
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>Identity <span class="kw">for </span>ExtendedPoint {
     <span class="kw">fn </span>identity() -&gt; ExtendedPoint {
         constants::EXTENDEDPOINT_IDENTITY
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>ExtendedPoint {
     <span class="kw">pub fn </span>double(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ExtendedPoint {
         <span class="comment">// (Y1 X1 T1 Z1) -- uses vpshufd (1c latency @ 1/c)
@@ -470,19 +472,19 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; Add&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>CachedPoint&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ExtendedPoint {
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; Add&lt;<span class="kw-2">&amp;</span><span class="lifetime">'b </span>CachedPoint&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>ExtendedPoint {
     <span class="kw">type </span>Output = ExtendedPoint;
 
     <span class="doccomment">/// Add an `ExtendedPoint` and a `CachedPoint`.
-    </span><span class="kw">fn </span>add(<span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>CachedPoint) -&gt; ExtendedPoint {
+    </span><span class="kw">fn </span>add(<span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>CachedPoint) -&gt; ExtendedPoint {
         <span class="kw">let </span><span class="kw-2">mut </span>tmp = <span class="self">self</span>.<span class="number">0</span>;
 
         tmp = tmp.blend(<span class="kw-2">&amp;</span>tmp.diff_sum(), Lanes::AB);
         <span class="comment">// tmp = (Y1-X1 Y1+X1 Z1 T1) = (S0 S1 Z1 T1)
 
         </span>tmp = <span class="kw-2">&amp;</span>F51x4Reduced::from(tmp) * <span class="kw-2">&amp;</span>other.<span class="number">0</span>;
-        <span class="comment">// tmp = (S0*S2&#39; S1*S3&#39; Z1*Z2&#39; T1*T2&#39;) = (S8 S9 S10 S11)
+        <span class="comment">// tmp = (S0*S2' S1*S3' Z1*Z2' T1*T2') = (S8 S9 S10 S11)
 
         </span>tmp = tmp.shuffle(Shuffle::ABDC);
         <span class="comment">// tmp = (S8 S9 S11 S10)
@@ -500,21 +502,21 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>Default <span class="kw">for </span>CachedPoint {
     <span class="kw">fn </span>default() -&gt; CachedPoint {
         CachedPoint::identity()
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>Identity <span class="kw">for </span>CachedPoint {
     <span class="kw">fn </span>identity() -&gt; CachedPoint {
         constants::CACHEDPOINT_IDENTITY
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
 </span><span class="kw">impl </span>ConditionallySelectable <span class="kw">for </span>CachedPoint {
     <span class="kw">fn </span>conditional_select(a: <span class="kw-2">&amp;</span><span class="self">Self</span>, b: <span class="kw-2">&amp;</span><span class="self">Self</span>, choice: Choice) -&gt; <span class="self">Self </span>{
         CachedPoint(F51x4Reduced::conditional_select(<span class="kw-2">&amp;</span>a.<span class="number">0</span>, <span class="kw-2">&amp;</span>b.<span class="number">0</span>, choice))
@@ -525,8 +527,8 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Neg <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CachedPoint {
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Neg <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>CachedPoint {
     <span class="kw">type </span>Output = CachedPoint;
 
     <span class="kw">fn </span>neg(<span class="self">self</span>) -&gt; CachedPoint {
@@ -535,19 +537,19 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; Sub&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>CachedPoint&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ExtendedPoint {
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; Sub&lt;<span class="kw-2">&amp;</span><span class="lifetime">'b </span>CachedPoint&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>ExtendedPoint {
     <span class="kw">type </span>Output = ExtendedPoint;
 
     <span class="doccomment">/// Implement subtraction by negating the point and adding.
-    </span><span class="kw">fn </span>sub(<span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>CachedPoint) -&gt; ExtendedPoint {
+    </span><span class="kw">fn </span>sub(<span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>CachedPoint) -&gt; ExtendedPoint {
         <span class="self">self </span>+ <span class="kw-2">&amp;</span>(-other)
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>edwards::EdwardsPoint&gt; <span class="kw">for </span>LookupTable&lt;CachedPoint&gt; {
-    <span class="kw">fn </span>from(point: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>edwards::EdwardsPoint) -&gt; <span class="self">Self </span>{
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>edwards::EdwardsPoint&gt; <span class="kw">for </span>LookupTable&lt;CachedPoint&gt; {
+    <span class="kw">fn </span>from(point: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>edwards::EdwardsPoint) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>P = ExtendedPoint::from(<span class="kw-2">*</span>point);
         <span class="kw">let </span><span class="kw-2">mut </span>points = [CachedPoint::from(P); <span class="number">8</span>];
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">7 </span>{
@@ -557,9 +559,9 @@
     }
 }
 
-<span class="attr">#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>edwards::EdwardsPoint&gt; <span class="kw">for </span>NafLookupTable5&lt;CachedPoint&gt; {
-    <span class="kw">fn </span>from(point: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>edwards::EdwardsPoint) -&gt; <span class="self">Self </span>{
+<span class="attr">#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>edwards::EdwardsPoint&gt; <span class="kw">for </span>NafLookupTable5&lt;CachedPoint&gt; {
+    <span class="kw">fn </span>from(point: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>edwards::EdwardsPoint) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>A = ExtendedPoint::from(<span class="kw-2">*</span>point);
         <span class="kw">let </span><span class="kw-2">mut </span>Ai = [CachedPoint::from(A); <span class="number">8</span>];
         <span class="kw">let </span>A2 = A.double();
@@ -571,10 +573,10 @@
     }
 }
 
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;precomputed-tables&quot;</span>, feature = <span class="string">&quot;alloc&quot;</span>))]
-#[unsafe_target_feature(<span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>edwards::EdwardsPoint&gt; <span class="kw">for </span>NafLookupTable8&lt;CachedPoint&gt; {
-    <span class="kw">fn </span>from(point: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>edwards::EdwardsPoint) -&gt; <span class="self">Self </span>{
+<span class="attr">#[cfg(any(feature = <span class="string">"precomputed-tables"</span>, feature = <span class="string">"alloc"</span>))]
+#[unsafe_target_feature(<span class="string">"avx512ifma,avx512vl"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>edwards::EdwardsPoint&gt; <span class="kw">for </span>NafLookupTable8&lt;CachedPoint&gt; {
+    <span class="kw">fn </span>from(point: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>edwards::EdwardsPoint) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>A = ExtendedPoint::from(<span class="kw-2">*</span>point);
         <span class="kw">let </span><span class="kw-2">mut </span>Ai = [CachedPoint::from(A); <span class="number">64</span>];
         <span class="kw">let </span>A2 = A.double();
@@ -586,7 +588,7 @@
     }
 }
 
-<span class="attr">#[cfg(target_feature = <span class="string">&quot;avx512ifma,avx512vl&quot;</span>)]
+<span class="attr">#[cfg(target_feature = <span class="string">"avx512ifma,avx512vl"</span>)]
 #[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -600,19 +602,19 @@
         <span class="kw">let </span>R_vector: edwards::EdwardsPoint = (<span class="kw-2">&amp;</span>ExtendedPoint::from(P) + <span class="kw-2">&amp;</span>cached_Q).into();
         <span class="kw">let </span>S_vector: edwards::EdwardsPoint = (<span class="kw-2">&amp;</span>ExtendedPoint::from(P) - <span class="kw-2">&amp;</span>cached_Q).into();
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing point addition:&quot;</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;P = {:?}&quot;</span>, P);
-        <span class="macro">println!</span>(<span class="string">&quot;Q = {:?}&quot;</span>, Q);
-        <span class="macro">println!</span>(<span class="string">&quot;cached Q = {:?}&quot;</span>, cached_Q);
-        <span class="macro">println!</span>(<span class="string">&quot;R = P + Q = {:?}&quot;</span>, <span class="kw-2">&amp;</span>P + <span class="kw-2">&amp;</span>Q);
-        <span class="comment">//println!(&quot;R_serial = {:?}&quot;, R_serial);
-        </span><span class="macro">println!</span>(<span class="string">&quot;R_vector = {:?}&quot;</span>, R_vector);
-        <span class="macro">println!</span>(<span class="string">&quot;S = P - Q = {:?}&quot;</span>, <span class="kw-2">&amp;</span>P - <span class="kw-2">&amp;</span>Q);
-        <span class="macro">println!</span>(<span class="string">&quot;S_vector = {:?}&quot;</span>, S_vector);
+        <span class="macro">println!</span>(<span class="string">"Testing point addition:"</span>);
+        <span class="macro">println!</span>(<span class="string">"P = {:?}"</span>, P);
+        <span class="macro">println!</span>(<span class="string">"Q = {:?}"</span>, Q);
+        <span class="macro">println!</span>(<span class="string">"cached Q = {:?}"</span>, cached_Q);
+        <span class="macro">println!</span>(<span class="string">"R = P + Q = {:?}"</span>, <span class="kw-2">&amp;</span>P + <span class="kw-2">&amp;</span>Q);
+        <span class="comment">//println!("R_serial = {:?}", R_serial);
+        </span><span class="macro">println!</span>(<span class="string">"R_vector = {:?}"</span>, R_vector);
+        <span class="macro">println!</span>(<span class="string">"S = P - Q = {:?}"</span>, <span class="kw-2">&amp;</span>P - <span class="kw-2">&amp;</span>Q);
+        <span class="macro">println!</span>(<span class="string">"S_vector = {:?}"</span>, S_vector);
         <span class="comment">//assert_eq!(R_serial.compress(), (&amp;P + &amp;Q).compress());
         </span><span class="macro">assert_eq!</span>(R_vector.compress(), (<span class="kw-2">&amp;</span>P + <span class="kw-2">&amp;</span>Q).compress());
         <span class="macro">assert_eq!</span>(S_vector.compress(), (<span class="kw-2">&amp;</span>P - <span class="kw-2">&amp;</span>Q).compress());
-        <span class="macro">println!</span>(<span class="string">&quot;OK!\n&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"OK!\n"</span>);
     }
 
     <span class="attr">#[test]
@@ -620,22 +622,22 @@
         <span class="kw">use </span><span class="kw">crate</span>::constants;
         <span class="kw">use </span><span class="kw">crate</span>::scalar::Scalar;
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing id +- id&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing id +- id"</span>);
         <span class="kw">let </span>P = edwards::EdwardsPoint::identity();
         <span class="kw">let </span>Q = edwards::EdwardsPoint::identity();
         addition_test_helper(P, Q);
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing id +- B&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing id +- B"</span>);
         <span class="kw">let </span>P = edwards::EdwardsPoint::identity();
         <span class="kw">let </span>Q = constants::ED25519_BASEPOINT_POINT;
         addition_test_helper(P, Q);
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing B +- B&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing B +- B"</span>);
         <span class="kw">let </span>P = constants::ED25519_BASEPOINT_POINT;
         <span class="kw">let </span>Q = constants::ED25519_BASEPOINT_POINT;
         addition_test_helper(P, Q);
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing B +- kB&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing B +- kB"</span>);
         <span class="kw">let </span>P = constants::ED25519_BASEPOINT_POINT;
         <span class="kw">let </span>Q = constants::ED25519_BASEPOINT_TABLE * <span class="kw-2">&amp;</span>Scalar::from(<span class="number">8475983829u64</span>);
         addition_test_helper(P, Q);
@@ -644,14 +646,14 @@
     <span class="kw">fn </span>doubling_test_helper(P: edwards::EdwardsPoint) {
         <span class="comment">//let R1: edwards::EdwardsPoint = serial_double(P.into()).into();
         </span><span class="kw">let </span>R2: edwards::EdwardsPoint = ExtendedPoint::from(P).double().into();
-        <span class="macro">println!</span>(<span class="string">&quot;Testing point doubling:&quot;</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;P = {:?}&quot;</span>, P);
-        <span class="comment">//println!(&quot;(serial) R1 = {:?}&quot;, R1);
-        </span><span class="macro">println!</span>(<span class="string">&quot;(vector) R2 = {:?}&quot;</span>, R2);
-        <span class="macro">println!</span>(<span class="string">&quot;P + P = {:?}&quot;</span>, <span class="kw-2">&amp;</span>P + <span class="kw-2">&amp;</span>P);
+        <span class="macro">println!</span>(<span class="string">"Testing point doubling:"</span>);
+        <span class="macro">println!</span>(<span class="string">"P = {:?}"</span>, P);
+        <span class="comment">//println!("(serial) R1 = {:?}", R1);
+        </span><span class="macro">println!</span>(<span class="string">"(vector) R2 = {:?}"</span>, R2);
+        <span class="macro">println!</span>(<span class="string">"P + P = {:?}"</span>, <span class="kw-2">&amp;</span>P + <span class="kw-2">&amp;</span>P);
         <span class="comment">//assert_eq!(R1.compress(), (&amp;P + &amp;P).compress());
         </span><span class="macro">assert_eq!</span>(R2.compress(), (<span class="kw-2">&amp;</span>P + <span class="kw-2">&amp;</span>P).compress());
-        <span class="macro">println!</span>(<span class="string">&quot;OK!\n&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"OK!\n"</span>);
     }
 
     <span class="attr">#[test]
@@ -659,15 +661,15 @@
         <span class="kw">use </span><span class="kw">crate</span>::constants;
         <span class="kw">use </span><span class="kw">crate</span>::scalar::Scalar;
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing [2]id&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing [2]id"</span>);
         <span class="kw">let </span>P = edwards::EdwardsPoint::identity();
         doubling_test_helper(P);
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing [2]B&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing [2]B"</span>);
         <span class="kw">let </span>P = constants::ED25519_BASEPOINT_POINT;
         doubling_test_helper(P);
 
-        <span class="macro">println!</span>(<span class="string">&quot;Testing [2]([k]B)&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"Testing [2]([k]B)"</span>);
         <span class="kw">let </span>P = constants::ED25519_BASEPOINT_TABLE * <span class="kw-2">&amp;</span>Scalar::from(<span class="number">8475983829u64</span>);
         doubling_test_helper(P);
     }

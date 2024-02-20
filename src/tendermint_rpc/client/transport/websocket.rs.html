@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tendermint-rpc-0.34.0/src/client/transport/websocket.rs`."><title>websocket.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="tendermint_rpc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../tendermint_rpc/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tendermint-rpc-0.34.0/src/client/transport/websocket.rs`."><title>websocket.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="tendermint_rpc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../tendermint_rpc/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1618,7 +1620,7 @@
     SubscriptionClient, Url,
 };
 
-<span class="comment">// WebSocket connection times out if we haven&#39;t heard anything at all from the
+<span class="comment">// WebSocket connection times out if we haven't heard anything at all from the
 // server in this long.
 //
 // Taken from https://github.com/tendermint/tendermint/blob/309e29c245a01825fc9630103311fd04de99fa5e/rpc/jsonrpc/server/ws_handler.go#L27
@@ -1643,7 +1645,7 @@
 /// therefore be cloned into different asynchronous contexts, effectively
 /// allowing for asynchronous access to the driver.
 ///
-/// It is the caller&#39;s responsibility to spawn an asynchronous task in which to
+/// It is the caller's responsibility to spawn an asynchronous task in which to
 /// execute the [`WebSocketClientDriver::run`] method. See the example below.
 ///
 /// Dropping [`Subscription`]s will automatically terminate them (the
@@ -1679,13 +1681,13 @@
 ///
 /// #[tokio::main]
 /// async fn main() {
-///     let (client, driver) = WebSocketClient::new(&quot;ws://127.0.0.1:26657/websocket&quot;)
+///     let (client, driver) = WebSocketClient::new("ws://127.0.0.1:26657/websocket")
 ///         .await
 ///         .unwrap();
 ///     let driver_handle = tokio::spawn(async move { driver.run().await });
 ///
 ///     // Standard client functionality
-///     let tx = format!(&quot;some-key=some-value&quot;);
+///     let tx = format!("some-key=some-value");
 ///     client.broadcast_tx_async(Transaction::from(tx.into_bytes())).await.unwrap();
 ///
 ///     // Subscription functionality
@@ -1698,7 +1700,7 @@
 ///
 ///     while let Some(res) = subs.next().await {
 ///         let ev = res.unwrap();
-///         println!(&quot;Got event: {:?}&quot;, ev);
+///         println!("Got event: {:?}", ev);
 ///         ev_count -= 1;
 ///         if ev_count &lt; 0 {
 ///             break;
@@ -1707,7 +1709,7 @@
 ///
 ///     // Signal to the driver to terminate.
 ///     client.close().unwrap();
-///     // Await the driver&#39;s termination to ensure proper connection closure.
+///     // Await the driver's termination to ensure proper connection closure.
 ///     let _ = driver_handle.await.unwrap();
 /// }
 /// ```
@@ -1757,7 +1759,7 @@
 
 <span class="kw">impl </span>WebSocketClient {
     <span class="doccomment">/// Construct a new WebSocket-based client connecting to the given
-    /// Tendermint node&#39;s RPC endpoint.
+    /// Tendermint node's RPC endpoint.
     ///
     /// Supports both `ws://` and `wss://` protocols.
     </span><span class="kw">pub async fn </span>new&lt;U&gt;(url: U) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, WebSocketClientDriver), Error&gt;
@@ -1769,7 +1771,7 @@
     </span>}
 
     <span class="doccomment">/// Construct a new WebSocket-based client connecting to the given
-    /// Tendermint node&#39;s RPC endpoint.
+    /// Tendermint node's RPC endpoint.
     ///
     /// Supports both `ws://` and `wss://` protocols.
     </span><span class="kw">pub async fn </span>new_with_config&lt;U&gt;(
@@ -1784,7 +1786,7 @@
     </span>}
 
     <span class="doccomment">/// Initiate a builder for a WebSocket-based client connecting to the given
-    /// Tendermint node&#39;s RPC endpoint.
+    /// Tendermint node's RPC endpoint.
     ///
     /// Supports both `ws://` and `wss://` protocols.
     </span><span class="kw">pub fn </span>builder(url: WebSocketClientUrl) -&gt; Builder {
@@ -1923,7 +1925,7 @@
         <span class="kw">match </span>value.scheme() {
             Scheme::WebSocket | Scheme::SecureWebSocket =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>(value)),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::invalid_params(<span class="macro">format!</span>(
-                <span class="string">&quot;cannot use URL {value} with WebSocket clients&quot;
+                <span class="string">"cannot use URL {value} with WebSocket clients"
             </span>))),
         }
     }
@@ -1939,7 +1941,7 @@
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>WebSocketClientUrl {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.<span class="number">0</span>.fmt(f)
     }
 }
@@ -1961,9 +1963,9 @@
                 peer_id: <span class="kw">_</span>,
                 host,
                 port,
-            } =&gt; <span class="macro">format!</span>(<span class="string">&quot;ws://{host}:{port}/websocket&quot;</span>).parse(),
+            } =&gt; <span class="macro">format!</span>(<span class="string">"ws://{host}:{port}/websocket"</span>).parse(),
             net::Address::Unix { .. } =&gt; <span class="prelude-val">Err</span>(Error::invalid_params(
-                <span class="string">&quot;only TCP-based node addresses are supported&quot;</span>.to_string(),
+                <span class="string">"only TCP-based node addresses are supported"</span>.to_string(),
             )),
         }
     }
@@ -2030,13 +2032,13 @@
         /// instance) as well as the WebSocket connection driver. The execution of
         /// this driver becomes the responsibility of the client owner, and must be
         /// executed in a separate asynchronous context to the client to ensure it
-        /// doesn&#39;t block the client.
+        /// doesn't block the client.
         </span><span class="kw">pub async fn </span>new(
             url: Url,
             compat: CompatMode,
             config: <span class="prelude-ty">Option</span>&lt;WebSocketConfig&gt;,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, WebSocketClientDriver), Error&gt; {
-            <span class="macro">debug!</span>(<span class="string">&quot;Connecting to unsecure WebSocket endpoint: {}&quot;</span>, url);
+            <span class="macro">debug!</span>(<span class="string">"Connecting to unsecure WebSocket endpoint: {}"</span>, url);
 
             <span class="kw">let </span>(stream, _response) = connect_async_with_config(url, config)
                 .<span class="kw">await
@@ -2062,13 +2064,13 @@
         /// instance) as well as the WebSocket connection driver. The execution of
         /// this driver becomes the responsibility of the client owner, and must be
         /// executed in a separate asynchronous context to the client to ensure it
-        /// doesn&#39;t block the client.
+        /// doesn't block the client.
         </span><span class="kw">pub async fn </span>new(
             url: Url,
             compat: CompatMode,
             config: <span class="prelude-ty">Option</span>&lt;WebSocketConfig&gt;,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, WebSocketClientDriver), Error&gt; {
-            <span class="macro">debug!</span>(<span class="string">&quot;Connecting to secure WebSocket endpoint: {}&quot;</span>, url);
+            <span class="macro">debug!</span>(<span class="string">"Connecting to secure WebSocket endpoint: {}"</span>, url);
 
             <span class="comment">// Not supplying a connector means async_tungstenite will create the
             // connector for us.
@@ -2109,7 +2111,7 @@
             <span class="kw">let </span>id = wrapper.id().to_string();
             <span class="kw">let </span>wrapped_request = wrapper.into_json();
 
-            <span class="macro">tracing::debug!</span>(<span class="string">&quot;Outgoing request: {}&quot;</span>, wrapped_request);
+            <span class="macro">tracing::debug!</span>(<span class="string">"Outgoing request: {}"</span>, wrapped_request);
 
             <span class="kw">let </span>(response_tx, <span class="kw-2">mut </span>response_rx) = unbounded();
 
@@ -2120,10 +2122,10 @@
             }))<span class="question-mark">?</span>;
 
             <span class="kw">let </span>response = response_rx.recv().<span class="kw">await</span>.ok_or_else(|| {
-                Error::client_internal(<span class="string">&quot;failed to hear back from WebSocket driver&quot;</span>.to_string())
+                Error::client_internal(<span class="string">"failed to hear back from WebSocket driver"</span>.to_string())
             })<span class="question-mark">??</span>;
 
-            <span class="macro">tracing::debug!</span>(<span class="string">&quot;Incoming response: {}&quot;</span>, response);
+            <span class="macro">tracing::debug!</span>(<span class="string">"Incoming response: {}"</span>, response);
 
             R::Response::from_string(response).map(Into::into)
         }
@@ -2141,7 +2143,7 @@
             }))<span class="question-mark">?</span>;
             <span class="comment">// Make sure our subscription request went through successfully.
             </span>response_rx.recv().<span class="kw">await</span>.ok_or_else(|| {
-                Error::client_internal(<span class="string">&quot;failed to hear back from WebSocket driver&quot;</span>.to_string())
+                Error::client_internal(<span class="string">"failed to hear back from WebSocket driver"</span>.to_string())
             })<span class="question-mark">??</span>;
             <span class="prelude-val">Ok</span>(Subscription::new(id, query, subscription_rx))
         }
@@ -2153,7 +2155,7 @@
                 response_tx,
             }))<span class="question-mark">?</span>;
             response_rx.recv().<span class="kw">await</span>.ok_or_else(|| {
-                Error::client_internal(<span class="string">&quot;failed to hear back from WebSocket driver&quot;</span>.to_string())
+                Error::client_internal(<span class="string">"failed to hear back from WebSocket driver"</span>.to_string())
             })<span class="question-mark">??</span>;
             <span class="prelude-val">Ok</span>(())
         }
@@ -2230,18 +2232,18 @@
             <span class="self">self</span>,
         ) -&gt; tungstenite::Result&lt;tungstenite::handshake::client::Request&gt; {
             <span class="kw">let </span>builder = tungstenite::handshake::client::Request::builder()
-                .method(<span class="string">&quot;GET&quot;</span>)
-                .header(<span class="string">&quot;Host&quot;</span>, <span class="self">self</span>.host())
-                .header(<span class="string">&quot;Connection&quot;</span>, <span class="string">&quot;Upgrade&quot;</span>)
-                .header(<span class="string">&quot;Upgrade&quot;</span>, <span class="string">&quot;websocket&quot;</span>)
-                .header(<span class="string">&quot;Sec-WebSocket-Version&quot;</span>, <span class="string">&quot;13&quot;</span>)
+                .method(<span class="string">"GET"</span>)
+                .header(<span class="string">"Host"</span>, <span class="self">self</span>.host())
+                .header(<span class="string">"Connection"</span>, <span class="string">"Upgrade"</span>)
+                .header(<span class="string">"Upgrade"</span>, <span class="string">"websocket"</span>)
+                .header(<span class="string">"Sec-WebSocket-Version"</span>, <span class="string">"13"</span>)
                 .header(
-                    <span class="string">&quot;Sec-WebSocket-Key&quot;</span>,
+                    <span class="string">"Sec-WebSocket-Key"</span>,
                     tungstenite::handshake::client::generate_key(),
                 );
 
             <span class="kw">let </span>builder = <span class="kw">if let </span><span class="prelude-val">Some</span>(auth) = authorize(<span class="self">self</span>.as_ref()) {
-                builder.header(<span class="string">&quot;Authorization&quot;</span>, auth.to_string())
+                builder.header(<span class="string">"Authorization"</span>, auth.to_string())
             } <span class="kw">else </span>{
                 builder
             };
@@ -2315,7 +2317,7 @@
     </span>router: SubscriptionRouter,
     <span class="comment">// How we receive incoming commands from the WebSocketClient.
     </span>cmd_rx: ChannelRx&lt;DriverCommand&gt;,
-    <span class="comment">// Commands we&#39;ve received but have not yet completed, indexed by their ID.
+    <span class="comment">// Commands we've received but have not yet completed, indexed by their ID.
     // A Terminate command is executed immediately.
     </span>pending_commands: HashMap&lt;SubscriptionId, DriverCommand&gt;,
     <span class="comment">// The compatibility mode directing how to parse subscription events.
@@ -2339,7 +2341,7 @@
 
     <span class="kw">async fn </span>send_msg(<span class="kw-2">&amp;mut </span><span class="self">self</span>, msg: Message) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="self">self</span>.stream.send(msg).<span class="kw">await</span>.map_err(|e| {
-            Error::web_socket(<span class="string">&quot;failed to write to WebSocket connection&quot;</span>.to_string(), e)
+            Error::web_socket(<span class="string">"failed to write to WebSocket connection"</span>.to_string(), e)
         })
     }
 
@@ -2376,7 +2378,7 @@
                     </span>},
                     <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(
                         Error::web_socket(
-                            <span class="string">&quot;failed to read from WebSocket connection&quot;</span>.to_string(),
+                            <span class="string">"failed to read from WebSocket connection"</span>.to_string(),
                             e
                         ),
                     ),
@@ -2407,7 +2409,7 @@
 
     <span class="kw">async fn </span>subscribe(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cmd: SubscribeCommand) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="comment">// If we already have an active subscription for the given query,
-        // there&#39;s no need to initiate another one. Just add this subscription
+        // there's no need to initiate another one. Just add this subscription
         // to the router.
         </span><span class="kw">if </span><span class="self">self</span>.router.num_subscriptions_for_query(cmd.query.clone()) &gt; <span class="number">0 </span>{
             <span class="kw">let </span>(id, query, subscription_tx, response_tx) =
@@ -2432,7 +2434,7 @@
 
     <span class="kw">async fn </span>unsubscribe(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cmd: UnsubscribeCommand) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="comment">// Terminate all subscriptions for this query immediately. This
-        // prioritizes acknowledgement of the caller&#39;s wishes over networking
+        // prioritizes acknowledgement of the caller's wishes over networking
         // problems.
         </span><span class="kw">if </span><span class="self">self</span>.router.remove_by_query(cmd.query.clone()) == <span class="number">0 </span>{
             <span class="comment">// If there were no subscriptions for this query, respond
@@ -2468,7 +2470,7 @@
             CompatMode::V0_34 =&gt; event::v0_34::DeEvent::from_string(<span class="kw-2">&amp;</span>msg).map(Into::into),
         };
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(ev) = parse_res {
-            <span class="macro">debug!</span>(<span class="string">&quot;JSON-RPC event: {}&quot;</span>, msg);
+            <span class="macro">debug!</span>(<span class="string">"JSON-RPC event: {}"</span>, msg);
             <span class="self">self</span>.publish_event(ev).<span class="kw">await</span>;
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
@@ -2477,17 +2479,17 @@
             <span class="prelude-val">Ok</span>(w) =&gt; w,
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;Failed to deserialize incoming message as a JSON-RPC message: {}&quot;</span>,
+                    <span class="string">"Failed to deserialize incoming message as a JSON-RPC message: {}"</span>,
                     e
                 );
 
-                <span class="macro">debug!</span>(<span class="string">&quot;JSON-RPC message: {}&quot;</span>, msg);
+                <span class="macro">debug!</span>(<span class="string">"JSON-RPC message: {}"</span>, msg);
 
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             },
         };
 
-        <span class="macro">debug!</span>(<span class="string">&quot;Generic JSON-RPC message: {:?}&quot;</span>, wrapper);
+        <span class="macro">debug!</span>(<span class="string">"Generic JSON-RPC message: {:?}"</span>, wrapper);
 
         <span class="kw">let </span>id = wrapper.id().to_string();
 
@@ -2499,16 +2501,16 @@
             <span class="self">self</span>.respond_to_pending_command(pending_cmd, msg).<span class="kw">await</span><span class="question-mark">?</span>;
         };
 
-        <span class="comment">// We ignore incoming messages whose ID we don&#39;t recognize (could be
+        <span class="comment">// We ignore incoming messages whose ID we don't recognize (could be
         // relating to a fire-and-forget unsubscribe request - see the
         // publish_event() method below).
         </span><span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>publish_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id: SubscriptionIdRef&lt;<span class="lifetime">&#39;_</span>&gt;, err: Error) {
+    <span class="kw">async fn </span>publish_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id: SubscriptionIdRef&lt;<span class="lifetime">'_</span>&gt;, err: Error) {
         <span class="kw">if let </span>PublishResult::AllDisconnected(query) = <span class="self">self</span>.router.publish_error(id, err) {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;All subscribers for query \&quot;{}\&quot; have disconnected. Unsubscribing from query...&quot;</span>,
+                <span class="string">"All subscribers for query \"{}\" have disconnected. Unsubscribing from query..."</span>,
                 query
             );
 
@@ -2519,7 +2521,7 @@
                 </span>.send_request(Wrapper::new(unsubscribe::Request::new(query)))
                 .<span class="kw">await
             </span>{
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to send unsubscribe request: {}&quot;</span>, e);
+                <span class="macro">error!</span>(<span class="string">"Failed to send unsubscribe request: {}"</span>, e);
             }
         }
     }
@@ -2527,7 +2529,7 @@
     <span class="kw">async fn </span>publish_event(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ev: Event) {
         <span class="kw">if let </span>PublishResult::AllDisconnected(query) = <span class="self">self</span>.router.publish_event(ev) {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;All subscribers for query \&quot;{}\&quot; have disconnected. Unsubscribing from query...&quot;</span>,
+                <span class="string">"All subscribers for query \"{}\" have disconnected. Unsubscribing from query..."</span>,
                 query
             );
 
@@ -2538,7 +2540,7 @@
                 </span>.send_request(Wrapper::new(unsubscribe::Request::new(query)))
                 .<span class="kw">await
             </span>{
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to send unsubscribe request: {}&quot;</span>, e);
+                <span class="macro">error!</span>(<span class="string">"Failed to send unsubscribe request: {}"</span>, e);
             }
         }
     }
@@ -2572,7 +2574,7 @@
     <span class="kw">async fn </span>close(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="self">self</span>.send_msg(Message::Close(<span class="prelude-val">Some</span>(CloseFrame {
             code: CloseCode::Normal,
-            reason: Cow::from(<span class="string">&quot;client closed WebSocket connection&quot;</span>),
+            reason: Cow::from(<span class="string">"client closed WebSocket connection"</span>),
         })))
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -2836,7 +2838,7 @@
         <span class="kw">async fn </span>handle_incoming_text_msg(<span class="kw-2">&amp;mut </span><span class="self">self</span>, msg: String) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;(), Error&gt;&gt; {
             <span class="kw">match </span>serde_json::from_str::&lt;serde_json::Value&gt;(<span class="kw-2">&amp;</span>msg) {
                 <span class="prelude-val">Ok</span>(json_msg) =&gt; {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(json_method) = json_msg.get(<span class="string">&quot;method&quot;</span>) {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(json_method) = json_msg.get(<span class="string">"method"</span>) {
                         <span class="kw">match </span>Method::from_str(json_method.as_str().unwrap()) {
                             <span class="prelude-val">Ok</span>(method) =&gt; <span class="kw">match </span>method {
                                 Method::Subscribe =&gt; {
@@ -2861,32 +2863,32 @@
                                     <span class="self">self</span>.send(req.id().clone(), unsubscribe::Response {}).<span class="kw">await</span>;
                                 },
                                 <span class="kw">_ </span>=&gt; {
-                                    <span class="macro">println!</span>(<span class="string">&quot;Unsupported method in incoming request: {}&quot;</span>, <span class="kw-2">&amp;</span>method);
+                                    <span class="macro">println!</span>(<span class="string">"Unsupported method in incoming request: {}"</span>, <span class="kw-2">&amp;</span>method);
                                 },
                             },
                             <span class="prelude-val">Err</span>(e) =&gt; {
                                 <span class="macro">println!</span>(
-                                    <span class="string">&quot;Unexpected method in incoming request: {json_method} ({e})&quot;
+                                    <span class="string">"Unexpected method in incoming request: {json_method} ({e})"
                                 </span>);
                             },
                         }
                     }
                 },
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">println!</span>(<span class="string">&quot;Failed to parse incoming request: {} ({})&quot;</span>, <span class="kw-2">&amp;</span>msg, e);
+                    <span class="macro">println!</span>(<span class="string">"Failed to parse incoming request: {} ({})"</span>, <span class="kw-2">&amp;</span>msg, e);
                 },
             }
             <span class="prelude-val">None
         </span>}
 
         <span class="kw">fn </span>add_subscription(<span class="kw-2">&amp;mut </span><span class="self">self</span>, query: String, id: String) {
-            <span class="macro">println!</span>(<span class="string">&quot;Adding subscription with ID {} for query: {}&quot;</span>, <span class="kw-2">&amp;</span>id, <span class="kw-2">&amp;</span>query);
+            <span class="macro">println!</span>(<span class="string">"Adding subscription with ID {} for query: {}"</span>, <span class="kw-2">&amp;</span>id, <span class="kw-2">&amp;</span>query);
             <span class="self">self</span>.subscriptions.insert(query, id);
         }
 
         <span class="kw">fn </span>remove_subscription(<span class="kw-2">&amp;mut </span><span class="self">self</span>, query: String) {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = <span class="self">self</span>.subscriptions.remove(<span class="kw-2">&amp;</span>query) {
-                <span class="macro">println!</span>(<span class="string">&quot;Removed subscription {id} for query: {query}&quot;</span>);
+                <span class="macro">println!</span>(<span class="string">"Removed subscription {id} for query: {query}"</span>);
             }
         }
 
@@ -2916,10 +2918,10 @@
 
     <span class="kw">async fn </span>read_json_fixture(version: <span class="kw-2">&amp;</span>str, name: <span class="kw-2">&amp;</span>str) -&gt; String {
         fs::read_to_string(
-            PathBuf::from(<span class="string">&quot;./tests/kvstore_fixtures&quot;</span>)
+            PathBuf::from(<span class="string">"./tests/kvstore_fixtures"</span>)
                 .join(version)
-                .join(<span class="string">&quot;incoming&quot;</span>)
-                .join(name.to_owned() + <span class="string">&quot;.json&quot;</span>),
+                .join(<span class="string">"incoming"</span>)
+                .join(name.to_owned() + <span class="string">".json"</span>),
         )
         .<span class="kw">await
         </span>.unwrap()
@@ -2930,21 +2932,21 @@
         <span class="kw">use </span><span class="kw">crate</span>::event::v0_34::DeEvent;
 
         <span class="kw">async fn </span>read_event(name: <span class="kw-2">&amp;</span>str) -&gt; Event {
-            DeEvent::from_string(read_json_fixture(<span class="string">&quot;v0_34&quot;</span>, name).<span class="kw">await</span>)
+            DeEvent::from_string(read_json_fixture(<span class="string">"v0_34"</span>, name).<span class="kw">await</span>)
                 .unwrap()
                 .into()
         }
 
         <span class="attr">#[tokio::test]
         </span><span class="kw">async fn </span>websocket_client_happy_path() {
-            <span class="kw">let </span>event1 = read_event(<span class="string">&quot;subscribe_newblock_0&quot;</span>).<span class="kw">await</span>;
-            <span class="kw">let </span>event2 = read_event(<span class="string">&quot;subscribe_newblock_1&quot;</span>).<span class="kw">await</span>;
-            <span class="kw">let </span>event3 = read_event(<span class="string">&quot;subscribe_newblock_2&quot;</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event1 = read_event(<span class="string">"subscribe_newblock_0"</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event2 = read_event(<span class="string">"subscribe_newblock_1"</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event3 = read_event(<span class="string">"subscribe_newblock_2"</span>).<span class="kw">await</span>;
             <span class="kw">let </span>test_events = <span class="macro">vec!</span>[event1, event2, event3];
 
-            <span class="macro">println!</span>(<span class="string">&quot;Starting WebSocket server...&quot;</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>server = TestServer::new(<span class="string">&quot;127.0.0.1:0&quot;</span>, TestRpcVersion::V0_34).<span class="kw">await</span>;
-            <span class="macro">println!</span>(<span class="string">&quot;Creating client RPC WebSocket connection...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Starting WebSocket server..."</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>server = TestServer::new(<span class="string">"127.0.0.1:0"</span>, TestRpcVersion::V0_34).<span class="kw">await</span>;
+            <span class="macro">println!</span>(<span class="string">"Creating client RPC WebSocket connection..."</span>);
             <span class="kw">let </span>url = server.node_addr.clone().try_into().unwrap();
             <span class="kw">let </span>(client, driver) = WebSocketClient::builder(url)
                 .compat_mode(CompatMode::V0_34)
@@ -2953,7 +2955,7 @@
                 </span>.unwrap();
             <span class="kw">let </span>driver_handle = tokio::spawn(<span class="kw">async move </span>{ driver.run().<span class="kw">await </span>});
 
-            <span class="macro">println!</span>(<span class="string">&quot;Initiating subscription for new blocks...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Initiating subscription for new blocks..."</span>);
             <span class="kw">let </span><span class="kw-2">mut </span>subs = client.subscribe(EventType::NewBlock.into()).<span class="kw">await</span>.unwrap();
 
             <span class="comment">// Collect all the events from the subscription.
@@ -2968,19 +2970,19 @@
                 results
             });
 
-            <span class="macro">println!</span>(<span class="string">&quot;Publishing events&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Publishing events"</span>);
             <span class="comment">// Publish the events from this context
             </span><span class="kw">for </span>ev <span class="kw">in </span><span class="kw-2">&amp;</span>test_events {
                 server.publish_event(ev.clone()).unwrap();
             }
 
-            <span class="macro">println!</span>(<span class="string">&quot;Collecting results from subscription...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Collecting results from subscription..."</span>);
             <span class="kw">let </span>collected_results = subs_collector_hdl.<span class="kw">await</span>.unwrap();
 
             client.close().unwrap();
             server.terminate().<span class="kw">await</span>.unwrap();
             <span class="kw">let _ </span>= driver_handle.<span class="kw">await</span>.unwrap();
-            <span class="macro">println!</span>(<span class="string">&quot;Closed client and terminated server&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Closed client and terminated server"</span>);
 
             <span class="macro">assert_eq!</span>(<span class="number">3</span>, collected_results.len());
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">3 </span>{
@@ -2997,21 +2999,21 @@
         <span class="kw">use </span><span class="kw">crate</span>::event::v0_37::DeEvent;
 
         <span class="kw">async fn </span>read_event(name: <span class="kw-2">&amp;</span>str) -&gt; Event {
-            DeEvent::from_string(read_json_fixture(<span class="string">&quot;v0_37&quot;</span>, name).<span class="kw">await</span>)
+            DeEvent::from_string(read_json_fixture(<span class="string">"v0_37"</span>, name).<span class="kw">await</span>)
                 .unwrap()
                 .into()
         }
 
         <span class="attr">#[tokio::test]
         </span><span class="kw">async fn </span>websocket_client_happy_path() {
-            <span class="kw">let </span>event1 = read_event(<span class="string">&quot;subscribe_newblock_0&quot;</span>).<span class="kw">await</span>;
-            <span class="kw">let </span>event2 = read_event(<span class="string">&quot;subscribe_newblock_1&quot;</span>).<span class="kw">await</span>;
-            <span class="kw">let </span>event3 = read_event(<span class="string">&quot;subscribe_newblock_2&quot;</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event1 = read_event(<span class="string">"subscribe_newblock_0"</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event2 = read_event(<span class="string">"subscribe_newblock_1"</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event3 = read_event(<span class="string">"subscribe_newblock_2"</span>).<span class="kw">await</span>;
             <span class="kw">let </span>test_events = <span class="macro">vec!</span>[event1, event2, event3];
 
-            <span class="macro">println!</span>(<span class="string">&quot;Starting WebSocket server...&quot;</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>server = TestServer::new(<span class="string">&quot;127.0.0.1:0&quot;</span>, TestRpcVersion::V0_37).<span class="kw">await</span>;
-            <span class="macro">println!</span>(<span class="string">&quot;Creating client RPC WebSocket connection...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Starting WebSocket server..."</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>server = TestServer::new(<span class="string">"127.0.0.1:0"</span>, TestRpcVersion::V0_37).<span class="kw">await</span>;
+            <span class="macro">println!</span>(<span class="string">"Creating client RPC WebSocket connection..."</span>);
             <span class="kw">let </span>url = server.node_addr.clone().try_into().unwrap();
             <span class="kw">let </span>(client, driver) = WebSocketClient::builder(url)
                 .compat_mode(CompatMode::V0_37)
@@ -3020,7 +3022,7 @@
                 </span>.unwrap();
             <span class="kw">let </span>driver_handle = tokio::spawn(<span class="kw">async move </span>{ driver.run().<span class="kw">await </span>});
 
-            <span class="macro">println!</span>(<span class="string">&quot;Initiating subscription for new blocks...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Initiating subscription for new blocks..."</span>);
             <span class="kw">let </span><span class="kw-2">mut </span>subs = client.subscribe(EventType::NewBlock.into()).<span class="kw">await</span>.unwrap();
 
             <span class="comment">// Collect all the events from the subscription.
@@ -3035,19 +3037,19 @@
                 results
             });
 
-            <span class="macro">println!</span>(<span class="string">&quot;Publishing events&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Publishing events"</span>);
             <span class="comment">// Publish the events from this context
             </span><span class="kw">for </span>ev <span class="kw">in </span><span class="kw-2">&amp;</span>test_events {
                 server.publish_event(ev.clone()).unwrap();
             }
 
-            <span class="macro">println!</span>(<span class="string">&quot;Collecting results from subscription...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Collecting results from subscription..."</span>);
             <span class="kw">let </span>collected_results = subs_collector_hdl.<span class="kw">await</span>.unwrap();
 
             client.close().unwrap();
             server.terminate().<span class="kw">await</span>.unwrap();
             <span class="kw">let _ </span>= driver_handle.<span class="kw">await</span>.unwrap();
-            <span class="macro">println!</span>(<span class="string">&quot;Closed client and terminated server&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Closed client and terminated server"</span>);
 
             <span class="macro">assert_eq!</span>(<span class="number">3</span>, collected_results.len());
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">3 </span>{
@@ -3064,21 +3066,21 @@
         <span class="kw">use </span><span class="kw">crate</span>::event::v0_38::DeEvent;
 
         <span class="kw">async fn </span>read_event(name: <span class="kw-2">&amp;</span>str) -&gt; Event {
-            DeEvent::from_string(read_json_fixture(<span class="string">&quot;v0_38&quot;</span>, name).<span class="kw">await</span>)
+            DeEvent::from_string(read_json_fixture(<span class="string">"v0_38"</span>, name).<span class="kw">await</span>)
                 .unwrap()
                 .into()
         }
 
         <span class="attr">#[tokio::test]
         </span><span class="kw">async fn </span>websocket_client_happy_path() {
-            <span class="kw">let </span>event1 = read_event(<span class="string">&quot;subscribe_newblock_0&quot;</span>).<span class="kw">await</span>;
-            <span class="kw">let </span>event2 = read_event(<span class="string">&quot;subscribe_newblock_1&quot;</span>).<span class="kw">await</span>;
-            <span class="kw">let </span>event3 = read_event(<span class="string">&quot;subscribe_newblock_2&quot;</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event1 = read_event(<span class="string">"subscribe_newblock_0"</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event2 = read_event(<span class="string">"subscribe_newblock_1"</span>).<span class="kw">await</span>;
+            <span class="kw">let </span>event3 = read_event(<span class="string">"subscribe_newblock_2"</span>).<span class="kw">await</span>;
             <span class="kw">let </span>test_events = <span class="macro">vec!</span>[event1, event2, event3];
 
-            <span class="macro">println!</span>(<span class="string">&quot;Starting WebSocket server...&quot;</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>server = TestServer::new(<span class="string">&quot;127.0.0.1:0&quot;</span>, TestRpcVersion::V0_38).<span class="kw">await</span>;
-            <span class="macro">println!</span>(<span class="string">&quot;Creating client RPC WebSocket connection...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Starting WebSocket server..."</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>server = TestServer::new(<span class="string">"127.0.0.1:0"</span>, TestRpcVersion::V0_38).<span class="kw">await</span>;
+            <span class="macro">println!</span>(<span class="string">"Creating client RPC WebSocket connection..."</span>);
             <span class="kw">let </span>url = server.node_addr.clone().try_into().unwrap();
             <span class="kw">let </span>(client, driver) = WebSocketClient::builder(url)
                 .compat_mode(CompatMode::V0_37)
@@ -3087,7 +3089,7 @@
                 </span>.unwrap();
             <span class="kw">let </span>driver_handle = tokio::spawn(<span class="kw">async move </span>{ driver.run().<span class="kw">await </span>});
 
-            <span class="macro">println!</span>(<span class="string">&quot;Initiating subscription for new blocks...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Initiating subscription for new blocks..."</span>);
             <span class="kw">let </span><span class="kw-2">mut </span>subs = client.subscribe(EventType::NewBlock.into()).<span class="kw">await</span>.unwrap();
 
             <span class="comment">// Collect all the events from the subscription.
@@ -3102,19 +3104,19 @@
                 results
             });
 
-            <span class="macro">println!</span>(<span class="string">&quot;Publishing events&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Publishing events"</span>);
             <span class="comment">// Publish the events from this context
             </span><span class="kw">for </span>ev <span class="kw">in </span><span class="kw-2">&amp;</span>test_events {
                 server.publish_event(ev.clone()).unwrap();
             }
 
-            <span class="macro">println!</span>(<span class="string">&quot;Collecting results from subscription...&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Collecting results from subscription..."</span>);
             <span class="kw">let </span>collected_results = subs_collector_hdl.<span class="kw">await</span>.unwrap();
 
             client.close().unwrap();
             server.terminate().<span class="kw">await</span>.unwrap();
             <span class="kw">let _ </span>= driver_handle.<span class="kw">await</span>.unwrap();
-            <span class="macro">println!</span>(<span class="string">&quot;Closed client and terminated server&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">"Closed client and terminated server"</span>);
 
             <span class="macro">assert_eq!</span>(<span class="number">3</span>, collected_results.len());
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">3 </span>{
@@ -3134,7 +3136,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>without_basic_auth() {
-        <span class="kw">let </span>uri = Uri::from_str(<span class="string">&quot;http://example.com&quot;</span>).unwrap();
+        <span class="kw">let </span>uri = Uri::from_str(<span class="string">"http://example.com"</span>).unwrap();
         <span class="kw">let </span>req = uri.into_client_request().unwrap();
 
         <span class="macro">assert_eq!</span>(authorization(<span class="kw-2">&amp;</span>req), <span class="prelude-val">None</span>);
@@ -3142,7 +3144,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>with_basic_auth() {
-        <span class="kw">let </span>uri = Uri::from_str(<span class="string">&quot;http://toto:tata@example.com&quot;</span>).unwrap();
+        <span class="kw">let </span>uri = Uri::from_str(<span class="string">"http://toto:tata@example.com"</span>).unwrap();
         <span class="kw">let </span>req = uri.into_client_request().unwrap();
 
         <span class="macro">assert_eq!</span>(authorization(<span class="kw-2">&amp;</span>req), <span class="prelude-val">None</span>);

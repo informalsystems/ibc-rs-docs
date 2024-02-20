@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/trace/provider.rs`."><title>provider.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../opentelemetry_sdk/index.html"><img src="https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/trace/provider.rs`."><title>provider.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../opentelemetry_sdk/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -361,7 +363,7 @@
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="doccomment">/// Default tracer name if empty string is provided.
-</span><span class="kw">const </span>DEFAULT_COMPONENT_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;rust.opentelemetry.io/sdk/tracer&quot;</span>;
+</span><span class="kw">const </span>DEFAULT_COMPONENT_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"rust.opentelemetry.io/sdk/tracer"</span>;
 <span class="kw">static </span>PROVIDER_RESOURCE: OnceCell&lt;Resource&gt; = OnceCell::new();
 
 <span class="doccomment">/// TracerProvider inner type
@@ -466,9 +468,9 @@
     <span class="doccomment">/// Create a new versioned `Tracer` instance.
     </span><span class="kw">fn </span>versioned_tracer(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        name: <span class="kw">impl </span>Into&lt;Cow&lt;<span class="lifetime">&#39;static</span>, str&gt;&gt;,
-        version: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
-        schema_url: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
+        name: <span class="kw">impl </span>Into&lt;Cow&lt;<span class="lifetime">'static</span>, str&gt;&gt;,
+        version: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
+        schema_url: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
     ) -&gt; <span class="self">Self</span>::Tracer {
         <span class="kw">let </span>name = name.into();
         <span class="comment">// Use default value if name is invalid empty string
@@ -496,7 +498,7 @@
 
 <span class="kw">impl </span>Builder {
     <span class="doccomment">/// The `SpanExporter` that this provider should use.
-    </span><span class="kw">pub fn </span>with_simple_exporter&lt;T: SpanExporter + <span class="lifetime">&#39;static</span>&gt;(<span class="self">self</span>, exporter: T) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>with_simple_exporter&lt;T: SpanExporter + <span class="lifetime">'static</span>&gt;(<span class="self">self</span>, exporter: T) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>processors = <span class="self">self</span>.processors;
         processors.push(Box::new(SimpleSpanProcessor::new(Box::new(exporter))));
 
@@ -504,7 +506,7 @@
     }
 
     <span class="doccomment">/// The [`SpanExporter`] setup using a default [`BatchSpanProcessor`] that this provider should use.
-    </span><span class="kw">pub fn </span>with_batch_exporter&lt;T: SpanExporter + <span class="lifetime">&#39;static</span>, R: TraceRuntime&gt;(
+    </span><span class="kw">pub fn </span>with_batch_exporter&lt;T: SpanExporter + <span class="lifetime">'static</span>, R: TraceRuntime&gt;(
         <span class="self">self</span>,
         exporter: T,
         runtime: R,
@@ -514,7 +516,7 @@
     }
 
     <span class="doccomment">/// The [`SpanProcessor`] that this provider should use.
-    </span><span class="kw">pub fn </span>with_span_processor&lt;T: SpanProcessor + <span class="lifetime">&#39;static</span>&gt;(<span class="self">self</span>, processor: T) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>with_span_processor&lt;T: SpanProcessor + <span class="lifetime">'static</span>&gt;(<span class="self">self</span>, processor: T) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>processors = <span class="self">self</span>.processors;
         processors.push(Box::new(processor));
 
@@ -588,7 +590,7 @@
             <span class="kw">if </span><span class="self">self</span>.success {
                 <span class="prelude-val">Ok</span>(())
             } <span class="kw">else </span>{
-                <span class="prelude-val">Err</span>(TraceError::from(<span class="string">&quot;cannot export&quot;</span>))
+                <span class="prelude-val">Err</span>(TraceError::from(<span class="string">"cannot export"</span>))
             }
         }
 
@@ -613,54 +615,54 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_tracer_provider_default_resource() {
-        <span class="comment">// If users didn&#39;t provided a resource and there isn&#39;t a env var set. Use default one
+        <span class="comment">// If users didn't provided a resource and there isn't a env var set. Use default one
         </span><span class="kw">let </span>assert_service_name = |provider: <span class="kw">super</span>::TracerProvider,
-                                   expect: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;| {
+                                   expect: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;| {
             <span class="macro">assert_eq!</span>(
                 provider
                     .config()
                     .resource
-                    .get(Key::from_static_str(<span class="string">&quot;service.name&quot;</span>))
+                    .get(Key::from_static_str(<span class="string">"service.name"</span>))
                     .map(|v| v.to_string()),
                 expect.map(|s| s.to_string())
             );
         };
         <span class="kw">let </span>default_config_provider = <span class="kw">super</span>::TracerProvider::builder().build();
-        assert_service_name(default_config_provider, <span class="prelude-val">Some</span>(<span class="string">&quot;unknown_service&quot;</span>));
+        assert_service_name(default_config_provider, <span class="prelude-val">Some</span>(<span class="string">"unknown_service"</span>));
 
-        <span class="comment">// If user didn&#39;t provided a resource, try to get a default from env var
+        <span class="comment">// If user didn't provided a resource, try to get a default from env var
         </span><span class="kw">let </span>custom_config_provider = <span class="kw">super</span>::TracerProvider::builder()
             .with_config(Config {
                 resource: Cow::Owned(Resource::new(<span class="macro">vec!</span>[KeyValue::new(
-                    <span class="string">&quot;service.name&quot;</span>,
-                    <span class="string">&quot;test_service&quot;</span>,
+                    <span class="string">"service.name"</span>,
+                    <span class="string">"test_service"</span>,
                 )])),
                 ..Default::default()
             })
             .build();
-        assert_service_name(custom_config_provider, <span class="prelude-val">Some</span>(<span class="string">&quot;test_service&quot;</span>));
+        assert_service_name(custom_config_provider, <span class="prelude-val">Some</span>(<span class="string">"test_service"</span>));
 
         <span class="comment">// If `OTEL_RESOURCE_ATTRIBUTES` is set, read them automatically
-        </span>env::set_var(<span class="string">&quot;OTEL_RESOURCE_ATTRIBUTES&quot;</span>, <span class="string">&quot;key1=value1, k2, k3=value2&quot;</span>);
+        </span>env::set_var(<span class="string">"OTEL_RESOURCE_ATTRIBUTES"</span>, <span class="string">"key1=value1, k2, k3=value2"</span>);
         <span class="kw">let </span>env_resource_provider = <span class="kw">super</span>::TracerProvider::builder().build();
         <span class="macro">assert_eq!</span>(
             env_resource_provider.config().resource,
             Cow::Owned(Resource::new(<span class="macro">vec!</span>[
-                KeyValue::new(<span class="string">&quot;key1&quot;</span>, <span class="string">&quot;value1&quot;</span>),
-                KeyValue::new(<span class="string">&quot;k3&quot;</span>, <span class="string">&quot;value2&quot;</span>),
-                KeyValue::new(<span class="string">&quot;service.name&quot;</span>, <span class="string">&quot;unknown_service&quot;</span>),
+                KeyValue::new(<span class="string">"key1"</span>, <span class="string">"value1"</span>),
+                KeyValue::new(<span class="string">"k3"</span>, <span class="string">"value2"</span>),
+                KeyValue::new(<span class="string">"service.name"</span>, <span class="string">"unknown_service"</span>),
             ]))
         );
 
         <span class="comment">// When `OTEL_RESOURCE_ATTRIBUTES` is set and also user provided config
         </span>env::set_var(
-            <span class="string">&quot;OTEL_RESOURCE_ATTRIBUTES&quot;</span>,
-            <span class="string">&quot;my-custom-key=env-val,k2=value2&quot;</span>,
+            <span class="string">"OTEL_RESOURCE_ATTRIBUTES"</span>,
+            <span class="string">"my-custom-key=env-val,k2=value2"</span>,
         );
         <span class="kw">let </span>user_provided_resource_config_provider = <span class="kw">super</span>::TracerProvider::builder()
             .with_config(Config {
                 resource: Cow::Owned(Resource::default().merge(<span class="kw-2">&amp;mut </span>Resource::new(<span class="macro">vec!</span>[
-                    KeyValue::new(<span class="string">&quot;my-custom-key&quot;</span>, <span class="string">&quot;my-custom-value&quot;</span>),
+                    KeyValue::new(<span class="string">"my-custom-key"</span>, <span class="string">"my-custom-value"</span>),
                 ]))),
                 ..Default::default()
             })
@@ -668,12 +670,12 @@
         <span class="macro">assert_eq!</span>(
             user_provided_resource_config_provider.config().resource,
             Cow::Owned(Resource::new(<span class="macro">vec!</span>[
-                KeyValue::new(<span class="string">&quot;my-custom-key&quot;</span>, <span class="string">&quot;my-custom-value&quot;</span>),
-                KeyValue::new(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;value2&quot;</span>),
-                KeyValue::new(<span class="string">&quot;service.name&quot;</span>, <span class="string">&quot;unknown_service&quot;</span>),
+                KeyValue::new(<span class="string">"my-custom-key"</span>, <span class="string">"my-custom-value"</span>),
+                KeyValue::new(<span class="string">"k2"</span>, <span class="string">"value2"</span>),
+                KeyValue::new(<span class="string">"service.name"</span>, <span class="string">"unknown_service"</span>),
             ]))
         );
-        env::remove_var(<span class="string">&quot;OTEL_RESOURCE_ATTRIBUTES&quot;</span>);
+        env::remove_var(<span class="string">"OTEL_RESOURCE_ATTRIBUTES"</span>);
 
         <span class="comment">// If user provided a resource, it takes priority during collision.
         </span><span class="kw">let </span>no_service_name = <span class="kw">super</span>::TracerProvider::builder()

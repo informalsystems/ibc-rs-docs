@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/trace/span_processor.rs`."><title>span_processor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../opentelemetry_sdk/index.html"><img src="https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/main/assets/logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/opentelemetry_sdk-0.19.0/src/trace/span_processor.rs`."><title>span_processor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="opentelemetry_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../opentelemetry_sdk/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -951,7 +953,7 @@
 //! All `Tracer` instances created by a `TracerProvider` share the same span processors.
 //! Changes to this collection reflect in all `Tracer` instances.
 //!
-//! The following diagram shows `SpanProcessor`&#39;s relationship to other components
+//! The following diagram shows `SpanProcessor`'s relationship to other components
 //! in the SDK:
 //!
 //! ```ascii
@@ -990,24 +992,24 @@
 <span class="kw">use </span>std::{env, fmt, str::FromStr, thread, time::Duration};
 
 <span class="doccomment">/// Delay interval between two consecutive exports.
-</span><span class="kw">const </span>OTEL_BSP_SCHEDULE_DELAY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;OTEL_BSP_SCHEDULE_DELAY&quot;</span>;
+</span><span class="kw">const </span>OTEL_BSP_SCHEDULE_DELAY: <span class="kw-2">&amp;</span>str = <span class="string">"OTEL_BSP_SCHEDULE_DELAY"</span>;
 <span class="doccomment">/// Default delay interval between two consecutive exports.
 </span><span class="kw">const </span>OTEL_BSP_SCHEDULE_DELAY_DEFAULT: u64 = <span class="number">5_000</span>;
 <span class="doccomment">/// Maximum queue size
-</span><span class="kw">const </span>OTEL_BSP_MAX_QUEUE_SIZE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;OTEL_BSP_MAX_QUEUE_SIZE&quot;</span>;
+</span><span class="kw">const </span>OTEL_BSP_MAX_QUEUE_SIZE: <span class="kw-2">&amp;</span>str = <span class="string">"OTEL_BSP_MAX_QUEUE_SIZE"</span>;
 <span class="doccomment">/// Default maximum queue size
 </span><span class="kw">const </span>OTEL_BSP_MAX_QUEUE_SIZE_DEFAULT: usize = <span class="number">2_048</span>;
 <span class="doccomment">/// Maximum batch size, must be less than or equal to OTEL_BSP_MAX_QUEUE_SIZE
-</span><span class="kw">const </span>OTEL_BSP_MAX_EXPORT_BATCH_SIZE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;OTEL_BSP_MAX_EXPORT_BATCH_SIZE&quot;</span>;
+</span><span class="kw">const </span>OTEL_BSP_MAX_EXPORT_BATCH_SIZE: <span class="kw-2">&amp;</span>str = <span class="string">"OTEL_BSP_MAX_EXPORT_BATCH_SIZE"</span>;
 <span class="doccomment">/// Default maximum batch size
 </span><span class="kw">const </span>OTEL_BSP_MAX_EXPORT_BATCH_SIZE_DEFAULT: usize = <span class="number">512</span>;
 <span class="doccomment">/// Maximum allowed time to export data.
-</span><span class="kw">const </span>OTEL_BSP_EXPORT_TIMEOUT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;OTEL_BSP_EXPORT_TIMEOUT&quot;</span>;
+</span><span class="kw">const </span>OTEL_BSP_EXPORT_TIMEOUT: <span class="kw-2">&amp;</span>str = <span class="string">"OTEL_BSP_EXPORT_TIMEOUT"</span>;
 <span class="doccomment">/// Default maximum allowed time to export data.
 </span><span class="kw">const </span>OTEL_BSP_EXPORT_TIMEOUT_DEFAULT: u64 = <span class="number">30_000</span>;
 <span class="doccomment">/// Environment variable to configure max concurrent exports for batch span
 /// processor.
-</span><span class="kw">const </span>OTEL_BSP_MAX_CONCURRENT_EXPORTS: <span class="kw-2">&amp;</span>str = <span class="string">&quot;OTEL_BSP_MAX_CONCURRENT_EXPORTS&quot;</span>;
+</span><span class="kw">const </span>OTEL_BSP_MAX_CONCURRENT_EXPORTS: <span class="kw-2">&amp;</span>str = <span class="string">"OTEL_BSP_MAX_CONCURRENT_EXPORTS"</span>;
 <span class="doccomment">/// Default max concurrent exports for BSP
 </span><span class="kw">const </span>OTEL_BSP_MAX_CONCURRENT_EXPORTS_DEFAULT: usize = <span class="number">1</span>;
 
@@ -1048,7 +1050,7 @@
         <span class="kw">let </span>(shutdown_tx, shutdown_rx) = crossbeam_channel::bounded(<span class="number">0</span>);
 
         <span class="kw">let _ </span>= thread::Builder::new()
-            .name(<span class="string">&quot;opentelemetry-exporter&quot;</span>.to_string())
+            .name(<span class="string">"opentelemetry-exporter"</span>.to_string())
             .spawn(<span class="kw">move </span>|| {
                 <span class="kw">while let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(span)) = span_rx.recv() {
                     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = futures_executor::block_on(exporter.export(<span class="macro">vec!</span>[span])) {
@@ -1060,7 +1062,7 @@
 
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = shutdown_tx.send(()) {
                     global::handle_error(TraceError::from(<span class="macro">format!</span>(
-                        <span class="string">&quot;could not send shutdown: {:?}&quot;</span>,
+                        <span class="string">"could not send shutdown: {:?}"</span>,
                         err
                     )));
                 }
@@ -1084,7 +1086,7 @@
         }
 
         <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = <span class="self">self</span>.sender.send(<span class="prelude-val">Some</span>(span)) {
-            global::handle_error(TraceError::from(<span class="macro">format!</span>(<span class="string">&quot;error processing span {:?}&quot;</span>, err)));
+            global::handle_error(TraceError::from(<span class="macro">format!</span>(<span class="string">"error processing span {:?}"</span>, err)));
         }
     }
 
@@ -1097,7 +1099,7 @@
         <span class="kw">if </span><span class="self">self</span>.sender.send(<span class="prelude-val">None</span>).is_ok() {
             <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = <span class="self">self</span>.shutdown.recv() {
                 global::handle_error(TraceError::from(<span class="macro">format!</span>(
-                    <span class="string">&quot;error shutting down span processor: {:?}&quot;</span>,
+                    <span class="string">"error shutting down span processor: {:?}"</span>,
                     err
                 )))
             }
@@ -1113,7 +1115,7 @@
 /// Batch span processors need to run a background task to collect and send
 /// spans. Different runtimes need different ways to handle the background task.
 ///
-/// Note: Configuring an opentelemetry `Runtime` that&#39;s not compatible with the
+/// Note: Configuring an opentelemetry `Runtime` that's not compatible with the
 /// underlying runtime can cause deadlocks (see tokio section).
 ///
 /// ### Use with Tokio
@@ -1122,7 +1124,7 @@
 /// `current_thread_scheduler`, the other is `multiple_thread_scheduler`. Both
 /// of them default to use batch span processors to install span exporters.
 ///
-/// Tokio&#39;s `current_thread_scheduler` can cause the program to hang forever if
+/// Tokio's `current_thread_scheduler` can cause the program to hang forever if
 /// blocking work is scheduled with other tasks in the same runtime. To avoid
 /// this, be sure to enable the `rt-tokio-current-thread` feature in this crate
 /// if you are using that runtime (e.g. users of actix-web), and blocking tasks
@@ -1137,7 +1139,7 @@
 /// contexts.
 ///
 /// ```
-/// # #[cfg(feature=&quot;tokio&quot;)]
+/// # #[cfg(feature="tokio")]
 /// # {
 /// use opentelemetry_api::global;
 /// use opentelemetry_sdk::{runtime, testing::trace::NoopSpanExporter, trace};
@@ -1171,9 +1173,9 @@
 }
 
 <span class="kw">impl</span>&lt;R: TraceRuntime&gt; fmt::Debug <span class="kw">for </span>BatchSpanProcessor&lt;R&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;BatchSpanProcessor&quot;</span>)
-            .field(<span class="string">&quot;message_sender&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.message_sender)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">"BatchSpanProcessor"</span>)
+            .field(<span class="string">"message_sender"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.message_sender)
             .finish()
     }
 }
@@ -1216,7 +1218,7 @@
     }
 }
 
-<span class="doccomment">/// Messages sent between application thread and batch span processor&#39;s work thread.
+<span class="doccomment">/// Messages sent between application thread and batch span processor's work thread.
 </span><span class="comment">// In this enum the size difference is not a concern because:
 // 1. If we wrap SpanData into a pointer, it will add overhead when processing.
 // 2. Most of the messages will be ExportSpan.
@@ -1234,7 +1236,7 @@
 
 <span class="kw">struct </span>BatchSpanProcessorInternal&lt;R&gt; {
     spans: Vec&lt;SpanData&gt;,
-    export_tasks: FuturesUnordered&lt;BoxFuture&lt;<span class="lifetime">&#39;static</span>, ExportResult&gt;&gt;,
+    export_tasks: FuturesUnordered&lt;BoxFuture&lt;<span class="lifetime">'static</span>, ExportResult&gt;&gt;,
     runtime: R,
     exporter: Box&lt;<span class="kw">dyn </span>SpanExporter&gt;,
     config: BatchConfig,
@@ -1249,7 +1251,7 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(channel) = res_channel {
                 <span class="kw">if let </span><span class="prelude-val">Err</span>(result) = channel.send(result) {
                     global::handle_error(TraceError::from(<span class="macro">format!</span>(
-                        <span class="string">&quot;failed to send flush result: {:?}&quot;</span>,
+                        <span class="string">"failed to send flush result: {:?}"</span>,
                         result
                     )));
                 }
@@ -1310,7 +1312,7 @@
             // this method.
             //
             // In particular, if any SpanProcessor has any associated exporter, it SHOULD
-            // try to call the exporter&#39;s Export with all spans for which this was not
+            // try to call the exporter's Export with all spans for which this was not
             // already done and then invoke ForceFlush on it. The built-in SpanProcessors
             // MUST do so. If a timeout is specified (see below), the SpanProcessor MUST
             // prioritize honoring the timeout over finishing all calls. It MAY skip or
@@ -1335,9 +1337,9 @@
         <span class="bool-val">true
     </span>}
 
-    <span class="kw">fn </span>export(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; BoxFuture&lt;<span class="lifetime">&#39;static</span>, ExportResult&gt; {
+    <span class="kw">fn </span>export(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; BoxFuture&lt;<span class="lifetime">'static</span>, ExportResult&gt; {
         <span class="comment">// Batch size check for flush / shutdown. Those methods may be called
-        // when there&#39;s no work to do.
+        // when there's no work to do.
         </span><span class="kw">if </span><span class="self">self</span>.spans.is_empty() {
             <span class="kw">return </span>Box::pin(future::ready(<span class="prelude-val">Ok</span>(())));
         }
@@ -1469,7 +1471,7 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(scheduled_delay) = env::var(OTEL_BSP_SCHEDULE_DELAY)
             .ok()
-            .or_else(|| env::var(<span class="string">&quot;OTEL_BSP_SCHEDULE_DELAY_MILLIS&quot;</span>).ok())
+            .or_else(|| env::var(<span class="string">"OTEL_BSP_SCHEDULE_DELAY_MILLIS"</span>).ok())
             .and_then(|delay| u64::from_str(<span class="kw-2">&amp;</span>delay).ok())
         {
             config.scheduled_delay = Duration::from_millis(scheduled_delay);
@@ -1483,14 +1485,14 @@
         }
 
         <span class="comment">// max export batch size must be less or equal to max queue size.
-        // we set max export batch size to max queue size if it&#39;s larger than max queue size.
+        // we set max export batch size to max queue size if it's larger than max queue size.
         </span><span class="kw">if </span>config.max_export_batch_size &gt; config.max_queue_size {
             config.max_export_batch_size = config.max_queue_size;
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(max_export_timeout) = env::var(OTEL_BSP_EXPORT_TIMEOUT)
             .ok()
-            .or_else(|| env::var(<span class="string">&quot;OTEL_BSP_EXPORT_TIMEOUT_MILLIS&quot;</span>).ok())
+            .or_else(|| env::var(<span class="string">"OTEL_BSP_EXPORT_TIMEOUT_MILLIS"</span>).ok())
             .and_then(|timeout| u64::from_str(<span class="kw-2">&amp;</span>timeout).ok())
         {
             config.max_export_timeout = Duration::from_millis(max_export_timeout);
@@ -1502,7 +1504,7 @@
 
 <span class="kw">impl </span>BatchConfig {
     <span class="doccomment">/// Set max_queue_size for [`BatchConfig`].
-    /// It&#39;s the maximum queue size to buffer spans for delayed processing.
+    /// It's the maximum queue size to buffer spans for delayed processing.
     /// If the queue gets full it will drops the spans.
     /// The default value of is 2048.
     </span><span class="kw">pub fn </span>with_max_queue_size(<span class="kw-2">mut </span><span class="self">self</span>, max_queue_size: usize) -&gt; <span class="self">Self </span>{
@@ -1511,7 +1513,7 @@
     </span>}
 
     <span class="doccomment">/// Set max_export_batch_size for [`BatchConfig`].
-    /// It&#39;s the maximum number of spans to process in a single batch. If there are
+    /// It's the maximum number of spans to process in a single batch. If there are
     /// more than one batch worth of spans then it processes multiple batches
     /// of spans one batch after the other without any delay. The default value
     /// is 512.
@@ -1521,7 +1523,7 @@
     </span>}
 
     <span class="doccomment">/// Set max_concurrent_exports for [`BatchConfig`].
-    /// It&#39;s the maximum number of concurrent exports.
+    /// It's the maximum number of concurrent exports.
     /// Limits the number of spawned tasks for exports and thus memory consumed by an exporter.
     /// The default value is 1.
     /// IF the max_concurrent_exports value is default value, it will cause exports to be performed
@@ -1532,7 +1534,7 @@
     </span>}
 
     <span class="doccomment">/// Set scheduled_delay_duration for [`BatchConfig`].
-    /// It&#39;s the delay interval in milliseconds between two consecutive processing of batches.
+    /// It's the delay interval in milliseconds between two consecutive processing of batches.
     /// The default value is 5000 milliseconds.
     </span><span class="kw">pub fn </span>with_scheduled_delay(<span class="kw-2">mut </span><span class="self">self</span>, scheduled_delay: Duration) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.scheduled_delay = scheduled_delay;
@@ -1540,7 +1542,7 @@
     </span>}
 
     <span class="doccomment">/// Set max_export_timeout for [`BatchConfig`].
-    /// It&#39;s the maximum duration to export a batch of data.
+    /// It's the maximum duration to export a batch of data.
     /// The The default value is 30000 milliseconds.
     </span><span class="kw">pub fn </span>with_max_export_timeout(<span class="kw-2">mut </span><span class="self">self</span>, max_export_timeout: Duration) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.max_export_timeout = max_export_timeout;
@@ -1559,7 +1561,7 @@
 
 <span class="kw">impl</span>&lt;E, R&gt; BatchSpanProcessorBuilder&lt;E, R&gt;
 <span class="kw">where
-    </span>E: SpanExporter + <span class="lifetime">&#39;static</span>,
+    </span>E: SpanExporter + <span class="lifetime">'static</span>,
     R: TraceRuntime,
 {
     <span class="doccomment">/// Set max queue size for batches
@@ -1621,7 +1623,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;testing&quot;</span>, feature = <span class="string">&quot;trace&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"testing"</span>, feature = <span class="string">"trace"</span>))]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::{
         BatchSpanProcessor, SimpleSpanProcessor, SpanProcessor, OTEL_BSP_EXPORT_TIMEOUT,
@@ -1657,7 +1659,7 @@
             span_context: SpanContext::empty_context(),
             parent_span_id: SpanId::INVALID,
             span_kind: SpanKind::Internal,
-            name: <span class="string">&quot;opentelemetry&quot;</span>.into(),
+            name: <span class="string">"opentelemetry"</span>.into(),
             start_time: opentelemetry_api::time::now(),
             end_time: opentelemetry_api::time::now(),
             attributes: EvictedHashMap::new(<span class="number">0</span>, <span class="number">0</span>),
@@ -1696,9 +1698,9 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_build_batch_span_processor_builder() {
-        std::env::set_var(OTEL_BSP_MAX_EXPORT_BATCH_SIZE, <span class="string">&quot;500&quot;</span>);
-        std::env::set_var(OTEL_BSP_EXPORT_TIMEOUT, <span class="string">&quot;2046&quot;</span>);
-        std::env::set_var(OTEL_BSP_SCHEDULE_DELAY, <span class="string">&quot;I am not number&quot;</span>);
+        std::env::set_var(OTEL_BSP_MAX_EXPORT_BATCH_SIZE, <span class="string">"500"</span>);
+        std::env::set_var(OTEL_BSP_EXPORT_TIMEOUT, <span class="string">"2046"</span>);
+        std::env::set_var(OTEL_BSP_SCHEDULE_DELAY, <span class="string">"I am not number"</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>builder = BatchSpanProcessor::builder(
             stdout::Exporter::new(std::io::stdout(), <span class="bool-val">true</span>),
@@ -1719,7 +1721,7 @@
             Duration::from_millis(<span class="number">2046</span>)
         );
 
-        std::env::set_var(OTEL_BSP_MAX_QUEUE_SIZE, <span class="string">&quot;120&quot;</span>);
+        std::env::set_var(OTEL_BSP_MAX_QUEUE_SIZE, <span class="string">"120"</span>);
         builder = BatchSpanProcessor::builder(
             stdout::Exporter::new(std::io::stdout(), <span class="bool-val">true</span>),
             runtime::Tokio,
@@ -1756,7 +1758,7 @@
             tokio::time::timeout(Duration::from_secs(<span class="number">5</span>), handle)
                 .<span class="kw">await
                 </span>.is_ok(),
-            <span class="string">&quot;timed out in 5 seconds. force_flush may not export any data when called&quot;
+            <span class="string">"timed out in 5 seconds. force_flush may not export any data when called"
         </span>);
     }
 
@@ -1767,24 +1769,24 @@
 
     <span class="kw">impl</span>&lt;D, DS&gt; Debug <span class="kw">for </span>BlockingExporter&lt;D&gt;
     <span class="kw">where
-        </span>D: Fn(Duration) -&gt; DS + <span class="lifetime">&#39;static </span>+ Send + Sync,
-        DS: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>D: Fn(Duration) -&gt; DS + <span class="lifetime">'static </span>+ Send + Sync,
+        DS: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">'static</span>,
     {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-            f.write_str(<span class="string">&quot;blocking exporter for testing&quot;</span>)
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+            f.write_str(<span class="string">"blocking exporter for testing"</span>)
         }
     }
 
     <span class="attr">#[async_trait]
     </span><span class="kw">impl</span>&lt;D, DS&gt; SpanExporter <span class="kw">for </span>BlockingExporter&lt;D&gt;
     <span class="kw">where
-        </span>D: Fn(Duration) -&gt; DS + <span class="lifetime">&#39;static </span>+ Send + Sync,
-        DS: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>D: Fn(Duration) -&gt; DS + <span class="lifetime">'static </span>+ Send + Sync,
+        DS: Future&lt;Output = ()&gt; + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">fn </span>export(
             <span class="kw-2">&amp;mut </span><span class="self">self</span>,
             _batch: Vec&lt;SpanData&gt;,
-        ) -&gt; futures_util::future::BoxFuture&lt;<span class="lifetime">&#39;static</span>, ExportResult&gt; {
+        ) -&gt; futures_util::future::BoxFuture&lt;<span class="lifetime">'static</span>, ExportResult&gt; {
             <span class="kw">use </span>futures_util::FutureExt;
             Box::pin((<span class="self">self</span>.delay_fn)(<span class="self">self</span>.delay_for).map(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(())))
         }
@@ -1812,20 +1814,20 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rt-async-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rt-async-std"</span>)]
     </span><span class="kw">fn </span>test_timeout_async_std_timeout() {
         async_std::task::block_on(timeout_test_std_async(<span class="bool-val">true</span>));
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rt-async-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rt-async-std"</span>)]
     </span><span class="kw">fn </span>test_timeout_async_std_not_timeout() {
         async_std::task::block_on(timeout_test_std_async(<span class="bool-val">false</span>));
     }
 
     <span class="comment">// If the time_out is true, then the result suppose to ended with timeout.
     // otherwise the exporter should be able to export within time out duration.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;rt-async-std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"rt-async-std"</span>)]
     </span><span class="kw">async fn </span>timeout_test_std_async(time_out: bool) {
         <span class="kw">let </span>config = BatchConfig {
             max_export_timeout: Duration::from_millis(<span class="kw">if </span>time_out { <span class="number">5 </span>} <span class="kw">else </span>{ <span class="number">60 </span>}),

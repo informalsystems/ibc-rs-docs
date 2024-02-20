@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor/scan.rs`."><title>scan.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor/scan.rs`."><title>scan.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../ibc_relayer/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -996,11 +998,11 @@
     Error {
         Spawn
             [ SpawnError ]
-            |<span class="kw">_</span>| { <span class="string">&quot;spawn&quot; </span>},
+            |<span class="kw">_</span>| { <span class="string">"spawn" </span>},
 
         Query
             [ RelayerError ]
-            |<span class="kw">_</span>| { <span class="string">&quot;query&quot; </span>},
+            |<span class="kw">_</span>| { <span class="string">"query" </span>},
 
         MissingConnectionHop
             {
@@ -1010,7 +1012,7 @@
             }
             |e| {
                 <span class="macro">format_args!</span>(
-                    <span class="string">&quot;could not retrieve the connection hop underlying port/channel {}/{} on chain &#39;{}&#39;&quot;</span>,
+                    <span class="string">"could not retrieve the connection hop underlying port/channel {}/{} on chain '{}'"</span>,
                     e.port_id, e.channel_id, e.chain_id
                 )
             },
@@ -1023,7 +1025,7 @@
             }
             |e| {
                 <span class="macro">format_args!</span>(
-                    <span class="string">&quot;channel &#39;{}/{}&#39; on chain &#39;{}&#39; is uninitialized&quot;</span>,
+                    <span class="string">"channel '{}/{}' on chain '{}' is uninitialized"</span>,
                     e.port_id, e.channel_id, e.chain_id
                 )
             },
@@ -1036,7 +1038,7 @@
             }
             |e| {
                 <span class="macro">format_args!</span>(
-                    <span class="string">&quot;failed to query counterparty connection state of connection &#39;{}&#39; on counterparty chain &#39;{}&#39;, reason: {}&quot;</span>,
+                    <span class="string">"failed to query counterparty connection state of connection '{}' on counterparty chain '{}', reason: {}"</span>,
                     e.connection_id, e.counterparty_chain_id, e.reason
                 )
             }
@@ -1049,35 +1051,35 @@
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>ChainsScan {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
         <span class="kw">for </span>scan <span class="kw">in </span><span class="self">self</span>.chains.iter().flatten() {
-            <span class="macro">writeln!</span>(f, <span class="string">&quot;# Chain: {}&quot;</span>, scan.chain_id)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">"# Chain: {}"</span>, scan.chain_id)<span class="question-mark">?</span>;
 
             <span class="kw">for </span>client <span class="kw">in </span>scan.clients.values() {
-                <span class="macro">writeln!</span>(f, <span class="string">&quot;  - Client: {}&quot;</span>, client.client.client_id)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">"  - Client: {}"</span>, client.client.client_id)<span class="question-mark">?</span>;
 
                 <span class="kw">for </span>conn <span class="kw">in </span>client.connections.values() {
                     <span class="kw">let </span>counterparty = conn
                         .counterparty_state
                         .as_ref()
                         .map(|s| s.to_string())
-                        .unwrap_or_else(|| <span class="string">&quot;&lt;none&gt;&quot;</span>.to_string());
+                        .unwrap_or_else(|| <span class="string">"&lt;none&gt;"</span>.to_string());
 
-                    <span class="macro">writeln!</span>(f, <span class="string">&quot;    * Connection: {}&quot;</span>, conn.connection.connection_id)<span class="question-mark">?</span>;
-                    <span class="macro">writeln!</span>(f, <span class="string">&quot;      | State: {}&quot;</span>, conn.state())<span class="question-mark">?</span>;
-                    <span class="macro">writeln!</span>(f, <span class="string">&quot;      | Counterparty state: {counterparty}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(f, <span class="string">"    * Connection: {}"</span>, conn.connection.connection_id)<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(f, <span class="string">"      | State: {}"</span>, conn.state())<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(f, <span class="string">"      | Counterparty state: {counterparty}"</span>)<span class="question-mark">?</span>;
 
                     <span class="kw">for </span>chan <span class="kw">in </span>conn.channels.values() {
                         <span class="kw">let </span>counterparty = chan
                             .counterparty
                             .as_ref()
                             .map(|c| c.channel_id.to_string())
-                            .unwrap_or_else(|| <span class="string">&quot;&lt;none&gt;&quot;</span>.to_string());
+                            .unwrap_or_else(|| <span class="string">"&lt;none&gt;"</span>.to_string());
 
-                        <span class="macro">writeln!</span>(f, <span class="string">&quot;      + Channel: {}&quot;</span>, chan.channel.channel_id)<span class="question-mark">?</span>;
-                        <span class="macro">writeln!</span>(f, <span class="string">&quot;        | Port: {}&quot;</span>, chan.channel.port_id)<span class="question-mark">?</span>;
-                        <span class="macro">writeln!</span>(f, <span class="string">&quot;        | State: {}&quot;</span>, chan.channel.channel_end.state())<span class="question-mark">?</span>;
-                        <span class="macro">writeln!</span>(f, <span class="string">&quot;        | Counterparty: {counterparty}&quot;</span>)<span class="question-mark">?</span>;
+                        <span class="macro">writeln!</span>(f, <span class="string">"      + Channel: {}"</span>, chan.channel.channel_id)<span class="question-mark">?</span>;
+                        <span class="macro">writeln!</span>(f, <span class="string">"        | Port: {}"</span>, chan.channel.port_id)<span class="question-mark">?</span>;
+                        <span class="macro">writeln!</span>(f, <span class="string">"        | State: {}"</span>, chan.channel.channel_end.state())<span class="question-mark">?</span>;
+                        <span class="macro">writeln!</span>(f, <span class="string">"        | Counterparty: {counterparty}"</span>)<span class="question-mark">?</span>;
                     }
                 }
             }
@@ -1218,18 +1220,18 @@
     Full,
 }
 
-<span class="kw">pub struct </span>ChainScanner&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt; {
-    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
-    client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>FilterPolicy,
+<span class="kw">pub struct </span>ChainScanner&lt;<span class="lifetime">'a</span>, Chain: ChainHandle&gt; {
+    config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Config,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>FilterPolicy,
     scan_mode: ScanMode,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt; ChainScanner&lt;<span class="lifetime">&#39;a</span>, Chain&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, Chain: ChainHandle&gt; ChainScanner&lt;<span class="lifetime">'a</span>, Chain&gt; {
     <span class="kw">pub fn </span>new(
-        config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-        registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
-        client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>FilterPolicy,
+        config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Config,
+        registry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+        client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>FilterPolicy,
         scan_mode: ScanMode,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -1253,10 +1255,10 @@
     }
 
     <span class="kw">pub fn </span>scan_chain(<span class="kw-2">&amp;mut </span><span class="self">self</span>, chain_config: <span class="kw-2">&amp;</span>ChainConfig) -&gt; <span class="prelude-ty">Result</span>&lt;ChainScan, Error&gt; {
-        <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">&quot;scan.chain&quot;</span>, chain = %chain_config.id());
+        <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">"scan.chain"</span>, chain = %chain_config.id());
         <span class="kw">let </span>_guard = span.enter();
 
-        <span class="macro">info!</span>(<span class="string">&quot;scanning chain...&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">"scanning chain..."</span>);
 
         <span class="macro">telemetry!</span>(init_per_chain, chain_config.id());
 
@@ -1264,7 +1266,7 @@
             <span class="prelude-val">Ok</span>(chain_handle) =&gt; chain_handle,
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;aborting scan, reason: failed to spawn chain runtime with error: {}&quot;</span>,
+                    <span class="string">"aborting scan, reason: failed to spawn chain runtime with error: {}"</span>,
                     e
                 );
 
@@ -1277,14 +1279,14 @@
         <span class="kw">match </span><span class="self">self</span>.use_allow_list(chain_config) {
             <span class="prelude-val">Some</span>(spec) <span class="kw">if </span><span class="self">self</span>.scan_mode == ScanMode::Auto =&gt; {
                 <span class="macro">info!</span>(
-                    <span class="string">&quot;chain uses an allow list (without wildcards), skipping scan for fast startup&quot;
+                    <span class="string">"chain uses an allow list (without wildcards), skipping scan for fast startup"
                 </span>);
-                <span class="macro">info!</span>(<span class="string">&quot;allowed ports/channels: {}&quot;</span>, spec);
+                <span class="macro">info!</span>(<span class="string">"allowed ports/channels: {}"</span>, spec);
 
                 <span class="self">self</span>.query_allowed_channels(<span class="kw-2">&amp;</span>chain, spec, <span class="kw-2">&amp;mut </span>scan)<span class="question-mark">?</span>;
             }
             <span class="kw">_ </span>=&gt; {
-                <span class="macro">info!</span>(<span class="string">&quot;scanning chain for all clients, connections and channels&quot;</span>);
+                <span class="macro">info!</span>(<span class="string">"scanning chain for all clients, connections and channels"</span>);
                 <span class="self">self</span>.scan_all_clients(<span class="kw-2">&amp;</span>chain, <span class="kw-2">&amp;mut </span>scan)<span class="question-mark">?</span>;
             }
         };
@@ -1298,7 +1300,7 @@
         filters: <span class="kw-2">&amp;</span>ChannelFilters,
         scan: <span class="kw-2">&amp;mut </span>ChainScan,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="macro">info!</span>(<span class="string">&quot;querying allowed channels...&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">"querying allowed channels..."</span>);
 
         <span class="kw">for </span>(port_id, channel_id) <span class="kw">in </span>filters.iter_exact() {
             <span class="kw">let </span>result = scan_allowed_channel(<span class="self">self</span>.registry, chain, port_id, channel_id);
@@ -1342,7 +1344,7 @@
                         .entry(channel.channel_id.clone())
                         .or_insert_with(|| ChannelScan::new(channel, counterparty_channel));
                 }
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(channel = %channel_id, <span class="string">&quot;failed to scan channel, reason: {}&quot;</span>, e),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(channel = %channel_id, <span class="string">"failed to scan channel, reason: {}"</span>, e),
             }
         }
 
@@ -1350,7 +1352,7 @@
     }
 
     <span class="kw">pub fn </span>scan_all_clients(<span class="kw-2">&amp;mut </span><span class="self">self</span>, chain: <span class="kw-2">&amp;</span>Chain, scan: <span class="kw-2">&amp;mut </span>ChainScan) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="macro">info!</span>(<span class="string">&quot;scanning all clients...&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">"scanning all clients..."</span>);
 
         <span class="kw">let </span>clients = query_all_clients(chain)<span class="question-mark">?</span>;
 
@@ -1390,15 +1392,15 @@
         chain: <span class="kw-2">&amp;</span>Chain,
         client: IdentifiedAnyClientState,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ClientScan&gt;, Error&gt; {
-        <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">&quot;scan.client&quot;</span>, client = %client.client_id);
+        <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">"scan.client"</span>, client = %client.client_id);
         <span class="kw">let </span>_guard = span.enter();
 
-        <span class="macro">info!</span>(<span class="string">&quot;scanning client...&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">"scanning client..."</span>);
 
         <span class="kw">if </span>!<span class="self">self</span>.client_allowed(chain, <span class="kw-2">&amp;</span>client) {
             <span class="macro">warn!</span>(
                 trust_threshold = <span class="question-mark">?</span>client.client_state.trust_threshold(),
-                <span class="string">&quot;skipping client, reason: client is not allowed&quot;</span>,
+                <span class="string">"skipping client, reason: client is not allowed"</span>,
             );
 
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -1411,7 +1413,7 @@
             <span class="macro">debug!</span>(
                 chain = %chain.id(),
                 counterparty_chain = %counterparty_chain_id,
-                <span class="string">&quot;skipping client because its counterparty is not present in the config&quot;</span>,
+                <span class="string">"skipping client because its counterparty is not present in the config"</span>,
             );
 
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -1439,20 +1441,20 @@
         client: <span class="kw-2">&amp;</span>IdentifiedAnyClientState,
         connection: IdentifiedConnectionEnd,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ConnectionScan&gt;, Error&gt; {
-        <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">&quot;scan.connection&quot;</span>, connection = %connection.connection_id);
+        <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">"scan.connection"</span>, connection = %connection.connection_id);
         <span class="kw">let </span>_guard = span.enter();
 
-        <span class="macro">info!</span>(<span class="string">&quot;scanning connection...&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">"scanning connection..."</span>);
 
         <span class="kw">if </span>!<span class="self">self</span>.connection_allowed(chain, client, <span class="kw-2">&amp;</span>connection) {
-            <span class="macro">warn!</span>(<span class="string">&quot;skipping connection, reason: connection is not allowed&quot;</span>);
+            <span class="macro">warn!</span>(<span class="string">"skipping connection, reason: connection is not allowed"</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>scan = ConnectionScan::new(connection, <span class="prelude-val">None</span>);
 
         <span class="kw">if </span>!scan.is_open() &amp;&amp; !<span class="self">self</span>.config.mode.connections.enabled {
-            <span class="macro">warn!</span>(<span class="string">&quot;connection is not open, skipping scan of channels over this connection&quot;</span>);
+            <span class="macro">warn!</span>(<span class="string">"connection is not open, skipping scan of channels over this connection"</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(scan));
         }
 
@@ -1461,11 +1463,11 @@
             <span class="prelude-val">Ok</span>(state)
                 <span class="kw">if </span>!state.eq(<span class="kw-2">&amp;</span>ConnectionState::Open) &amp;&amp; !<span class="self">self</span>.config.mode.connections.enabled =&gt;
             {
-                <span class="macro">warn!</span>(<span class="string">&quot;counterparty connection is not open, skipping scan of channels over this connection&quot;</span>);
+                <span class="macro">warn!</span>(<span class="string">"counterparty connection is not open, skipping scan of channels over this connection"</span>);
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(scan));
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">error!</span>(<span class="string">&quot;error fetching counterparty connection state: {}&quot;</span>, e);
+                <span class="macro">error!</span>(<span class="string">"error fetching counterparty connection state: {}"</span>, e);
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
             }
             <span class="prelude-val">Ok</span>(state) =&gt; state,
@@ -1476,7 +1478,7 @@
         <span class="kw">let </span>channels = <span class="kw">match </span>query_connection_channels(chain, scan.connection.id()) {
             <span class="prelude-val">Ok</span>(channels) =&gt; channels,
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">error!</span>(<span class="string">&quot;failed to fetch connection channels: {}&quot;</span>, e);
+                <span class="macro">error!</span>(<span class="string">"failed to fetch connection channels: {}"</span>, e);
                 Vec::new()
             }
         };
@@ -1535,7 +1537,7 @@
         </span><span class="bool-val">true
     </span>}
 
-    <span class="kw">fn </span>use_allow_list&lt;<span class="lifetime">&#39;b</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>ChainConfig) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>ChannelFilters&gt; {
+    <span class="kw">fn </span>use_allow_list&lt;<span class="lifetime">'b</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_config: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>ChainConfig) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'b </span>ChannelFilters&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.filtering_enabled() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
@@ -1581,8 +1583,8 @@
         <span class="kw">match </span>permission {
             <span class="prelude-val">Ok</span>(Permission::Deny) =&gt; {
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;skipping workers for chain {}, client {} &amp; conn {}, \
-                     reason: client or counterparty client is not allowed&quot;</span>,
+                    <span class="string">"skipping workers for chain {}, client {} &amp; conn {}, \
+                     reason: client or counterparty client is not allowed"</span>,
                     chain.id(),
                     client.client_id,
                     connection.connection_id
@@ -1592,7 +1594,7 @@
             </span>}
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;skipping workers for chain {}, client {} &amp; conn {}, reason: {}&quot;</span>,
+                    <span class="string">"skipping workers for chain {}, client {} &amp; conn {}, reason: {}"</span>,
                     chain.id(),
                     client.client_id,
                     connection.connection_id,
@@ -1620,15 +1622,15 @@
 }
 
 <span class="kw">fn </span>scan_allowed_channel&lt;Chain: ChainHandle&gt;(
-    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
     chain: <span class="kw-2">&amp;</span>Chain,
     port_id: <span class="kw-2">&amp;</span>PortId,
     channel_id: <span class="kw-2">&amp;</span>ChannelId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ScannedChannel, Error&gt; {
-    <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">&quot;scan.channel&quot;</span>, port = %port_id, channel = %channel_id);
+    <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">"scan.channel"</span>, port = %port_id, channel = %channel_id);
     <span class="kw">let </span>_guard = span.enter();
 
-    <span class="macro">info!</span>(<span class="string">&quot;querying channel...&quot;</span>);
+    <span class="macro">info!</span>(<span class="string">"querying channel..."</span>);
     <span class="kw">let </span>channel = query_channel(chain, port_id, channel_id)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>channel
@@ -1647,10 +1649,10 @@
 
     <span class="macro">info!</span>(
         connection = %connection.connection_id, client = %client_id,
-        <span class="string">&quot;found connection and client&quot;</span>,
+        <span class="string">"found connection and client"</span>,
     );
 
-    <span class="macro">info!</span>(client = %client_id, <span class="string">&quot;querying client...&quot;</span>);
+    <span class="macro">info!</span>(client = %client_id, <span class="string">"querying client..."</span>);
     <span class="kw">let </span>client = query_client(chain, client_id)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>counterparty_chain_id = client.client_state.chain_id();
@@ -1658,7 +1660,7 @@
     <span class="macro">info!</span>(
         client = %client_id,
         counterparty_chain = %counterparty_chain_id,
-        <span class="string">&quot;found counterparty chain for client&quot;</span>,
+        <span class="string">"found counterparty chain for client"</span>,
     );
 
     <span class="kw">let </span>counterparty_chain = registry
@@ -1671,11 +1673,11 @@
     <span class="kw">let </span>counterparty_channel_name = counterparty_channel
         .as_ref()
         .map(|c| c.channel_id.to_string())
-        .unwrap_or_else(|| <span class="string">&quot;&lt;none&gt;&quot;</span>.to_string());
+        .unwrap_or_else(|| <span class="string">"&lt;none&gt;"</span>.to_string());
 
     <span class="macro">info!</span>(
         counterparty_channel = %counterparty_channel_name,
-        <span class="string">&quot;found counterparty channel&quot;
+        <span class="string">"found counterparty channel"
     </span>);
 
     <span class="kw">let </span>counterparty_connection_state =
@@ -1686,11 +1688,11 @@
     <span class="kw">let </span>counterparty_connection_name = counterparty_connection_state
         .as_ref()
         .map(|s| s.to_string())
-        .unwrap_or_else(|| <span class="string">&quot;&lt;none&gt;&quot;</span>.to_string());
+        .unwrap_or_else(|| <span class="string">"&lt;none&gt;"</span>.to_string());
 
     <span class="macro">info!</span>(
         counterparty_connection_state = %counterparty_connection_name,
-        <span class="string">&quot;found counterparty connection state&quot;
+        <span class="string">"found counterparty connection state"
     </span>);
 
     <span class="prelude-val">Ok</span>(ScannedChannel {
@@ -1786,7 +1788,7 @@
         .into_iter()
         .filter_map(|id| {
             query_connection(chain, <span class="kw-2">&amp;</span>id)
-                .map_err(|e| <span class="macro">error!</span>(<span class="string">&quot;failed to query connection: {}&quot;</span>, e))
+                .map_err(|e| <span class="macro">error!</span>(<span class="string">"failed to query connection: {}"</span>, e))
                 .ok()
         })
         .collect_vec();

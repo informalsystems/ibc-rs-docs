@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor.rs`."><title>supervisor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../ibc_relayer/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor.rs`."><title>supervisor.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../ibc_relayer/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1128,7 +1130,7 @@
         health_check(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>registry.write());
     }
 
-    <span class="comment">// If telemetry is enabled, for each chain register the relayer&#39;s address
+    <span class="comment">// If telemetry is enabled, for each chain register the relayer's address
     // in the list of visible fee addresses.
     </span><span class="kw">if </span>config.telemetry.enabled {
         <span class="kw">for </span>chain <span class="kw">in </span>registry.read().chains() {
@@ -1155,8 +1157,8 @@
         )
         .scan_chains();
 
-        <span class="macro">info!</span>(<span class="string">&quot;scanned chains:&quot;</span>);
-        <span class="macro">info!</span>(<span class="string">&quot;{}&quot;</span>, scan);
+        <span class="macro">info!</span>(<span class="string">"scanned chains:"</span>);
+        <span class="macro">info!</span>(<span class="string">"{}"</span>, scan);
 
         spawn_context(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>registry.write(), <span class="kw-2">&amp;mut </span>workers.acquire_write())
             .spawn_workers(scan);
@@ -1204,7 +1206,7 @@
         <span class="kw">let </span>workers = workers.clone();
 
         <span class="kw">let </span>handle = spawn_background_task(
-            <span class="macro">error_span!</span>(<span class="string">&quot;worker.batch&quot;</span>, chain = %chain.id()),
+            <span class="macro">error_span!</span>(<span class="string">"worker.batch"</span>, chain = %chain.id()),
             <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">5</span>)),
             <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(batch) = subscription.try_recv() {
@@ -1234,7 +1236,7 @@
     cmd_rx: Receiver&lt;SupervisorCmd&gt;,
 ) -&gt; TaskHandle {
     spawn_background_task(
-        <span class="macro">error_span!</span>(<span class="string">&quot;worker.cmd&quot;</span>),
+        <span class="macro">error_span!</span>(<span class="string">"worker.cmd"</span>),
         <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">500</span>)),
         <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(cmd) = cmd_rx.try_recv() {
@@ -1257,7 +1259,7 @@
     rest_rx: rest::Receiver,
 ) -&gt; TaskHandle {
     spawn_background_task(
-        <span class="macro">error_span!</span>(<span class="string">&quot;rest&quot;</span>),
+        <span class="macro">error_span!</span>(<span class="string">"rest"</span>),
         <span class="prelude-val">Some</span>(Duration::from_millis(<span class="number">500</span>)),
         <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
             handle_rest_requests(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span>registry.read(), <span class="kw-2">&amp;</span>workers.acquire_read(), <span class="kw-2">&amp;</span>rest_rx);
@@ -1270,7 +1272,7 @@
 <span class="doccomment">/// Spawn a background task which verifies if there are idle workers and removes them if.
 </span><span class="kw">pub fn </span>spawn_cleanup_worker(workers: Arc&lt;RwLock&lt;WorkerMap&gt;&gt;) -&gt; TaskHandle {
     spawn_background_task(
-        <span class="macro">error_span!</span>(<span class="string">&quot;cleanup_worker&quot;</span>),
+        <span class="macro">error_span!</span>(<span class="string">"cleanup_worker"</span>),
         <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">30</span>)),
         <span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;Next, TaskError&lt;Infallible&gt;&gt; {
             workers.acquire_write().clean_stopped_workers();
@@ -1355,7 +1357,7 @@
         <span class="prelude-val">Ok</span>(Permission::Allow) =&gt; <span class="bool-val">true</span>,
         <span class="prelude-val">Ok</span>(Permission::Deny) =&gt; {
             <span class="macro">warn!</span>(
-                <span class="string">&quot;client filter denies relaying on object {}&quot;</span>,
+                <span class="string">"client filter denies relaying on object {}"</span>,
                 object.short_name()
             );
 
@@ -1363,7 +1365,7 @@
         </span>}
         <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.log_as_debug() =&gt; {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;denying relaying on object {}, caused by: {}&quot;</span>,
+                <span class="string">"denying relaying on object {}, caused by: {}"</span>,
                 object.short_name(),
                 e
             );
@@ -1372,7 +1374,7 @@
         </span>}
         <span class="prelude-val">Err</span>(e) =&gt; {
             <span class="macro">warn!</span>(
-                <span class="string">&quot;denying relaying on object {}, caused by: {}&quot;</span>,
+                <span class="string">"denying relaying on object {}, caused by: {}"</span>,
                 object.short_name(),
                 e
             );
@@ -1563,20 +1565,20 @@
 }
 
 <span class="doccomment">/// Create a new `SpawnContext` for spawning workers.
-</span><span class="kw">fn </span>spawn_context&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt;(
-    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
-    workers: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>WorkerMap,
-) -&gt; SpawnContext&lt;<span class="lifetime">&#39;a</span>, Chain&gt; {
+</span><span class="kw">fn </span>spawn_context&lt;<span class="lifetime">'a</span>, Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Config,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    workers: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>WorkerMap,
+) -&gt; SpawnContext&lt;<span class="lifetime">'a</span>, Chain&gt; {
     SpawnContext::new(config, registry, workers)
 }
 
-<span class="kw">fn </span>chain_scanner&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt;(
-    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
-    client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>FilterPolicy,
+<span class="kw">fn </span>chain_scanner&lt;<span class="lifetime">'a</span>, Chain: ChainHandle&gt;(
+    config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Config,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    client_state_filter: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>FilterPolicy,
     full_scan: ScanMode,
-) -&gt; ChainScanner&lt;<span class="lifetime">&#39;a</span>, Chain&gt; {
+) -&gt; ChainScanner&lt;<span class="lifetime">'a</span>, Chain&gt; {
     ChainScanner::new(config, registry, client_state_filter, full_scan)
 }
 
@@ -1588,19 +1590,19 @@
 
     <span class="kw">for </span>config <span class="kw">in </span>chains {
         <span class="kw">let </span>id = <span class="kw-2">&amp;</span>config.id();
-        <span class="kw">let </span>_span = <span class="macro">error_span!</span>(<span class="string">&quot;health_check&quot;</span>, chain = %id).entered();
+        <span class="kw">let </span>_span = <span class="macro">error_span!</span>(<span class="string">"health_check"</span>, chain = %id).entered();
 
         <span class="kw">let </span>chain = registry.get_or_spawn(id);
 
         <span class="kw">match </span>chain {
             <span class="prelude-val">Ok</span>(chain) =&gt; <span class="kw">match </span>chain.health_check() {
-                <span class="prelude-val">Ok</span>(Healthy) =&gt; <span class="macro">info!</span>(<span class="string">&quot;chain is healthy&quot;</span>),
-                <span class="prelude-val">Ok</span>(Unhealthy(e)) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;chain is not healthy: {}&quot;</span>, e),
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(<span class="string">&quot;failed to perform health check: {}&quot;</span>, e),
+                <span class="prelude-val">Ok</span>(Healthy) =&gt; <span class="macro">info!</span>(<span class="string">"chain is healthy"</span>),
+                <span class="prelude-val">Ok</span>(Unhealthy(e)) =&gt; <span class="macro">warn!</span>(<span class="string">"chain is not healthy: {}"</span>, e),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(<span class="string">"failed to perform health check: {}"</span>, e),
             },
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;skipping health check, reason: failed to spawn chain runtime with error: {}&quot;</span>,
+                    <span class="string">"skipping health check, reason: failed to spawn chain runtime with error: {}"</span>,
                     e
                 );
             }
@@ -1609,7 +1611,7 @@
 }
 
 <span class="doccomment">/// Subscribe to the events emitted by the chains the supervisor is connected to.
-</span><span class="attr">#[instrument(name = <span class="string">&quot;supervisor.init_subscriptions&quot;</span>, level = <span class="string">&quot;error&quot;</span>, skip_all)]
+</span><span class="attr">#[instrument(name = <span class="string">"supervisor.init_subscriptions"</span>, level = <span class="string">"error"</span>, skip_all)]
 </span><span class="kw">fn </span>init_subscriptions&lt;Chain: ChainHandle&gt;(
     config: <span class="kw-2">&amp;</span>Config,
     registry: <span class="kw-2">&amp;mut </span>Registry&lt;Chain&gt;,
@@ -1623,7 +1625,7 @@
             <span class="prelude-val">Ok</span>(chain) =&gt; chain,
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;failed to spawn chain runtime for {}: {}&quot;</span>,
+                    <span class="string">"failed to spawn chain runtime for {}: {}"</span>,
                     chain_config.id(),
                     e
                 );
@@ -1635,7 +1637,7 @@
         <span class="kw">match </span>chain.subscribe() {
             <span class="prelude-val">Ok</span>(subscription) =&gt; subscriptions.push((chain, subscription)),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(
-                <span class="string">&quot;failed to subscribe to events of {}: {}&quot;</span>,
+                <span class="string">"failed to subscribe to events of {}: {}"</span>,
                 chain_config.id(),
                 e
             ),
@@ -1662,7 +1664,7 @@
     <span class="kw">let _ </span>= reply_to.try_send(state);
 }
 
-<span class="doccomment">/// Returns a representation of the supervisor&#39;s internal state
+<span class="doccomment">/// Returns a representation of the supervisor's internal state
 /// as a [`SupervisorState`].
 </span><span class="kw">fn </span>state&lt;Chain: ChainHandle&gt;(registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;, workers: <span class="kw-2">&amp;</span>WorkerMap) -&gt; SupervisorState {
     <span class="kw">let </span>chains = registry.chains().map(|c| c.id()).collect_vec();
@@ -1680,7 +1682,7 @@
     }
 }
 
-<span class="attr">#[instrument(name = <span class="string">&quot;supervisor.handle_rest_cmd&quot;</span>, level = <span class="string">&quot;error&quot;</span>, skip_all)]
+<span class="attr">#[instrument(name = <span class="string">"supervisor.handle_rest_cmd"</span>, level = <span class="string">"error"</span>, skip_all)]
 </span><span class="kw">fn </span>handle_rest_cmd&lt;Chain: ChainHandle&gt;(
     registry: <span class="kw-2">&amp;</span>Registry&lt;Chain&gt;,
     workers: <span class="kw-2">&amp;</span>WorkerMap,
@@ -1691,35 +1693,35 @@
             <span class="kw">let </span>state = state(registry, workers);
             reply
                 .send(<span class="prelude-val">Ok</span>(state))
-                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {e}&quot;</span>));
+                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">"error replying to a REST request {e}"</span>));
         }
 
         rest::Command::ClearPackets(chain_id, reply) =&gt; {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(chain_id) = chain_id {
-                <span class="macro">info!</span>(<span class="string">&quot;clearing packets for chain {chain_id} after REST request&quot;</span>);
+                <span class="macro">info!</span>(<span class="string">"clearing packets for chain {chain_id} after REST request"</span>);
 
                 clear_pending_packets(workers, <span class="kw-2">&amp;</span>chain_id)
-                    .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error clearing packets for chain {chain_id}: {e}&quot;</span>));
+                    .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">"error clearing packets for chain {chain_id}: {e}"</span>));
             } <span class="kw">else </span>{
                 <span class="kw">for </span>chain_id <span class="kw">in </span>registry.chains().map(|c| c.id()) {
-                    <span class="macro">info!</span>(<span class="string">&quot;clearing packets for chain {chain_id} after REST request&quot;</span>);
+                    <span class="macro">info!</span>(<span class="string">"clearing packets for chain {chain_id} after REST request"</span>);
 
                     clear_pending_packets(workers, <span class="kw-2">&amp;</span>chain_id).unwrap_or_else(|e| {
-                        <span class="macro">error!</span>(<span class="string">&quot;error clearing packets for chain {chain_id}: {e}&quot;</span>)
+                        <span class="macro">error!</span>(<span class="string">"error clearing packets for chain {chain_id}: {e}"</span>)
                     });
                 }
             }
 
             reply
                 .send(<span class="prelude-val">Ok</span>(()))
-                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">&quot;error replying to a REST request {e}&quot;</span>));
+                .unwrap_or_else(|e| <span class="macro">error!</span>(<span class="string">"error replying to a REST request {e}"</span>));
         }
     }
 }
 
 <span class="attr">#[instrument(
-    name = <span class="string">&quot;supervisor.clear_pending_packets&quot;</span>,
-    level = <span class="string">&quot;error&quot;</span>,
+    name = <span class="string">"supervisor.clear_pending_packets"</span>,
+    level = <span class="string">"error"</span>,
     skip_all,
     fields(chain = %chain_id)
 )]
@@ -1733,8 +1735,8 @@
 
 <span class="doccomment">/// Process a batch of events received from a chain.
 </span><span class="attr">#[instrument(
-    name = <span class="string">&quot;supervisor.process_batch&quot;</span>,
-    level = <span class="string">&quot;error&quot;</span>,
+    name = <span class="string">"supervisor.process_batch"</span>,
+    level = <span class="string">"error"</span>,
     skip_all,
     fields(chain = %src_chain.id()))
 ]
@@ -1767,8 +1769,8 @@
             <span class="kw-2">&amp;</span>object,
         ) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;skipping events for &#39;{}&#39;. \
-                reason: filtering is enabled and channel does not match any allowed channels&quot;</span>,
+                <span class="string">"skipping events for '{}'. \
+                reason: filtering is enabled and channel does not match any allowed channels"</span>,
                 object.short_name()
             );
 
@@ -1816,7 +1818,7 @@
 /// So successfully sending a packet from chain A to chain B will result in first a SendPacket
 /// event with `chain_id = A` and `counterparty_chain_id = B` and then a WriteAcknowlegment
 /// event with `chain_id = B` and `counterparty_chain_id = A`.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;telemetry&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"telemetry"</span>)]
 </span><span class="kw">fn </span>send_telemetry&lt;Src, Dst&gt;(
     src: <span class="kw-2">&amp;</span>Src,
     dst: <span class="kw-2">&amp;</span>Dst,
@@ -1866,8 +1868,8 @@
 <span class="doccomment">/// Process the given batch if it does not contain any errors,
 /// output the errors on the console otherwise.
 </span><span class="attr">#[instrument(
-    name = <span class="string">&quot;supervisor.handle_batch&quot;</span>,
-    level = <span class="string">&quot;error&quot;</span>,
+    name = <span class="string">"supervisor.handle_batch"</span>,
+    level = <span class="string">"error"</span>,
     skip_all,
     fields(chain = %chain.id())
 )]
@@ -1886,17 +1888,17 @@
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) =
                 process_batch(config, registry, client_state_filter, workers, chain, batch)
             {
-                <span class="macro">error!</span>(<span class="string">&quot;error during batch processing: {}&quot;</span>, e);
+                <span class="macro">error!</span>(<span class="string">"error during batch processing: {}"</span>, e);
             }
         }
         <span class="prelude-val">Err</span>(EventError(EventErrorDetail::SubscriptionCancelled(<span class="kw">_</span>), <span class="kw">_</span>)) =&gt; {
-            <span class="macro">warn!</span>(<span class="string">&quot;event subscription was cancelled, clearing pending packets&quot;</span>);
+            <span class="macro">warn!</span>(<span class="string">"event subscription was cancelled, clearing pending packets"</span>);
 
             <span class="kw">let _ </span>= clear_pending_packets(workers, <span class="kw-2">&amp;</span>chain_id)
-                .map_err(|e| <span class="macro">error!</span>(<span class="string">&quot;error during clearing pending packets: {}&quot;</span>, e));
+                .map_err(|e| <span class="macro">error!</span>(<span class="string">"error during clearing pending packets: {}"</span>, e));
         }
         <span class="prelude-val">Err</span>(e) =&gt; {
-            <span class="macro">error!</span>(<span class="string">&quot;error when receiving event batch: {}&quot;</span>, e)
+            <span class="macro">error!</span>(<span class="string">"error when receiving event batch: {}"</span>, e)
         }
     }
 }

@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor/spawn.rs`."><title>spawn.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/supervisor/spawn.rs`."><title>spawn.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../ibc_relayer/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -368,17 +370,17 @@
 };
 
 <span class="doccomment">/// A context for spawning workers within the supervisor.
-</span><span class="kw">pub struct </span>SpawnContext&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt; {
-    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-    registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
-    workers: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>WorkerMap,
+</span><span class="kw">pub struct </span>SpawnContext&lt;<span class="lifetime">'a</span>, Chain: ChainHandle&gt; {
+    config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Config,
+    registry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+    workers: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>WorkerMap,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, Chain: ChainHandle&gt; SpawnContext&lt;<span class="lifetime">&#39;a</span>, Chain&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, Chain: ChainHandle&gt; SpawnContext&lt;<span class="lifetime">'a</span>, Chain&gt; {
     <span class="kw">pub fn </span>new(
-        config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-        registry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
-        workers: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>WorkerMap,
+        config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Config,
+        registry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Registry&lt;Chain&gt;,
+        workers: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>WorkerMap,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             config,
@@ -388,24 +390,24 @@
     }
 
     <span class="kw">pub fn </span>spawn_workers(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scan: ChainsScan) {
-        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">&quot;spawn&quot;</span>).entered();
+        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">"spawn"</span>).entered();
 
         <span class="kw">for </span>chain_scan <span class="kw">in </span>scan.chains {
             <span class="kw">match </span>chain_scan {
                 <span class="prelude-val">Ok</span>(chain_scan) =&gt; <span class="self">self</span>.spawn_workers_for_chain(chain_scan),
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(<span class="string">&quot;failed to spawn worker for a chain, reason: {}&quot;</span>, e), <span class="comment">// TODO: Show chain id
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(<span class="string">"failed to spawn worker for a chain, reason: {}"</span>, e), <span class="comment">// TODO: Show chain id
             </span>}
         }
     }
 
     <span class="kw">pub fn </span>spawn_workers_for_chain(<span class="kw-2">&amp;mut </span><span class="self">self</span>, scan: ChainScan) {
-        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">&quot;chain&quot;</span>, chain = %scan.chain_id).entered();
+        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">"chain"</span>, chain = %scan.chain_id).entered();
 
         <span class="kw">let </span>chain = <span class="kw">match </span><span class="self">self</span>.registry.get_or_spawn(<span class="kw-2">&amp;</span>scan.chain_id) {
             <span class="prelude-val">Ok</span>(chain_handle) =&gt; chain_handle,
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;skipping workers, reason: failed to spawn chain runtime with error: {}&quot;</span>,
+                    <span class="string">"skipping workers, reason: failed to spawn chain runtime with error: {}"</span>,
                     e
                 );
 
@@ -417,7 +419,7 @@
             <span class="self">self</span>.spawn_workers_for_client(chain.clone(), client_scan);
         }
 
-        <span class="comment">// Let&#39;s only spawn the wallet worker if telemetry is enabled,
+        <span class="comment">// Let's only spawn the wallet worker if telemetry is enabled,
         // otherwise the worker just ends up issuing queries to the node
         // without making anything of the result
         </span><span class="macro">telemetry!</span>(<span class="self">self</span>.spawn_wallet_worker(chain));
@@ -431,12 +433,12 @@
         <span class="self">self</span>.workers
             .spawn(chain.clone(), chain, <span class="kw-2">&amp;</span>wallet_object, <span class="self">self</span>.config)
             .then(|| {
-                <span class="macro">info!</span>(<span class="string">&quot;spawning Wallet worker: {}&quot;</span>, wallet_object.short_name());
+                <span class="macro">info!</span>(<span class="string">"spawning Wallet worker: {}"</span>, wallet_object.short_name());
             });
     }
 
     <span class="kw">pub fn </span>spawn_workers_for_client(<span class="kw-2">&amp;mut </span><span class="self">self</span>, chain: Chain, client_scan: ClientScan) {
-        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">&quot;client&quot;</span>, client = %client_scan.id()).entered();
+        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">"client"</span>, client = %client_scan.id()).entered();
 
         <span class="kw">for </span>(<span class="kw">_</span>, connection_scan) <span class="kw">in </span>client_scan.connections {
             <span class="self">self</span>.spawn_workers_for_connection(chain.clone(), <span class="kw-2">&amp;</span>client_scan.client, connection_scan);
@@ -450,7 +452,7 @@
         connection_scan: ConnectionScan,
     ) {
         <span class="kw">let </span>_span =
-            <span class="macro">tracing::error_span!</span>(<span class="string">&quot;connection&quot;</span>, connection = %connection_scan.id()).entered();
+            <span class="macro">tracing::error_span!</span>(<span class="string">"connection"</span>, connection = %connection_scan.id()).entered();
 
         <span class="kw">let </span>connection_id = connection_scan.id().clone();
 
@@ -462,17 +464,17 @@
             <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="macro">info!</span>(
                 chain = %chain.id(),
                 connection = %connection_id,
-                <span class="string">&quot;done spawning connection workers&quot;</span>,
+                <span class="string">"done spawning connection workers"</span>,
             ),
             <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="macro">info!</span>(
                 chain = %chain.id(),
                 connection = %connection_id,
-                <span class="string">&quot;no connection workers were spawn&quot;</span>,
+                <span class="string">"no connection workers were spawn"</span>,
             ),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(
                 chain = %chain.id(),
                 connection = %connection_id,
-                <span class="string">&quot;skipped connection workers, reason: {}&quot;</span>,
+                <span class="string">"skipped connection workers, reason: {}"</span>,
                 e
             ),
         }
@@ -482,17 +484,17 @@
                 <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="macro">info!</span>(
                     chain = %chain.id(),
                     channel = %channel_id,
-                    <span class="string">&quot;done spawning channel workers&quot;</span>,
+                    <span class="string">"done spawning channel workers"</span>,
                 ),
                 <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="macro">info!</span>(
                     chain = %chain.id(),
                     channel = %channel_id,
-                    <span class="string">&quot;no channel workers were spawned&quot;</span>,
+                    <span class="string">"no channel workers were spawned"</span>,
                 ),
                 <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">error!</span>(
                     chain = %chain.id(),
                     channel = %channel_id,
-                    <span class="string">&quot;skipped channel workers, reason: {}&quot;</span>,
+                    <span class="string">"skipped channel workers, reason: {}"</span>,
                     e
                 ),
             }
@@ -519,7 +521,7 @@
             chain = %chain.id(),
             connection = %connection.connection_id,
             counterparty_chain = %counterparty_chain.id(),
-            <span class="string">&quot;connection is {}, state on destination chain is {}&quot;</span>,
+            <span class="string">"connection is {}, state on destination chain is {}"</span>,
             conn_state_src,
             conn_state_dst
         );
@@ -528,7 +530,7 @@
             <span class="macro">info!</span>(
                 chain = %chain.id(),
                 connection = %connection.connection_id,
-                <span class="string">&quot;connection is already open, not spawning Connection worker&quot;</span>,
+                <span class="string">"connection is already open, not spawning Connection worker"</span>,
             );
 
             <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
@@ -547,7 +549,7 @@
                 .spawn(chain, counterparty_chain, <span class="kw-2">&amp;</span>connection_object, <span class="self">self</span>.config)
                 .then(|| {
                     <span class="macro">info!</span>(
-                        <span class="string">&quot;spawning Connection worker: {}&quot;</span>,
+                        <span class="string">"spawning Connection worker: {}"</span>,
                         connection_object.short_name()
                     );
                 });
@@ -566,7 +568,7 @@
         client: <span class="kw-2">&amp;</span>IdentifiedAnyClientState,
         channel_scan: ChannelScan,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Error&gt; {
-        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">&quot;channel&quot;</span>, channel = %channel_scan.id()).entered();
+        <span class="kw">let </span>_span = <span class="macro">tracing::error_span!</span>(<span class="string">"channel"</span>, channel = %channel_scan.id()).entered();
 
         <span class="kw">let </span>mode = <span class="kw-2">&amp;</span><span class="self">self</span>.config.mode;
 
@@ -585,7 +587,7 @@
             chain = %chain.id(),
             counterparty_chain = %counterparty_chain.id(),
             channel = %channel_scan.id(),
-            <span class="string">&quot;channel is {}, state on destination chain is {}&quot;</span>,
+            <span class="string">"channel is {}, state on destination chain is {}"</span>,
             chan_state_src,
             chan_state_dst
         );
@@ -609,7 +611,7 @@
                         <span class="kw-2">&amp;</span>client_object,
                         <span class="self">self</span>.config,
                     )
-                    .then(|| <span class="macro">info!</span>(<span class="string">&quot;spawned client worker: {}&quot;</span>, client_object.short_name()));
+                    .then(|| <span class="macro">info!</span>(<span class="string">"spawned client worker: {}"</span>, client_object.short_name()));
             }
 
             <span class="kw">if </span>mode.packets.enabled {
@@ -644,7 +646,7 @@
                             <span class="kw-2">&amp;</span>path_object,
                             <span class="self">self</span>.config,
                         )
-                        .then(|| <span class="macro">info!</span>(<span class="string">&quot;spawned packet worker: {}&quot;</span>, path_object.short_name()));
+                        .then(|| <span class="macro">info!</span>(<span class="string">"spawned packet worker: {}"</span>, path_object.short_name()));
                 }
             }
 
@@ -679,7 +681,7 @@
 
                 <span class="self">self</span>.workers
                     .spawn(chain, counterparty_chain, <span class="kw-2">&amp;</span>channel_object, <span class="self">self</span>.config)
-                    .then(|| <span class="macro">info!</span>(<span class="string">&quot;spawned channel worker: {}&quot;</span>, channel_object.short_name()));
+                    .then(|| <span class="macro">info!</span>(<span class="string">"spawned channel worker: {}"</span>, channel_object.short_name()));
 
                 <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
             } <span class="kw">else </span>{

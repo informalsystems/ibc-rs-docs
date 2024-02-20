@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-0.31.1/src/network.rs`."><title>network.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bitcoin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../bitcoin/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-0.31.1/src/network.rs`."><title>network.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bitcoin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../bitcoin/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -407,11 +409,11 @@
 
 </span><span class="doccomment">//! Bitcoin network.
 //!
-//! The term &quot;network&quot; is overloaded, here [`Network`] refers to the specific
+//! The term "network" is overloaded, here [`Network`] refers to the specific
 //! Bitcoin network we are operating on e.g., signet, regtest. The terms
-//! &quot;network&quot; and &quot;chain&quot; are often used interchangeably for this concept.
+//! "network" and "chain" are often used interchangeably for this concept.
 //!
-//! # Example: encoding a network&#39;s magic bytes
+//! # Example: encoding a network's magic bytes
 //!
 //! ```rust
 //! use bitcoin::Network;
@@ -429,7 +431,7 @@
 <span class="kw">use </span>core::str::FromStr;
 
 <span class="kw">use </span>internals::write_err;
-<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
 </span><span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::constants::ChainHash;
@@ -438,18 +440,18 @@
 
 <span class="doccomment">/// The cryptocurrency network to act on.
 </span><span class="attr">#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, derive(Serialize, Deserialize))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde(<span class="kw">crate </span>= <span class="string">&quot;actual_serde&quot;</span>))]
-#[cfg_attr(feature = <span class="string">&quot;serde&quot;</span>, serde(rename_all = <span class="string">&quot;lowercase&quot;</span>))]
+#[cfg_attr(feature = <span class="string">"serde"</span>, derive(Serialize, Deserialize))]
+#[cfg_attr(feature = <span class="string">"serde"</span>, serde(<span class="kw">crate </span>= <span class="string">"actual_serde"</span>))]
+#[cfg_attr(feature = <span class="string">"serde"</span>, serde(rename_all = <span class="string">"lowercase"</span>))]
 #[non_exhaustive]
 </span><span class="kw">pub enum </span>Network {
     <span class="doccomment">/// Mainnet Bitcoin.
     </span>Bitcoin,
-    <span class="doccomment">/// Bitcoin&#39;s testnet network.
+    <span class="doccomment">/// Bitcoin's testnet network.
     </span>Testnet,
-    <span class="doccomment">/// Bitcoin&#39;s signet network.
+    <span class="doccomment">/// Bitcoin's signet network.
     </span>Signet,
-    <span class="doccomment">/// Bitcoin&#39;s regtest network.
+    <span class="doccomment">/// Bitcoin's regtest network.
     </span>Regtest,
 }
 
@@ -485,25 +487,25 @@
     <span class="doccomment">/// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
     ///
     /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 &#39;\-chain=&lt;chain&gt;&#39;
+    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=&lt;chain&gt;'
     /// Chain selection options:
     ///
     /// -chain=&lt;chain&gt;
     /// Use the chain &lt;chain&gt; (default: main). Allowed values: main, test, signet, regtest
     /// ```
-    </span><span class="kw">pub fn </span>to_core_arg(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    </span><span class="kw">pub fn </span>to_core_arg(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
         <span class="kw">match </span><span class="self">self </span>{
-            Network::Bitcoin =&gt; <span class="string">&quot;main&quot;</span>,
-            Network::Testnet =&gt; <span class="string">&quot;test&quot;</span>,
-            Network::Signet =&gt; <span class="string">&quot;signet&quot;</span>,
-            Network::Regtest =&gt; <span class="string">&quot;regtest&quot;</span>,
+            Network::Bitcoin =&gt; <span class="string">"main"</span>,
+            Network::Testnet =&gt; <span class="string">"test"</span>,
+            Network::Signet =&gt; <span class="string">"signet"</span>,
+            Network::Regtest =&gt; <span class="string">"regtest"</span>,
         }
     }
 
     <span class="doccomment">/// Converts a `bitcoind -chain` argument name to its equivalent `Network`.
     ///
     /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 &#39;\-chain=&lt;chain&gt;&#39;
+    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=&lt;chain&gt;'
     /// Chain selection options:
     ///
     /// -chain=&lt;chain&gt;
@@ -513,16 +515,16 @@
         <span class="kw">use </span>Network::<span class="kw-2">*</span>;
 
         <span class="kw">let </span>network = <span class="kw">match </span>core_arg {
-            <span class="string">&quot;main&quot; </span>=&gt; Bitcoin,
-            <span class="string">&quot;test&quot; </span>=&gt; Testnet,
-            <span class="string">&quot;signet&quot; </span>=&gt; Signet,
-            <span class="string">&quot;regtest&quot; </span>=&gt; Regtest,
+            <span class="string">"main" </span>=&gt; Bitcoin,
+            <span class="string">"test" </span>=&gt; Testnet,
+            <span class="string">"signet" </span>=&gt; Signet,
+            <span class="string">"regtest" </span>=&gt; Regtest,
             <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ParseNetworkError(core_arg.to_owned())),
         };
         <span class="prelude-val">Ok</span>(network)
     }
 
-    <span class="doccomment">/// Return the network&#39;s chain hash (genesis block hash).
+    <span class="doccomment">/// Return the network's chain hash (genesis block hash).
     ///
     /// # Examples
     ///
@@ -551,7 +553,7 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
 </span><span class="kw">pub mod </span>as_core_arg {
     <span class="doccomment">//! Module for serialization/deserialization of network variants into/from Bitcoin Core values
     </span><span class="attr">#![allow(missing_docs)]
@@ -567,20 +569,20 @@
         serializer.serialize_str(network.to_core_arg())
     }
 
-    <span class="kw">pub fn </span>deserialize&lt;<span class="lifetime">&#39;de</span>, D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;Network, D::Error&gt;
+    <span class="kw">pub fn </span>deserialize&lt;<span class="lifetime">'de</span>, D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;Network, D::Error&gt;
     <span class="kw">where
-        </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;,
+        </span>D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="kw">struct </span>NetworkVisitor;
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; serde::de::Visitor&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>NetworkVisitor {
+        <span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>NetworkVisitor {
             <span class="kw">type </span>Value = Network;
 
             <span class="kw">fn </span>visit_str&lt;E: serde::de::Error&gt;(<span class="self">self</span>, s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, E&gt; {
                 Network::from_core_arg(s).map_err(|<span class="kw">_</span>| {
                     E::invalid_value(
                         serde::de::Unexpected::Str(s),
-                        <span class="kw-2">&amp;</span><span class="string">&quot;bitcoin network encoded as a string (either main, test, signet or regtest)&quot;</span>,
+                        <span class="kw-2">&amp;</span><span class="string">"bitcoin network encoded as a string (either main, test, signet or regtest)"</span>,
                     )
                 })
             }
@@ -588,7 +590,7 @@
             <span class="kw">fn </span>expecting(<span class="kw-2">&amp;</span><span class="self">self</span>, formatter: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
                 <span class="macro">write!</span>(
                     formatter,
-                    <span class="string">&quot;bitcoin network encoded as a string (either main, test, signet or regtest)&quot;
+                    <span class="string">"bitcoin network encoded as a string (either main, test, signet or regtest)"
                 </span>)
             }
         }
@@ -604,13 +606,13 @@
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>ParseNetworkError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-        <span class="macro">write_err!</span>(f, <span class="string">&quot;failed to parse {} as network&quot;</span>, <span class="self">self</span>.<span class="number">0</span>; <span class="self">self</span>)
+        <span class="macro">write_err!</span>(f, <span class="string">"failed to parse {} as network"</span>, <span class="self">self</span>.<span class="number">0</span>; <span class="self">self</span>)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>ParseNetworkError {
-    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; { <span class="prelude-val">None </span>}
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">'static</span>)&gt; { <span class="prelude-val">None </span>}
 }
 
 <span class="kw">impl </span>FromStr <span class="kw">for </span>Network {
@@ -621,10 +623,10 @@
         <span class="kw">use </span>Network::<span class="kw-2">*</span>;
 
         <span class="kw">let </span>network = <span class="kw">match </span>s {
-            <span class="string">&quot;bitcoin&quot; </span>=&gt; Bitcoin,
-            <span class="string">&quot;testnet&quot; </span>=&gt; Testnet,
-            <span class="string">&quot;signet&quot; </span>=&gt; Signet,
-            <span class="string">&quot;regtest&quot; </span>=&gt; Regtest,
+            <span class="string">"bitcoin" </span>=&gt; Bitcoin,
+            <span class="string">"testnet" </span>=&gt; Testnet,
+            <span class="string">"signet" </span>=&gt; Signet,
+            <span class="string">"regtest" </span>=&gt; Regtest,
             <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ParseNetworkError(s.to_owned())),
         };
         <span class="prelude-val">Ok</span>(network)
@@ -636,12 +638,12 @@
         <span class="kw">use </span>Network::<span class="kw-2">*</span>;
 
         <span class="kw">let </span>s = <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Bitcoin =&gt; <span class="string">&quot;bitcoin&quot;</span>,
-            Testnet =&gt; <span class="string">&quot;testnet&quot;</span>,
-            Signet =&gt; <span class="string">&quot;signet&quot;</span>,
-            Regtest =&gt; <span class="string">&quot;regtest&quot;</span>,
+            Bitcoin =&gt; <span class="string">"bitcoin"</span>,
+            Testnet =&gt; <span class="string">"testnet"</span>,
+            Signet =&gt; <span class="string">"signet"</span>,
+            Regtest =&gt; <span class="string">"regtest"</span>,
         };
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s)
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, s)
     }
 }
 
@@ -652,13 +654,13 @@
 
 <span class="kw">impl </span>Display <span class="kw">for </span>UnknownChainHashError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;unknown chain hash: {}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
+        <span class="macro">write!</span>(f, <span class="string">"unknown chain hash: {}"</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>UnknownChainHashError {
-    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; { <span class="prelude-val">None </span>}
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">'static</span>)&gt; { <span class="prelude-val">None </span>}
 }
 
 <span class="kw">impl </span>TryFrom&lt;ChainHash&gt; <span class="kw">for </span>Network {
@@ -697,16 +699,16 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>string_test() {
-        <span class="macro">assert_eq!</span>(Network::Bitcoin.to_string(), <span class="string">&quot;bitcoin&quot;</span>);
-        <span class="macro">assert_eq!</span>(Network::Testnet.to_string(), <span class="string">&quot;testnet&quot;</span>);
-        <span class="macro">assert_eq!</span>(Network::Regtest.to_string(), <span class="string">&quot;regtest&quot;</span>);
-        <span class="macro">assert_eq!</span>(Network::Signet.to_string(), <span class="string">&quot;signet&quot;</span>);
+        <span class="macro">assert_eq!</span>(Network::Bitcoin.to_string(), <span class="string">"bitcoin"</span>);
+        <span class="macro">assert_eq!</span>(Network::Testnet.to_string(), <span class="string">"testnet"</span>);
+        <span class="macro">assert_eq!</span>(Network::Regtest.to_string(), <span class="string">"regtest"</span>);
+        <span class="macro">assert_eq!</span>(Network::Signet.to_string(), <span class="string">"signet"</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;bitcoin&quot;</span>.parse::&lt;Network&gt;().unwrap(), Network::Bitcoin);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;testnet&quot;</span>.parse::&lt;Network&gt;().unwrap(), Network::Testnet);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;regtest&quot;</span>.parse::&lt;Network&gt;().unwrap(), Network::Regtest);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;signet&quot;</span>.parse::&lt;Network&gt;().unwrap(), Network::Signet);
-        <span class="macro">assert!</span>(<span class="string">&quot;fakenet&quot;</span>.parse::&lt;Network&gt;().is_err());
+        <span class="macro">assert_eq!</span>(<span class="string">"bitcoin"</span>.parse::&lt;Network&gt;().unwrap(), Network::Bitcoin);
+        <span class="macro">assert_eq!</span>(<span class="string">"testnet"</span>.parse::&lt;Network&gt;().unwrap(), Network::Testnet);
+        <span class="macro">assert_eq!</span>(<span class="string">"regtest"</span>.parse::&lt;Network&gt;().unwrap(), Network::Regtest);
+        <span class="macro">assert_eq!</span>(<span class="string">"signet"</span>.parse::&lt;Network&gt;().unwrap(), Network::Signet);
+        <span class="macro">assert!</span>(<span class="string">"fakenet"</span>.parse::&lt;Network&gt;().is_err());
     }
 
     <span class="attr">#[test]
@@ -741,33 +743,33 @@
         <span class="macro">assert_eq!</span>(flags2, ServiceFlags::COMPACT_FILTERS);
 
         <span class="comment">// Test formatting.
-        </span><span class="macro">assert_eq!</span>(<span class="string">&quot;ServiceFlags(NONE)&quot;</span>, ServiceFlags::NONE.to_string());
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;ServiceFlags(WITNESS)&quot;</span>, ServiceFlags::WITNESS.to_string());
+        </span><span class="macro">assert_eq!</span>(<span class="string">"ServiceFlags(NONE)"</span>, ServiceFlags::NONE.to_string());
+        <span class="macro">assert_eq!</span>(<span class="string">"ServiceFlags(WITNESS)"</span>, ServiceFlags::WITNESS.to_string());
         <span class="kw">let </span>flag = ServiceFlags::WITNESS | ServiceFlags::BLOOM | ServiceFlags::NETWORK;
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;ServiceFlags(NETWORK|BLOOM|WITNESS)&quot;</span>, flag.to_string());
+        <span class="macro">assert_eq!</span>(<span class="string">"ServiceFlags(NETWORK|BLOOM|WITNESS)"</span>, flag.to_string());
         <span class="kw">let </span>flag = ServiceFlags::WITNESS | <span class="number">0xf0</span>.into();
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)&quot;</span>, flag.to_string());
+        <span class="macro">assert_eq!</span>(<span class="string">"ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)"</span>, flag.to_string());
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+    #[cfg(feature = <span class="string">"serde"</span>)]
     </span><span class="kw">fn </span>serde_roundtrip() {
         <span class="kw">use </span>Network::<span class="kw-2">*</span>;
         <span class="kw">let </span>tests = <span class="macro">vec!</span>[
-            (Bitcoin, <span class="string">&quot;bitcoin&quot;</span>),
-            (Testnet, <span class="string">&quot;testnet&quot;</span>),
-            (Signet, <span class="string">&quot;signet&quot;</span>),
-            (Regtest, <span class="string">&quot;regtest&quot;</span>),
+            (Bitcoin, <span class="string">"bitcoin"</span>),
+            (Testnet, <span class="string">"testnet"</span>),
+            (Signet, <span class="string">"signet"</span>),
+            (Regtest, <span class="string">"regtest"</span>),
         ];
 
         <span class="kw">for </span>tc <span class="kw">in </span>tests {
             <span class="kw">let </span>network = tc.<span class="number">0</span>;
 
-            <span class="kw">let </span>want = <span class="macro">format!</span>(<span class="string">&quot;\&quot;{}\&quot;&quot;</span>, tc.<span class="number">1</span>);
-            <span class="kw">let </span>got = serde_json::to_string(<span class="kw-2">&amp;</span>tc.<span class="number">0</span>).expect(<span class="string">&quot;failed to serialize network&quot;</span>);
+            <span class="kw">let </span>want = <span class="macro">format!</span>(<span class="string">"\"{}\""</span>, tc.<span class="number">1</span>);
+            <span class="kw">let </span>got = serde_json::to_string(<span class="kw-2">&amp;</span>tc.<span class="number">0</span>).expect(<span class="string">"failed to serialize network"</span>);
             <span class="macro">assert_eq!</span>(got, want);
 
-            <span class="kw">let </span>back: Network = serde_json::from_str(<span class="kw-2">&amp;</span>got).expect(<span class="string">&quot;failed to deserialize network&quot;</span>);
+            <span class="kw">let </span>back: Network = serde_json::from_str(<span class="kw-2">&amp;</span>got).expect(<span class="string">"failed to deserialize network"</span>);
             <span class="macro">assert_eq!</span>(back, network);
         }
     }
@@ -775,10 +777,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>from_to_core_arg() {
         <span class="kw">let </span>expected_pairs = [
-            (Network::Bitcoin, <span class="string">&quot;main&quot;</span>),
-            (Network::Testnet, <span class="string">&quot;test&quot;</span>),
-            (Network::Regtest, <span class="string">&quot;regtest&quot;</span>),
-            (Network::Signet, <span class="string">&quot;signet&quot;</span>),
+            (Network::Bitcoin, <span class="string">"main"</span>),
+            (Network::Testnet, <span class="string">"test"</span>),
+            (Network::Regtest, <span class="string">"regtest"</span>),
+            (Network::Signet, <span class="string">"signet"</span>),
         ];
 
         <span class="kw">for </span>(net, core_arg) <span class="kw">in </span><span class="kw-2">&amp;</span>expected_pairs {
@@ -787,22 +789,22 @@
         }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
     #[test]
     </span><span class="kw">fn </span>serde_as_core_arg() {
         <span class="attr">#[derive(Serialize, Deserialize, PartialEq, Debug)]
-        #[serde(<span class="kw">crate </span>= <span class="string">&quot;actual_serde&quot;</span>)]
+        #[serde(<span class="kw">crate </span>= <span class="string">"actual_serde"</span>)]
         </span><span class="kw">struct </span>T {
-            <span class="attr">#[serde(with = <span class="string">&quot;crate::network::as_core_arg&quot;</span>)]
+            <span class="attr">#[serde(with = <span class="string">"crate::network::as_core_arg"</span>)]
             </span><span class="kw">pub </span>network: Network,
         }
 
         serde_test::assert_tokens(
             <span class="kw-2">&amp;</span>T { network: Network::Bitcoin },
             <span class="kw-2">&amp;</span>[
-                serde_test::Token::Struct { name: <span class="string">&quot;T&quot;</span>, len: <span class="number">1 </span>},
-                serde_test::Token::Str(<span class="string">&quot;network&quot;</span>),
-                serde_test::Token::Str(<span class="string">&quot;main&quot;</span>),
+                serde_test::Token::Struct { name: <span class="string">"T"</span>, len: <span class="number">1 </span>},
+                serde_test::Token::Str(<span class="string">"network"</span>),
+                serde_test::Token::Str(<span class="string">"main"</span>),
                 serde_test::Token::StructEnd,
             ],
         );

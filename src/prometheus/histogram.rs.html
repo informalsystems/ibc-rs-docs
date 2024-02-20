@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/prometheus-0.13.3/src/histogram.rs`."><title>histogram.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prometheus" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../prometheus/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/prometheus-0.13.3/src/histogram.rs`."><title>histogram.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="prometheus" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../prometheus/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1602,14 +1604,14 @@
 ];
 
 <span class="doccomment">/// Used for the label that defines the upper bound of a
-/// bucket of a histogram (&quot;le&quot; -&gt; &quot;less or equal&quot;).
-</span><span class="kw">pub const </span>BUCKET_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">&quot;le&quot;</span>;
+/// bucket of a histogram ("le" -&gt; "less or equal").
+</span><span class="kw">pub const </span>BUCKET_LABEL: <span class="kw-2">&amp;</span>str = <span class="string">"le"</span>;
 
 <span class="attr">#[inline]
 </span><span class="kw">fn </span>check_bucket_label(label: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>label == BUCKET_LABEL {
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(
-            <span class="string">&quot;`le` is not allowed as label name in histograms&quot;</span>.to_owned(),
+            <span class="string">"`le` is not allowed as label name in histograms"</span>.to_owned(),
         ));
     }
 
@@ -1618,14 +1620,14 @@
 
 <span class="kw">fn </span>check_and_adjust_buckets(<span class="kw-2">mut </span>buckets: Vec&lt;f64&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;f64&gt;&gt; {
     <span class="kw">if </span>buckets.is_empty() {
-        buckets = Vec::from(DEFAULT_BUCKETS <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[f64]);
+        buckets = Vec::from(DEFAULT_BUCKETS <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">'static </span>[f64]);
     }
 
     <span class="kw">for </span>(i, upper_bound) <span class="kw">in </span>buckets.iter().enumerate() {
         <span class="kw">if </span>i &lt; (buckets.len() - <span class="number">1</span>) &amp;&amp; <span class="kw-2">*</span>upper_bound &gt;= buckets[i + <span class="number">1</span>] {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-                <span class="string">&quot;histogram buckets must be in increasing \
-                 order: {} &gt;= {}&quot;</span>,
+                <span class="string">"histogram buckets must be in increasing \
+                 order: {} &gt;= {}"</span>,
                 upper_bound,
                 buckets[i + <span class="number">1</span>]
             )));
@@ -1662,7 +1664,7 @@
     </span><span class="kw">pub fn </span>new&lt;S1: Into&lt;String&gt;, S2: Into&lt;String&gt;&gt;(name: S1, help: S2) -&gt; HistogramOpts {
         HistogramOpts {
             common_opts: Opts::new(name, help),
-            buckets: Vec::from(DEFAULT_BUCKETS <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[f64]),
+            buckets: Vec::from(DEFAULT_BUCKETS <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">'static </span>[f64]),
         }
     }
 
@@ -1724,7 +1726,7 @@
     <span class="kw">fn </span>from(opts: Opts) -&gt; HistogramOpts {
         HistogramOpts {
             common_opts: opts,
-            buckets: Vec::from(DEFAULT_BUCKETS <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[f64]),
+            buckets: Vec::from(DEFAULT_BUCKETS <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">'static </span>[f64]),
         }
     }
 }
@@ -1781,7 +1783,7 @@
             <span class="number">0 </span>=&gt; ShardIndex::First,
             <span class="number">1 </span>=&gt; ShardIndex::Second,
             <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">&quot;Invalid shard index {:?}. A histogram only has two shards.&quot;</span>,
+                <span class="string">"Invalid shard index {:?}. A histogram only has two shards."</span>,
                 index
             ),
         }
@@ -1933,8 +1935,8 @@
     </span><span class="comment">//
     // First increase the overall observation counter and thus learn which shard
     // is the current hot shard. Subsequently on the hot shard update the
-    // corresponding bucket count, adjust the shard&#39;s sum and finally increase
-    // the shard&#39;s count.
+    // corresponding bucket count, adjust the shard's sum and finally increase
+    // the shard's count.
     </span><span class="kw">pub fn </span>observe(<span class="kw-2">&amp;</span><span class="self">self</span>, v: f64) {
         <span class="comment">// The collect code path uses `self.shard_and_count` and
         // `self.shards[x].count` to ensure not to collect data from a shard
@@ -1968,7 +1970,7 @@
     // remaining `observe` calls to finish on the previously hot now cold shard,
     // snapshot the data, update the now hot shard and reset the cold shard.
     </span><span class="kw">pub fn </span>proto(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; proto::Histogram {
-        <span class="kw">let </span>collect_guard = <span class="self">self</span>.collect_lock.lock().expect(<span class="string">&quot;Lock poisoned&quot;</span>);
+        <span class="kw">let </span>collect_guard = <span class="self">self</span>.collect_lock.lock().expect(<span class="string">"Lock poisoned"</span>);
 
         <span class="comment">// `flip` needs to use AcqRel ordering to ensure the lock operation
         // above stays above and the histogram operations (especially the shard
@@ -2042,7 +2044,7 @@
     <span class="kw">fn </span>sample_sum(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
         <span class="comment">// Make sure to not overlap with any collect calls, as they might flip
         // the hot and cold shards.
-        </span><span class="kw">let </span>_guard = <span class="self">self</span>.collect_lock.lock().expect(<span class="string">&quot;Lock poisoned&quot;</span>);
+        </span><span class="kw">let </span>_guard = <span class="self">self</span>.collect_lock.lock().expect(<span class="string">"Lock poisoned"</span>);
 
         <span class="kw">let </span>(shard_index, _count) = <span class="self">self</span>.shard_and_count.get();
         <span class="self">self</span>.shards[shard_index <span class="kw">as </span>usize].sum.get()
@@ -2054,15 +2056,15 @@
 }
 
 <span class="comment">// We have to wrap libc::timespec in order to implement std::fmt::Debug.
-</span><span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+</span><span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
 </span><span class="kw">pub struct </span>Timespec(libc::timespec);
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+<span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
 </span><span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span>Timespec {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Timespec {{ tv_sec: {}, tv_nsec: {} }}&quot;</span>,
+            <span class="string">"Timespec {{ tv_sec: {}, tv_nsec: {} }}"</span>,
             <span class="self">self</span>.<span class="number">0</span>.tv_sec, <span class="self">self</span>.<span class="number">0</span>.tv_nsec
         )
     }
@@ -2071,7 +2073,7 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>Instant {
     Monotonic(StdInstant),
-    <span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+    <span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
     </span>MonotonicCoarse(Timespec),
 }
 
@@ -2080,12 +2082,12 @@
         Instant::Monotonic(StdInstant::now())
     }
 
-    <span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+    <span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
     </span><span class="kw">pub fn </span>now_coarse() -&gt; Instant {
         Instant::MonotonicCoarse(get_time_coarse())
     }
 
-    <span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, not(target_os = <span class="string">&quot;linux&quot;</span>)))]
+    <span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, not(target_os = <span class="string">"linux"</span>)))]
     </span><span class="kw">pub fn </span>now_coarse() -&gt; Instant {
         Instant::Monotonic(StdInstant::now())
     }
@@ -2100,7 +2102,7 @@
             // and therefore the timer registers are typically running at an offset.
             // Use millisecond resolution for ignoring the error.
             // See more: https://linux.die.net/man/2/clock_gettime
-            </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+            </span><span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
             </span>Instant::MonotonicCoarse(t) =&gt; {
                 <span class="kw">let </span>now = get_time_coarse();
                 <span class="kw">let </span>now_ms = now.<span class="number">0</span>.tv_sec * MILLIS_PER_SEC + now.<span class="number">0</span>.tv_nsec / NANOS_PER_MILLI;
@@ -2121,10 +2123,10 @@
     }
 }
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+<span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
 </span><span class="kw">use </span><span class="self">self</span>::coarse::<span class="kw-2">*</span>;
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;nightly&quot;</span>, target_os = <span class="string">&quot;linux&quot;</span>))]
+<span class="attr">#[cfg(all(feature = <span class="string">"nightly"</span>, target_os = <span class="string">"linux"</span>))]
 </span><span class="kw">mod </span>coarse {
     <span class="kw">use </span><span class="kw">crate</span>::histogram::Timespec;
     <span class="kw">pub use </span>libc::timespec;
@@ -2151,7 +2153,7 @@
 /// This timer can be stopped and observed at most once, either automatically (when it
 /// goes out of scope) or manually.
 /// Alternatively, it can be manually stopped and discarded in order to not record its value.
-</span><span class="attr">#[must_use = <span class="string">&quot;Timer should be kept in a variable otherwise it cannot observe duration&quot;</span>]
+</span><span class="attr">#[must_use = <span class="string">"Timer should be kept in a variable otherwise it cannot observe duration"</span>]
 #[derive(Debug)]
 </span><span class="kw">pub struct </span>HistogramTimer {
     <span class="doccomment">/// A histogram for automatic recording of observations.
@@ -2171,7 +2173,7 @@
         }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">fn </span>new_coarse(histogram: Histogram) -&gt; <span class="self">Self </span>{
         HistogramTimer {
             histogram,
@@ -2277,7 +2279,7 @@
 
     <span class="doccomment">/// Return a [`HistogramTimer`] to track a duration.
     /// It is faster but less precise.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">pub fn </span>start_coarse_timer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HistogramTimer {
         HistogramTimer::new_coarse(<span class="self">self</span>.clone())
     }
@@ -2295,7 +2297,7 @@
     }
 
     <span class="doccomment">/// Observe execution time of a closure, in second.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">pub fn </span>observe_closure_duration_coarse&lt;F, T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; T
     <span class="kw">where
         </span>F: FnOnce() -&gt; T,
@@ -2399,13 +2401,13 @@
 </span><span class="kw">pub fn </span>linear_buckets(start: f64, width: f64, count: usize) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;f64&gt;&gt; {
     <span class="kw">if </span>count &lt; <span class="number">1 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-            <span class="string">&quot;LinearBuckets needs a positive count, count: {}&quot;</span>,
+            <span class="string">"LinearBuckets needs a positive count, count: {}"</span>,
             count
         )));
     }
     <span class="kw">if </span>width &lt;= <span class="number">0.0 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-            <span class="string">&quot;LinearBuckets needs a width greater then 0, width: {}&quot;</span>,
+            <span class="string">"LinearBuckets needs a width greater then 0, width: {}"</span>,
             width
         )));
     }
@@ -2418,8 +2420,8 @@
 }
 
 <span class="doccomment">/// Create `count` buckets, where the lowest bucket has an
-/// upper bound of `start` and each following bucket&#39;s upper bound is `factor`
-/// times the previous bucket&#39;s upper bound. The final +Inf bucket is not counted
+/// upper bound of `start` and each following bucket's upper bound is `factor`
+/// times the previous bucket's upper bound. The final +Inf bucket is not counted
 /// and not included in the returned slice. The returned slice is meant to be
 /// used for the Buckets field of [`HistogramOpts`].
 ///
@@ -2428,21 +2430,21 @@
 </span><span class="kw">pub fn </span>exponential_buckets(start: f64, factor: f64, count: usize) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;f64&gt;&gt; {
     <span class="kw">if </span>count &lt; <span class="number">1 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-            <span class="string">&quot;exponential_buckets needs a positive count, count: {}&quot;</span>,
+            <span class="string">"exponential_buckets needs a positive count, count: {}"</span>,
             count
         )));
     }
     <span class="kw">if </span>start &lt;= <span class="number">0.0 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-            <span class="string">&quot;exponential_buckets needs a positive start value, \
-             start: {}&quot;</span>,
+            <span class="string">"exponential_buckets needs a positive start value, \
+             start: {}"</span>,
             start
         )));
     }
     <span class="kw">if </span>factor &lt;= <span class="number">1.0 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Msg(<span class="macro">format!</span>(
-            <span class="string">&quot;exponential_buckets needs a factor greater than 1, \
-             factor: {}&quot;</span>,
+            <span class="string">"exponential_buckets needs a factor greater than 1, \
+             factor: {}"</span>,
             factor
         )));
     }
@@ -2488,7 +2490,7 @@
 }
 
 <span class="doccomment">/// An unsync [`HistogramTimer`].
-</span><span class="attr">#[must_use = <span class="string">&quot;Timer should be kept in a variable otherwise it cannot observe duration&quot;</span>]
+</span><span class="attr">#[must_use = <span class="string">"Timer should be kept in a variable otherwise it cannot observe duration"</span>]
 #[derive(Debug)]
 </span><span class="kw">pub struct </span>LocalHistogramTimer {
     <span class="doccomment">/// A local histogram for automatic recording of observations.
@@ -2508,7 +2510,7 @@
         }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">fn </span>new_coarse(histogram: LocalHistogram) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             local: histogram,
@@ -2664,7 +2666,7 @@
 
     <span class="doccomment">/// Return a `LocalHistogramTimer` to track a duration.
     /// It is faster but less precise.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">pub fn </span>start_coarse_timer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LocalHistogramTimer {
         LocalHistogramTimer::new_coarse(<span class="self">self</span>.clone())
     }
@@ -2682,7 +2684,7 @@
     }
 
     <span class="doccomment">/// Observe execution time of a closure, in second.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">pub fn </span>observe_closure_duration_coarse&lt;F, T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; T
     <span class="kw">where
         </span>F: FnOnce() -&gt; T,
@@ -2743,7 +2745,7 @@
 
     <span class="doccomment">/// Get a [`LocalHistogram`] by label values.
     /// See more [`MetricVec::with_label_values`].
-    </span><span class="kw">pub fn </span>with_label_values&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>, vals: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>LocalHistogram {
+    </span><span class="kw">pub fn </span>with_label_values&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>, vals: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>LocalHistogram {
         <span class="kw">let </span>hash = <span class="self">self</span>.vec.v.hash_label_values(vals).unwrap();
         <span class="kw">let </span>vec = <span class="kw-2">&amp;</span><span class="self">self</span>.vec;
         <span class="self">self</span>.local
@@ -2791,9 +2793,9 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_histogram() {
-        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">&quot;test1&quot;</span>, <span class="string">&quot;test help&quot;</span>)
-            .const_label(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;1&quot;</span>)
-            .const_label(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;2&quot;</span>);
+        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">"test1"</span>, <span class="string">"test help"</span>)
+            .const_label(<span class="string">"a"</span>, <span class="string">"1"</span>)
+            .const_label(<span class="string">"b"</span>, <span class="string">"2"</span>);
         <span class="kw">let </span>histogram = Histogram::with_opts(opts).unwrap();
         histogram.observe(<span class="number">1.0</span>);
 
@@ -2820,7 +2822,7 @@
         <span class="macro">assert_eq!</span>(proto_histogram.get_bucket().len(), DEFAULT_BUCKETS.len());
 
         <span class="kw">let </span>buckets = <span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>];
-        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">&quot;test2&quot;</span>, <span class="string">&quot;test help&quot;</span>).buckets(buckets.clone());
+        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">"test2"</span>, <span class="string">"test help"</span>).buckets(buckets.clone());
         <span class="kw">let </span>histogram = Histogram::with_opts(opts).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>mfs = histogram.collect();
         <span class="macro">assert_eq!</span>(mfs.len(), <span class="number">1</span>);
@@ -2835,9 +2837,9 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    #[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">fn </span>test_histogram_coarse_timer() {
-        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">&quot;test1&quot;</span>, <span class="string">&quot;test help&quot;</span>);
+        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">"test1"</span>, <span class="string">"test help"</span>);
         <span class="kw">let </span>histogram = Histogram::with_opts(opts).unwrap();
 
         <span class="kw">let </span>timer = histogram.start_coarse_timer();
@@ -2866,7 +2868,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    #[cfg(feature = <span class="string">"nightly"</span>)]
     </span><span class="kw">fn </span>test_instant_on_smp() {
         <span class="kw">let </span>zero = Duration::from_millis(<span class="number">0</span>);
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">100_000 </span>{
@@ -2948,31 +2950,31 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_histogram_vec_with_label_values() {
         <span class="kw">let </span>vec = HistogramVec::new(
-            HistogramOpts::new(<span class="string">&quot;test_histogram_vec&quot;</span>, <span class="string">&quot;test histogram vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>],
+            HistogramOpts::new(<span class="string">"test_histogram_vec"</span>, <span class="string">"test histogram vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"l1"</span>, <span class="string">"l2"</span>],
         )
         .unwrap();
 
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).is_err());
-        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).observe(<span class="number">1.0</span>);
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).is_ok());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).is_err());
+        vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).observe(<span class="number">1.0</span>);
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).is_ok());
 
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>]).is_err());
-        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v3&quot;</span>]).is_err());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>]).is_err());
+        <span class="macro">assert!</span>(vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v3"</span>]).is_err());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_histogram_vec_with_opts_buckets() {
-        <span class="kw">let </span>labels = [<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>];
+        <span class="kw">let </span>labels = [<span class="string">"l1"</span>, <span class="string">"l2"</span>];
         <span class="kw">let </span>buckets = <span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>];
         <span class="kw">let </span>vec = HistogramVec::new(
-            HistogramOpts::new(<span class="string">&quot;test_histogram_vec&quot;</span>, <span class="string">&quot;test histogram vec help&quot;</span>)
+            HistogramOpts::new(<span class="string">"test_histogram_vec"</span>, <span class="string">"test histogram vec help"</span>)
                 .buckets(buckets.clone()),
             <span class="kw-2">&amp;</span>labels,
         )
         .unwrap();
 
-        <span class="kw">let </span>histogram = vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]);
+        <span class="kw">let </span>histogram = vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]);
         histogram.observe(<span class="number">1.0</span>);
 
         <span class="kw">let </span>m = histogram.metric();
@@ -2987,7 +2989,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_histogram_local() {
         <span class="kw">let </span>buckets = <span class="macro">vec!</span>[<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>];
-        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">&quot;test_histogram_local&quot;</span>, <span class="string">&quot;test histogram local help&quot;</span>)
+        <span class="kw">let </span>opts = HistogramOpts::new(<span class="string">"test_histogram_local"</span>, <span class="string">"test histogram local help"</span>)
             .buckets(buckets.clone());
         <span class="kw">let </span>histogram = Histogram::with_opts(opts).unwrap();
         <span class="kw">let </span>local = histogram.local();
@@ -3018,14 +3020,14 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_histogram_vec_local() {
         <span class="kw">let </span>vec = HistogramVec::new(
-            HistogramOpts::new(<span class="string">&quot;test_histogram_vec_local&quot;</span>, <span class="string">&quot;test histogram vec help&quot;</span>),
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;l1&quot;</span>, <span class="string">&quot;l2&quot;</span>],
+            HistogramOpts::new(<span class="string">"test_histogram_vec_local"</span>, <span class="string">"test histogram vec help"</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"l1"</span>, <span class="string">"l2"</span>],
         )
         .unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>local_vec = vec.local();
 
-        vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).unwrap_err();
-        local_vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).unwrap_err();
+        vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).unwrap_err();
+        local_vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).unwrap_err();
 
         <span class="kw">let </span>check = |count, sum| {
             <span class="kw">let </span>ms = vec.collect()[<span class="number">0</span>].take_metric();
@@ -3036,7 +3038,7 @@
 
         {
             <span class="comment">// Flush LocalHistogram
-            </span><span class="kw">let </span>h = local_vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]);
+            </span><span class="kw">let </span>h = local_vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]);
             h.observe(<span class="number">1.0</span>);
             h.flush();
             check(<span class="number">1</span>, <span class="number">1.0</span>);
@@ -3044,16 +3046,16 @@
 
         {
             <span class="comment">// Flush LocalHistogramVec
-            </span>local_vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).observe(<span class="number">4.0</span>);
+            </span>local_vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).observe(<span class="number">4.0</span>);
             local_vec.flush();
             check(<span class="number">2</span>, <span class="number">5.0</span>);
         }
         {
-            <span class="comment">// Reset [&quot;v1&quot;, &quot;v2&quot;]
-            </span>local_vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).unwrap();
+            <span class="comment">// Reset ["v1", "v2"]
+            </span>local_vec.remove_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).unwrap();
 
             <span class="comment">// Flush on drop
-            </span>local_vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">&quot;v1&quot;</span>, <span class="string">&quot;v2&quot;</span>]).observe(<span class="number">2.0</span>);
+            </span>local_vec.with_label_values(<span class="kw-2">&amp;</span>[<span class="string">"v1"</span>, <span class="string">"v2"</span>]).observe(<span class="number">2.0</span>);
             drop(local_vec);
             check(<span class="number">1</span>, <span class="number">2.0</span>);
         }
@@ -3066,7 +3068,7 @@
     </span><span class="kw">fn </span>atomic_observe_across_collects() {
         <span class="kw">let </span>done = Arc::new(std::sync::atomic::AtomicBool::default());
         <span class="kw">let </span>histogram =
-            Histogram::with_opts(HistogramOpts::new(<span class="string">&quot;test_name&quot;</span>, <span class="string">&quot;test help&quot;</span>).buckets(<span class="macro">vec!</span>[<span class="number">1.0</span>]))
+            Histogram::with_opts(HistogramOpts::new(<span class="string">"test_name"</span>, <span class="string">"test help"</span>).buckets(<span class="macro">vec!</span>[<span class="number">1.0</span>]))
                 .unwrap();
 
         <span class="kw">let </span>done_clone = done.clone();
@@ -3111,19 +3113,19 @@
 
         <span class="kw">if </span>sample_count != cumulative_count {
             <span class="macro">panic!</span>(
-                <span class="string">&quot;Histogram invariant violated: For a histogram with a single \
-                 bucket observing values below the bucket&#39;s upper bound only \
-                 the histogram&#39;s count should always be equal to the buckets&#39;s \
-                 cumulative count, got {:?} and {:?} instead.&quot;</span>,
+                <span class="string">"Histogram invariant violated: For a histogram with a single \
+                 bucket observing values below the bucket's upper bound only \
+                 the histogram's count should always be equal to the buckets's \
+                 cumulative count, got {:?} and {:?} instead."</span>,
                 sample_count, cumulative_count,
             );
         }
 
         <span class="kw">if </span>sample_count != sample_sum {
             <span class="macro">panic!</span>(
-                <span class="string">&quot;Histogram invariant violated: For a histogram which is only \
+                <span class="string">"Histogram invariant violated: For a histogram which is only \
                  ever observing a value of `1.0` the sample count should equal \
-                 the sum, instead got: {:?} and {:?}&quot;</span>,
+                 the sum, instead got: {:?} and {:?}"</span>,
                 sample_count, sample_sum,
             )
         }
@@ -3133,18 +3135,18 @@
     </span><span class="kw">fn </span>test_error_on_inconsistent_label_cardinality() {
         <span class="kw">let </span>hist = Histogram::with_opts(
             <span class="macro">histogram_opts!</span>(
-                <span class="string">&quot;example_histogram&quot;</span>,
-                <span class="string">&quot;Used as an example&quot;</span>,
+                <span class="string">"example_histogram"</span>,
+                <span class="string">"Used as an example"</span>,
                 <span class="macro">vec!</span>[<span class="number">0.005</span>, <span class="number">0.01</span>, <span class="number">0.025</span>, <span class="number">0.05</span>, <span class="number">0.075</span>, <span class="number">0.1</span>, <span class="number">0.25</span>, <span class="number">0.5</span>, <span class="number">0.75</span>, <span class="number">1.0</span>, <span class="number">5.0</span>]
             )
-            .variable_label(<span class="string">&quot;example_variable&quot;</span>),
+            .variable_label(<span class="string">"example_variable"</span>),
         );
 
         <span class="kw">if let </span><span class="prelude-val">Err</span>(Error::InconsistentCardinality { expect, got }) = hist {
             <span class="macro">assert_eq!</span>(<span class="number">1</span>, expect);
             <span class="macro">assert_eq!</span>(<span class="number">0</span>, got);
         } <span class="kw">else </span>{
-            <span class="macro">panic!</span>(<span class="string">&quot;Expected InconsistentCardinality error.&quot;</span>)
+            <span class="macro">panic!</span>(<span class="string">"Expected InconsistentCardinality error."</span>)
         }
     }
 }

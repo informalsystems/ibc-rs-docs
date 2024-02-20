@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-0.28.1/src/ecdsa/recovery.rs`."><title>recovery.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="secp256k1" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../secp256k1/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/secp256k1-0.28.1/src/ecdsa/recovery.rs`."><title>recovery.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="secp256k1" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../secp256k1/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -510,14 +512,14 @@
 
     <span class="doccomment">/// Obtains a raw pointer suitable for use with FFI functions.
     </span><span class="attr">#[inline]
-    #[deprecated(since = <span class="string">&quot;0.25.0&quot;</span>, note = <span class="string">&quot;Use Self::as_c_ptr if you need to access the FFI layer&quot;</span>)]
+    #[deprecated(since = <span class="string">"0.25.0"</span>, note = <span class="string">"Use Self::as_c_ptr if you need to access the FFI layer"</span>)]
     </span><span class="kw">pub fn </span>as_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*const </span>ffi::RecoverableSignature { <span class="self">self</span>.as_c_ptr() }
 
     <span class="doccomment">/// Obtains a raw mutable pointer suitable for use with FFI functions.
     </span><span class="attr">#[inline]
     #[deprecated(
-        since = <span class="string">&quot;0.25.0&quot;</span>,
-        note = <span class="string">&quot;Use Self::as_mut_c_ptr if you need to access the FFI layer&quot;
+        since = <span class="string">"0.25.0"</span>,
+        note = <span class="string">"Use Self::as_mut_c_ptr if you need to access the FFI layer"
     </span>)]
     </span><span class="kw">pub fn </span>as_mut_ptr(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>ffi::RecoverableSignature { <span class="self">self</span>.as_mut_c_ptr() }
 
@@ -557,7 +559,7 @@
     <span class="doccomment">/// Determines the public key for which this [`Signature`] is valid for `msg`. Requires a
     /// verify-capable context.
     </span><span class="attr">#[inline]
-    #[cfg(feature = <span class="string">&quot;global-context&quot;</span>)]
+    #[cfg(feature = <span class="string">"global-context"</span>)]
     </span><span class="kw">pub fn </span>recover(<span class="kw-2">&amp;</span><span class="self">self</span>, msg: <span class="kw-2">&amp;</span>Message) -&gt; <span class="prelude-ty">Result</span>&lt;key::PublicKey, Error&gt; {
         <span class="kw">crate</span>::SECP256K1.recover_ecdsa(msg, <span class="self">self</span>)
     }
@@ -585,7 +587,7 @@
     ) -&gt; RecoverableSignature {
         <span class="kw">let </span><span class="kw-2">mut </span>ret = ffi::RecoverableSignature::new();
         <span class="kw">unsafe </span>{
-            <span class="comment">// We can assume the return value because it&#39;s not possible to construct
+            <span class="comment">// We can assume the return value because it's not possible to construct
             // an invalid signature from a valid `Message` and `SecretKey`
             </span><span class="macro">assert_eq!</span>(
                 ffi::secp256k1_ecdsa_sign_recoverable(
@@ -656,7 +658,7 @@
 <span class="attr">#[cfg(test)]
 #[allow(unused_imports)]
 </span><span class="kw">mod </span>tests {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"wasm32"</span>)]
     </span><span class="kw">use </span>wasm_bindgen_test::wasm_bindgen_test <span class="kw">as </span>test;
 
     <span class="kw">use super</span>::{RecoverableSignature, RecoveryId};
@@ -664,7 +666,7 @@
     <span class="kw">use crate</span>::{Error, Message, Secp256k1, SecretKey};
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>capabilities() {
         <span class="kw">let </span>sign = Secp256k1::signing_only();
         <span class="kw">let </span>vrfy = Secp256k1::verification_only();
@@ -695,8 +697,8 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(secp256k1_fuzz))]  </span><span class="comment">// fixed sig vectors can&#39;t work with fuzz-sigs
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(not(secp256k1_fuzz))]  </span><span class="comment">// fixed sig vectors can't work with fuzz-sigs
+    </span><span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     #[rustfmt::skip]
     </span><span class="kw">fn </span>sign() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
@@ -720,8 +722,8 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(secp256k1_fuzz))]  </span><span class="comment">// fixed sig vectors can&#39;t work with fuzz-sigs
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(not(secp256k1_fuzz))]  </span><span class="comment">// fixed sig vectors can't work with fuzz-sigs
+    </span><span class="attr">#[cfg(feature = <span class="string">"rand-std"</span>)]
     #[rustfmt::skip]
     </span><span class="kw">fn </span>sign_with_noncedata() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
@@ -746,7 +748,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>sign_and_verify_fail() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
         s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
@@ -768,7 +770,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>sign_with_recovery() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
         s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
@@ -784,7 +786,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>sign_with_recovery_and_noncedata() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
         s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
@@ -802,7 +804,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)]
+    #[cfg(feature = <span class="string">"rand-std"</span>)]
     </span><span class="kw">fn </span>bad_recovery() {
         <span class="kw">let </span><span class="kw-2">mut </span>s = Secp256k1::new();
         s.randomize(<span class="kw-2">&amp;mut </span>rand::thread_rng());
@@ -830,7 +832,7 @@
             <span class="number">0xff</span>, <span class="number">0x20</span>, <span class="number">0x80</span>, <span class="number">0xc4</span>, <span class="number">0xa3</span>, <span class="number">0x9a</span>, <span class="number">0xae</span>, <span class="number">0x06</span>,
             <span class="number">0x8d</span>, <span class="number">0x12</span>, <span class="number">0xee</span>, <span class="number">0xd0</span>, <span class="number">0x09</span>, <span class="number">0xb6</span>, <span class="number">0x8c</span>, <span class="number">0x89</span>],
             RecoveryId(<span class="number">1</span>)).unwrap();
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, sig), <span class="string">&quot;RecoverableSignature(6673ffad2147741f04772b6f921f0ba6af0c1e77fc439e65c36dedf4092e88984c1a971652e0ada880120ef8025e709fff2080c4a39aae068d12eed009b68c8901)&quot;</span>);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{:?}"</span>, sig), <span class="string">"RecoverableSignature(6673ffad2147741f04772b6f921f0ba6af0c1e77fc439e65c36dedf4092e88984c1a971652e0ada880120ef8025e709fff2080c4a39aae068d12eed009b68c8901)"</span>);
     }
 
     <span class="attr">#[test]
@@ -868,7 +870,7 @@
 }
 
 <span class="attr">#[cfg(bench)]
-#[cfg(feature = <span class="string">&quot;rand-std&quot;</span>)] </span><span class="comment">// Currently only a single bench that requires &quot;rand-std&quot;.
+#[cfg(feature = <span class="string">"rand-std"</span>)] </span><span class="comment">// Currently only a single bench that requires "rand-std".
 </span><span class="kw">mod </span>benches {
     <span class="kw">use </span>test::{black_box, Bencher};
 

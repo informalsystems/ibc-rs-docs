@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/k256-0.13.3/src/arithmetic/field.rs`."><title>field.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="k256" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../k256/index.html"><img src="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/k256-0.13.3/src/arithmetic/field.rs`."><title>field.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="k256" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../k256/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -849,12 +851,12 @@
 </span><span class="kw">use </span>cfg_if::cfg_if;
 
 <span class="macro">cfg_if! </span>{
-    <span class="kw">if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)] </span>{
+    <span class="kw">if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)] </span>{
         <span class="kw">mod </span>field_10x26;
-    } <span class="kw">else if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)] </span>{
+    } <span class="kw">else if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)] </span>{
         <span class="kw">mod </span>field_5x52;
     } <span class="kw">else </span>{
-        <span class="macro">compile_error!</span>(<span class="string">&quot;unsupported target word size (i.e. target_pointer_width)&quot;</span>);
+        <span class="macro">compile_error!</span>(<span class="string">"unsupported target word size (i.e. target_pointer_width)"</span>);
     }
 }
 
@@ -864,12 +866,12 @@
         <span class="kw">use </span>field_impl::FieldElementImpl;
     } <span class="kw">else </span>{
         <span class="macro">cfg_if! </span>{
-            <span class="kw">if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)] </span>{
+            <span class="kw">if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)] </span>{
                 <span class="kw">use </span>field_10x26::FieldElement10x26 <span class="kw">as </span>FieldElementImpl;
-            } <span class="kw">else if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)] </span>{
+            } <span class="kw">else if </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)] </span>{
                 <span class="kw">use </span>field_5x52::FieldElement5x52 <span class="kw">as </span>FieldElementImpl;
             } <span class="kw">else </span>{
-                <span class="macro">compile_error!</span>(<span class="string">&quot;unsupported target word size (i.e. target_pointer_width)&quot;</span>);
+                <span class="macro">compile_error!</span>(<span class="string">"unsupported target word size (i.e. target_pointer_width)"</span>);
             }
         }
     }
@@ -989,7 +991,7 @@
     }
 
     <span class="doccomment">/// Returns self * rhs mod p
-    /// Brings the magnitude to 1 (but doesn&#39;t normalize the result).
+    /// Brings the magnitude to 1 (but doesn't normalize the result).
     /// The magnitudes of arguments should be &lt;= 8.
     </span><span class="kw">pub fn </span>mul(<span class="kw-2">&amp;</span><span class="self">self</span>, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>(<span class="self">self</span>.<span class="number">0</span>.mul(<span class="kw-2">&amp;</span>(rhs.<span class="number">0</span>)))
@@ -997,7 +999,7 @@
 
     <span class="doccomment">/// Returns self * self.
     ///
-    /// Brings the magnitude to 1 (but doesn&#39;t normalize the result).
+    /// Brings the magnitude to 1 (but doesn't normalize the result).
     /// The magnitudes of arguments should be &lt;= 8.
     </span><span class="kw">pub fn </span>square(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>(<span class="self">self</span>.<span class="number">0</span>.square())
@@ -1050,7 +1052,7 @@
     </span><span class="kw">pub fn </span>sqrt(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CtOption&lt;<span class="self">Self</span>&gt; {
         <span class="comment">/*
         Given that p is congruent to 3 mod 4, we can compute the square root of
-        a mod p as the (p+1)/4&#39;th power of a.
+        a mod p as the (p+1)/4'th power of a.
 
         As (p+1)/4 is an even number, it will have the same result for a and for
         (-a). Only one of these two numbers actually has a square root however,
@@ -1080,7 +1082,7 @@
 
         <span class="kw">let </span>is_root = (res.mul(<span class="kw-2">&amp;</span>res).negate(<span class="number">1</span>) + <span class="self">self</span>).normalizes_to_zero();
 
-        <span class="comment">// Only return Some if it&#39;s the square root.
+        <span class="comment">// Only return Some if it's the square root.
         </span>CtOption::new(res, is_root)
     }
 
@@ -1139,8 +1141,8 @@
 <span class="kw">impl </span>PrimeField <span class="kw">for </span>FieldElement {
     <span class="kw">type </span>Repr = FieldBytes;
 
-    <span class="kw">const </span>MODULUS: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str =
-        <span class="string">&quot;fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f&quot;</span>;
+    <span class="kw">const </span>MODULUS: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str =
+        <span class="string">"fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f"</span>;
     <span class="kw">const </span>NUM_BITS: u32 = <span class="number">256</span>;
     <span class="kw">const </span>CAPACITY: u32 = <span class="number">255</span>;
     <span class="kw">const </span>TWO_INV: <span class="self">Self </span>= <span class="self">Self</span>(FieldElementImpl::from_bytes_unchecked(<span class="kw-2">&amp;</span>[
@@ -1333,9 +1335,9 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Sum&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FieldElement&gt; <span class="kw">for </span>FieldElement {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Sum&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>FieldElement&gt; <span class="kw">for </span>FieldElement {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FieldElement&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FieldElement&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
         iter.copied().sum()
     }
 }
@@ -1346,8 +1348,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Product&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FieldElement&gt; <span class="kw">for </span>FieldElement {
-    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FieldElement&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Product&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>FieldElement&gt; <span class="kw">for </span>FieldElement {
+    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FieldElement&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
         iter.copied().product()
     }
 }
@@ -1367,7 +1369,7 @@
         FieldBytes,
     };
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span><span class="kw">use </span>alloc::vec::Vec;
 
     <span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>BigUint&gt; <span class="kw">for </span>FieldElement {
@@ -1545,7 +1547,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    #[cfg(feature = <span class="string">"alloc"</span>)]
     </span><span class="kw">fn </span>batch_invert() {
         <span class="kw">let </span>k: FieldElement = FieldElement::random(<span class="kw-2">&amp;mut </span>OsRng);
         <span class="kw">let </span>l: FieldElement = FieldElement::random(<span class="kw-2">&amp;mut </span>OsRng);
@@ -1568,13 +1570,13 @@
     <span class="attr">#[test]
     #[cfg_attr(
         debug_assertions,
-        should_panic(expected = <span class="string">&quot;assertion failed: self.normalized&quot;</span>)
+        should_panic(expected = <span class="string">"assertion failed: self.normalized"</span>)
     )]
     </span><span class="kw">fn </span>unnormalized_is_odd() {
         <span class="comment">// This is a regression test for https://github.com/RustCrypto/elliptic-curves/issues/529
         // where `is_odd()` in debug mode force-normalized its argument
         // instead of checking that it is already normalized.
-        // As a result, in release (where normalization didn&#39;t happen) `is_odd()`
+        // As a result, in release (where normalization didn't happen) `is_odd()`
         // could return an incorrect value.
 
         </span><span class="kw">let </span>x = FieldElement::from_bytes_unchecked(<span class="kw-2">&amp;</span>[

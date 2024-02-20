@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-0.31.1/src/psbt/serialize.rs`."><title>serialize.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bitcoin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../bitcoin/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitcoin-0.31.1/src/psbt/serialize.rs`."><title>serialize.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bitcoin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../bitcoin/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -500,7 +502,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>buf: Vec&lt;u8&gt; = Vec::new();
 
         <span class="comment">//  &lt;magic&gt;
-        </span>buf.extend_from_slice(<span class="string">b&quot;psbt&quot;</span>);
+        </span>buf.extend_from_slice(<span class="string">b"psbt"</span>);
 
         buf.push(<span class="number">0xff_u8</span>);
 
@@ -519,7 +521,7 @@
 
     <span class="doccomment">/// Deserialize a value from raw binary data.
     </span><span class="kw">pub fn </span>deserialize(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
-        <span class="kw">const </span>MAGIC_BYTES: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;psbt&quot;</span>;
+        <span class="kw">const </span>MAGIC_BYTES: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"psbt"</span>;
         <span class="kw">if </span>bytes.get(<span class="number">0</span>..MAGIC_BYTES.len()) != <span class="prelude-val">Some</span>(MAGIC_BYTES) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidMagic);
         }
@@ -587,7 +589,7 @@
 <span class="kw">impl </span>Serialize <span class="kw">for </span>PublicKey {
     <span class="kw">fn </span>serialize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>buf = Vec::new();
-        <span class="self">self</span>.write_into(<span class="kw-2">&amp;mut </span>buf).expect(<span class="string">&quot;vecs don&#39;t error&quot;</span>);
+        <span class="self">self</span>.write_into(<span class="kw-2">&amp;mut </span>buf).expect(<span class="string">"vecs don't error"</span>);
         buf
     }
 }
@@ -614,8 +616,8 @@
 
 <span class="kw">impl </span>Deserialize <span class="kw">for </span>ecdsa::Signature {
     <span class="kw">fn </span>deserialize(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
-        <span class="comment">// NB: Since BIP-174 says &quot;the signature as would be pushed to the stack from
-        // a scriptSig or witness&quot; we should ideally use a consensus deserialization and do
+        <span class="comment">// NB: Since BIP-174 says "the signature as would be pushed to the stack from
+        // a scriptSig or witness" we should ideally use a consensus deserialization and do
         // not error on a non-standard values. However,
         //
         // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
@@ -631,7 +633,7 @@
             ecdsa::Error::EmptySignature =&gt; Error::InvalidEcdsaSignature(e),
             ecdsa::Error::SighashType(err) =&gt; Error::NonStandardSighashType(err.<span class="number">0</span>),
             ecdsa::Error::Secp256k1(..) =&gt; Error::InvalidEcdsaSignature(e),
-            ecdsa::Error::Hex(..) =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Decoding from slice, not hex&quot;</span>),
+            ecdsa::Error::Hex(..) =&gt; <span class="macro">unreachable!</span>(<span class="string">"Decoding from slice, not hex"</span>),
         })
     }
 }
@@ -656,7 +658,7 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::from(io::ErrorKind::UnexpectedEof).into());
         }
 
-        <span class="kw">let </span>fprint: Fingerprint = bytes[<span class="number">0</span>..<span class="number">4</span>].try_into().expect(<span class="string">&quot;4 is the fingerprint length&quot;</span>);
+        <span class="kw">let </span>fprint: Fingerprint = bytes[<span class="number">0</span>..<span class="number">4</span>].try_into().expect(<span class="string">"4 is the fingerprint length"</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>dpath: Vec&lt;ChildNumber&gt; = Default::default();
 
         <span class="kw">let </span><span class="kw-2">mut </span>d = <span class="kw-2">&amp;</span>bytes[<span class="number">4</span>..];
@@ -775,7 +777,7 @@
 <span class="kw">impl </span>Serialize <span class="kw">for </span>(Vec&lt;TapLeafHash&gt;, KeySource) {
     <span class="kw">fn </span>serialize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>buf = Vec::with_capacity(<span class="number">32 </span>* <span class="self">self</span>.<span class="number">0</span>.len() + key_source_len(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">1</span>));
-        <span class="self">self</span>.<span class="number">0</span>.consensus_encode(<span class="kw-2">&amp;mut </span>buf).expect(<span class="string">&quot;Vecs don&#39;t error allocation&quot;</span>);
+        <span class="self">self</span>.<span class="number">0</span>.consensus_encode(<span class="kw-2">&amp;mut </span>buf).expect(<span class="string">"Vecs don't error allocation"</span>);
         <span class="comment">// TODO: Add support for writing into a writer for key-source
         </span>buf.extend(<span class="self">self</span>.<span class="number">1</span>.serialize());
         buf
@@ -808,7 +810,7 @@
             // safe to cast from usize to u8
             </span>buf.push(leaf_info.merkle_branch().len() <span class="kw">as </span>u8);
             buf.push(leaf_info.version().to_consensus());
-            leaf_info.script().consensus_encode(<span class="kw-2">&amp;mut </span>buf).expect(<span class="string">&quot;Vecs dont err&quot;</span>);
+            leaf_info.script().consensus_encode(<span class="kw-2">&amp;mut </span>buf).expect(<span class="string">"Vecs dont err"</span>);
         }
         buf
     }
@@ -819,7 +821,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>builder = TaprootBuilder::new();
         <span class="kw">let </span><span class="kw-2">mut </span>bytes_iter = bytes.iter();
         <span class="kw">while let </span><span class="prelude-val">Some</span>(depth) = bytes_iter.next() {
-            <span class="kw">let </span>version = bytes_iter.next().ok_or(Error::Taproot(<span class="string">&quot;Invalid Taproot Builder&quot;</span>))<span class="question-mark">?</span>;
+            <span class="kw">let </span>version = bytes_iter.next().ok_or(Error::Taproot(<span class="string">"Invalid Taproot Builder"</span>))<span class="question-mark">?</span>;
             <span class="kw">let </span>(script, consumed) = deserialize_partial::&lt;ScriptBuf&gt;(bytes_iter.as_slice())<span class="question-mark">?</span>;
             <span class="kw">if </span>consumed &gt; <span class="number">0 </span>{
                 bytes_iter.nth(consumed - <span class="number">1</span>);
@@ -828,7 +830,7 @@
                 LeafVersion::from_consensus(<span class="kw-2">*</span>version).map_err(|<span class="kw">_</span>| Error::InvalidLeafVersion)<span class="question-mark">?</span>;
             builder = builder
                 .add_leaf_with_ver(<span class="kw-2">*</span>depth, script, leaf_version)
-                .map_err(|<span class="kw">_</span>| Error::Taproot(<span class="string">&quot;Tree not in DFS order&quot;</span>))<span class="question-mark">?</span>;
+                .map_err(|<span class="kw">_</span>| Error::Taproot(<span class="string">"Tree not in DFS order"</span>))<span class="question-mark">?</span>;
         }
         TapTree::try_from(builder).map_err(Error::TapTree)
     }
@@ -846,14 +848,14 @@
     <span class="comment">// Composes tree matching a given depth map, filled with dumb script leafs,
     // each of which consists of a single push-int op code, with int value
     // increased for each consecutive leaf.
-    </span><span class="kw">pub fn </span>compose_taproot_builder&lt;<span class="lifetime">&#39;map</span>&gt;(
+    </span><span class="kw">pub fn </span>compose_taproot_builder&lt;<span class="lifetime">'map</span>&gt;(
         opcode: u8,
-        depth_map: <span class="kw">impl </span>IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;map </span>u8&gt;,
+        depth_map: <span class="kw">impl </span>IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'map </span>u8&gt;,
     ) -&gt; TaprootBuilder {
         <span class="kw">let </span><span class="kw-2">mut </span>val = opcode;
         <span class="kw">let </span><span class="kw-2">mut </span>builder = TaprootBuilder::new();
         <span class="kw">for </span>depth <span class="kw">in </span>depth_map {
-            <span class="kw">let </span>script = ScriptBuf::from_hex(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{:02x}&quot;</span>, val)).unwrap();
+            <span class="kw">let </span>script = ScriptBuf::from_hex(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{:02x}"</span>, val)).unwrap();
             builder = builder.add_leaf(<span class="kw-2">*</span>depth, script).unwrap();
             <span class="kw">let </span>(new_val, <span class="kw">_</span>) = val.overflowing_add(<span class="number">1</span>);
             val = new_val;
@@ -867,7 +869,7 @@
         builder = builder
             .add_leaf_with_ver(
                 <span class="number">3</span>,
-                ScriptBuf::from_hex(<span class="string">&quot;b9&quot;</span>).unwrap(),
+                ScriptBuf::from_hex(<span class="string">"b9"</span>).unwrap(),
                 LeafVersion::from_consensus(<span class="number">0xC2</span>).unwrap(),
             )
             .unwrap();
@@ -881,7 +883,7 @@
         builder = builder
             .add_leaf_with_ver(
                 <span class="number">3</span>,
-                ScriptBuf::from_hex(<span class="string">&quot;b9&quot;</span>).unwrap(),
+                ScriptBuf::from_hex(<span class="string">"b9"</span>).unwrap(),
                 LeafVersion::from_consensus(<span class="number">0xC2</span>).unwrap(),
             )
             .unwrap();
@@ -898,9 +900,9 @@
     }
 
     <span class="attr">#[test]
-    #[should_panic(expected = <span class="string">&quot;InvalidMagic&quot;</span>)]
+    #[should_panic(expected = <span class="string">"InvalidMagic"</span>)]
     </span><span class="kw">fn </span>invalid_vector_1() {
-        <span class="kw">let </span>hex_psbt = <span class="string">b&quot;0200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf6000000006a473044022070b2245123e6bf474d60c5b50c043d4c691a5d2435f09a34a7662a9dc251790a022001329ca9dacf280bdf30740ec0390422422c81cb45839457aeb76fc12edd95b3012102657d118d3357b8e0f4c2cd46db7b39f6d9c38d9a70abcb9b2de5dc8dbfe4ce31feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e1300&quot;</span>;
+        <span class="kw">let </span>hex_psbt = <span class="string">b"0200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf6000000006a473044022070b2245123e6bf474d60c5b50c043d4c691a5d2435f09a34a7662a9dc251790a022001329ca9dacf280bdf30740ec0390422422c81cb45839457aeb76fc12edd95b3012102657d118d3357b8e0f4c2cd46db7b39f6d9c38d9a70abcb9b2de5dc8dbfe4ce31feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e1300"</span>;
         Psbt::deserialize(hex_psbt).unwrap();
     }
 }

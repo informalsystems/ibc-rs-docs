@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/protobuf-2.28.0/src/buf_read_iter.rs`."><title>buf_read_iter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="protobuf" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../protobuf/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/protobuf-2.28.0/src/buf_read_iter.rs`."><title>buf_read_iter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="protobuf" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../protobuf/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -529,13 +531,13 @@
 <span class="kw">use </span>std::mem::MaybeUninit;
 <span class="kw">use </span>std::u64;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
 </span><span class="kw">use </span>bytes::buf::UninitSlice;
-<span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
 </span><span class="kw">use </span>bytes::BufMut;
-<span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
 </span><span class="kw">use </span>bytes::Bytes;
-<span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
 </span><span class="kw">use </span>bytes::BytesMut;
 
 <span class="kw">use </span><span class="kw">crate</span>::buf_read_or_reader::BufReadOrReader;
@@ -555,11 +557,11 @@
 <span class="kw">const </span>NO_LIMIT: u64 = u64::MAX;
 
 <span class="doccomment">/// Hold all possible combinations of input source
-</span><span class="kw">enum </span>InputSource&lt;<span class="lifetime">&#39;a</span>&gt; {
-    Read(BufReadOrReader&lt;<span class="lifetime">&#39;a</span>&gt;),
-    Slice(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]),
-    <span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
-    </span>Bytes(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Bytes),
+</span><span class="kw">enum </span>InputSource&lt;<span class="lifetime">'a</span>&gt; {
+    Read(BufReadOrReader&lt;<span class="lifetime">'a</span>&gt;),
+    Slice(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]),
+    <span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
+    </span>Bytes(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Bytes),
 }
 
 <span class="doccomment">/// Dangerous implementation of `BufRead`.
@@ -576,16 +578,16 @@
 /// It is important for `CodedInputStream` performance that small reads
 /// (e. g. 4 bytes reads) do not involve virtual calls or switches.
 /// This is achievable with `BufReadIter`.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>BufReadIter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    input_source: InputSource&lt;<span class="lifetime">&#39;a</span>&gt;,
-    buf: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>BufReadIter&lt;<span class="lifetime">'a</span>&gt; {
+    input_source: InputSource&lt;<span class="lifetime">'a</span>&gt;,
+    buf: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8],
     pos_within_buf: usize,
     limit_within_buf: usize,
     pos_of_buf_start: u64,
     limit: u64,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Drop <span class="kw">for </span>BufReadIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Drop <span class="kw">for </span>BufReadIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">match </span><span class="self">self</span>.input_source {
             InputSource::Read(<span class="kw-2">ref mut </span>buf_read) =&gt; buf_read.consume(<span class="self">self</span>.pos_within_buf),
@@ -594,8 +596,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;ignore</span>&gt; BufReadIter&lt;<span class="lifetime">&#39;ignore</span>&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_read&lt;<span class="lifetime">&#39;a</span>&gt;(read: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Read) -&gt; BufReadIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'ignore</span>&gt; BufReadIter&lt;<span class="lifetime">'ignore</span>&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_read&lt;<span class="lifetime">'a</span>&gt;(read: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Read) -&gt; BufReadIter&lt;<span class="lifetime">'a</span>&gt; {
         BufReadIter {
             input_source: InputSource::Read(BufReadOrReader::BufReader(BufReader::with_capacity(
                 INPUT_STREAM_BUFFER_SIZE,
@@ -609,7 +611,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_buf_read&lt;<span class="lifetime">&#39;a</span>&gt;(buf_read: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="kw">dyn </span>BufRead) -&gt; BufReadIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_buf_read&lt;<span class="lifetime">'a</span>&gt;(buf_read: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>BufRead) -&gt; BufReadIter&lt;<span class="lifetime">'a</span>&gt; {
         BufReadIter {
             input_source: InputSource::Read(BufReadOrReader::BufRead(buf_read)),
             buf: <span class="kw-2">&amp;</span>[],
@@ -620,7 +622,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_byte_slice&lt;<span class="lifetime">&#39;a</span>&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]) -&gt; BufReadIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_byte_slice&lt;<span class="lifetime">'a</span>&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; BufReadIter&lt;<span class="lifetime">'a</span>&gt; {
         BufReadIter {
             input_source: InputSource::Slice(bytes),
             buf: bytes,
@@ -631,8 +633,8 @@
         }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_bytes&lt;<span class="lifetime">&#39;a</span>&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Bytes) -&gt; BufReadIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_bytes&lt;<span class="lifetime">'a</span>&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Bytes) -&gt; BufReadIter&lt;<span class="lifetime">'a</span>&gt; {
         BufReadIter {
             input_source: InputSource::Bytes(bytes),
             buf: <span class="kw-2">&amp;</span>bytes,
@@ -762,7 +764,7 @@
         <span class="prelude-val">Ok</span>(len)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_exact_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, len: usize) -&gt; ProtobufResult&lt;Bytes&gt; {
         <span class="kw">if let </span>InputSource::Bytes(bytes) = <span class="self">self</span>.input_source {
             <span class="kw">let </span>end = <span class="kw">match </span><span class="self">self</span>.pos_within_buf.checked_add(len) {
@@ -796,7 +798,7 @@
         }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;bytes&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"bytes"</span>)]
     </span><span class="kw">unsafe fn </span>uninit_slice_as_mut_slice(slice: <span class="kw-2">&amp;mut </span>UninitSlice) -&gt; <span class="kw-2">&amp;mut </span>[MaybeUninit&lt;u8&gt;] {
         <span class="kw">use </span>std::slice;
         slice::from_raw_parts_mut(slice.as_mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>MaybeUninit&lt;u8&gt;, slice.len())
@@ -954,7 +956,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;bytes&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"bytes"</span>))]
 </span><span class="kw">mod </span>test_bytes {
     <span class="kw">use </span>std::io::Write;
 
@@ -964,7 +966,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>s = Vec::new();
         <span class="kw">while </span>s.len() &lt; len {
             <span class="kw">let </span>len = s.len();
-            <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot;{}&quot;</span>, len).expect(<span class="string">&quot;unexpected&quot;</span>);
+            <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">"{}"</span>, len).expect(<span class="string">"unexpected"</span>);
         }
         s.truncate(len);
         s
@@ -975,7 +977,7 @@
         <span class="kw">let </span>bytes = make_long_string(<span class="number">100</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>bri = BufReadIter::from_byte_slice(<span class="kw-2">&amp;</span>bytes[..]);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>bytes[..<span class="number">90</span>], <span class="kw-2">&amp;</span>bri.read_exact_bytes(<span class="number">90</span>).unwrap()[..]);
-        <span class="macro">assert_eq!</span>(bytes[<span class="number">90</span>], bri.read_byte().expect(<span class="string">&quot;read_byte&quot;</span>));
+        <span class="macro">assert_eq!</span>(bytes[<span class="number">90</span>], bri.read_byte().expect(<span class="string">"read_byte"</span>));
     }
 
     <span class="attr">#[test]
@@ -985,7 +987,7 @@
         <span class="kw">let </span>read = bri.read_exact_bytes(<span class="number">90</span>).unwrap();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>bytes[..<span class="number">90</span>], <span class="kw-2">&amp;</span>read[..]);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>bytes[..<span class="number">90</span>].as_ptr(), <span class="kw-2">&amp;</span>read.as_ptr());
-        <span class="macro">assert_eq!</span>(bytes[<span class="number">90</span>], bri.read_byte().expect(<span class="string">&quot;read_byte&quot;</span>));
+        <span class="macro">assert_eq!</span>(bytes[<span class="number">90</span>], bri.read_byte().expect(<span class="string">"read_byte"</span>));
     }
 }
 
@@ -1012,7 +1014,7 @@
         <span class="kw">impl </span>BufRead <span class="kw">for </span>Read5ThenPanic {
             <span class="kw">fn </span>fill_buf(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; io::Result&lt;<span class="kw-2">&amp;</span>[u8]&gt; {
                 <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="self">self</span>.pos);
-                <span class="kw">static </span>ZERO_TO_FIVE: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8] = <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
+                <span class="kw">static </span>ZERO_TO_FIVE: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[u8] = <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
                 <span class="prelude-val">Ok</span>(ZERO_TO_FIVE)
             }
 
@@ -1032,7 +1034,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>buf_read_iter = BufReadIter::from_buf_read(<span class="kw-2">&amp;mut </span>read);
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, buf_read_iter.pos());
         <span class="kw">let </span>_prev_limit = buf_read_iter.push_limit(<span class="number">5</span>);
-        buf_read_iter.read_byte().expect(<span class="string">&quot;read_byte&quot;</span>);
+        buf_read_iter.read_byte().expect(<span class="string">"read_byte"</span>);
         buf_read_iter
             .read_exact(<span class="kw-2">&amp;mut </span>[
                 MaybeUninit::uninit(),
@@ -1040,8 +1042,8 @@
                 MaybeUninit::uninit(),
                 MaybeUninit::uninit(),
             ])
-            .expect(<span class="string">&quot;read_exact&quot;</span>);
-        <span class="macro">assert!</span>(buf_read_iter.eof().expect(<span class="string">&quot;eof&quot;</span>));
+            .expect(<span class="string">"read_exact"</span>);
+        <span class="macro">assert!</span>(buf_read_iter.eof().expect(<span class="string">"eof"</span>));
     }
 }
 </code></pre></div></section></main></body></html>

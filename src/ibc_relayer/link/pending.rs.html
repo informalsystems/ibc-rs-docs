@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/link/pending.rs`."><title>pending.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/link/pending.rs`."><title>pending.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../ibc_relayer/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -379,7 +381,7 @@
                 // behavior of handling the OperationalData.
 
                 </span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(
-                    <span class="string">&quot;inserting new pending txs&quot;</span>,
+                    <span class="string">"inserting new pending txs"</span>,
                     chain = %<span class="self">self</span>.chain_id(),
                     counterparty_chain = %<span class="self">self</span>.counterparty_chain_id,
                     port = %<span class="self">self</span>.port_id,
@@ -389,12 +391,12 @@
                 <span class="kw">let </span>_guard = span.enter();
 
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;putting error response in error event queue: {:?} &quot;</span>,
+                    <span class="string">"putting error response in error event queue: {:?} "</span>,
                     response
                 );
 
                 <span class="kw">let </span>error_event = IbcEvent::ChainError(<span class="macro">format!</span>(
-                    <span class="string">&quot;deliver_tx on chain {} for Tx hash {} reports error: code={:?}, log={:?}&quot;</span>,
+                    <span class="string">"deliver_tx on chain {} for Tx hash {} reports error: code={:?}, log={:?}"</span>,
                     <span class="self">self</span>.chain_id(),
                     response.hash,
                     response.code,
@@ -455,7 +457,7 @@
             }
 
             <span class="kw">let </span>span = <span class="macro">trace_span!</span>(
-                <span class="string">&quot;processing pending tx&quot;</span>,
+                <span class="string">"processing pending tx"</span>,
                 chain = %<span class="self">self</span>.chain_id(),
                 counterparty_chain = %<span class="self">self</span>.counterparty_chain_id,
                 port = %<span class="self">self</span>.port_id,
@@ -465,7 +467,7 @@
             <span class="kw">let </span>_guard = span.enter();
 
             <span class="comment">// Process the given pending transaction.
-            </span><span class="macro">trace!</span>(<span class="string">&quot;trying to confirm {} &quot;</span>, tx_hashes);
+            </span><span class="macro">trace!</span>(<span class="string">"trying to confirm {} "</span>, tx_hashes);
 
             <span class="comment">// Check for TX events for the given pending transaction hashes.
             </span><span class="kw">let </span>relay_summary = <span class="kw">match </span><span class="self">self</span>.check_tx_events(tx_hashes) {
@@ -473,23 +475,23 @@
                     <span class="comment">// There is no events for the associated transactions.
                     // This means the transaction has not yet been committed.
 
-                    </span><span class="macro">trace!</span>(<span class="string">&quot;transaction is not yet committed: {} &quot;</span>, tx_hashes);
+                    </span><span class="macro">trace!</span>(<span class="string">"transaction is not yet committed: {} "</span>, tx_hashes);
 
                     <span class="kw">if </span>submit_time.elapsed() &gt; timeout {
                         <span class="comment">// The submission time for the transaction has exceeded the
                         // timeout threshold. Returning Outcome::Timeout for the
                         // relayer to resubmit the transaction to the chain again.
-                        </span><span class="macro">error!</span>(<span class="string">&quot;timed out while confirming {}&quot;</span>, tx_hashes);
+                        </span><span class="macro">error!</span>(<span class="string">"timed out while confirming {}"</span>, tx_hashes);
 
                         <span class="kw">match </span>resubmit {
                             <span class="prelude-val">Some</span>(f) =&gt; {
-                                <span class="comment">// The pending tx needs to be resubmitted. This involves replacing the tx&#39;s
+                                <span class="comment">// The pending tx needs to be resubmitted. This involves replacing the tx's
                                 // stale operational data with a fresh copy and then applying the `resubmit`
                                 // closure to it.
                                 </span><span class="kw">let </span>new_od = relay_path
                                     .regenerate_operational_data(pending.original_od.clone());
 
-                                <span class="macro">trace!</span>(<span class="string">&quot;regenerated operational data for {}&quot;</span>, tx_hashes);
+                                <span class="macro">trace!</span>(<span class="string">"regenerated operational data for {}"</span>, tx_hashes);
 
                                 <span class="kw">match </span>new_od.map(f) {
                                     <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(reply)) =&gt; {
@@ -528,7 +530,7 @@
                         tracking_id = %pending.tracking_id(),
                         elapsed = <span class="question-mark">?</span>pending.submit_time.elapsed(),
                         tx_hashes = %tx_hashes,
-                        <span class="string">&quot;transactions confirmed&quot;</span>,
+                        <span class="string">"transactions confirmed"</span>,
                     );
 
                     <span class="macro">telemetry!</span>(
@@ -553,7 +555,7 @@
                     // with the chain endpoint.
 
                     </span><span class="macro">error!</span>(
-                        <span class="string">&quot;error querying for tx hashes {}: {}. will retry again later&quot;</span>,
+                        <span class="string">"error querying for tx hashes {}: {}. will retry again later"</span>,
                         tx_hashes, e
                     );
 
@@ -567,7 +569,7 @@
 
             <span class="kw">if </span>!<span class="self">self</span>.pending_queue.is_empty() {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;total pending transactions left: {}&quot;</span>,
+                    <span class="string">"total pending transactions left: {}"</span>,
                     <span class="self">self</span>.pending_queue.len()
                 );
             }

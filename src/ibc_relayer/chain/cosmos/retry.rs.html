@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/chain/cosmos/retry.rs`."><title>retry.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0-nightly (33a2c2487 2023-07-12)" data-channel="nightly" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../ibc_relayer/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/relayer/src/chain/cosmos/retry.rs`."><title>retry.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="ibc_relayer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3246e7951 2024-02-19)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../ibc_relayer/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -233,7 +235,7 @@
 <span class="comment">// Delay in milliseconds before retrying in the case of account sequence mismatch.
 </span><span class="kw">const </span>ACCOUNT_SEQUENCE_RETRY_DELAY: u64 = <span class="number">300</span>;
 
-<span class="comment">// The error &quot;incorrect account sequence&quot; is defined as the unique error code 32 in cosmos-sdk:
+<span class="comment">// The error "incorrect account sequence" is defined as the unique error code 32 in cosmos-sdk:
 // https://github.com/cosmos/cosmos-sdk/blob/v0.44.0/types/errors/errors.go#L115-L117
 </span><span class="kw">const </span>INCORRECT_ACCOUNT_SEQUENCE_ERR: u32 = <span class="number">32</span>;
 
@@ -249,8 +251,8 @@
 /// We treat both cases by re-fetching the account sequence number
 /// from the full node and retrying once with the new account s.n.
 </span><span class="attr">#[instrument(
-    name = <span class="string">&quot;send_tx_with_account_sequence_retry&quot;</span>,
-    level = <span class="string">&quot;error&quot;</span>,
+    name = <span class="string">"send_tx_with_account_sequence_retry"</span>,
+    level = <span class="string">"error"</span>,
     skip_all,
     fields(
         chain = %config.chain_id,
@@ -266,9 +268,9 @@
     messages: <span class="kw-2">&amp;</span>[Any],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Response, Error&gt; {
     <span class="macro">time!</span>(
-        <span class="string">&quot;send_tx_with_account_sequence_retry&quot;</span>,
+        <span class="string">"send_tx_with_account_sequence_retry"</span>,
         {
-            <span class="string">&quot;src_chain&quot;</span>: config.chain_id,
+            <span class="string">"src_chain"</span>: config.chain_id,
         }
     );
 
@@ -301,8 +303,8 @@
         </span><span class="prelude-val">Err</span>(<span class="kw-2">ref </span>e) <span class="kw">if </span>mismatch_account_sequence_number_error_requires_refresh(e) =&gt; {
             <span class="macro">warn!</span>(
                 error = %e,
-                <span class="string">&quot;failed to estimate gas because of a mismatched account sequence number, \
-                refreshing account sequence number and retrying once&quot;</span>,
+                <span class="string">"failed to estimate gas because of a mismatched account sequence number, \
+                refreshing account sequence number and retrying once"</span>,
             );
 
             refresh_account_and_retry_send_tx_with_account_sequence(
@@ -318,8 +320,8 @@
         </span><span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>response) <span class="kw">if </span>response.code == Code::from(INCORRECT_ACCOUNT_SEQUENCE_ERR) =&gt; {
             <span class="macro">warn!</span>(
                 <span class="question-mark">?</span>response,
-                <span class="string">&quot;failed to broadcast tx because of a mismatched account sequence number, \
-                refreshing account sequence number and retrying once&quot;
+                <span class="string">"failed to broadcast tx because of a mismatched account sequence number, \
+                refreshing account sequence number and retrying once"
             </span>);
 
             <span class="macro">telemetry!</span>(
@@ -338,7 +340,7 @@
         <span class="comment">// Gas estimation succeeded and broadcast_tx_sync was either successful or has failed with
         // an unrecoverable error.
         </span><span class="prelude-val">Ok</span>(response) =&gt; {
-            <span class="macro">debug!</span>(<span class="string">&quot;gas estimation succeeded&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"gas estimation succeeded"</span>);
 
             <span class="comment">// Gas estimation and broadcast_tx_sync were successful.
             // NOTE: The error code could potentially overlap between Cosmos SDK and Ibc-go channel
@@ -354,8 +356,8 @@
                         <span class="question-mark">?</span>response,
                         account.sequence.old = %old_account_sequence,
                         account.sequence.new = %account.sequence,
-                        <span class="string">&quot;tx was successfully broadcasted, \
-                        increasing account sequence number&quot;
+                        <span class="string">"tx was successfully broadcasted, \
+                        increasing account sequence number"
                     </span>);
 
                     <span class="prelude-val">Ok</span>(response)
@@ -368,7 +370,7 @@
                     </span><span class="macro">error!</span>(
                         <span class="question-mark">?</span>response,
                         diagnostic = <span class="question-mark">?</span>sdk_error_from_tx_sync_error_code(code.into()),
-                        <span class="string">&quot;failed to broadcast tx with unrecoverable error&quot;
+                        <span class="string">"failed to broadcast tx with unrecoverable error"
                     </span>);
 
                     <span class="macro">telemetry!</span>(
@@ -385,7 +387,7 @@
 
         <span class="comment">// Gas estimation failure or other unrecoverable error, propagate.
         </span><span class="prelude-val">Err</span>(e) =&gt; {
-            <span class="macro">error!</span>(error = %e, <span class="string">&quot;gas estimation failed or encountered another unrecoverable error&quot;</span>);
+            <span class="macro">error!</span>(error = %e, <span class="string">"gas estimation failed or encountered another unrecoverable error"</span>);
 
             <span class="prelude-val">Err</span>(e)
         }
@@ -412,7 +414,7 @@
 
 <span class="doccomment">/// Determine whether the given error yielded by `tx_simulate`
 /// indicates that the current account sequence number cached in Hermes
-/// is smaller than the full node&#39;s version of the sequence number and therefore
+/// is smaller than the full node's version of the sequence number and therefore
 /// the account needs to be refreshed.
 </span><span class="kw">fn </span>mismatch_account_sequence_number_error_requires_refresh(e: <span class="kw-2">&amp;</span>Error) -&gt; bool {
     <span class="kw">use </span><span class="kw">crate</span>::error::ErrorDetail::<span class="kw-2">*</span>;
