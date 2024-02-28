@@ -89,6 +89,16 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Cosmos-SDK compatibility constants and diagnostic methods.
 
 </span><span class="kw">use </span>thiserror::Error;
@@ -115,12 +125,18 @@
 
 <span class="attr">#[derive(Error, Debug)]
 </span><span class="kw">pub enum </span>Diagnostic {
+    <span class="attr">#[error(<span class="string">"SDK module version not found, required {requirements}"</span>)]
+    </span>MissingSdkModuleVersion { requirements: String },
+
+    <span class="attr">#[error(<span class="string">"IBC-Go module version not found, required {requirements}"</span>)]
+    </span>MissingIbcGoModuleVersion { requirements: String },
+
     <span class="attr">#[error(
         <span class="string">"SDK module at version '{found}' does not meet compatibility requirements {requirements}"
     </span>)]
     </span>MismatchingSdkModuleVersion { requirements: String, found: String },
 
-    <span class="attr">#[error(<span class="string">"Ibc-Go module at version '{found}' does not meet compatibility requirements {requirements}"</span>)]
+    <span class="attr">#[error(<span class="string">"IBC-Go module at version '{found}' does not meet compatibility requirements {requirements}"</span>)]
     </span>MismatchingIbcGoModuleVersion { requirements: String, found: String },
 }
 
@@ -135,40 +151,44 @@
 /// Sdk module by name, as well as the constants
 /// [`SDK_MODULE_VERSION_REQ`] and [`IBC_GO_MODULE_VERSION_REQ`]
 /// for establishing compatibility requirements.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>run_diagnostic(v: <span class="kw-2">&amp;</span>version::Specs) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&gt; {
-    <span class="macro">debug!</span>(<span class="string">"running diagnostic on version info {}"</span>, v);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>run_diagnostic(specs: <span class="kw-2">&amp;</span>version::Specs) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&gt; {
+    <span class="macro">debug!</span>(<span class="string">"running diagnostic on version specs: {specs}"</span>);
 
-    sdk_diagnostic(<span class="kw-2">&amp;</span>v.cosmos_sdk)<span class="question-mark">?</span>;
-    ibc_go_diagnostic(v.ibc_go.as_ref())<span class="question-mark">?</span>;
+    sdk_diagnostic(specs.cosmos_sdk.as_ref())<span class="question-mark">?</span>;
+    ibc_go_diagnostic(specs.ibc_go.as_ref())<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>sdk_diagnostic(version: <span class="kw-2">&amp;</span>semver::Version) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&gt; {
+<span class="kw">fn </span>sdk_diagnostic(version: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>semver::Version&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&gt; {
     <span class="comment">// Parse the SDK requirements into a semver
     </span><span class="kw">let </span>sdk_reqs = semver::VersionReq::parse(SDK_MODULE_VERSION_REQ)
         .expect(<span class="string">"parsing the SDK module requirements into semver"</span>);
 
-    <span class="comment">// Finally, check the version requirements
-    </span><span class="kw">match </span>sdk_reqs.matches(version) {
-        <span class="bool-val">true </span>=&gt; <span class="prelude-val">Ok</span>(()),
-        <span class="bool-val">false </span>=&gt; <span class="prelude-val">Err</span>(Diagnostic::MismatchingSdkModuleVersion {
+    <span class="kw">match </span>version {
+        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Diagnostic::MissingSdkModuleVersion {
             requirements: SDK_MODULE_VERSION_REQ.to_string(),
-            found: version.to_string(),
         }),
+
+        <span class="prelude-val">Some</span>(version) =&gt; <span class="kw">match </span>sdk_reqs.matches(version) {
+            <span class="bool-val">true </span>=&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="bool-val">false </span>=&gt; <span class="prelude-val">Err</span>(Diagnostic::MismatchingSdkModuleVersion {
+                requirements: SDK_MODULE_VERSION_REQ.to_string(),
+                found: version.to_string(),
+            }),
+        },
     }
 }
 
-<span class="kw">fn </span>ibc_go_diagnostic(version_info: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>semver::Version&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&gt; {
+<span class="kw">fn </span>ibc_go_diagnostic(version: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>semver::Version&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Diagnostic&gt; {
     <span class="comment">// Parse the IBC-go module requirements into a semver
     </span><span class="kw">let </span>ibc_reqs = semver::VersionReq::parse(IBC_GO_MODULE_VERSION_REQ)
         .expect(<span class="string">"parsing the IBC-Go module requirements into semver"</span>);
 
-    <span class="comment">// Find the Ibc-Go module
-    </span><span class="kw">match </span>version_info {
-        <span class="comment">// If binary lacks the ibc-go dependency it is _not_ an error,
-        // we support chains without the standalone ibc-go module.
-        </span><span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
+    <span class="kw">match </span>version {
+        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Diagnostic::MissingIbcGoModuleVersion {
+            requirements: IBC_GO_MODULE_VERSION_REQ.to_string(),
+        }),
         <span class="prelude-val">Some</span>(version) =&gt; <span class="kw">match </span>ibc_reqs.matches(version) {
             <span class="bool-val">true </span>=&gt; <span class="prelude-val">Ok</span>(()),
             <span class="bool-val">false </span>=&gt; <span class="prelude-val">Err</span>(Diagnostic::MismatchingIbcGoModuleVersion {

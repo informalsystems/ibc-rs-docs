@@ -319,6 +319,17 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Chain upgrade plans for triggering IBC-breaking upgrades.
 
 </span><span class="kw">use </span>core::time::Duration;
@@ -338,6 +349,7 @@
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_state::ClientState;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ClientId};
 <span class="kw">use </span>ibc_relayer_types::{downcast, Height};
+<span class="kw">use </span>tracing::warn;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::handle::ChainHandle;
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::{IncludeProof, QueryClientStateRequest, QueryHeight};
@@ -417,22 +429,32 @@
 <span class="doccomment">/// Looks at the ibc-go version to determine if the legacy `UpgradeProposal` message
 /// or if the newer `MsgIBCSoftwareUpdate` message should be used to upgrade the chain.
 /// If the ibc-go version returned isn't reliable, a deprecated version, then the version
-/// of Cosmos SDK is used.
+/// of Cosmos SDK is used, if any. If there is no SDK version, we assume that the legacy upgrade is required.
 </span><span class="kw">pub fn </span>requires_legacy_upgrade_proposal(dst_chain: <span class="kw">impl </span>ChainHandle) -&gt; bool {
-    <span class="kw">let </span>version_specs = dst_chain.version_specs().unwrap();
+    <span class="kw">let </span><span class="prelude-val">Ok</span>(version_specs) = dst_chain.version_specs() <span class="kw">else </span>{
+        <span class="macro">warn!</span>(<span class="string">"failed to get version specs, assuming legacy upgrade proposal is required"</span>);
+        <span class="kw">return </span><span class="bool-val">true</span>;
+    };
+
+    <span class="kw">let </span>sdk_before_50 = version_specs
+        .cosmos_sdk
+        .as_ref()
+        .map(|s| s.minor &lt; <span class="number">50</span>)
+        .unwrap_or(<span class="bool-val">true</span>);
+
     <span class="kw">match </span>version_specs.ibc_go {
+        <span class="prelude-val">None </span>=&gt; sdk_before_50,
         <span class="prelude-val">Some</span>(ibc_version) =&gt; {
             <span class="comment">// Some ibc-go simapps return unreliable ibc-go versions, such as simapp v8.0.0
             // returns version v1.0.0. So if the ibc-go version matches which is not maintained
             // anymore, use the Cosmos SDK version to determine if the legacy upgrade proposal
             // has to be used
             </span><span class="kw">if </span>ibc_version.major &lt; <span class="number">4 </span>{
-                version_specs.cosmos_sdk.minor &lt; <span class="number">50
-            </span>} <span class="kw">else </span>{
+                sdk_before_50
+            } <span class="kw">else </span>{
                 ibc_version.major &lt; <span class="number">8
             </span>}
         }
-        <span class="prelude-val">None </span>=&gt; version_specs.cosmos_sdk.minor &lt; <span class="number">50</span>,
     }
 }
 

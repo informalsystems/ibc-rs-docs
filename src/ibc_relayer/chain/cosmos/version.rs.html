@@ -203,37 +203,6 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Utilities for extracting and parsing versioning information
 //! of Cosmos-SDK networks. The extracted version specification
 //! is captured in a domain-type semver format in [`Specs`].
@@ -258,20 +227,15 @@
 ///    sum: "h1:yaD4PyOx0LnyfiWasC5egg1U76lT83GRxjJjupPo7Gk=",
 /// },
 /// ```
-</span><span class="kw">const </span>SDK_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"cosmos/cosmos-sdk"</span>;
-<span class="kw">const </span>IBC_GO_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"cosmos/ibc-go"</span>;
-<span class="kw">const </span>TENDERMINT_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"tendermint/tendermint"</span>;
-<span class="kw">const </span>COMET_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"cometbft/cometbft"</span>;
+</span><span class="kw">const </span>SDK_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"github.com/cosmos/cosmos-sdk"</span>;
+<span class="kw">const </span>IBC_GO_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"github.com/cosmos/ibc-go"</span>;
+<span class="kw">const </span>TENDERMINT_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"github.com/tendermint/tendermint"</span>;
+<span class="kw">const </span>COMET_MODULE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"github.com/cometbft/cometbft"</span>;
 
-<span class="doccomment">/// Captures the version(s) specification of different
-/// modules of a network.
-///
-/// Assumes that the network runs on Cosmos SDK.
-/// Stores both the SDK version as well as
-/// the IBC-go module version (if existing).
+<span class="doccomment">/// Captures the version(s) specification of different modules of a network.
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Specs {
-    <span class="kw">pub </span>cosmos_sdk: semver::Version,
+    <span class="kw">pub </span>cosmos_sdk: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
     <span class="kw">pub </span>ibc_go: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
     <span class="kw">pub </span>tendermint: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
     <span class="kw">pub </span>comet: <span class="prelude-ty">Option</span>&lt;semver::Version&gt;,
@@ -279,6 +243,12 @@
 
 <span class="kw">impl </span>Display <span class="kw">for </span>Specs {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), FmtError&gt; {
+        <span class="kw">let </span>cosmos_sdk = <span class="self">self
+            </span>.cosmos_sdk
+            .as_ref()
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| <span class="string">"UNKNOWN"</span>.to_string());
+
         <span class="kw">let </span>ibc_go = <span class="self">self
             </span>.ibc_go
             .as_ref()
@@ -300,20 +270,13 @@
         <span class="macro">write!</span>(
             f,
             <span class="string">"Cosmos SDK {}, IBC-Go {}, Tendermint {}, CometBFT {}"</span>,
-            <span class="self">self</span>.cosmos_sdk, ibc_go, tendermint, comet
+            cosmos_sdk, ibc_go, tendermint, comet
         )
     }
 }
 
 <span class="macro">define_error! </span>{
     Error {
-        SdkModuleNotFound
-            {
-                address: String,
-                app: AppInfo,
-            }
-            |e| { <span class="macro">format!</span>(<span class="string">"failed to find the SDK module dependency ('{}') for application {}"</span>, e.address, e.app) },
-
         ConsensusModuleNotFound
             {
                 tendermint: String,
@@ -357,7 +320,7 @@
             application = %raw_version.app_name,
             version = %raw_version.version,
             git_commit = %raw_version.git_commit,
-            sdk_version = %sdk_version,
+            sdk_version = <span class="question-mark">?</span>sdk_version,
             ibc_go_status = <span class="question-mark">?</span>ibc_go_version,
             tendermint_version = <span class="question-mark">?</span>tendermint_version,
             comet_version = <span class="question-mark">?</span>comet_version,
@@ -373,33 +336,8 @@
     }
 }
 
-<span class="kw">fn </span>parse_sdk_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;semver::Version, Error&gt; {
-    <span class="kw">let </span>module = version_info
-        .build_deps
-        .iter()
-        .find(|<span class="kw-2">&amp;</span>m| m.path.contains(SDK_MODULE_NAME))
-        .ok_or_else(|| {
-            Error::sdk_module_not_found(SDK_MODULE_NAME.to_string(), AppInfo::from(version_info))
-        })<span class="question-mark">?</span>;
-
-    <span class="comment">// The raw version number has a leading 'v', trim it out;
-    </span><span class="kw">let </span>plain_version = module.version.trim_start_matches(<span class="string">'v'</span>);
-
-    <span class="comment">// Parse the module version
-    </span><span class="kw">let </span><span class="kw-2">mut </span>version = semver::Version::parse(plain_version).map_err(|e| {
-        Error::version_parsing_failed(
-            module.path.clone(),
-            module.version.clone(),
-            e.to_string(),
-            AppInfo::from(version_info),
-        )
-    })<span class="question-mark">?</span>;
-
-    <span class="comment">// Remove the pre-release version to ensure we treat pre-releases of the SDK
-    // as their normal version, eg. 0.42.0-rc2 should satisfy &gt;=0.41.3, &lt;= 0.42.6.
-    </span>version.pre = semver::Prerelease::EMPTY;
-
-    <span class="prelude-val">Ok</span>(version)
+<span class="kw">fn </span>parse_sdk_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
+    parse_optional_version(version_info, SDK_MODULE_NAME)
 }
 
 <span class="kw">fn </span>parse_ibc_go_version(version_info: <span class="kw-2">&amp;</span>VersionInfo) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;semver::Version&gt;, Error&gt; {
@@ -421,7 +359,7 @@
     <span class="kw">match </span>version_info
         .build_deps
         .iter()
-        .find(|<span class="kw-2">&amp;</span>m| m.path.contains(module_name))
+        .find(|<span class="kw-2">&amp;</span>m| m.path == module_name)
     {
         <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         <span class="prelude-val">Some</span>(module) =&gt; {
