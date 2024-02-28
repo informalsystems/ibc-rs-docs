@@ -535,6 +535,55 @@
 <a href="#533" id="533">533</a>
 <a href="#534" id="534">534</a>
 <a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">"telemetry"</span>)]
 </span><span class="kw">use </span>{
     ibc_relayer_types::core::ics24_host::identifier::ChannelId,
@@ -554,14 +603,17 @@
 <span class="kw">use </span>ibc_proto::ibc::core::channel::v1::PacketId;
 <span class="kw">use </span>ibc_relayer_types::applications::ics29_fee::events::IncentivizedPacket;
 <span class="kw">use </span>ibc_relayer_types::applications::transfer::{Amount, Coin, RawCoin};
+<span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::Ordering;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::events::WriteAcknowledgement;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::events::{IbcEvent, IbcEventType};
 <span class="kw">use </span>ibc_relayer_types::Height;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::handle::ChainHandle;
+<span class="kw">use </span><span class="kw">crate</span>::chain::requests::QueryHeight;
 <span class="kw">use </span><span class="kw">crate</span>::config::filter::FeePolicy;
 <span class="kw">use </span><span class="kw">crate</span>::event::source::EventBatch;
+<span class="kw">use </span><span class="kw">crate</span>::event::IbcEventWithHeight;
 <span class="kw">use </span><span class="kw">crate</span>::foreign_client::HasExpiredOrFrozenError;
 <span class="kw">use </span><span class="kw">crate</span>::link::Resubmit;
 <span class="kw">use </span><span class="kw">crate</span>::link::{error::LinkError, Link};
@@ -741,6 +793,24 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), TaskError&lt;RunError&gt;&gt; {
     <span class="comment">// Handle packet clearing which is triggered from a command
     </span><span class="kw">let </span>(do_clear, maybe_height) = <span class="kw">match </span><span class="kw-2">&amp;</span>cmd {
+        WorkerCmd::IbcEvents { batch } <span class="kw">if </span>link.a_to_b.channel().ordering == Ordering::Ordered =&gt; {
+            <span class="kw">let </span>lowest_sequence = lowest_sequence(<span class="kw-2">&amp;</span>batch.events);
+
+            <span class="kw">let </span>next_sequence = query_next_sequence_receive(
+                link.a_to_b.dst_chain(),
+                link.a_to_b.dst_port_id(),
+                link.a_to_b.dst_channel_id(),
+                QueryHeight::Specific(batch.height),
+            )
+            .ok();
+
+            <span class="kw">if </span><span class="kw-2">*</span>should_clear_on_start || next_sequence &lt; lowest_sequence {
+                (<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(batch.height))
+            } <span class="kw">else </span>{
+                (<span class="bool-val">false</span>, <span class="prelude-val">None</span>)
+            }
+        }
+
         WorkerCmd::IbcEvents { batch } =&gt; {
             <span class="kw">if </span><span class="kw-2">*</span>should_clear_on_start {
                 (<span class="bool-val">true</span>, <span class="prelude-val">Some</span>(batch.height))
@@ -974,6 +1044,34 @@
     }
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">fn </span>query_next_sequence_receive&lt;Chain: ChainHandle&gt;(
+    chain: <span class="kw-2">&amp;</span>Chain,
+    port_id: <span class="kw-2">&amp;</span>PortId,
+    channel_id: <span class="kw-2">&amp;</span>ChannelId,
+    height: QueryHeight,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Sequence, LinkError&gt; {
+    <span class="kw">use </span><span class="kw">crate</span>::chain::requests::{IncludeProof, QueryNextSequenceReceiveRequest};
+
+    chain
+        .query_next_sequence_receive(
+            QueryNextSequenceReceiveRequest {
+                port_id: port_id.clone(),
+                channel_id: channel_id.clone(),
+                height,
+            },
+            IncludeProof::No,
+        )
+        .map(|(seq, _height)| seq)
+        .map_err(|e| LinkError::query(chain.id(), e))
+}
+
+<span class="kw">fn </span>lowest_sequence(events: <span class="kw-2">&amp;</span>[IbcEventWithHeight]) -&gt; <span class="prelude-ty">Option</span>&lt;Sequence&gt; {
+    events
+        .iter()
+        .flat_map(|event| event.event.packet().map(|p| p.sequence))
+        .min()
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"telemetry"</span>)]

@@ -110,6 +110,11 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
@@ -127,7 +132,7 @@
     /// the CLI or during packet clearing.
     </span>Static(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str),
     <span class="doccomment">/// Random identifier used to track latency of packet clearing.
-    </span>ClearedUuid(Uuid),
+    </span>PacketClearing(Uuid),
 }
 
 <span class="kw">impl </span>TrackingId {
@@ -141,8 +146,13 @@
         <span class="self">Self</span>::Static(s)
     }
 
-    <span class="kw">pub fn </span>new_cleared_uuid() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::ClearedUuid(Uuid::new_v4())
+    <span class="kw">pub fn </span>new_packet_clearing() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::PacketClearing(Uuid::new_v4())
+    }
+
+    <span class="doccomment">/// Indicates whether a packet clearing process is currently in-progress.
+    </span><span class="kw">pub fn </span>is_clearing(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::PacketClearing(<span class="kw">_</span>))
     }
 }
 
@@ -155,7 +165,7 @@
                 s.fmt(f)
             }
             TrackingId::Static(s) =&gt; s.fmt(f),
-            TrackingId::ClearedUuid(u) =&gt; {
+            TrackingId::PacketClearing(u) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>uuid = <span class="string">"cleared/"</span>.to_owned();
                 <span class="kw">let </span><span class="kw-2">mut </span>s = u.to_string();
                 s.truncate(<span class="number">8</span>);
