@@ -145,6 +145,10 @@
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
 <a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::Fee;
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
@@ -164,6 +168,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::keyring::{Secp256k1KeyPair, SigningKeyPair};
 
 <span class="kw">use </span><span class="kw">super</span>::batch::send_batched_messages_and_wait_commit;
+<span class="kw">use </span><span class="kw">super</span>::estimate::EstimatedGas;
 
 <span class="kw">pub async fn </span>estimate_fee_and_send_tx(
     rpc_client: <span class="kw-2">&amp;</span>HttpClient,
@@ -172,14 +177,17 @@
     account: <span class="kw-2">&amp;</span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
-) -&gt; <span class="prelude-ty">Result</span>&lt;Response, Error&gt; {
-    <span class="kw">let </span>fee = estimate_tx_fees(config, key_pair, account, tx_memo, messages).<span class="kw">await</span><span class="question-mark">?</span>;
+) -&gt; <span class="prelude-ty">Result</span>&lt;(Response, EstimatedGas), Error&gt; {
+    <span class="kw">let </span>(fee, estimated_gas) =
+        estimate_tx_fees(config, key_pair, account, tx_memo, messages).<span class="kw">await</span><span class="question-mark">?</span>;
 
-    send_tx_with_fee(
+    <span class="kw">let </span>tx_result = send_tx_with_fee(
         rpc_client, config, key_pair, account, tx_memo, messages, <span class="kw-2">&amp;</span>fee,
     )
-    .<span class="kw">await
-</span>}
+    .<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>((tx_result, estimated_gas))
+}
 
 <span class="kw">async fn </span>send_tx_with_fee(
     rpc_client: <span class="kw-2">&amp;</span>HttpClient,
@@ -234,7 +242,7 @@
         .<span class="kw">await</span><span class="question-mark">?
         </span>.into();
 
-    <span class="kw">let </span>response = estimate_fee_and_send_tx(
+    <span class="kw">let </span>(response, <span class="kw">_</span>) = estimate_fee_and_send_tx(
         rpc_client,
         config,
         key_pair,

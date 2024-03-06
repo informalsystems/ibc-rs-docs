@@ -212,6 +212,9 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>std::thread;
 
@@ -317,7 +320,7 @@
         // NOTE: The error code could potentially overlap between Cosmos SDK and Ibc-go channel
         // error codes. This is currently not the case of incorrect account sequence error
         //which is the Cosmos SDK code 32 and Ibc-go channel errors only go up to 25.
-        </span><span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>response) <span class="kw">if </span>response.code == Code::from(INCORRECT_ACCOUNT_SEQUENCE_ERR) =&gt; {
+        </span><span class="prelude-val">Ok</span>((<span class="kw-2">ref </span>response, <span class="kw">_</span>)) <span class="kw">if </span>response.code == Code::from(INCORRECT_ACCOUNT_SEQUENCE_ERR) =&gt; {
             <span class="macro">warn!</span>(
                 <span class="question-mark">?</span>response,
                 <span class="string">"failed to broadcast tx because of a mismatched account sequence number, \
@@ -339,7 +342,7 @@
 
         <span class="comment">// Gas estimation succeeded and broadcast_tx_sync was either successful or has failed with
         // an unrecoverable error.
-        </span><span class="prelude-val">Ok</span>(response) =&gt; {
+        </span><span class="prelude-val">Ok</span>((response, estimated_gas)) =&gt; {
             <span class="macro">debug!</span>(<span class="string">"gas estimation succeeded"</span>);
 
             <span class="comment">// Gas estimation and broadcast_tx_sync were successful.
@@ -369,7 +372,7 @@
                     // Log the error.
                     </span><span class="macro">error!</span>(
                         <span class="question-mark">?</span>response,
-                        diagnostic = <span class="question-mark">?</span>sdk_error_from_tx_sync_error_code(code.into()),
+                        diagnostic = <span class="question-mark">?</span>sdk_error_from_tx_sync_error_code(code.into(), estimated_gas),
                         <span class="string">"failed to broadcast tx with unrecoverable error"
                     </span>);
 
@@ -409,8 +412,11 @@
     <span class="comment">// Retry after delay
     </span>thread::sleep(Duration::from_millis(ACCOUNT_SEQUENCE_RETRY_DELAY));
 
-    estimate_fee_and_send_tx(rpc_client, config, key_pair, account, tx_memo, messages).<span class="kw">await
-</span>}
+    <span class="kw">let </span>(estimate_result, <span class="kw">_</span>) =
+        estimate_fee_and_send_tx(rpc_client, config, key_pair, account, tx_memo, messages).<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(estimate_result)
+}
 
 <span class="doccomment">/// Determine whether the given error yielded by `tx_simulate`
 /// indicates that the current account sequence number cached in Hermes

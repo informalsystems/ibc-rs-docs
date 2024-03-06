@@ -206,6 +206,22 @@
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>ibc_proto::cosmos::tx::v1beta1::{Fee, Tx};
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
@@ -225,13 +241,26 @@
 <span class="kw">use </span><span class="kw">crate</span>::telemetry;
 <span class="kw">use </span><span class="kw">crate</span>::util::pretty::PrettyFee;
 
+<span class="kw">pub enum </span>EstimatedGas {
+    Simulated(u64),
+    Default(u64),
+}
+
+<span class="kw">impl </span>EstimatedGas {
+    <span class="kw">pub fn </span>get_amount(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Simulated(amount) | <span class="self">Self</span>::Default(amount) =&gt; <span class="kw-2">*</span>amount,
+        }
+    }
+}
+
 <span class="kw">pub async fn </span>estimate_tx_fees(
     config: <span class="kw-2">&amp;</span>TxConfig,
     key_pair: <span class="kw-2">&amp;</span>Secp256k1KeyPair,
     account: <span class="kw-2">&amp;</span>Account,
     tx_memo: <span class="kw-2">&amp;</span>Memo,
     messages: <span class="kw-2">&amp;</span>[Any],
-) -&gt; <span class="prelude-ty">Result</span>&lt;Fee, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(Fee, EstimatedGas), Error&gt; {
     <span class="kw">let </span>gas_config = <span class="kw-2">&amp;</span>config.gas_config;
 
     <span class="macro">debug!</span>(
@@ -254,7 +283,7 @@
         signatures: signed_tx.signatures,
     };
 
-    <span class="kw">let </span>estimated_fee = estimate_fee_with_tx(
+    <span class="kw">let </span>estimated_fee_and_gas = estimate_fee_with_tx(
         gas_config,
         <span class="kw-2">&amp;</span>config.grpc_address,
         <span class="kw-2">&amp;</span>config.rpc_address,
@@ -264,7 +293,7 @@
     )
     .<span class="kw">await</span><span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(estimated_fee)
+    <span class="prelude-val">Ok</span>(estimated_fee_and_gas)
 }
 
 <span class="kw">async fn </span>estimate_fee_with_tx(
@@ -274,7 +303,7 @@
     chain_id: <span class="kw-2">&amp;</span>ChainId,
     tx: Tx,
     account: <span class="kw-2">&amp;</span>Account,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Fee, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(Fee, EstimatedGas), Error&gt; {
     <span class="kw">let </span>estimated_gas = {
         <span class="macro">crate::time!</span>(
             <span class="string">"estimate_gas_with_tx"</span>,
@@ -286,29 +315,32 @@
         estimate_gas_with_tx(gas_config, grpc_address, tx, account).<span class="kw">await
     </span>}<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>estimated_gas &gt; gas_config.max_gas {
+    <span class="kw">let </span>estimated_gas_amount = estimated_gas.get_amount();
+
+    <span class="kw">if </span>estimated_gas_amount &gt; gas_config.max_gas {
         <span class="macro">debug!</span>(
-            id = %chain_id, estimated = <span class="question-mark">?</span>estimated_gas, max = <span class="question-mark">?</span>gas_config.max_gas,
+            id = %chain_id, estimated = <span class="question-mark">?</span>estimated_gas_amount, max = <span class="question-mark">?</span>gas_config.max_gas,
             <span class="string">"send_tx: estimated gas is higher than max gas"
         </span>);
 
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::tx_simulate_gas_estimate_exceeded(
             chain_id.clone(),
-            estimated_gas,
+            estimated_gas_amount,
             gas_config.max_gas,
         ));
     }
 
-    <span class="kw">let </span>adjusted_fee = gas_amount_to_fee(gas_config, estimated_gas, chain_id, rpc_address).<span class="kw">await</span>;
+    <span class="kw">let </span>adjusted_fee =
+        gas_amount_to_fee(gas_config, estimated_gas_amount, chain_id, rpc_address).<span class="kw">await</span>;
 
     <span class="macro">debug!</span>(
         id = %chain_id,
         <span class="string">"send_tx: using {} gas, fee {}"</span>,
-        estimated_gas,
+        estimated_gas_amount,
         PrettyFee(<span class="kw-2">&amp;</span>adjusted_fee)
     );
 
-    <span class="prelude-val">Ok</span>(adjusted_fee)
+    <span class="prelude-val">Ok</span>((adjusted_fee, estimated_gas))
 }
 
 <span class="doccomment">/// Try to simulate the given tx in order to estimate how much gas will be needed to submit it.
@@ -324,7 +356,7 @@
     grpc_address: <span class="kw-2">&amp;</span>Uri,
     tx: Tx,
     account: <span class="kw-2">&amp;</span>Account,
-) -&gt; <span class="prelude-ty">Result</span>&lt;u64, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;EstimatedGas, Error&gt; {
     <span class="kw">let </span>simulated_gas = send_tx_simulate(grpc_address, tx)
         .<span class="kw">await
         </span>.map(|sr| sr.gas_info);
@@ -338,7 +370,7 @@
                 gas_info.gas_used
             );
 
-            <span class="prelude-val">Ok</span>(gas_info.gas_used)
+            <span class="prelude-val">Ok</span>(EstimatedGas::Simulated(gas_info.gas_used))
         }
 
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
@@ -347,7 +379,7 @@
                 gas_config.default_gas
             );
 
-            <span class="prelude-val">Ok</span>(gas_config.default_gas)
+            <span class="prelude-val">Ok</span>(EstimatedGas::Default(gas_config.default_gas))
         }
 
         <span class="comment">// If there is a chance that the tx will be accepted once actually submitted, we fall
@@ -366,7 +398,7 @@
                 get_error_text(<span class="kw-2">&amp;</span>e),
             );
 
-            <span class="prelude-val">Ok</span>(gas_config.default_gas)
+            <span class="prelude-val">Ok</span>(EstimatedGas::Default(gas_config.default_gas))
         }
 
         <span class="prelude-val">Err</span>(e) =&gt; {

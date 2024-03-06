@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["estimate_tx_fees"]};
+window.SIDEBAR_ITEMS = {"enum":["EstimatedGas"],"fn":["estimate_tx_fees"]};

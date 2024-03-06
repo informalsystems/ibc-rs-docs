@@ -198,8 +198,19 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>flex_error::define_error;
 <span class="kw">use </span>tendermint::abci::Code;
+
+<span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::estimate::EstimatedGas;
 
 <span class="comment">// Provides mapping for errors returned from ibc-go and cosmos-sdk
 </span><span class="macro">define_error!</span> {
@@ -224,9 +235,13 @@
             { code: u32 }
             | e | { <span class="macro">format_args!</span>(<span class="string">"unknown TX sync response error: {}"</span>, e.code) },
 
-        OutOfGas
-            { code: u32 }
-            |<span class="kw">_</span>| { <span class="string">"the gas requirement is higher than the configured maximum gas! please check the Hermes config.toml"</span>.to_string() },
+        OutOfGasDefault
+            { code: u32, amount: u64 }
+            |e| { <span class="macro">format_args!</span>(<span class="string">"due to the Tx simulation failing, the configured default gas was used. Please check the Hermes config.toml and increase the configured `default_gas`. Current value is `{}`"</span>, e.amount) },
+
+        OutOfGasSimulated
+            { code: u32, amount: u64 }
+            |e| { <span class="macro">format_args!</span>(<span class="string">"the issue might have been caused by the configured max gas which binds the gas used. Please check the Hermes config.toml and increase the configured `max_gas`. Curerent value is `{}`"</span>, e.amount) },
 
         InsufficientFee
             { code: u32 }
@@ -386,12 +401,15 @@
 /// into IBC relayer domain-type errors.
 /// See [`tendermint_rpc::endpoint::broadcast::tx_sync::Response`].
 /// Cf: &lt;https://github.com/cosmos/cosmos-sdk/blob/v0.42.10/types/errors/errors.go&gt;
-</span><span class="kw">pub fn </span>sdk_error_from_tx_sync_error_code(code: u32) -&gt; SdkError {
+</span><span class="kw">pub fn </span>sdk_error_from_tx_sync_error_code(code: u32, estimated_gas: EstimatedGas) -&gt; SdkError {
     <span class="kw">match </span>code {
         <span class="comment">// The primary reason (we know of) causing broadcast_tx_sync to fail
         // is due to "out of gas" errors. These are unrecoverable at the moment
         // on Hermes side. We'll inform the user to check for misconfiguration.
-        </span><span class="number">11 </span>=&gt; SdkError::out_of_gas(code),
+        </span><span class="number">11 </span>=&gt; <span class="kw">match </span>estimated_gas {
+            EstimatedGas::Default(amount) =&gt; SdkError::out_of_gas_default(code, amount),
+            EstimatedGas::Simulated(amount) =&gt; SdkError::out_of_gas_simulated(code, amount),
+        },
         <span class="number">13 </span>=&gt; SdkError::insufficient_fee(code),
         <span class="kw">_ </span>=&gt; SdkError::unknown_tx_sync(code),
     }
