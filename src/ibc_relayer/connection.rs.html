@@ -1433,29 +1433,29 @@
     //! for the connection handshake algorithm.
 
     </span><span class="kw">use </span><span class="kw">crate</span>::connection::ConnectionError;
-    <span class="kw">use </span><span class="kw">crate</span>::util::retry::{clamp_total, ConstantGrowth};
+    <span class="kw">use </span><span class="kw">crate</span>::util::retry::{clamp, ConstantGrowth};
     <span class="kw">use </span>core::time::Duration;
 
     <span class="doccomment">/// Approximate number of retries per block.
-    </span><span class="kw">const </span>PER_BLOCK_RETRIES: u32 = <span class="number">10</span>;
+    </span><span class="kw">const </span>PER_BLOCK_RETRIES: u32 = <span class="number">5</span>;
 
     <span class="doccomment">/// Defines the increment in delay between subsequent retries.
     /// A value of `0` will make the retry delay constant.
-    </span><span class="kw">const </span>DELAY_INCREMENT: u64 = <span class="number">0</span>;
+    </span><span class="kw">const </span>DELAY_INCREMENT: Duration = Duration::from_secs(<span class="number">1</span>);
 
-    <span class="doccomment">/// Maximum retry delay expressed in number of blocks
-    </span><span class="kw">const </span>BLOCK_NUMBER_DELAY: u32 = <span class="number">10</span>;
+    <span class="doccomment">/// Maximum number of retries
+    </span><span class="kw">const </span>MAX_RETRIES: u32 = <span class="number">10</span>;
 
     <span class="doccomment">/// The default retry strategy.
-    /// We retry with a constant backoff strategy. The strategy is parametrized by the
+    /// We retry with a growing backoff strategy. The strategy is parametrized by the
     /// maximum block time expressed as a `Duration`.
-    </span><span class="kw">pub fn </span>default_strategy(max_block_times: Duration) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
-        <span class="kw">let </span>retry_delay = max_block_times / PER_BLOCK_RETRIES;
+    </span><span class="kw">pub fn </span>default_strategy(max_block_time: Duration) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
+        <span class="kw">let </span>retry_delay = max_block_time / PER_BLOCK_RETRIES;
 
-        clamp_total(
-            ConstantGrowth::new(retry_delay, Duration::from_secs(DELAY_INCREMENT)),
-            retry_delay,
-            max_block_times * BLOCK_NUMBER_DELAY,
+        clamp(
+            ConstantGrowth::new(retry_delay, DELAY_INCREMENT),
+            retry_delay + DELAY_INCREMENT * MAX_RETRIES,
+            MAX_RETRIES <span class="kw">as </span>usize,
         )
     }
 

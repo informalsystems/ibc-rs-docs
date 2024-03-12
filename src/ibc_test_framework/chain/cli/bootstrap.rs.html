@@ -234,6 +234,8 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>std::fs;
@@ -298,35 +300,37 @@
     home_path: <span class="kw-2">&amp;</span>str,
     wallet_address: <span class="kw-2">&amp;</span>str,
     amounts: <span class="kw-2">&amp;</span>[String],
+    extra_start_args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
     <span class="kw">let </span>amounts_str = itertools::join(amounts, <span class="string">","</span>);
+
+    <span class="kw">let </span>legacy_base_args = [
+        <span class="string">"--home"</span>,
+        home_path,
+        <span class="string">"add-genesis-account"</span>,
+        wallet_address,
+        <span class="kw-2">&amp;</span>amounts_str,
+    ];
+    <span class="kw">let </span><span class="kw-2">mut </span>legacy_args: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = legacy_base_args.to_vec();
+    legacy_args.extend(extra_start_args.iter());
+
+    <span class="kw">let </span>base_args = [
+        <span class="string">"--home"</span>,
+        home_path,
+        <span class="string">"genesis"</span>,
+        <span class="string">"add-genesis-account"</span>,
+        wallet_address,
+        <span class="kw-2">&amp;</span>amounts_str,
+    ];
+    <span class="kw">let </span><span class="kw-2">mut </span>args: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = base_args.to_vec();
+    args.extend(extra_start_args.iter());
+
     <span class="comment">// Cosmos SDK v0.47.0 introduced the `genesis` subcommand, this match is required to
     // support pre and post SDK v0.47.0. https://github.com/cosmos/cosmos-sdk/pull/14149
-    </span><span class="kw">match </span>simple_exec(
-        chain_id,
-        command_path,
-        <span class="kw-2">&amp;</span>[
-            <span class="string">"--home"</span>,
-            home_path,
-            <span class="string">"genesis"</span>,
-            <span class="string">"add-genesis-account"</span>,
-            wallet_address,
-            <span class="kw-2">&amp;</span>amounts_str,
-        ],
-    ) {
+    </span><span class="kw">match </span>simple_exec(chain_id, command_path, <span class="kw-2">&amp;</span>args) {
         <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
         <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-            simple_exec(
-                chain_id,
-                command_path,
-                <span class="kw-2">&amp;</span>[
-                    <span class="string">"--home"</span>,
-                    home_path,
-                    <span class="string">"add-genesis-account"</span>,
-                    wallet_address,
-                    <span class="kw-2">&amp;</span>amounts_str,
-                ],
-            )<span class="question-mark">?</span>;
+            simple_exec(chain_id, command_path, <span class="kw-2">&amp;</span>legacy_args)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(())
         }
     }

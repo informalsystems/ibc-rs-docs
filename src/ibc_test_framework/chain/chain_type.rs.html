@@ -82,6 +82,19 @@
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>ibc_relayer::config::AddressType;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
@@ -98,13 +111,14 @@
     Cosmos,
     Evmos,
     Provenance,
+    Injective,
 }
 
 <span class="kw">impl </span>ChainType {
     <span class="kw">pub fn </span>hd_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Cosmos =&gt; COSMOS_HD_PATH,
-            <span class="self">Self</span>::Evmos =&gt; EVMOS_HD_PATH,
+            <span class="self">Self</span>::Evmos | <span class="self">Self</span>::Injective =&gt; EVMOS_HD_PATH,
             <span class="self">Self</span>::Provenance =&gt; PROVENANCE_HD_PATH,
         }
     }
@@ -118,6 +132,7 @@
                     ChainId::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"ibc{prefix}"</span>))
                 }
             }
+            <span class="self">Self</span>::Injective =&gt; ChainId::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"injective-{prefix}"</span>)),
             <span class="self">Self</span>::Evmos =&gt; ChainId::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"evmos_9000-{prefix}"</span>)),
             <span class="self">Self</span>::Provenance =&gt; ChainId::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"pio-mainnet-{prefix}"</span>)),
         }
@@ -128,23 +143,37 @@
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="macro">vec!</span>[];
         <span class="kw">let </span>json_rpc_port = random_unused_tcp_port();
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Cosmos =&gt; {}
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Injective | <span class="self">Self</span>::Provenance =&gt; {}
             <span class="self">Self</span>::Evmos =&gt; {
                 res.push(<span class="string">"--json-rpc.address"</span>.to_owned());
                 res.push(<span class="macro">format!</span>(<span class="string">"localhost:{json_rpc_port}"</span>));
             }
-            <span class="self">Self</span>::Provenance =&gt; {}
+        }
+        res
+    }
+
+    <span class="comment">// Extra arguments required to run `&lt;chain binary&gt; add-genesis-account`
+    </span><span class="kw">pub fn </span>extra_add_genesis_account_args(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>ChainId) -&gt; Vec&lt;String&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="macro">vec!</span>[];
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Evmos | <span class="self">Self</span>::Provenance =&gt; {}
+            <span class="self">Self</span>::Injective =&gt; {
+                res.push(<span class="string">"--chain-id"</span>.to_owned());
+                res.push(<span class="macro">format!</span>(<span class="string">"{chain_id}"</span>));
+            }
         }
         res
     }
 
     <span class="kw">pub fn </span>address_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; AddressType {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Cosmos =&gt; AddressType::default(),
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Provenance =&gt; AddressType::default(),
             <span class="self">Self</span>::Evmos =&gt; AddressType::Ethermint {
                 pk_type: <span class="string">"/ethermint.crypto.v1.ethsecp256k1.PubKey"</span>.to_string(),
             },
-            <span class="self">Self</span>::Provenance =&gt; AddressType::default(),
+            <span class="self">Self</span>::Injective =&gt; AddressType::Ethermint {
+                pk_type: <span class="string">"/injective.crypto.v1beta1.ethsecp256k1.PubKey"</span>.to_string(),
+            },
         }
     }
 }
@@ -154,11 +183,8 @@
 
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="kw">match </span>s {
-            name <span class="kw">if </span>name.contains(<span class="string">"gaiad"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Cosmos),
-            name <span class="kw">if </span>name.contains(<span class="string">"simd"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Cosmos),
-            name <span class="kw">if </span>name.contains(<span class="string">"wasmd"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Cosmos),
-            name <span class="kw">if </span>name.contains(<span class="string">"icad"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Cosmos),
             name <span class="kw">if </span>name.contains(<span class="string">"evmosd"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Evmos),
+            name <span class="kw">if </span>name.contains(<span class="string">"injectived"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Injective),
             name <span class="kw">if </span>name.contains(<span class="string">"provenanced"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Provenance),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(ChainType::Cosmos),
         }
