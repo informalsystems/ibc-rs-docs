@@ -2605,6 +2605,11 @@
 <a href="#2603" id="2603">2603</a>
 <a href="#2604" id="2604">2604</a>
 <a href="#2605" id="2605">2605</a>
+<a href="#2606" id="2606">2606</a>
+<a href="#2607" id="2607">2607</a>
+<a href="#2608" id="2608">2608</a>
+<a href="#2609" id="2609">2609</a>
+<a href="#2610" id="2610">2610</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::{Buf, Bytes};
 <span class="kw">use </span>core::{
@@ -2753,6 +2758,7 @@
 ///
 /// [tm-37-max]: https://github.com/tendermint/tendermint/blob/v0.37.0-rc1/types/params.go#L79
 </span><span class="kw">pub const </span>BLOCK_MAX_BYTES_MAX_FRACTION: f64 = <span class="number">0.9</span>;
+
 <span class="kw">pub struct </span>CosmosSdkChain {
     config: config::CosmosSdkConfig,
     tx_config: TxConfig,
@@ -2899,19 +2905,23 @@
             ));
         }
 
-        <span class="comment">// Query /genesis RPC endpoint to retrieve the `max_expected_time_per_block` value
-        // to use as `max_block_time`.
+        <span class="comment">// Query /genesis RPC endpoint to retrieve the `max_expected_time_per_block` value to use as `max_block_time`.
         // If it is not found, keep the configured `max_block_time`.
         </span><span class="kw">match </span><span class="self">self</span>.block_on(<span class="self">self</span>.rpc_client.genesis::&lt;GenesisAppState&gt;()) {
             <span class="prelude-val">Ok</span>(genesis_reponse) =&gt; {
                 <span class="kw">let </span>old_max_block_time = <span class="self">self</span>.config.max_block_time;
-                <span class="self">self</span>.config.max_block_time =
+                <span class="kw">let </span>new_max_block_time =
                     Duration::from_nanos(genesis_reponse.app_state.max_expected_time_per_block());
-                <span class="macro">info!</span>(
-                    <span class="string">"Updated `max_block_time` using /genesis endpoint. Old value: `{}s`, new value: `{}s`"</span>,
-                    old_max_block_time.as_secs(),
-                    <span class="self">self</span>.config.max_block_time.as_secs()
-                );
+
+                <span class="kw">if </span>old_max_block_time.as_secs() != new_max_block_time.as_secs() {
+                    <span class="self">self</span>.config.max_block_time = new_max_block_time;
+
+                    <span class="macro">info!</span>(
+                        <span class="string">"Updated `max_block_time` using /genesis endpoint. Old value: `{}s`, new value: `{}s`"</span>,
+                        old_max_block_time.as_secs(),
+                        <span class="self">self</span>.config.max_block_time.as_secs()
+                    );
+                }
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="macro">warn!</span>(
