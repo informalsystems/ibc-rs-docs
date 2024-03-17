@@ -2605,6 +2605,11 @@
 <a href="#2603" id="2603">2603</a>
 <a href="#2604" id="2604">2604</a>
 <a href="#2605" id="2605">2605</a>
+<a href="#2606" id="2606">2606</a>
+<a href="#2607" id="2607">2607</a>
+<a href="#2608" id="2608">2608</a>
+<a href="#2609" id="2609">2609</a>
+<a href="#2610" id="2610">2610</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{future::Future, str::FromStr, time::Duration};
 <span class="kw">use </span>std::{cmp::Ordering, thread};
@@ -3088,7 +3093,7 @@
     }
 
     <span class="doccomment">/// The minimum gas price that this node accepts
-    </span><span class="kw">pub fn </span>min_gas_price(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;GasPrice&gt;, Error&gt; {
+    </span><span class="kw">pub fn </span>min_gas_price(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;GasPrice&gt;&gt;, Error&gt; {
         <span class="macro">crate::time!</span>(
             <span class="string">"min_gas_price"</span>,
             {
@@ -3096,10 +3101,9 @@
             }
         );
 
-        <span class="kw">let </span>min_gas_price: Vec&lt;GasPrice&gt; =
-            <span class="self">self</span>.query_config_params()<span class="question-mark">?</span>.map_or(<span class="macro">vec!</span>[], |cfg_response| {
-                parse_gas_prices(cfg_response.minimum_gas_price)
-            });
+        <span class="kw">let </span>min_gas_price: <span class="prelude-ty">Option</span>&lt;Vec&lt;GasPrice&gt;&gt; = <span class="self">self
+            </span>.query_config_params()<span class="question-mark">?
+            </span>.map(|cfg_response| parse_gas_prices(cfg_response.minimum_gas_price));
 
         <span class="prelude-val">Ok</span>(min_gas_price)
     }
@@ -5074,38 +5078,44 @@
     }
 
     <span class="kw">let </span>relayer_gas_price = <span class="kw-2">&amp;</span>chain.config.gas_price;
-    <span class="kw">let </span>node_min_gas_prices = chain.min_gas_price()<span class="question-mark">?</span>;
+    <span class="kw">let </span>node_min_gas_prices_result = chain.min_gas_price()<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>!node_min_gas_prices.is_empty() {
-        <span class="kw">let </span><span class="kw-2">mut </span>found_matching_denom = <span class="bool-val">false</span>;
+    <span class="kw">match </span>node_min_gas_prices_result {
+        <span class="prelude-val">Some</span>(node_min_gas_prices) <span class="kw">if </span>!node_min_gas_prices.is_empty() =&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>found_matching_denom = <span class="bool-val">false</span>;
 
-        <span class="kw">for </span>price <span class="kw">in </span>node_min_gas_prices {
-            <span class="kw">match </span>relayer_gas_price.partial_cmp(<span class="kw-2">&amp;</span>price) {
-                <span class="prelude-val">Some</span>(Ordering::Less) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::gas_price_too_low(chain_id.clone())),
-                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                    found_matching_denom = <span class="bool-val">true</span>;
-                    <span class="kw">break</span>;
+            <span class="kw">for </span>price <span class="kw">in </span>node_min_gas_prices {
+                <span class="kw">match </span>relayer_gas_price.partial_cmp(<span class="kw-2">&amp;</span>price) {
+                    <span class="prelude-val">Some</span>(Ordering::Less) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::gas_price_too_low(chain_id.clone())),
+                    <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
+                        found_matching_denom = <span class="bool-val">true</span>;
+                        <span class="kw">break</span>;
+                    }
+                    <span class="prelude-val">None </span>=&gt; <span class="kw">continue</span>,
                 }
-                <span class="prelude-val">None </span>=&gt; <span class="kw">continue</span>,
+            }
+
+            <span class="kw">if </span>!found_matching_denom {
+                <span class="macro">warn!</span>(
+                        <span class="string">"chain '{}' has no minimum gas price of denomination '{}' \
+                        that is strictly less than the `gas_price` specified for that chain in the Hermes configuration. \
+                        This is usually a sign of misconfiguration, please check your chain and Hermes configurations"</span>,
+                        chain_id, relayer_gas_price.denom
+                    );
             }
         }
 
-        <span class="kw">if </span>!found_matching_denom {
-            <span class="macro">warn!</span>(
-                <span class="string">"chain '{}' has no minimum gas price of denomination '{}' \
-                that is strictly less than the `gas_price` specified for \
-                that chain in the Hermes configuration. \
-                This is usually a sign of misconfiguration, please check your chain and Hermes configurations"</span>,
-                chain_id, relayer_gas_price.denom
-            );
-        }
-    } <span class="kw">else </span>{
-        <span class="macro">warn!</span>(
+        <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="macro">warn!</span>(
             <span class="string">"chain '{}' has no minimum gas price value configured for denomination '{}'. \
-            This is usually a sign of misconfiguration, please check your chain and \
-            relayer configurations"</span>,
+            This is usually a sign of misconfiguration, please check your chain and relayer configurations"</span>,
             chain_id, relayer_gas_price.denom
-        );
+        ),
+
+        <span class="prelude-val">None </span>=&gt; <span class="macro">warn!</span>(
+            <span class="string">"chain '{}' does not implement the `cosmos.base.node.v1beta1.Service/Params` endpoint. \
+            It is impossible to check whether the chain's minimum-gas-prices matches the ones specified in config"</span>,
+            chain_id,
+        ),
     }
 
     <span class="kw">let </span>version_specs = chain.block_on(fetch_version_specs(<span class="kw-2">&amp;</span>chain.config.id, <span class="kw-2">&amp;</span>chain.grpc_addr))<span class="question-mark">?</span>;
