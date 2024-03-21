@@ -76,7 +76,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["fastrand",["",[],["global_rng.rs","lib.rs"]]],\
 ["ff",["",[],["batch.rs","helpers.rs","lib.rs"]]],\
 ["fixed_hash",["",[],["hash.rs","lib.rs"]]],\
-["flex_error",["",[["tracer_impl",[],["anyhow.rs","eyre.rs","mod.rs","string.rs"]]],["lib.rs","macros.rs","source.rs","tracer.rs"]]],\
+["flex_error",["",[["tracer_impl",[],["eyre.rs","mod.rs","string.rs"]]],["lib.rs","macros.rs","source.rs","tracer.rs"]]],\
 ["fnv",["",[],["lib.rs"]]],\
 ["form_urlencoded",["",[],["lib.rs"]]],\
 ["fs_err",["",[["os",[],["unix.rs"]]],["dir.rs","errors.rs","file.rs","lib.rs","open_options.rs","os.rs","path.rs"]]],\
