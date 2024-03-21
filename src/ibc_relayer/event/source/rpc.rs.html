@@ -402,6 +402,35 @@
 <a href="#400" id="400">400</a>
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>extract;
 
 <span class="kw">use </span>std::sync::Arc;
@@ -427,7 +456,7 @@
 
 <span class="kw">use crate</span>::{
     chain::tracking::TrackingId,
-    event::{bus::EventBus, source::Error, IbcEventWithHeight},
+    event::{bus::EventBus, error::ErrorDetail, source::Error, IbcEventWithHeight},
     telemetry,
     util::retry::ConstantGrowth,
 };
@@ -449,6 +478,9 @@
     <span class="doccomment">/// Poll interval
     </span>poll_interval: Duration,
 
+    <span class="doccomment">/// Max retries to collect events
+    </span>max_retries: u32,
+
     <span class="doccomment">/// Event bus for broadcasting events
     </span>event_bus: EventBus&lt;Arc&lt;<span class="prelude-ty">Result</span>&lt;EventBatch&gt;&gt;&gt;,
 
@@ -467,6 +499,7 @@
         chain_id: ChainId,
         rpc_client: HttpClient,
         poll_interval: Duration,
+        max_retries: u32,
         rt: Arc&lt;TokioRuntime&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, TxEventSourceCmd)&gt; {
         <span class="kw">let </span>event_bus = EventBus::new();
@@ -477,6 +510,7 @@
             chain_id,
             rpc_client,
             poll_interval,
+            max_retries,
             event_bus,
             rx_cmd,
             last_fetched_height: BlockHeight::from(<span class="number">0_u32</span>),
@@ -607,19 +641,38 @@
         <span class="kw">for </span>height <span class="kw">in </span>heights {
             <span class="macro">trace!</span>(<span class="string">"collecting events at height {height}"</span>);
 
-            <span class="kw">let </span>result = collect_events(<span class="kw-2">&amp;</span><span class="self">self</span>.rpc_client, <span class="kw-2">&amp;</span><span class="self">self</span>.chain_id, height).<span class="kw">await</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>attempts = <span class="number">0</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>backoff = retries_backoff(<span class="self">self</span>.max_retries);
 
-            <span class="kw">match </span>result {
-                <span class="prelude-val">Ok</span>(batch) =&gt; {
-                    <span class="self">self</span>.last_fetched_height = height;
+            <span class="comment">// NOTE: Even if we failed to collect events after max retries,
+            // we still need to update to move on next block
+            </span><span class="self">self</span>.last_fetched_height = height;
 
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(batch) = batch {
-                        batches.push(batch);
+            <span class="kw">loop </span>{
+                attempts += <span class="number">1</span>;
+
+                <span class="kw">match </span>collect_events(<span class="kw-2">&amp;</span><span class="self">self</span>.rpc_client, <span class="kw-2">&amp;</span><span class="self">self</span>.chain_id, height).<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(batch) =&gt; {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(batch) = batch {
+                            batches.push(batch);
+                        }
+                        <span class="kw">break</span>;
                     }
-                }
-                <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">error!</span>(%height, <span class="string">"failed to collect events: {e}"</span>);
-                    <span class="kw">break</span>;
+                    <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">match </span>e.detail() {
+                        ErrorDetail::Rpc(<span class="kw">_</span>) <span class="kw">if </span>attempts &lt; <span class="self">self</span>.max_retries =&gt; {
+                            <span class="kw">let </span>delay = backoff.next().expect(
+                                <span class="string">"backoff has attempted to make more iterates than is expected"</span>,
+                            );
+
+                            <span class="macro">error!</span>(%height, <span class="string">"failed to collect events: {e}, retrying in {delay:?}..."</span>);
+                            sleep(delay).<span class="kw">await</span>;
+                        }
+
+                        <span class="kw">_ </span>=&gt; {
+                            <span class="macro">error!</span>(%height, <span class="string">"failed to collect events after {attempts} attempts: {e}"</span>);
+                            <span class="kw">break</span>;
+                        }
+                    },
                 }
             }
         }
@@ -646,6 +699,11 @@
 <span class="kw">fn </span>poll_backoff(poll_interval: Duration) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
     ConstantGrowth::new(poll_interval, Duration::from_millis(<span class="number">500</span>))
         .clamp(poll_interval * <span class="number">5</span>, usize::MAX)
+}
+
+<span class="kw">fn </span>retries_backoff(collect_retries: u32) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Duration&gt; {
+    ConstantGrowth::new(Duration::from_secs(<span class="number">1</span>), Duration::from_millis(<span class="number">500</span>))
+        .clamp(Duration::from_secs(<span class="number">4</span>), collect_retries <span class="kw">as </span>usize)
 }
 
 <span class="kw">fn </span>dedupe(events: Vec&lt;abci::Event&gt;) -&gt; Vec&lt;abci::Event&gt; {
