@@ -274,6 +274,13 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
@@ -292,6 +299,7 @@
 <span class="kw">use </span>ibc_relayer::{
     chain::handle::Subscription,
     config::{ChainConfig, EventSourceMode},
+    error::Error,
     event::source::EventSource,
     util::compat_mode::compat_mode_from_version,
 };
@@ -435,13 +443,19 @@
                 EventSourceMode::Pull {
                     interval,
                     max_retries,
-                } =&gt; EventSource::rpc(
-                    chain_config.id().clone(),
-                    HttpClient::new(config.rpc_addr.clone())<span class="question-mark">?</span>,
-                    <span class="kw-2">*</span>interval,
-                    <span class="kw-2">*</span>max_retries,
-                    rt,
-                ),
+                } =&gt; {
+                    <span class="kw">let </span><span class="kw-2">mut </span>rpc_client = HttpClient::new(config.rpc_addr.clone())
+                        .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
+                    rpc_client.set_compat_mode(compat_mode);
+
+                    EventSource::rpc(
+                        chain_config.id().clone(),
+                        rpc_client,
+                        <span class="kw-2">*</span>interval,
+                        <span class="kw-2">*</span>max_retries,
+                        rt,
+                    )
+                }
             }<span class="question-mark">?</span>;
 
             thread::spawn(<span class="kw">move </span>|| event_source.run());
