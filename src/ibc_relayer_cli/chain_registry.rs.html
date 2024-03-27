@@ -518,10 +518,6 @@
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
 <a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains functions to generate a relayer config for a given chain
 
 </span><span class="kw">use </span>std::collections::BTreeMap;
@@ -633,11 +629,6 @@
     )
     .<span class="kw">await</span><span class="question-mark">?</span>;
 
-    <span class="kw">let </span>websocket_address =
-        rpc_data.websocket.clone().try_into().map_err(|e| {
-            RegistryError::websocket_url_parse_error(rpc_data.websocket.to_string(), e)
-        })<span class="question-mark">?</span>;
-
     <span class="kw">let </span>avg_gas_price = <span class="kw">if let </span><span class="prelude-val">Some</span>(fee_token) = chain_data.fees.fee_tokens.first() {
         fee_token.average_gas_price
     } <span class="kw">else </span>{
@@ -655,9 +646,9 @@
         id: chain_data.chain_id,
         rpc_addr: rpc_data.rpc_address,
         grpc_addr: grpc_address,
-        event_source: EventSourceMode::Push {
-            url: websocket_address,
-            batch_delay: default::batch_delay(),
+        event_source: EventSourceMode::Pull {
+            interval: default::poll_interval(),
+            max_retries: default::max_retries(),
         },
         rpc_timeout: default::rpc_timeout(),
         trusted_node: default::trusted_node(),
@@ -715,6 +706,7 @@
     <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..retries {
         <span class="kw">let </span>query_response =
             QuerierType::query_healthy(chain_name.to_string(), endpoints.clone()).<span class="kw">await</span>;
+
         <span class="kw">match </span>query_response {
             <span class="prelude-val">Ok</span>(r) =&gt; {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(r);
@@ -724,13 +716,13 @@
             }
         }
     }
-    <span class="prelude-val">Err</span>(RegistryError::unhealthy_endpoints(
-        endpoints
-            .iter()
-            .map(|endpoint| endpoint.to_string())
-            .collect(),
-        retries,
-    ))
+
+    <span class="kw">let </span>endpoints = endpoints
+        .iter()
+        .map(|endpoint| endpoint.to_string())
+        .collect();
+
+    <span class="prelude-val">Err</span>(RegistryError::unhealthy_endpoints(endpoints, retries))
 }
 
 <span class="doccomment">/// Fetches the specified resources from the Cosmos chain registry, using the specified commit hash

@@ -166,23 +166,6 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains traits to query nodes of a given chain from their APIs.
 //! Contains struct to perform a health check on a gRPC/WebSocket endpoint and
 //! to retrieve the `max_block_size` from a RPC endpoint.
@@ -193,15 +176,14 @@
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>futures::{stream::FuturesUnordered, StreamExt};
 <span class="kw">use </span>http::Uri;
-<span class="kw">use </span>tokio::time::timeout;
-<span class="kw">use </span>tokio::time::Duration;
+<span class="kw">use </span>tendermint_rpc::HttpClient;
+<span class="kw">use </span>tendermint_rpc::HttpClientUrl;
 <span class="kw">use </span>tracing::{debug, info};
 
 <span class="kw">use </span>ibc_proto::cosmos::bank::v1beta1::query_client::QueryClient;
-<span class="kw">use </span>tendermint_rpc::{Client, SubscriptionClient, Url, WebSocketClient};
+<span class="kw">use </span>tendermint_rpc::{Client, Url};
 
 <span class="kw">use </span><span class="kw">crate</span>::error::RegistryError;
-<span class="kw">use </span><span class="kw">crate</span>::formatter::{SimpleWebSocketFormatter, UriFormatter};
 
 <span class="doccomment">/// `QueryTypes` represents the basic types required to query a node
 </span><span class="kw">pub trait </span>QueryTypes {
@@ -258,8 +240,8 @@
 
 <span class="comment">// ----------------- RPC ------------------
 
-</span><span class="doccomment">/// `SimpleHermesRpcQuerier` retrieves `HermesConfigData` by querying a list of RPC endpoints through their WebSocket API
-/// and returns the result of the first endpoint to answer.
+</span><span class="doccomment">/// `SimpleHermesRpcQuerier` retrieves `HermesConfigData` by querying a list of RPC endpoints
+/// through their RPC API and returns the result of the first endpoint to answer.
 </span><span class="kw">pub struct </span>SimpleHermesRpcQuerier;
 
 <span class="doccomment">/// Data which must be retrieved from RPC endpoints for Hermes
@@ -267,7 +249,6 @@
 </span><span class="kw">pub struct </span>HermesConfigData {
     <span class="kw">pub </span>rpc_address: Url,
     <span class="kw">pub </span>max_block_size: u64,
-    <span class="kw">pub </span>websocket: Url,
     <span class="comment">// max_block_time should also be retrieved from the RPC
     // however it looks like it is not in the genesis file anymore
 </span>}
@@ -286,46 +267,31 @@
         RegistryError::no_healthy_rpc(chain_name)
     }
 
-    <span class="doccomment">/// Convert the RPC url to a WebSocket url, query the endpoint, return the data from the RPC.
-    </span><span class="kw">async fn </span>query(rpc: <span class="self">Self</span>::QueryInput) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::QueryOutput, <span class="self">Self</span>::QueryError&gt; {
-        <span class="kw">let </span>websocket_addr = SimpleWebSocketFormatter::parse_or_build_address(rpc.as_str())<span class="question-mark">?</span>;
+    <span class="doccomment">/// Query the endpoint, return the data from the RPC.
+    </span><span class="kw">async fn </span>query(rpc_url: <span class="self">Self</span>::QueryInput) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::QueryOutput, <span class="self">Self</span>::QueryError&gt; {
+        <span class="macro">info!</span>(<span class="string">"Querying RPC server at {rpc_url}"</span>);
 
-        <span class="macro">info!</span>(<span class="string">"Querying WebSocket server at {websocket_addr}"</span>);
+        <span class="kw">let </span>url = HttpClientUrl::from_str(<span class="kw-2">&amp;</span>rpc_url)
+            .map_err(|e| RegistryError::tendermint_url_parse_error(rpc_url.clone(), e))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>(client, driver) = timeout(
-            Duration::from_secs(<span class="number">5</span>),
-            WebSocketClient::new(websocket_addr.clone()),
-        )
-        .<span class="kw">await
-        </span>.map_err(|e| RegistryError::websocket_time_out_error(websocket_addr.to_string(), e))<span class="question-mark">?
-        </span>.map_err(|e| RegistryError::websocket_connect_error(websocket_addr.to_string(), e))<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>driver_handle = tokio::spawn(driver.run());
+        <span class="kw">let </span>client = HttpClient::builder(url)
+            .build()
+            .map_err(|e| RegistryError::rpc_connect_error(rpc_url.clone(), e))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>latest_consensus_params = <span class="kw">match </span>client.latest_consensus_params().<span class="kw">await </span>{
             <span class="prelude-val">Ok</span>(response) =&gt; response.consensus_params.block.max_bytes,
             <span class="prelude-val">Err</span>(e) =&gt; {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(RegistryError::rpc_consensus_params_error(
-                    websocket_addr.to_string(),
+                    rpc_url.to_string(),
                     e,
                 ))
             }
         };
 
-        client.close().map_err(|e| {
-            RegistryError::websocket_conn_close_error(websocket_addr.to_string(), e)
-        })<span class="question-mark">?</span>;
-
-        driver_handle
-            .<span class="kw">await
-            </span>.map_err(|e| RegistryError::join_error(<span class="string">"chain_data_join"</span>.to_string(), e))<span class="question-mark">?
-            </span>.map_err(|e| RegistryError::websocket_driver_error(websocket_addr.to_string(), e))<span class="question-mark">?</span>;
-
         <span class="prelude-val">Ok</span>(HermesConfigData {
-            rpc_address: Url::from_str(<span class="kw-2">&amp;</span>rpc)
-                .map_err(|e| RegistryError::tendermint_url_parse_error(rpc, e))<span class="question-mark">?</span>,
+            rpc_address: Url::from_str(<span class="kw-2">&amp;</span>rpc_url)
+                .map_err(|e| RegistryError::tendermint_url_parse_error(rpc_url, e))<span class="question-mark">?</span>,
             max_block_size: latest_consensus_params,
-            websocket: websocket_addr,
         })
     }
 }
