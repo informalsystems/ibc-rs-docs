@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["MOCK_MISBEHAVIOUR_TYPE_URL"],"struct":["Misbehaviour"]};

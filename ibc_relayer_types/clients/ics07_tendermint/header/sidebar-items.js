@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["TENDERMINT_HEADER_TYPE_URL"],"fn":["decode_header"],"mod":["test_util"],"struct":["Header"]};
+window.SIDEBAR_ITEMS = {"constant":["TENDERMINT_HEADER_TYPE_URL"],"fn":["decode_header"],"struct":["Header"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["downcast"],"mod":["applications","bigint","clients","core","events","handler","keys","macros","mock","proofs","signer","test_utils","timestamp","tx_msg","utils"],"type":["Height"]};
+window.SIDEBAR_ITEMS = {"macro":["downcast"],"mod":["applications","bigint","clients","core","events","handler","keys","macros","proofs","signer","timestamp","tx_msg","utils"],"type":["Height"]};

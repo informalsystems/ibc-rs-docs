@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["default_consensus_params","get_dummy_account_id","get_dummy_bech32_account","get_dummy_proof"]};

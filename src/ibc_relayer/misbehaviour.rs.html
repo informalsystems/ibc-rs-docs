@@ -79,41 +79,6 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
@@ -127,11 +92,6 @@
 <span class="kw">use </span>ibc_relayer_types::Height;
 <span class="kw">use </span>tendermint_proto::Protobuf;
 
-<span class="attr">#[cfg(test)]
-</span><span class="kw">use </span>ibc_relayer_types::mock::misbehaviour::Misbehaviour <span class="kw">as </span>MockMisbehaviour;
-<span class="attr">#[cfg(test)]
-</span><span class="kw">use </span>ibc_relayer_types::mock::misbehaviour::MOCK_MISBEHAVIOUR_TYPE_URL;
-
 <span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>MisbehaviourEvidence {
     <span class="kw">pub </span>misbehaviour: AnyMisbehaviour,
@@ -142,27 +102,18 @@
 #[allow(clippy::large_enum_variant)]
 </span><span class="kw">pub enum </span>AnyMisbehaviour {
     Tendermint(TmMisbehaviour),
-
-    <span class="attr">#[cfg(test)]
-    </span>Mock(MockMisbehaviour),
 }
 
 <span class="kw">impl </span>Misbehaviour <span class="kw">for </span>AnyMisbehaviour {
     <span class="kw">fn </span>client_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ClientId {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Tendermint(misbehaviour) =&gt; misbehaviour.client_id(),
-
-            <span class="attr">#[cfg(test)]
-            </span><span class="self">Self</span>::Mock(misbehaviour) =&gt; misbehaviour.client_id(),
         }
     }
 
     <span class="kw">fn </span>height(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Height {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Tendermint(misbehaviour) =&gt; misbehaviour.height(),
-
-            <span class="attr">#[cfg(test)]
-            </span><span class="self">Self</span>::Mock(misbehaviour) =&gt; misbehaviour.height(),
         }
     }
 }
@@ -178,11 +129,6 @@
                 TmMisbehaviour::decode_vec(<span class="kw-2">&amp;</span>raw.value).map_err(Error::decode_raw_misbehaviour)<span class="question-mark">?</span>,
             )),
 
-            <span class="attr">#[cfg(test)]
-            </span>MOCK_MISBEHAVIOUR_TYPE_URL =&gt; <span class="prelude-val">Ok</span>(AnyMisbehaviour::Mock(
-                MockMisbehaviour::decode_vec(<span class="kw-2">&amp;</span>raw.value).map_err(Error::decode_raw_misbehaviour)<span class="question-mark">?</span>,
-            )),
-
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::unknown_misbehaviour_type(raw.type_url)),
         }
     }
@@ -195,12 +141,6 @@
                 type_url: TENDERMINT_MISBEHAVIOR_TYPE_URL.to_string(),
                 value: misbehaviour.encode_vec(),
             },
-
-            <span class="attr">#[cfg(test)]
-            </span>AnyMisbehaviour::Mock(misbehaviour) =&gt; Any {
-                type_url: MOCK_MISBEHAVIOUR_TYPE_URL.to_string(),
-                value: misbehaviour.encode_vec(),
-            },
         }
     }
 }
@@ -209,9 +149,6 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), core::fmt::Error&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             AnyMisbehaviour::Tendermint(tm) =&gt; <span class="macro">write!</span>(f, <span class="string">"{tm}"</span>),
-
-            <span class="attr">#[cfg(test)]
-            </span>AnyMisbehaviour::Mock(mock) =&gt; <span class="macro">write!</span>(f, <span class="string">"{mock:?}"</span>),
         }
     }
 }
@@ -219,13 +156,6 @@
 <span class="kw">impl </span>From&lt;TmMisbehaviour&gt; <span class="kw">for </span>AnyMisbehaviour {
     <span class="kw">fn </span>from(misbehaviour: TmMisbehaviour) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Tendermint(misbehaviour)
-    }
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">impl </span>From&lt;MockMisbehaviour&gt; <span class="kw">for </span>AnyMisbehaviour {
-    <span class="kw">fn </span>from(misbehaviour: MockMisbehaviour) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::Mock(misbehaviour)
     }
 }
 </code></pre></div></section></main></body></html>
