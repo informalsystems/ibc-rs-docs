@@ -175,39 +175,7 @@
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
@@ -216,8 +184,7 @@
 <span class="kw">use </span>ibc_proto::ibc::lightclients::tendermint::v1::ClientState <span class="kw">as </span>RawTmClientState;
 <span class="kw">use </span>ibc_proto::Protobuf;
 <span class="kw">use </span>ibc_relayer_types::clients::ics07_tendermint::client_state::{
-    ClientState <span class="kw">as </span>TmClientState, UpgradeOptions <span class="kw">as </span>TmUpgradeOptions,
-    TENDERMINT_CLIENT_STATE_TYPE_URL,
+    ClientState <span class="kw">as </span>TmClientState, TENDERMINT_CLIENT_STATE_TYPE_URL,
 };
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_state::ClientState;
 <span class="kw">use </span>ibc_relayer_types::core::ics02_client::client_type::ClientType;
@@ -226,20 +193,6 @@
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::error::ValidationError;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ClientId};
 <span class="kw">use </span>ibc_relayer_types::Height;
-
-<span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = <span class="string">"type"</span>)]
-</span><span class="kw">pub enum </span>AnyUpgradeOptions {
-    Tendermint(TmUpgradeOptions),
-}
-
-<span class="kw">impl </span>AnyUpgradeOptions {
-    <span class="kw">fn </span>into_tm_upgrade_options(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TmUpgradeOptions&gt; {
-        <span class="kw">match </span><span class="self">self </span>{
-            AnyUpgradeOptions::Tendermint(tm) =&gt; <span class="prelude-val">Some</span>(tm),
-        }
-    }
-}
 
 <span class="attr">#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = <span class="string">"type"</span>)]
@@ -289,6 +242,12 @@
             <span class="self">Self</span>::Tendermint(state) =&gt; state.client_type(),
         }
     }
+
+    <span class="kw">pub fn </span>expired(<span class="kw-2">&amp;</span><span class="self">self</span>, elapsed: Duration) -&gt; bool {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Tendermint(state) =&gt; state.expired(elapsed),
+        }
+    }
 }
 
 <span class="kw">impl </span>Protobuf&lt;Any&gt; <span class="kw">for </span>AnyClientState {}
@@ -322,47 +281,24 @@
 }
 
 <span class="kw">impl </span>ClientState <span class="kw">for </span>AnyClientState {
-    <span class="kw">type </span>UpgradeOptions = AnyUpgradeOptions;
-
     <span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ChainId {
-        <span class="kw">match </span><span class="self">self </span>{
-            AnyClientState::Tendermint(tm_state) =&gt; tm_state.chain_id(),
-        }
+        AnyClientState::chain_id(<span class="self">self</span>)
     }
 
     <span class="kw">fn </span>client_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ClientType {
-        <span class="self">self</span>.client_type()
+        AnyClientState::client_type(<span class="self">self</span>)
     }
 
     <span class="kw">fn </span>latest_height(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Height {
-        <span class="self">self</span>.latest_height()
+        AnyClientState::latest_height(<span class="self">self</span>)
     }
 
     <span class="kw">fn </span>frozen_height(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Height&gt; {
-        <span class="self">self</span>.frozen_height()
+        AnyClientState::frozen_height(<span class="self">self</span>)
     }
 
-    <span class="kw">fn </span>upgrade(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        upgrade_height: Height,
-        upgrade_options: AnyUpgradeOptions,
-        chain_id: ChainId,
-    ) {
-        <span class="kw">match </span><span class="self">self </span>{
-            AnyClientState::Tendermint(tm_state) =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(upgrade_options) = upgrade_options.into_tm_upgrade_options() {
-                    tm_state.upgrade(upgrade_height, upgrade_options, chain_id);
-                }
-                <span class="comment">// TODO: Handle case where upgrade options are not of the right type,
-                //       not a problem in practice for now but good to have.
-            </span>}
-        }
-    }
-
-    <span class="kw">fn </span>expired(<span class="kw-2">&amp;</span><span class="self">self</span>, elapsed_since_latest: Duration) -&gt; bool {
-        <span class="kw">match </span><span class="self">self </span>{
-            AnyClientState::Tendermint(tm_state) =&gt; tm_state.expired(elapsed_since_latest),
-        }
+    <span class="kw">fn </span>expired(<span class="kw-2">&amp;</span><span class="self">self</span>, elapsed: Duration) -&gt; bool {
+        AnyClientState::expired(<span class="self">self</span>, elapsed)
     }
 }
 

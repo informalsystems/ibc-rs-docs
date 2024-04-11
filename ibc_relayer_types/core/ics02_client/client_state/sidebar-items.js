@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["ClientState"]};
+window.SIDEBAR_ITEMS = {"trait":["ClientState","UpgradableClientState"]};
