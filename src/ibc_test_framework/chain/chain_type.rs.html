@@ -95,6 +95,11 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>ibc_relayer::config::AddressType;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
@@ -109,6 +114,7 @@
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub enum </span>ChainType {
     Cosmos,
+    Osmosis,
     Evmos,
     Provenance,
     Injective,
@@ -117,7 +123,7 @@
 <span class="kw">impl </span>ChainType {
     <span class="kw">pub fn </span>hd_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Cosmos =&gt; COSMOS_HD_PATH,
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Osmosis =&gt; COSMOS_HD_PATH,
             <span class="self">Self</span>::Evmos | <span class="self">Self</span>::Injective =&gt; EVMOS_HD_PATH,
             <span class="self">Self</span>::Provenance =&gt; PROVENANCE_HD_PATH,
         }
@@ -125,7 +131,7 @@
 
     <span class="kw">pub fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>, prefix: <span class="kw-2">&amp;</span>str, use_random_id: bool) -&gt; ChainId {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Cosmos =&gt; {
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Osmosis =&gt; {
                 <span class="kw">if </span>use_random_id {
                     ChainId::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"ibc-{}-{:x}"</span>, prefix, random_u32()))
                 } <span class="kw">else </span>{
@@ -144,6 +150,9 @@
         <span class="kw">let </span>json_rpc_port = random_unused_tcp_port();
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Injective | <span class="self">Self</span>::Provenance =&gt; {}
+            <span class="self">Self</span>::Osmosis =&gt; {
+                res.push(<span class="string">"--reject-config-defaults"</span>.to_owned());
+            }
             <span class="self">Self</span>::Evmos =&gt; {
                 res.push(<span class="string">"--json-rpc.address"</span>.to_owned());
                 res.push(<span class="macro">format!</span>(<span class="string">"localhost:{json_rpc_port}"</span>));
@@ -156,7 +165,7 @@
     </span><span class="kw">pub fn </span>extra_add_genesis_account_args(<span class="kw-2">&amp;</span><span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>ChainId) -&gt; Vec&lt;String&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="macro">vec!</span>[];
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Evmos | <span class="self">Self</span>::Provenance =&gt; {}
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Osmosis | <span class="self">Self</span>::Evmos | <span class="self">Self</span>::Provenance =&gt; {}
             <span class="self">Self</span>::Injective =&gt; {
                 res.push(<span class="string">"--chain-id"</span>.to_owned());
                 res.push(<span class="macro">format!</span>(<span class="string">"{chain_id}"</span>));
@@ -167,7 +176,7 @@
 
     <span class="kw">pub fn </span>address_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; AddressType {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Provenance =&gt; AddressType::default(),
+            <span class="self">Self</span>::Cosmos | <span class="self">Self</span>::Osmosis | <span class="self">Self</span>::Provenance =&gt; AddressType::default(),
             <span class="self">Self</span>::Evmos =&gt; AddressType::Ethermint {
                 pk_type: <span class="string">"/ethermint.crypto.v1.ethsecp256k1.PubKey"</span>.to_string(),
             },
@@ -186,6 +195,7 @@
             name <span class="kw">if </span>name.contains(<span class="string">"evmosd"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Evmos),
             name <span class="kw">if </span>name.contains(<span class="string">"injectived"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Injective),
             name <span class="kw">if </span>name.contains(<span class="string">"provenanced"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Provenance),
+            name <span class="kw">if </span>name.contains(<span class="string">"osmosisd"</span>) =&gt; <span class="prelude-val">Ok</span>(ChainType::Osmosis),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(ChainType::Cosmos),
         }
     }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CrossChainQueryPacket"]};
+window.SIDEBAR_ITEMS = {"constant":["EVENT_TYPE_PREFIX"],"struct":["CrossChainQueryPacket"]};

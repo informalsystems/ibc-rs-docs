@@ -291,10 +291,31 @@
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::time::Duration;
 <span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
-<span class="kw">use </span>ibc_relayer::chain::requests::{IncludeProof, QueryChannelRequest, QueryHeight};
+<span class="kw">use </span>ibc_relayer::chain::requests::{
+    IncludeProof, QueryChannelRequest, QueryChannelsRequest, QueryHeight,
+};
 <span class="kw">use </span>ibc_relayer::channel::version::Version;
 <span class="kw">use </span>ibc_relayer::channel::{extract_channel_id, Channel, ChannelSide};
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::State <span class="kw">as </span>ChannelState;
@@ -498,6 +519,23 @@
         channel_id.into_value().clone(),
         channel_end,
     )))
+}
+
+<span class="kw">pub fn </span>query_identified_channel_ends&lt;ChainA: ChainHandle, ChainB&gt;(
+    handle: <span class="kw-2">&amp;</span>ChainA,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;DualTagged&lt;ChainA, ChainB, IdentifiedChannelEnd&gt;&gt;, Error&gt; {
+    <span class="kw">let </span>channel_ends = handle.query_channels(QueryChannelsRequest { pagination: <span class="prelude-val">None </span>})<span class="question-mark">?</span>;
+    <span class="kw">let </span>identified_channels = channel_ends
+        .iter()
+        .map(|c| {
+            DualTagged::new(IdentifiedChannelEnd::new(
+                c.port_id.clone(),
+                c.channel_id.clone(),
+                c.channel_end.clone(),
+            ))
+        })
+        .collect();
+    <span class="prelude-val">Ok</span>(identified_channels)
 }
 
 <span class="kw">pub fn </span>assert_eventually_channel_established&lt;ChainA: ChainHandle, ChainB: ChainHandle&gt;(
