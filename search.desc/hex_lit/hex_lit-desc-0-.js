@@ -1,0 +1,1 @@
+searchState.loadedDescShard("hex_lit", 0, "Hex literals without proc macros.\nCreates a byte array const value from hex &amp;str const value.")

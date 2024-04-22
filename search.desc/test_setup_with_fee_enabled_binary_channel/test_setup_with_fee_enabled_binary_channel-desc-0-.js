@@ -1,0 +1,1 @@
+searchState.loadedDescShard("test_setup_with_fee_enabled_binary_channel", 0, "This is a simple wrapper around <code>BinaryChannelTest</code> to turn …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

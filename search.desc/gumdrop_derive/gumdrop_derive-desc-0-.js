@@ -1,0 +1,1 @@
+searchState.loadedDescShard("gumdrop_derive", 0, "Provides <code>derive(Options)</code> for <code>gumdrop</code> crate\nDerives the <code>gumdrop::Options</code> trait for <code>struct</code> and <code>enum</code> …")
