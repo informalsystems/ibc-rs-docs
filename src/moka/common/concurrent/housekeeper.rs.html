@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.5/src/common/concurrent/housekeeper.rs`."><title>housekeeper.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.7/src/common/concurrent/housekeeper.rs`."><title>housekeeper.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -88,13 +88,70 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::constants::{MAX_SYNC_REPEATS, PERIODICAL_SYNC_INITIAL_DELAY_MILLIS};
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::constants::LOG_SYNC_INTERVAL_MILLIS;
 
 <span class="kw">use super</span>::{
     atomic_time::AtomicInstant,
     constants::{READ_LOG_FLUSH_POINT, WRITE_LOG_FLUSH_POINT},
 };
 <span class="kw">use </span><span class="kw">crate</span>::common::time::{CheckedTimeOps, Instant};
+<span class="kw">use </span><span class="kw">crate</span>::common::HousekeeperConfig;
 
 <span class="kw">use </span>parking_lot::{Mutex, MutexGuard};
 <span class="kw">use </span>std::{
@@ -103,7 +160,14 @@
 };
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>InnerSync {
-    <span class="kw">fn </span>run_pending_tasks(<span class="kw-2">&amp;</span><span class="self">self</span>, max_sync_repeats: usize);
+    <span class="doccomment">/// Runs the pending tasks. Returns `true` if there are more entries to evict in
+    /// next run.
+    </span><span class="kw">fn </span>run_pending_tasks(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        timeout: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+        max_log_sync_repeats: u32,
+        eviction_batch_size: u32,
+    ) -&gt; bool;
 
     <span class="kw">fn </span>now(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Instant;
 }
@@ -111,26 +175,70 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Housekeeper {
     run_lock: Mutex&lt;()&gt;,
     run_after: AtomicInstant,
+    <span class="doccomment">/// A flag to indicate if the last call on `run_pending_tasks` method left some
+    /// entries to evict.
+    ///
+    /// Used only when the eviction listener closure is set for this cache instance
+    /// because, if not, `run_pending_tasks` will never leave entries to evict.
+    </span>more_entries_to_evict: <span class="prelude-ty">Option</span>&lt;AtomicBool&gt;,
+    <span class="doccomment">/// The timeout duration for the `run_pending_tasks` method. This is a safe-guard
+    /// to prevent cache read/write operations (that may call `run_pending_tasks`
+    /// internally) from being blocked for a long time when the user wrote a slow
+    /// eviction listener closure.
+    ///
+    /// Used only when the eviction listener closure is set for this cache instance.
+    </span>maintenance_task_timeout: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+    <span class="doccomment">/// The maximum repeat count for receiving operation logs from the read and write
+    /// log channels. Default: `MAX_LOG_SYNC_REPEATS`.
+    </span>max_log_sync_repeats: u32,
+    <span class="doccomment">/// The batch size of entries to be processed by each internal eviction method.
+    /// Default: `EVICTION_BATCH_SIZE`.
+    </span>eviction_batch_size: u32,
     auto_run_enabled: AtomicBool,
 }
 
-<span class="kw">impl </span>Default <span class="kw">for </span>Housekeeper {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>Housekeeper {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(is_eviction_listener_enabled: bool, config: HousekeeperConfig) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>(more_entries_to_evict, maintenance_task_timeout) = <span class="kw">if </span>is_eviction_listener_enabled {
+            (
+                <span class="prelude-val">Some</span>(AtomicBool::new(<span class="bool-val">false</span>)),
+                <span class="prelude-val">Some</span>(config.maintenance_task_timeout),
+            )
+        } <span class="kw">else </span>{
+            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+        };
+
         <span class="self">Self </span>{
             run_lock: Mutex::default(),
             run_after: AtomicInstant::new(<span class="self">Self</span>::sync_after(Instant::now())),
+            more_entries_to_evict,
+            maintenance_task_timeout,
+            max_log_sync_repeats: config.max_log_sync_repeats,
+            eviction_batch_size: config.eviction_batch_size,
             auto_run_enabled: AtomicBool::new(<span class="bool-val">true</span>),
         }
     }
-}
 
-<span class="kw">impl </span>Housekeeper {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>should_apply_reads(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
-        <span class="self">self</span>.should_apply(ch_len, READ_LOG_FLUSH_POINT / <span class="number">8</span>, now)
+        <span class="self">self</span>.more_entries_to_evict() || <span class="self">self</span>.should_apply(ch_len, READ_LOG_FLUSH_POINT, now)
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>should_apply_writes(<span class="kw-2">&amp;</span><span class="self">self</span>, ch_len: usize, now: Instant) -&gt; bool {
-        <span class="self">self</span>.should_apply(ch_len, WRITE_LOG_FLUSH_POINT / <span class="number">8</span>, now)
+        <span class="self">self</span>.more_entries_to_evict() || <span class="self">self</span>.should_apply(ch_len, WRITE_LOG_FLUSH_POINT, now)
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>more_entries_to_evict(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.more_entries_to_evict
+            .as_ref()
+            .map(|v| v.load(Ordering::Acquire))
+            .unwrap_or(<span class="bool-val">false</span>)
+    }
+
+    <span class="kw">fn </span>set_more_entries_to_evict(<span class="kw-2">&amp;</span><span class="self">self</span>, v: bool) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(flag) = <span class="kw-2">&amp;</span><span class="self">self</span>.more_entries_to_evict {
+            flag.store(v, Ordering::Release);
+        }
     }
 
     <span class="attr">#[inline]
@@ -156,11 +264,15 @@
     <span class="kw">fn </span>do_run_pending_tasks&lt;T: InnerSync&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;</span>T, _lock: MutexGuard&lt;<span class="lifetime">'_</span>, ()&gt;) {
         <span class="kw">let </span>now = cache.now();
         <span class="self">self</span>.run_after.set_instant(<span class="self">Self</span>::sync_after(now));
-        cache.run_pending_tasks(MAX_SYNC_REPEATS);
+        <span class="kw">let </span>timeout = <span class="self">self</span>.maintenance_task_timeout;
+        <span class="kw">let </span>repeats = <span class="self">self</span>.max_log_sync_repeats;
+        <span class="kw">let </span>batch_size = <span class="self">self</span>.eviction_batch_size;
+        <span class="kw">let </span>more_to_evict = cache.run_pending_tasks(timeout, repeats, batch_size);
+        <span class="self">self</span>.set_more_entries_to_evict(more_to_evict);
     }
 
     <span class="kw">fn </span>sync_after(now: Instant) -&gt; Instant {
-        <span class="kw">let </span>dur = Duration::from_millis(PERIODICAL_SYNC_INITIAL_DELAY_MILLIS);
+        <span class="kw">let </span>dur = Duration::from_millis(LOG_SYNC_INTERVAL_MILLIS);
         <span class="kw">let </span>ts = now.checked_add(dur);
         <span class="comment">// Assuming that `now` is current wall clock time, this should never fail at
         // least next millions of years.

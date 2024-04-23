@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.5/src/sync/cache.rs`."><title>cache.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.7/src/sync/cache.rs`."><title>cache.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moka/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -5000,6 +5000,166 @@
 <a href="#5000" id="5000">5000</a>
 <a href="#5001" id="5001">5001</a>
 <a href="#5002" id="5002">5002</a>
+<a href="#5003" id="5003">5003</a>
+<a href="#5004" id="5004">5004</a>
+<a href="#5005" id="5005">5005</a>
+<a href="#5006" id="5006">5006</a>
+<a href="#5007" id="5007">5007</a>
+<a href="#5008" id="5008">5008</a>
+<a href="#5009" id="5009">5009</a>
+<a href="#5010" id="5010">5010</a>
+<a href="#5011" id="5011">5011</a>
+<a href="#5012" id="5012">5012</a>
+<a href="#5013" id="5013">5013</a>
+<a href="#5014" id="5014">5014</a>
+<a href="#5015" id="5015">5015</a>
+<a href="#5016" id="5016">5016</a>
+<a href="#5017" id="5017">5017</a>
+<a href="#5018" id="5018">5018</a>
+<a href="#5019" id="5019">5019</a>
+<a href="#5020" id="5020">5020</a>
+<a href="#5021" id="5021">5021</a>
+<a href="#5022" id="5022">5022</a>
+<a href="#5023" id="5023">5023</a>
+<a href="#5024" id="5024">5024</a>
+<a href="#5025" id="5025">5025</a>
+<a href="#5026" id="5026">5026</a>
+<a href="#5027" id="5027">5027</a>
+<a href="#5028" id="5028">5028</a>
+<a href="#5029" id="5029">5029</a>
+<a href="#5030" id="5030">5030</a>
+<a href="#5031" id="5031">5031</a>
+<a href="#5032" id="5032">5032</a>
+<a href="#5033" id="5033">5033</a>
+<a href="#5034" id="5034">5034</a>
+<a href="#5035" id="5035">5035</a>
+<a href="#5036" id="5036">5036</a>
+<a href="#5037" id="5037">5037</a>
+<a href="#5038" id="5038">5038</a>
+<a href="#5039" id="5039">5039</a>
+<a href="#5040" id="5040">5040</a>
+<a href="#5041" id="5041">5041</a>
+<a href="#5042" id="5042">5042</a>
+<a href="#5043" id="5043">5043</a>
+<a href="#5044" id="5044">5044</a>
+<a href="#5045" id="5045">5045</a>
+<a href="#5046" id="5046">5046</a>
+<a href="#5047" id="5047">5047</a>
+<a href="#5048" id="5048">5048</a>
+<a href="#5049" id="5049">5049</a>
+<a href="#5050" id="5050">5050</a>
+<a href="#5051" id="5051">5051</a>
+<a href="#5052" id="5052">5052</a>
+<a href="#5053" id="5053">5053</a>
+<a href="#5054" id="5054">5054</a>
+<a href="#5055" id="5055">5055</a>
+<a href="#5056" id="5056">5056</a>
+<a href="#5057" id="5057">5057</a>
+<a href="#5058" id="5058">5058</a>
+<a href="#5059" id="5059">5059</a>
+<a href="#5060" id="5060">5060</a>
+<a href="#5061" id="5061">5061</a>
+<a href="#5062" id="5062">5062</a>
+<a href="#5063" id="5063">5063</a>
+<a href="#5064" id="5064">5064</a>
+<a href="#5065" id="5065">5065</a>
+<a href="#5066" id="5066">5066</a>
+<a href="#5067" id="5067">5067</a>
+<a href="#5068" id="5068">5068</a>
+<a href="#5069" id="5069">5069</a>
+<a href="#5070" id="5070">5070</a>
+<a href="#5071" id="5071">5071</a>
+<a href="#5072" id="5072">5072</a>
+<a href="#5073" id="5073">5073</a>
+<a href="#5074" id="5074">5074</a>
+<a href="#5075" id="5075">5075</a>
+<a href="#5076" id="5076">5076</a>
+<a href="#5077" id="5077">5077</a>
+<a href="#5078" id="5078">5078</a>
+<a href="#5079" id="5079">5079</a>
+<a href="#5080" id="5080">5080</a>
+<a href="#5081" id="5081">5081</a>
+<a href="#5082" id="5082">5082</a>
+<a href="#5083" id="5083">5083</a>
+<a href="#5084" id="5084">5084</a>
+<a href="#5085" id="5085">5085</a>
+<a href="#5086" id="5086">5086</a>
+<a href="#5087" id="5087">5087</a>
+<a href="#5088" id="5088">5088</a>
+<a href="#5089" id="5089">5089</a>
+<a href="#5090" id="5090">5090</a>
+<a href="#5091" id="5091">5091</a>
+<a href="#5092" id="5092">5092</a>
+<a href="#5093" id="5093">5093</a>
+<a href="#5094" id="5094">5094</a>
+<a href="#5095" id="5095">5095</a>
+<a href="#5096" id="5096">5096</a>
+<a href="#5097" id="5097">5097</a>
+<a href="#5098" id="5098">5098</a>
+<a href="#5099" id="5099">5099</a>
+<a href="#5100" id="5100">5100</a>
+<a href="#5101" id="5101">5101</a>
+<a href="#5102" id="5102">5102</a>
+<a href="#5103" id="5103">5103</a>
+<a href="#5104" id="5104">5104</a>
+<a href="#5105" id="5105">5105</a>
+<a href="#5106" id="5106">5106</a>
+<a href="#5107" id="5107">5107</a>
+<a href="#5108" id="5108">5108</a>
+<a href="#5109" id="5109">5109</a>
+<a href="#5110" id="5110">5110</a>
+<a href="#5111" id="5111">5111</a>
+<a href="#5112" id="5112">5112</a>
+<a href="#5113" id="5113">5113</a>
+<a href="#5114" id="5114">5114</a>
+<a href="#5115" id="5115">5115</a>
+<a href="#5116" id="5116">5116</a>
+<a href="#5117" id="5117">5117</a>
+<a href="#5118" id="5118">5118</a>
+<a href="#5119" id="5119">5119</a>
+<a href="#5120" id="5120">5120</a>
+<a href="#5121" id="5121">5121</a>
+<a href="#5122" id="5122">5122</a>
+<a href="#5123" id="5123">5123</a>
+<a href="#5124" id="5124">5124</a>
+<a href="#5125" id="5125">5125</a>
+<a href="#5126" id="5126">5126</a>
+<a href="#5127" id="5127">5127</a>
+<a href="#5128" id="5128">5128</a>
+<a href="#5129" id="5129">5129</a>
+<a href="#5130" id="5130">5130</a>
+<a href="#5131" id="5131">5131</a>
+<a href="#5132" id="5132">5132</a>
+<a href="#5133" id="5133">5133</a>
+<a href="#5134" id="5134">5134</a>
+<a href="#5135" id="5135">5135</a>
+<a href="#5136" id="5136">5136</a>
+<a href="#5137" id="5137">5137</a>
+<a href="#5138" id="5138">5138</a>
+<a href="#5139" id="5139">5139</a>
+<a href="#5140" id="5140">5140</a>
+<a href="#5141" id="5141">5141</a>
+<a href="#5142" id="5142">5142</a>
+<a href="#5143" id="5143">5143</a>
+<a href="#5144" id="5144">5144</a>
+<a href="#5145" id="5145">5145</a>
+<a href="#5146" id="5146">5146</a>
+<a href="#5147" id="5147">5147</a>
+<a href="#5148" id="5148">5148</a>
+<a href="#5149" id="5149">5149</a>
+<a href="#5150" id="5150">5150</a>
+<a href="#5151" id="5151">5151</a>
+<a href="#5152" id="5152">5152</a>
+<a href="#5153" id="5153">5153</a>
+<a href="#5154" id="5154">5154</a>
+<a href="#5155" id="5155">5155</a>
+<a href="#5156" id="5156">5156</a>
+<a href="#5157" id="5157">5157</a>
+<a href="#5158" id="5158">5158</a>
+<a href="#5159" id="5159">5159</a>
+<a href="#5160" id="5160">5160</a>
+<a href="#5161" id="5161">5161</a>
+<a href="#5162" id="5162">5162</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     value_initializer::{GetOrInsert, InitResult, ValueInitializer},
     CacheBuilder, OwnedKeyEntrySelector, RefKeyEntrySelector,
@@ -5010,6 +5170,7 @@
             constants::WRITE_RETRY_INTERVAL_MICROS, housekeeper::InnerSync, Weigher, WriteOp,
         },
         time::Instant,
+        HousekeeperConfig,
     },
     notification::EvictionListener,
     ops::compute::{<span class="self">self</span>, CompResult},
@@ -5179,7 +5340,6 @@
 /// # Example: Size-based Eviction
 ///
 /// ```rust
-/// use std::convert::TryInto;
 /// use moka::sync::Cache;
 ///
 /// // Evict based on the number of entries in the cache.
@@ -5712,6 +5872,7 @@
             EvictionPolicy::default(),
             <span class="prelude-val">None</span>,
             ExpirationPolicy::default(),
+            HousekeeperConfig::default(),
             <span class="bool-val">false</span>,
         )
     }
@@ -5742,6 +5903,7 @@
         eviction_policy: EvictionPolicy,
         eviction_listener: <span class="prelude-ty">Option</span>&lt;EvictionListener&lt;K, V&gt;&gt;,
         expiration_policy: ExpirationPolicy&lt;K, V&gt;,
+        housekeeper_config: HousekeeperConfig,
         invalidator_enabled: bool,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -5754,6 +5916,7 @@
                 eviction_policy,
                 eviction_listener,
                 expiration_policy,
+                housekeeper_config,
                 invalidator_enabled,
             ),
             value_initializer: Arc::new(ValueInitializer::with_hasher(build_hasher)),
@@ -6909,7 +7072,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span><span class="kw">super</span>::Cache;
     <span class="kw">use crate</span>::{
-        common::time::Clock,
+        common::{time::Clock, HousekeeperConfig},
         notification::RemovalCause,
         policy::{test_utils::ExpiryCallCounters, EvictionPolicy},
         Expiry,
@@ -6918,7 +7081,10 @@
     <span class="kw">use </span>parking_lot::Mutex;
     <span class="kw">use </span>std::{
         convert::Infallible,
-        sync::Arc,
+        sync::{
+            atomic::{AtomicU8, Ordering},
+            Arc,
+        },
         time::{Duration, Instant <span class="kw">as </span>StdInstant},
     };
 
@@ -8558,7 +8724,7 @@
         <span class="comment">// Note that MyError does not implement std::error::Error trait like
         // anyhow::Error.
         </span><span class="attr">#[derive(Debug)]
-        </span><span class="kw">pub struct </span>MyError(String);
+        </span><span class="kw">pub struct </span>MyError(<span class="attr">#[allow(dead_code)] </span>String);
 
         <span class="kw">type </span>MyResult&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, Arc&lt;MyError&gt;&gt;;
 
@@ -8699,7 +8865,7 @@
         <span class="comment">// Note that MyError does not implement std::error::Error trait like
         // anyhow::Error.
         </span><span class="attr">#[derive(Debug)]
-        </span><span class="kw">pub struct </span>MyError(String);
+        </span><span class="kw">pub struct </span>MyError(<span class="attr">#[allow(dead_code)] </span>String);
 
         <span class="kw">type </span>MyResult&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, Arc&lt;MyError&gt;&gt;;
 
@@ -9790,6 +9956,160 @@
         }
 
         <span class="macro">assert!</span>(cache.key_locks_map_is_empty());
+    }
+
+    <span class="comment">// When the eviction listener is not set, calling `run_pending_tasks` once should
+    // evict all entries that can be removed.
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>no_batch_size_limit_on_eviction() {
+        <span class="kw">const </span>MAX_CAPACITY: u64 = <span class="number">20</span>;
+
+        <span class="kw">const </span>EVICTION_TIMEOUT: Duration = Duration::from_nanos(<span class="number">0</span>);
+        <span class="kw">const </span>MAX_LOG_SYNC_REPEATS: u32 = <span class="number">1</span>;
+        <span class="kw">const </span>EVICTION_BATCH_SIZE: u32 = <span class="number">1</span>;
+
+        <span class="kw">let </span>hk_conf = HousekeeperConfig::new(
+            <span class="comment">// Timeout should be ignored when the eviction listener is not provided.
+            </span><span class="prelude-val">Some</span>(EVICTION_TIMEOUT),
+            <span class="prelude-val">Some</span>(MAX_LOG_SYNC_REPEATS),
+            <span class="prelude-val">Some</span>(EVICTION_BATCH_SIZE),
+        );
+
+        <span class="comment">// Create a cache with the LRU policy.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>cache = Cache::builder()
+            .max_capacity(MAX_CAPACITY)
+            .eviction_policy(EvictionPolicy::lru())
+            .housekeeper_config(hk_conf)
+            .build();
+        cache.reconfigure_for_testing();
+
+        <span class="comment">// Make the cache exterior immutable.
+        </span><span class="kw">let </span>cache = cache;
+
+        <span class="comment">// Fill the cache.
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..MAX_CAPACITY {
+            <span class="kw">let </span>v = <span class="macro">format!</span>(<span class="string">"v{i}"</span>);
+            cache.insert(i, v)
+        }
+        <span class="comment">// The max capacity should not change because we have not called
+        // `run_pending_tasks` yet.
+        </span><span class="macro">assert_eq!</span>(cache.entry_count(), <span class="number">0</span>);
+
+        cache.run_pending_tasks();
+        <span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY);
+
+        <span class="comment">// Insert more items to the cache.
+        </span><span class="kw">for </span>i <span class="kw">in </span>MAX_CAPACITY..(MAX_CAPACITY * <span class="number">2</span>) {
+            <span class="kw">let </span>v = <span class="macro">format!</span>(<span class="string">"v{i}"</span>);
+            cache.insert(i, v)
+        }
+        <span class="comment">// The max capacity should not change because we have not called
+        // `run_pending_tasks` yet.
+        </span><span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY);
+        <span class="comment">// Both old and new keys should exist.
+        </span><span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span><span class="number">0</span>)); <span class="comment">// old
+        </span><span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span>(MAX_CAPACITY - <span class="number">1</span>))); <span class="comment">// old
+        </span><span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span>(MAX_CAPACITY * <span class="number">2 </span>- <span class="number">1</span>))); <span class="comment">// new
+
+        // Process the remaining write op logs (there should be MAX_CAPACITY logs),
+        // and evict the LRU entries.
+        </span>cache.run_pending_tasks();
+        <span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY);
+
+        <span class="comment">// Now all the old keys should be gone.
+        </span><span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span><span class="number">0</span>));
+        <span class="macro">assert!</span>(!cache.contains_key(<span class="kw-2">&amp;</span>(MAX_CAPACITY - <span class="number">1</span>)));
+        <span class="comment">// And the new keys should exist.
+        </span><span class="macro">assert!</span>(cache.contains_key(<span class="kw-2">&amp;</span>(MAX_CAPACITY * <span class="number">2 </span>- <span class="number">1</span>)));
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>slow_eviction_listener() {
+        <span class="kw">const </span>MAX_CAPACITY: u64 = <span class="number">20</span>;
+
+        <span class="kw">const </span>EVICTION_TIMEOUT: Duration = Duration::from_millis(<span class="number">30</span>);
+        <span class="kw">const </span>LISTENER_DELAY: Duration = Duration::from_millis(<span class="number">11</span>);
+        <span class="kw">const </span>MAX_LOG_SYNC_REPEATS: u32 = <span class="number">1</span>;
+        <span class="kw">const </span>EVICTION_BATCH_SIZE: u32 = <span class="number">1</span>;
+
+        <span class="kw">let </span>hk_conf = HousekeeperConfig::new(
+            <span class="prelude-val">Some</span>(EVICTION_TIMEOUT),
+            <span class="prelude-val">Some</span>(MAX_LOG_SYNC_REPEATS),
+            <span class="prelude-val">Some</span>(EVICTION_BATCH_SIZE),
+        );
+
+        <span class="kw">let </span>(clock, mock) = Clock::mock();
+        <span class="kw">let </span>listener_call_count = Arc::new(AtomicU8::new(<span class="number">0</span>));
+        <span class="kw">let </span>lcc = Arc::clone(<span class="kw-2">&amp;</span>listener_call_count);
+
+        <span class="comment">// A slow eviction listener that spend `LISTENER_DELAY` to process a removal
+        // notification.
+        </span><span class="kw">let </span>listener = <span class="kw">move </span>|_k, _v, _cause| {
+            mock.increment(LISTENER_DELAY);
+            lcc.fetch_add(<span class="number">1</span>, Ordering::AcqRel);
+        };
+
+        <span class="comment">// Create a cache with the LRU policy.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>cache = Cache::builder()
+            .max_capacity(MAX_CAPACITY)
+            .eviction_policy(EvictionPolicy::lru())
+            .eviction_listener(listener)
+            .housekeeper_config(hk_conf)
+            .build();
+        cache.reconfigure_for_testing();
+        cache.set_expiration_clock(<span class="prelude-val">Some</span>(clock));
+
+        <span class="comment">// Make the cache exterior immutable.
+        </span><span class="kw">let </span>cache = cache;
+
+        <span class="comment">// Fill the cache.
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..MAX_CAPACITY {
+            <span class="kw">let </span>v = <span class="macro">format!</span>(<span class="string">"v{i}"</span>);
+            cache.insert(i, v)
+        }
+        <span class="comment">// The max capacity should not change because we have not called
+        // `run_pending_tasks` yet.
+        </span><span class="macro">assert_eq!</span>(cache.entry_count(), <span class="number">0</span>);
+
+        cache.run_pending_tasks();
+        <span class="macro">assert_eq!</span>(listener_call_count.load(Ordering::Acquire), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY);
+
+        <span class="comment">// Insert more items to the cache.
+        </span><span class="kw">for </span>i <span class="kw">in </span>MAX_CAPACITY..(MAX_CAPACITY * <span class="number">2</span>) {
+            <span class="kw">let </span>v = <span class="macro">format!</span>(<span class="string">"v{i}"</span>);
+            cache.insert(i, v);
+        }
+        <span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY);
+
+        cache.run_pending_tasks();
+        <span class="comment">// Because of the slow listener, cache should get an over capacity.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>expected_call_count = <span class="number">3</span>;
+        <span class="macro">assert_eq!</span>(
+            listener_call_count.load(Ordering::Acquire) <span class="kw">as </span>u64,
+            expected_call_count
+        );
+        <span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY * <span class="number">2 </span>- expected_call_count);
+
+        <span class="kw">loop </span>{
+            cache.run_pending_tasks();
+
+            expected_call_count += <span class="number">3</span>;
+            <span class="kw">if </span>expected_call_count &gt; MAX_CAPACITY {
+                expected_call_count = MAX_CAPACITY;
+            }
+
+            <span class="kw">let </span>actual_count = listener_call_count.load(Ordering::Acquire) <span class="kw">as </span>u64;
+            <span class="macro">assert_eq!</span>(actual_count, expected_call_count);
+            <span class="kw">let </span>expected_entry_count = MAX_CAPACITY * <span class="number">2 </span>- expected_call_count;
+            <span class="macro">assert_eq!</span>(cache.entry_count(), expected_entry_count);
+
+            <span class="kw">if </span>expected_call_count &gt;= MAX_CAPACITY {
+                <span class="kw">break</span>;
+            }
+        }
+
+        <span class="macro">assert_eq!</span>(cache.entry_count(), MAX_CAPACITY);
     }
 
     <span class="comment">// NOTE: To enable the panic logging, run the following command:
