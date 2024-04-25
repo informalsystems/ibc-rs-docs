@@ -98,6 +98,7 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -132,21 +133,22 @@
     entries
         .iter()
         .find_map(|entry| {
-            <span class="kw">if </span>entry.key == key {
-                <span class="prelude-val">Some</span>(entry.value.as_str())
+            <span class="kw">if </span>entry.key_bytes() == key.as_bytes() {
+                <span class="prelude-val">Some</span>(entry.value_str().map_err(|<span class="kw">_</span>| {
+                    Error::event(<span class="macro">format!</span>(
+                        <span class="string">"attribute value for key {key} is not a valid UTF-8 string"
+                    </span>))
+                }))
             } <span class="kw">else </span>{
                 <span class="prelude-val">None
             </span>}
         })
-        .ok_or_else(|| Error::event(<span class="macro">format!</span>(<span class="string">"attribute not found for key: {key}"</span>)))
+        .transpose()<span class="question-mark">?
+        </span>.ok_or_else(|| Error::event(<span class="macro">format!</span>(<span class="string">"attribute not found for key: {key}"</span>)))
 }
 
 <span class="kw">fn </span>new_attr(key: <span class="kw-2">&amp;</span>str, value: <span class="kw-2">&amp;</span>str) -&gt; abci::EventAttribute {
-    abci::EventAttribute {
-        key: String::from(key),
-        value: String::from(value),
-        index: <span class="bool-val">true</span>,
-    }
+    abci::EventAttribute::from((key, value, <span class="bool-val">true</span>))
 }
 
 <span class="kw">impl </span>From&lt;CrossChainQueryPacket&gt; <span class="kw">for </span>abci::Event {

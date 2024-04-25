@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["ChannelSubdetail","EmptyFeeSubdetail","EmptyPacketIdSubdetail","EncodeSubdetail","Error","EventAttributeNotFoundSubdetail","Ics24Subdetail","SignerSubdetail","TransferSubdetail"]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["ChannelSubdetail","EmptyFeeSubdetail","EmptyPacketIdSubdetail","EncodeSubdetail","Error","EventAttributeInvalidUtf8Subdetail","EventAttributeNotFoundSubdetail","Ics24Subdetail","SignerSubdetail","TransferSubdetail"]};

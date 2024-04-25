@@ -150,7 +150,6 @@ var srcIndex = new Map(JSON.parse('[\
 ["num_bigint",["",[["bigint",[],["addition.rs","bits.rs","convert.rs","division.rs","multiplication.rs","power.rs","serde.rs","shift.rs","subtraction.rs"]],["biguint",[],["addition.rs","bits.rs","convert.rs","division.rs","iter.rs","monty.rs","multiplication.rs","power.rs","serde.rs","shift.rs","subtraction.rs"]]],["bigint.rs","biguint.rs","lib.rs","macros.rs"]]],\
 ["num_conv",["",[],["lib.rs"]]],\
 ["num_cpus",["",[],["lib.rs","linux.rs"]]],\
-["num_derive",["",[],["lib.rs"]]],\
 ["num_integer",["",[],["average.rs","lib.rs","roots.rs"]]],\
 ["num_rational",["",[],["lib.rs","pow.rs"]]],\
 ["num_traits",["",[["ops",[],["bytes.rs","checked.rs","euclid.rs","inv.rs","mod.rs","mul_add.rs","overflowing.rs","saturating.rs","wrapping.rs"]]],["bounds.rs","cast.rs","float.rs","identities.rs","int.rs","lib.rs","macros.rs","pow.rs","real.rs","sign.rs"]]],\

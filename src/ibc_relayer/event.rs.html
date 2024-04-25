@@ -549,6 +549,33 @@
 <a href="#549" id="549">549</a>
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>serde::Serialize;
 <span class="kw">use </span>subtle_encoding::hex;
@@ -852,8 +879,14 @@
     <span class="kw">let </span><span class="kw-2">mut </span>attr = ClientAttributes::default();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_str();
-        <span class="kw">let </span>value = tag.value.as_str();
+        <span class="kw">let </span>key = tag
+            .key_str()
+            .map_err(|<span class="kw">_</span>| ClientError::malformed_event_attribute_key())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>value = tag
+            .value_str()
+            .map_err(|<span class="kw">_</span>| ClientError::malformed_event_attribute_value(key.to_owned()))<span class="question-mark">?</span>;
+
         <span class="kw">match </span>key {
             client_events::CLIENT_ID_ATTRIBUTE_KEY =&gt; {
                 attr.client_id = value
@@ -879,9 +912,13 @@
 
 <span class="kw">pub fn </span>extract_header_from_tx(event: <span class="kw-2">&amp;</span>AbciEvent) -&gt; <span class="prelude-ty">Result</span>&lt;AnyHeader, ClientError&gt; {
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">if </span>tag.key == HEADER_ATTRIBUTE_KEY {
-            <span class="kw">let </span>header_bytes = hex::decode(tag.value.to_lowercase())
-                .map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?</span>;
+        <span class="kw">if </span>tag.key_bytes() == HEADER_ATTRIBUTE_KEY.as_bytes() {
+            <span class="kw">let </span>header_bytes = hex::decode(
+                tag.value_str()
+                    .map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?
+                    </span>.to_lowercase(),
+            )
+            .map_err(|<span class="kw">_</span>| ClientError::malformed_header())<span class="question-mark">?</span>;
             <span class="kw">return </span>decode_header(<span class="kw-2">&amp;</span>header_bytes);
         }
     }
@@ -895,8 +932,14 @@
     <span class="kw">let </span><span class="kw-2">mut </span>attr = ConnectionAttributes::default();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_str();
-        <span class="kw">let </span>value = tag.value.as_str();
+        <span class="kw">let </span>key = tag
+            .key_str()
+            .map_err(|<span class="kw">_</span>| ConnectionError::malformed_event_attribute_key())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>value = tag
+            .value_str()
+            .map_err(|<span class="kw">_</span>| ConnectionError::malformed_event_attribute_value(key.to_owned()))<span class="question-mark">?</span>;
+
         <span class="kw">match </span>key {
             connection_events::CONN_ID_ATTRIBUTE_KEY =&gt; {
                 attr.connection_id = value.parse().ok();
@@ -924,8 +967,14 @@
     <span class="kw">let </span><span class="kw-2">mut </span>attr = ChannelAttributes::default();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_str();
-        <span class="kw">let </span>value = tag.value.as_str();
+        <span class="kw">let </span>key = tag
+            .key_str()
+            .map_err(|<span class="kw">_</span>| ChannelError::malformed_event_attribute_key())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>value = tag
+            .value_str()
+            .map_err(|<span class="kw">_</span>| ChannelError::malformed_event_attribute_value(key.to_owned()))<span class="question-mark">?</span>;
+
         <span class="kw">match </span>key {
             channel_events::PORT_ID_ATTRIBUTE_KEY =&gt; {
                 attr.port_id = value.parse().map_err(ChannelError::identifier)<span class="question-mark">?
@@ -956,8 +1005,13 @@
     <span class="kw">let </span><span class="kw-2">mut </span>write_ack: Vec&lt;u8&gt; = Vec::new();
 
     <span class="kw">for </span>tag <span class="kw">in </span><span class="kw-2">&amp;</span>event.attributes {
-        <span class="kw">let </span>key = tag.key.as_str();
-        <span class="kw">let </span>value = tag.value.as_str();
+        <span class="kw">let </span>key = tag
+            .key_str()
+            .map_err(|<span class="kw">_</span>| ChannelError::malformed_event_attribute_key())<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>value = tag
+            .value_str()
+            .map_err(|<span class="kw">_</span>| ChannelError::malformed_event_attribute_value(key.to_owned()))<span class="question-mark">?</span>;
 
         <span class="kw">match </span>key {
             channel_events::PKT_SRC_PORT_ATTRIBUTE_KEY =&gt; {
