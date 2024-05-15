@@ -183,7 +183,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["proc_macro2",["",[],["detection.rs","extra.rs","fallback.rs","lib.rs","marker.rs","parse.rs","rcvec.rs","wrapper.rs"]]],\
 ["proc_macro_error",["",[["imp",[],["delegate.rs"]]],["diagnostic.rs","dummy.rs","lib.rs","macros.rs","sealed.rs"]]],\
 ["proc_macro_error_attr",["",[],["lib.rs","parse.rs","settings.rs"]]],\
-["prometheus",["",[["encoder",[],["mod.rs","pb.rs","text.rs"]],["proto",[],["proto_model.rs"]]],["atomic64.rs","auto_flush.rs","counter.rs","desc.rs","errors.rs","gauge.rs","histogram.rs","lib.rs","macros.rs","metrics.rs","registry.rs","timer.rs","value.rs","vec.rs"]]],\
+["prometheus",["",[["encoder",[],["mod.rs","pb.rs","text.rs"]],["proto",[],["proto_model.rs"]]],["atomic64.rs","auto_flush.rs","counter.rs","desc.rs","errors.rs","gauge.rs","histogram.rs","lib.rs","macros.rs","metrics.rs","pulling_gauge.rs","registry.rs","timer.rs","value.rs","vec.rs"]]],\
 ["prost",["",[],["encoding.rs","error.rs","lib.rs","message.rs","name.rs","types.rs"]]],\
 ["prost_derive",["",[["field",[],["group.rs","map.rs","message.rs","mod.rs","oneof.rs","scalar.rs"]]],["lib.rs"]]],\
 ["prost_types",["",[],["any.rs","compiler.rs","datetime.rs","duration.rs","lib.rs","protobuf.rs","timestamp.rs","type_url.rs"]]],\
