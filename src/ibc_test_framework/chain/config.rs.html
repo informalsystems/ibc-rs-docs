@@ -442,6 +442,13 @@
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
     Helper functions for modifying the Gaia chain config in TOML.
 
@@ -803,11 +810,18 @@
     genesis: <span class="kw-2">&amp;mut </span>serde_json::Value,
     max_gas: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-    <span class="kw">let </span>block = genesis
-        .get_mut(<span class="string">"consensus_params"</span>)
-        .and_then(|consensus_params| consensus_params.get_mut(<span class="string">"block"</span>))
-        .and_then(|block| block.as_object_mut())
-        .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">"failed to get `block` field in genesis file"</span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>block = <span class="kw">match </span>genesis.get_mut(<span class="string">"consensus_params"</span>) {
+        <span class="prelude-val">Some</span>(consensus_params) =&gt; consensus_params
+            .get_mut(<span class="string">"block"</span>)
+            .and_then(|block| block.as_object_mut())
+            .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">"failed to get `block` field in genesis file"</span>))<span class="question-mark">?</span>,
+        <span class="prelude-val">None </span>=&gt; genesis
+            .get_mut(<span class="string">"consensus"</span>)
+            .and_then(|consensus| consensus.get_mut(<span class="string">"params"</span>))
+            .and_then(|params| params.get_mut(<span class="string">"block"</span>))
+            .and_then(|block| block.as_object_mut())
+            .ok_or_else(|| <span class="macro">eyre!</span>(<span class="string">"failed to get `block` field in genesis file"</span>))<span class="question-mark">?</span>,
+    };
 
     block.insert(
         <span class="string">"max_gas"</span>.to_owned(),

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["query_eip_base_fee"]};
+window.SIDEBAR_ITEMS = {"fn":["query_eip_base_fee"],"struct":["GasPriceResponse"]};
