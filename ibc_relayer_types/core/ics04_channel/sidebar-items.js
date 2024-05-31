@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["channel","commitment","error","events","msgs","packet","packet_id","timeout","version"]};
+window.SIDEBAR_ITEMS = {"mod":["channel","commitment","error","events","msgs","packet","packet_id","timeout","upgrade","upgrade_fields","version"]};

@@ -301,16 +301,9 @@
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::core::ics04_channel::channel::ChannelEnd;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics04_channel::error::Error <span class="kw">as </span>ChannelError;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics04_channel::version::Version;
-<span class="kw">use </span><span class="kw">crate</span>::core::ics24_host::error::ValidationError;
 <span class="kw">use </span><span class="kw">crate</span>::core::ics24_host::identifier::{ChannelId, PortId};
 
 <span class="kw">use </span><span class="kw">crate</span>::proofs::Proofs;
@@ -324,9 +317,7 @@
 
 <span class="kw">pub const </span>TYPE_URL: <span class="kw-2">&amp;</span>str = <span class="string">"/ibc.core.channel.v1.MsgChannelOpenTry"</span>;
 
-<span class="doccomment">///
-/// Message definition for the second step in the channel open handshake (`ChanOpenTry` datagram).
-///
+<span class="doccomment">/// Message definition for the second step in the channel open handshake (`ChanOpenTry` datagram).
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>MsgChannelOpenTry {
     <span class="kw">pub </span>port_id: PortId,
@@ -368,13 +359,6 @@
     <span class="kw">fn </span>type_url(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         TYPE_URL.to_string()
     }
-
-    <span class="kw">fn </span>validate_basic(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), ValidationError&gt; {
-        <span class="kw">match </span><span class="self">self</span>.channel.counterparty().channel_id() {
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(ValidationError::invalid_counterparty_channel_id()),
-            <span class="prelude-val">Some</span>(_c) =&gt; <span class="prelude-val">Ok</span>(()),
-        }
-    }
 }
 
 <span class="kw">impl </span>Protobuf&lt;RawMsgChannelOpenTry&gt; <span class="kw">for </span>MsgChannelOpenTry {}
@@ -406,20 +390,24 @@
             .transpose()
             .map_err(ChannelError::identifier)<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>channel: ChannelEnd = raw_msg
+            .channel
+            .ok_or_else(ChannelError::missing_channel)<span class="question-mark">?
+            </span>.try_into()<span class="question-mark">?</span>;
+
+        <span class="macro">assert!</span>(
+            channel.counterparty().channel_id().is_some(),
+            <span class="string">"Expected counterparty channel to have a channel ID"
+        </span>);
+
         <span class="kw">let </span>msg = MsgChannelOpenTry {
             port_id: raw_msg.port_id.parse().map_err(ChannelError::identifier)<span class="question-mark">?</span>,
             previous_channel_id,
-            channel: raw_msg
-                .channel
-                .ok_or_else(ChannelError::missing_channel)<span class="question-mark">?
-                </span>.try_into()<span class="question-mark">?</span>,
+            channel,
             counterparty_version: raw_msg.counterparty_version.into(),
             proofs,
             signer: raw_msg.signer.parse().map_err(ChannelError::signer)<span class="question-mark">?</span>,
         };
-
-        msg.validate_basic()
-            .map_err(ChannelError::invalid_counterparty_channel_id)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(msg)
     }

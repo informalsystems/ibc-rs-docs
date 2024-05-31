@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["Error","InvalidConnectionIdentifierSubdetail","InvalidOrderingSubdetail","InvalidPacketDataSubdetail","InvalidRelativeTimeoutSubdetail","OwnerSubdetail"]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["Error","Ics04ChannelSubdetail","InvalidConnectionIdentifierSubdetail","InvalidOrderingSubdetail","InvalidPacketDataSubdetail","InvalidRelativeTimeoutSubdetail","OwnerSubdetail"]};

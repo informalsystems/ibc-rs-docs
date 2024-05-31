@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["TimeoutHeight"]};
+window.SIDEBAR_ITEMS = {"enum":["Timeout","TimeoutErrorDetail","TimeoutHeight"],"struct":["InvalidTimeoutSubdetail","InvalidTimestampSubdetail","TimeoutError"]};

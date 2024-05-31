@@ -560,6 +560,38 @@
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt::Display;
 
 <span class="kw">use </span>flex_error::define_error;
@@ -570,7 +602,7 @@
     ics02_client::events::UpdateClient,
     ics03_connection::events::Attributes <span class="kw">as </span>ConnectionAttributes,
     ics04_channel::events::{
-        Attributes, CloseInit, SendPacket, TimeoutPacket, WriteAcknowledgement,
+        Attributes, CloseInit, SendPacket, TimeoutPacket, UpgradeAttributes, WriteAcknowledgement,
     },
     ics24_host::identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId},
 };
@@ -983,6 +1015,38 @@
         <span class="kw">let </span>channel_id = attributes
             .channel_id()
             .ok_or_else(|| ObjectError::missing_channel_id(attributes.clone()))<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>port_id = attributes.port_id();
+
+        <span class="kw">let </span>dst_chain_id = <span class="kw">if </span>allow_non_open_connection {
+            <span class="comment">// Get the destination chain allowing for the possibility that the connection is not yet open.
+            // This is to support the optimistic channel handshake by allowing the channel worker to get
+            // the channel events while the connection is being established.
+            // The channel worker will eventually finish the channel handshake via the retry mechanism.
+            </span>channel_connection_client_no_checks(src_chain, port_id, channel_id)
+                .map(|c| c.client.client_state.chain_id())
+                .map_err(ObjectError::supervisor)<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            channel_connection_client(src_chain, port_id, channel_id)
+                .map(|c| c.client.client_state.chain_id())
+                .map_err(ObjectError::supervisor)<span class="question-mark">?
+        </span>};
+
+        <span class="prelude-val">Ok</span>(Channel {
+            dst_chain_id,
+            src_chain_id: src_chain.id(),
+            src_channel_id: channel_id.clone(),
+            src_port_id: port_id.clone(),
+        }
+        .into())
+    }
+
+    <span class="kw">pub fn </span>channel_from_chan_upgrade_events(
+        attributes: <span class="kw-2">&amp;</span>UpgradeAttributes,
+        src_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
+        allow_non_open_connection: bool,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ObjectError&gt; {
+        <span class="kw">let </span>channel_id = attributes.channel_id();
 
         <span class="kw">let </span>port_id = attributes.port_id();
 

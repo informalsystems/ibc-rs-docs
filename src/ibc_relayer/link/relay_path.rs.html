@@ -1973,6 +1973,10 @@
 <a href="#1973" id="1973">1973</a>
 <a href="#1974" id="1974">1974</a>
 <a href="#1975" id="1975">1975</a>
+<a href="#1976" id="1976">1976</a>
+<a href="#1977" id="1977">1977</a>
+<a href="#1978" id="1978">1978</a>
+<a href="#1979" id="1979">1979</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::collections::VecDeque;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
@@ -2329,10 +2333,9 @@
         }
 
         <span class="comment">// Nothing to do if channel on destination is already closed
-        </span><span class="kw">if </span><span class="self">self
-            </span>.dst_channel(QueryHeight::Latest)<span class="question-mark">?
-            </span>.state_matches(<span class="kw-2">&amp;</span>ChannelState::Closed)
-        {
+        </span><span class="kw">let </span>dst_channel = <span class="self">self</span>.dst_channel(QueryHeight::Latest)<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>dst_channel.state_matches(<span class="kw-2">&amp;</span>ChannelState::Closed) {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
@@ -2342,13 +2345,15 @@
             .build_channel_proofs(<span class="self">self</span>.src_port_id(), src_channel_id, event.height)
             .map_err(|e| LinkError::channel(ChannelError::channel_proof(e)))<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>counterparty_upgrade_sequence = <span class="self">self</span>.src_channel(QueryHeight::Latest)<span class="question-mark">?</span>.upgrade_sequence;
+
         <span class="comment">// Build the domain type message
         </span><span class="kw">let </span>new_msg = MsgChannelCloseConfirm {
             port_id: <span class="self">self</span>.dst_port_id().clone(),
             channel_id: <span class="self">self</span>.dst_channel_id().clone(),
             proofs,
             signer: <span class="self">self</span>.dst_signer()<span class="question-mark">?</span>,
-            counterparty_upgrade_sequence: <span class="number">0</span>,
+            counterparty_upgrade_sequence,
         };
 
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(new_msg.to_any()))
@@ -3370,11 +3375,14 @@
             )
             .map_err(|e| LinkError::packet_proofs_constructor(<span class="self">self</span>.dst_chain().id(), e))<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>counterparty_upgrade_sequence = <span class="self">self</span>.src_channel(QueryHeight::Latest)<span class="question-mark">?</span>.upgrade_sequence;
+
         <span class="kw">let </span>msg = MsgTimeoutOnClose::new(
             packet.clone(),
             next_sequence_received,
             proofs.clone(),
             <span class="self">self</span>.src_signer()<span class="question-mark">?</span>,
+            counterparty_upgrade_sequence,
         );
 
         <span class="macro">trace!</span>(packet = %msg.packet, height = %proofs.height(), <span class="string">"built timeout on close msg"</span>);

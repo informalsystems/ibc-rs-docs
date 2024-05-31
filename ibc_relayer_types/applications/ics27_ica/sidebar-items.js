@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cosmos_tx","error","msgs","packet_data"]};
+window.SIDEBAR_ITEMS = {"constant":["VERSION"],"mod":["cosmos_tx","error","msgs","packet_data"]};
