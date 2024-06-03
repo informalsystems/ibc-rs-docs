@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["register_interchain_account"],"trait":["InterchainAccountMethodsExt"]};
+window.SIDEBAR_ITEMS = {"fn":["register_interchain_account","register_ordered_interchain_account"],"trait":["InterchainAccountMethodsExt"]};
