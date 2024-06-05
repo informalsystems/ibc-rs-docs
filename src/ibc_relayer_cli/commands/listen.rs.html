@@ -279,6 +279,12 @@
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::{
     fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
@@ -300,6 +306,7 @@
     error::Error,
     event::source::EventSource,
     util::compat_mode::compat_mode_from_version,
+    HERMES_VERSION,
 };
 <span class="kw">use </span>ibc_relayer_types::{core::ics24_host::identifier::ChainId, events::IbcEvent};
 
@@ -442,7 +449,9 @@
                     interval,
                     max_retries,
                 } =&gt; {
-                    <span class="kw">let </span><span class="kw-2">mut </span>rpc_client = HttpClient::new(config.rpc_addr.clone())
+                    <span class="kw">let </span><span class="kw-2">mut </span>rpc_client = HttpClient::builder(config.rpc_addr.clone().try_into()<span class="question-mark">?</span>)
+                        .user_agent(<span class="macro">format!</span>(<span class="string">"hermes/{}"</span>, HERMES_VERSION))
+                        .build()
                         .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
                     rpc_client.set_compat_mode(compat_mode);
 
@@ -472,7 +481,10 @@
     </span><span class="kw">let </span>rpc_addr = <span class="kw">match </span>config {
         ChainConfig::CosmosSdk(config) =&gt; config.rpc_addr.clone(),
     };
-    <span class="kw">let </span>client = HttpClient::new(rpc_addr)<span class="question-mark">?</span>;
+    <span class="kw">let </span>client = HttpClient::builder(rpc_addr.try_into()<span class="question-mark">?</span>)
+        .user_agent(<span class="macro">format!</span>(<span class="string">"hermes/{}"</span>, HERMES_VERSION))
+        .build()<span class="question-mark">?</span>;
+
     <span class="kw">let </span>status = rt.block_on(client.status())<span class="question-mark">?</span>;
     <span class="kw">let </span>compat_mode = <span class="kw">match </span>config {
         ChainConfig::CosmosSdk(config) =&gt; {
