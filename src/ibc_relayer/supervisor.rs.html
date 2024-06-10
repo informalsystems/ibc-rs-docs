@@ -990,6 +990,24 @@
 <a href="#990" id="990">990</a>
 <a href="#991" id="991">991</a>
 <a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::btree_map::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::convert::Infallible;
@@ -1366,13 +1384,15 @@
     };
 
     <span class="comment">// Then, apply the client filter
+    // If the object is a CrossChain query discard it if the destination chain
+    // is not configured
     </span><span class="kw">let </span>client_filter_outcome = <span class="kw">match </span>object {
         Object::Client(client) =&gt; client_state_filter.control_client_object(registry, client),
         Object::Connection(conn) =&gt; client_state_filter.control_conn_object(registry, conn),
         Object::Channel(chan) =&gt; client_state_filter.control_chan_object(registry, chan),
         Object::Packet(packet) =&gt; client_state_filter.control_packet_object(registry, packet),
+        Object::CrossChainQuery(_ccq) =&gt; <span class="prelude-val">Ok</span>(Permission::Allow),
         Object::Wallet(_wallet) =&gt; <span class="prelude-val">Ok</span>(Permission::Allow),
-        Object::CrossChainQuery(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Permission::Allow),
     };
 
     <span class="kw">match </span>client_filter_outcome {
@@ -1806,8 +1826,33 @@
         workers.notify_new_block(<span class="kw-2">&amp;</span>src_chain.id(), batch.height, new_block);
     }
 
-    <span class="comment">// Forward the IBC events.
+    <span class="comment">// Forward the IBC events to the appropriate workers
     </span><span class="kw">for </span>(object, events_with_heights) <span class="kw">in </span>collected.per_object.into_iter() {
+        <span class="kw">if </span>events_with_heights.is_empty() {
+            <span class="comment">// Event batch is empty, nothing to do
+            </span><span class="kw">continue</span>;
+        }
+
+        <span class="kw">let </span><span class="prelude-val">Ok</span>(src_chain) = registry.get_or_spawn(object.src_chain_id()) <span class="kw">else </span>{
+            <span class="macro">trace!</span>(
+                <span class="string">"skipping events for '{}': source chain '{}' is not registered"</span>,
+                object.short_name(),
+                object.src_chain_id()
+            );
+
+            <span class="kw">continue</span>;
+        };
+
+        <span class="kw">let </span><span class="prelude-val">Ok</span>(dst_chain) = registry.get_or_spawn(object.dst_chain_id()) <span class="kw">else </span>{
+            <span class="macro">trace!</span>(
+                <span class="string">"skipping events for '{}': destination chain '{}' is not registered"</span>,
+                object.short_name(),
+                object.src_chain_id()
+            );
+
+            <span class="kw">continue</span>;
+        };
+
         <span class="kw">if </span>!relay_on_object(
             config,
             registry,
@@ -1816,32 +1861,23 @@
             <span class="kw-2">&amp;</span>object,
         ) {
             <span class="macro">trace!</span>(
-                <span class="string">"skipping events for '{}'. \
-                reason: filtering is enabled and channel does not match any allowed channels"</span>,
+                <span class="string">"skipping events for '{}': rejected by filtering policy"</span>,
                 object.short_name()
             );
 
             <span class="kw">continue</span>;
         }
 
-        <span class="kw">if </span>events_with_heights.is_empty() {
-            <span class="kw">continue</span>;
-        }
-
-        <span class="kw">let </span>src = registry
-            .get_or_spawn(object.src_chain_id())
-            .map_err(Error::spawn)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>dst = registry
-            .get_or_spawn(object.dst_chain_id())
-            .map_err(Error::spawn)<span class="question-mark">?</span>;
-
         <span class="kw">if let </span>Object::Packet(<span class="kw-2">ref </span>_path) = object {
-            <span class="comment">// Update telemetry info
-            </span><span class="macro">telemetry!</span>(send_telemetry(<span class="kw-2">&amp;</span>src, <span class="kw-2">&amp;</span>dst, <span class="kw-2">&amp;</span>events_with_heights, _path));
+            <span class="macro">telemetry!</span>(send_telemetry(
+                <span class="kw-2">&amp;</span>src_chain,
+                <span class="kw-2">&amp;</span>dst_chain,
+                <span class="kw-2">&amp;</span>events_with_heights,
+                _path
+            ));
         }
 
-        <span class="kw">let </span>worker = workers.get_or_spawn(object, src, dst, config);
+        <span class="kw">let </span>worker = workers.get_or_spawn(object, src_chain, dst_chain, config);
 
         worker.send_events(
             batch.height,
