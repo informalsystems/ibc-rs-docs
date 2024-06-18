@@ -603,6 +603,27 @@
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
 <a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Custom `serde` deserializer for `FilterMatch`
 
 </span><span class="kw">use </span>core::fmt;
@@ -989,11 +1010,13 @@
         }
 
         <span class="kw">fn </span>visit_str&lt;E: de::Error&gt;(<span class="self">self</span>, v: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, E&gt; {
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(port_id) = PortId::from_str(v) {
-                <span class="prelude-val">Ok</span>(PortFilterMatch::Exact(port_id))
-            } <span class="kw">else </span>{
-                <span class="kw">let </span>wildcard = v.parse().map_err(E::custom)<span class="question-mark">?</span>;
+            <span class="kw">let </span>trimmed_v = v.trim();
+            <span class="kw">if </span>trimmed_v.contains(<span class="string">'*'</span>) {
+                <span class="kw">let </span>wildcard = trimmed_v.parse().map_err(E::custom)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(PortFilterMatch::Wildcard(wildcard))
+            } <span class="kw">else </span>{
+                <span class="kw">let </span>port_id = PortId::from_str(trimmed_v).map_err(E::custom)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(PortFilterMatch::Exact(port_id))
             }
         }
 
@@ -1016,11 +1039,13 @@
         }
 
         <span class="kw">fn </span>visit_str&lt;E: de::Error&gt;(<span class="self">self</span>, v: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, E&gt; {
-            <span class="kw">if let </span><span class="prelude-val">Ok</span>(channel_id) = ChannelId::from_str(v) {
-                <span class="prelude-val">Ok</span>(ChannelFilterMatch::Exact(channel_id))
-            } <span class="kw">else </span>{
-                <span class="kw">let </span>wildcard = v.parse().map_err(E::custom)<span class="question-mark">?</span>;
+            <span class="kw">let </span>trimmed_v = v.trim();
+            <span class="kw">if </span>trimmed_v.contains(<span class="string">'*'</span>) {
+                <span class="kw">let </span>wildcard = trimmed_v.parse().map_err(E::custom)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(ChannelFilterMatch::Wildcard(wildcard))
+            } <span class="kw">else </span>{
+                <span class="kw">let </span>channel_id = ChannelId::from_str(trimmed_v.trim()).map_err(E::custom)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(ChannelFilterMatch::Exact(channel_id))
             }
         }
 
@@ -1206,6 +1231,23 @@
     </span><span class="kw">fn </span>to_string_wildcards() {
         <span class="kw">let </span>wildcard = <span class="string">"ica*"</span>.parse::&lt;Wildcard&gt;().unwrap();
         <span class="macro">assert_eq!</span>(wildcard.to_string(), <span class="string">"ica*"</span>.to_string());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_exact_matches() {
+        <span class="kw">let </span>allow_policy = <span class="string">r#"
+            policy = "allow"
+            list = [
+                [ "transfer", "channel-88", ], # Standard exact match
+                [ "transfer", "channel-476 ", ], # Whitespace abstraction
+            ]
+            "#</span>;
+
+        <span class="kw">let </span>pf: ChannelPolicy =
+            toml::from_str(allow_policy).expect(<span class="string">"could not parse filter policy"</span>);
+
+        <span class="kw">let </span>assert_allow = <span class="macro">matches!</span>(pf, ChannelPolicy::Allow(filters) <span class="kw">if </span>filters.is_exact());
+        <span class="macro">assert!</span>(assert_allow);
     }
 }
 </code></pre></div></section></main></body></html>
