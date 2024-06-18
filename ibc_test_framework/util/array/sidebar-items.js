@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["assert_same_dimension","into_nested_vec","map_nested_array","try_into_array","try_into_nested_array"]};
+window.SIDEBAR_ITEMS = {"fn":["into_nested_vec","try_into_array"]};

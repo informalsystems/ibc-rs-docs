@@ -116,24 +116,40 @@
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Functions for bootstrapping N-ary number of chains.
 */
 
 </span><span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer::config::Config;
-<span class="kw">use </span>ibc_relayer::foreign_client::ForeignClient;
 <span class="kw">use </span>ibc_relayer::registry::SharedRegistry;
 
 <span class="kw">use </span><span class="kw">crate</span>::bootstrap::binary::chain::{
-    add_chain_config, add_keys_to_chain_handle, bootstrap_foreign_client, new_registry,
-    save_relayer_config,
+    add_chain_config, add_keys_to_chain_handle, new_registry, save_relayer_config,
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::{handle_generic_error, Error};
 <span class="kw">use </span><span class="kw">crate</span>::relayer::driver::RelayerDriver;
 <span class="kw">use </span><span class="kw">crate</span>::types::config::TestConfig;
 <span class="kw">use </span><span class="kw">crate</span>::types::nary::chains::{DynamicConnectedChains, NaryConnectedChains};
 <span class="kw">use </span><span class="kw">crate</span>::types::single::node::FullNode;
+<span class="kw">use </span><span class="kw">crate</span>::types::topology::{bootstrap_topology, TopologyType};
 
 <span class="doccomment">/**
   Bootstrap a fixed number of chains specified by `SIZE`.
@@ -141,10 +157,15 @@
 </span><span class="kw">pub fn </span>boostrap_chains_with_nodes&lt;<span class="kw">const </span>SIZE: usize&gt;(
     test_config: <span class="kw-2">&amp;</span>TestConfig,
     full_nodes: [FullNode; SIZE],
+    topology_override: <span class="prelude-ty">Option</span>&lt;TopologyType&gt;,
     config_modifier: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>Config),
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(RelayerDriver, NaryConnectedChains&lt;<span class="kw">impl </span>ChainHandle, SIZE&gt;), Error&gt; {
-    <span class="kw">let </span>(relayer, chains) =
-        boostrap_chains_with_any_nodes(test_config, full_nodes.into(), config_modifier)<span class="question-mark">?</span>;
+    <span class="kw">let </span>(relayer, chains) = boostrap_chains_with_any_nodes(
+        test_config,
+        full_nodes.into(),
+        topology_override,
+        config_modifier,
+    )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((relayer, chains.try_into()<span class="question-mark">?</span>))
 }
@@ -156,11 +177,16 @@
 </span><span class="kw">pub fn </span>boostrap_chains_with_self_connected_node&lt;<span class="kw">const </span>SIZE: usize&gt;(
     test_config: <span class="kw-2">&amp;</span>TestConfig,
     full_node: FullNode,
+    topology_override: <span class="prelude-ty">Option</span>&lt;TopologyType&gt;,
     config_modifier: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>Config),
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(RelayerDriver, NaryConnectedChains&lt;<span class="kw">impl </span>ChainHandle, SIZE&gt;), Error&gt; {
     <span class="kw">let </span>full_nodes = <span class="macro">vec!</span>[full_node; SIZE];
-    <span class="kw">let </span>(relayer, chains) =
-        boostrap_chains_with_any_nodes(test_config, full_nodes, config_modifier)<span class="question-mark">?</span>;
+    <span class="kw">let </span>(relayer, chains) = boostrap_chains_with_any_nodes(
+        test_config,
+        full_nodes,
+        topology_override,
+        config_modifier,
+    )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((relayer, chains.try_into()<span class="question-mark">?</span>))
 }
@@ -168,10 +194,13 @@
 <span class="doccomment">/**
    Bootstrap a dynamic number of chains, according to the number of full nodes
    in the `Vec&lt;FullNode&gt;`.
+   The topology will be retrieved and set in this method,
+   see [`crate::types::topology`] for more information.
 */
 </span><span class="kw">pub fn </span>boostrap_chains_with_any_nodes(
     test_config: <span class="kw-2">&amp;</span>TestConfig,
     full_nodes: Vec&lt;FullNode&gt;,
+    topology_override: <span class="prelude-ty">Option</span>&lt;TopologyType&gt;,
     config_modifier: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>Config),
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(RelayerDriver, DynamicConnectedChains&lt;<span class="kw">impl </span>ChainHandle&gt;), Error&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>config = Config::default();
@@ -195,19 +224,24 @@
         chain_handles.push(handle);
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>foreign_clients: Vec&lt;Vec&lt;ForeignClient&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;&gt; = Vec::new();
-
-    <span class="kw">for </span>handle_a <span class="kw">in </span>chain_handles.iter() {
-        <span class="kw">let </span><span class="kw-2">mut </span>foreign_clients_b = Vec::new();
-
-        <span class="kw">for </span>handle_b <span class="kw">in </span>chain_handles.iter() {
-            <span class="kw">let </span>foreign_client = bootstrap_foreign_client(handle_a, handle_b, Default::default())<span class="question-mark">?</span>;
-
-            foreign_clients_b.push(foreign_client);
+    <span class="comment">// Retrieve the topology or fallback to the Linear topology
+    </span><span class="kw">let </span>topology_type = <span class="kw">if let </span><span class="prelude-val">Some</span>(topology_type) = topology_override {
+        topology_type
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>topology_str = std::env::var(<span class="string">"TOPOLOGY"</span>).unwrap_or_else(|<span class="kw">_</span>| <span class="string">"linear"</span>.to_owned());
+        <span class="kw">match </span>topology_str.parse() {
+            <span class="prelude-val">Ok</span>(topology_type) =&gt; topology_type,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">tracing::warn!</span>(
+                    <span class="string">"Failed to parse topology type `{topology_str}`. Will fallback to Linear topology"
+                </span>);
+                TopologyType::Linear
+            }
         }
+    };
+    <span class="kw">let </span>topology = bootstrap_topology(topology_type);
 
-        foreign_clients.push(foreign_clients_b);
-    }
+    <span class="kw">let </span>foreign_clients = topology.create_topology(<span class="kw-2">&amp;</span>chain_handles)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>relayer = RelayerDriver {
         config_path,

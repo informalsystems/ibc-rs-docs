@@ -138,27 +138,9 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Constructs for N-ary connected channels.
 */
-
 </span><span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer::channel::Channel;
@@ -169,26 +151,28 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::binary::channel::ConnectedChannel;
 <span class="kw">use </span><span class="kw">crate</span>::types::env::{EnvWriter, ExportEnv};
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::util::array::try_into_nested_array;
+<span class="kw">use </span><span class="kw">crate</span>::util::two_dim_hash_map::TwoDimMap;
 
 <span class="doccomment">/**
-   A fixed-size N-ary connected channels as specified by `SIZE`.
+   A two dimensional BTreeMap of connected channels as specified by `SIZE`
+   and topology.
 
-   Contains `SIZE`x`SIZE` number of binary [`ConnectedChannel`]s.
+   The number of binary [`ConnectedChannel`]s depends on the topology.
 */
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ConnectedChannels&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; {
-    channels: [[ConnectedChannel&lt;Handle, Handle&gt;; SIZE]; SIZE],
+    <span class="kw">pub </span>channels: TwoDimMap&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;,
 }
 
 <span class="doccomment">/**
-   A dynamic-sized N-ary connected channels, consist of a nested
-   vector of binary [`ConnectedChannel`]s which must be of the
-   same length.
+   A two dimensional BTreeMap of connected channels as specified by `SIZE`
+   and topology.
+
+   The number of binary [`ConnectedChannel`]s depends on the topology.
 */
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>DynamicConnectedChannels&lt;Handle: ChainHandle&gt; {
-    channels: Vec&lt;Vec&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;&gt;,
+    channels: TwoDimMap&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;,
 }
 
 <span class="doccomment">/**
@@ -227,32 +211,31 @@
     </span><span class="kw">pub fn </span>channel_at&lt;<span class="kw">const </span>CHAIN_A: usize, <span class="kw">const </span>CHAIN_B: usize&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;NthConnectedChannel&lt;CHAIN_A, CHAIN_B, Handle&gt;, Error&gt; {
-        <span class="kw">if </span>CHAIN_A &gt;= SIZE || CHAIN_B &gt;= SIZE {
-            <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(
-                <span class="string">"cannot get channel beyond position {}/{}"</span>,
-                CHAIN_A,
-                CHAIN_B
-            )))
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>raw_channel = <span class="self">self</span>.channels[CHAIN_A][CHAIN_B].clone();
+        <span class="kw">let </span>raw_channel = <span class="self">self
+            </span>.channels
+            .get((CHAIN_A, CHAIN_B))
+            .ok_or_else(|| {
+                Error::generic(<span class="macro">eyre!</span>(
+                    <span class="string">"No channel entry found for chain `{CHAIN_A}` to `{CHAIN_B}`"
+                </span>))
+            })<span class="question-mark">?
+            </span>.clone();
+        <span class="kw">let </span>channel = raw_channel.map_chain(MonoTagged::new, MonoTagged::new);
 
-            <span class="kw">let </span>channel = raw_channel.map_chain(MonoTagged::new, MonoTagged::new);
-
-            <span class="prelude-val">Ok</span>(channel)
-        }
+        <span class="prelude-val">Ok</span>(channel)
     }
 
-    <span class="kw">pub fn </span>channels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[[ConnectedChannel&lt;Handle, Handle&gt;; SIZE]; SIZE] {
+    <span class="kw">pub fn </span>channels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TwoDimMap&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.channels
     }
 }
 
 <span class="kw">impl</span>&lt;Handle: ChainHandle&gt; DynamicConnectedChannels&lt;Handle&gt; {
-    <span class="kw">pub fn </span>new(channels: Vec&lt;Vec&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(channels: TwoDimMap&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ channels }
     }
 
-    <span class="kw">pub fn </span>channels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Vec&lt;Vec&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;&gt; {
+    <span class="kw">pub fn </span>channels(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TwoDimMap&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.channels
     }
 }
@@ -264,7 +247,7 @@
 
     <span class="kw">fn </span>try_from(channels: DynamicConnectedChannels&lt;Handle&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="prelude-val">Ok</span>(ConnectedChannels {
-            channels: try_into_nested_array(channels.channels)<span class="question-mark">?</span>,
+            channels: channels.channels,
         })
     }
 }
@@ -277,38 +260,21 @@
 
 <span class="kw">impl</span>&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; ExportEnv <span class="kw">for </span>ConnectedChannels&lt;Handle, SIZE&gt; {
     <span class="kw">fn </span>export_env(<span class="kw-2">&amp;</span><span class="self">self</span>, writer: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>EnvWriter) {
-        <span class="kw">for </span>(i, inner_channels) <span class="kw">in </span><span class="self">self</span>.channels.iter().enumerate() {
-            <span class="kw">for </span>(j, channel_i_to_j) <span class="kw">in </span>inner_channels.iter().enumerate() {
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CONNECTION_ID_{j}_to_{i}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel_i_to_j.connection.connection_id_a),
-                );
+        <span class="kw">for </span>(src_chain, dst_chain, channel) <span class="kw">in </span><span class="self">self</span>.channels.iter() {
+            writer.write_env(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CONNECTION_ID_{}_to_{}"</span>, src_chain, dst_chain),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel.connection.connection_id_a),
+            );
 
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CONNECTION_ID_{i}_to_{j}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel_i_to_j.connection.connection_id_b),
-                );
+            writer.write_env(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CHANNEL_ID_{}_to_{}"</span>, src_chain, dst_chain),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel.channel_id_a),
+            );
 
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CHANNEL_ID_{j}_to_{i}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel_i_to_j.channel_id_a),
-                );
-
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"PORT_{j}_to_{i}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel_i_to_j.port_a),
-                );
-
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CHANNEL_ID_{i}_to_{j}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel_i_to_j.channel_id_b),
-                );
-
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"PORT_{i}_to_{j}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel_i_to_j.port_b),
-                );
-            }
+            writer.write_env(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"PORT_{}_to_{}"</span>, src_chain, dst_chain),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, channel.port_a),
+            );
         }
     }
 }

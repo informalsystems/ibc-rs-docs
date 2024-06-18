@@ -69,14 +69,12 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Functions for bootstrapping N-ary number of connections.
 */
 
 </span><span class="kw">use </span>core::time::Duration;
+<span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer::foreign_client::ForeignClient;
 
@@ -86,48 +84,44 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::binary::foreign_client::ForeignClientPair;
 <span class="kw">use </span><span class="kw">crate</span>::types::nary::connection::{ConnectedConnections, DynamicConnectedConnections};
 <span class="kw">use </span><span class="kw">crate</span>::types::nary::foreign_client::ForeignClientPairs;
-<span class="kw">use </span><span class="kw">crate</span>::util::array::assert_same_dimension;
+<span class="kw">use </span><span class="kw">crate</span>::util::two_dim_hash_map::TwoDimMap;
 
 <span class="doccomment">/**
    Bootstrap a dynamic number of connections based on the
-   given foreign client NxN matrix.
+   given foreign clients.
+   See [`crate::types::topology`] for more information.
 */
 </span><span class="kw">pub fn </span>bootstrap_connections_dynamic&lt;Handle: ChainHandle&gt;(
-    foreign_clients: <span class="kw-2">&amp;</span>Vec&lt;Vec&lt;ForeignClient&lt;Handle, Handle&gt;&gt;&gt;,
+    foreign_clients: <span class="kw-2">&amp;</span>TwoDimMap&lt;ForeignClient&lt;Handle, Handle&gt;&gt;,
     connection_delay: Duration,
     bootstrap_with_random_ids: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;DynamicConnectedConnections&lt;Handle&gt;, Error&gt; {
-    <span class="kw">let </span>size = foreign_clients.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>connections: TwoDimMap&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt; = TwoDimMap::new();
 
-    assert_same_dimension(size, foreign_clients)<span class="question-mark">?</span>;
+    <span class="kw">for </span>(src_chain, dst_chain, foreign_client) <span class="kw">in </span>foreign_clients.iter() {
+        <span class="kw">let </span>connection = <span class="kw">if let </span><span class="prelude-val">Some</span>(counterparty_connection) =
+            connections.get((dst_chain, src_chain))
+        {
+            counterparty_connection.clone().flip()
+        } <span class="kw">else </span>{
+            <span class="comment">// No connection is found, will create one
+            </span><span class="kw">let </span>client_a_to_b = foreign_client.clone();
+            <span class="kw">let </span>client_b_to_a = foreign_clients.get((dst_chain, src_chain)).ok_or_else(|| {
+                Error::generic(<span class="macro">eyre!</span>(
+                    <span class="string">"No client entry found from chain `{}` to `{}`"</span>,
+                    dst_chain,
+                    src_chain,
+                ))
+            })<span class="question-mark">?</span>;
+            <span class="kw">let </span>foreign_clients = ForeignClientPair::new(client_a_to_b, client_b_to_a.clone());
 
-    <span class="kw">let </span><span class="kw-2">mut </span>connections: Vec&lt;Vec&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;&gt; = Vec::new();
+            <span class="kw">let </span>bootstrap_options = BootstrapConnectionOptions::default()
+                .connection_delay(connection_delay)
+                .bootstrap_with_random_ids(bootstrap_with_random_ids);
 
-    <span class="kw">for </span>(i, foreign_clients_b) <span class="kw">in </span>foreign_clients.iter().enumerate() {
-        <span class="kw">let </span><span class="kw-2">mut </span>connections_b: Vec&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt; = Vec::new();
-
-        <span class="kw">for </span>(j, foreign_client) <span class="kw">in </span>foreign_clients_b.iter().enumerate() {
-            <span class="kw">if </span>i &lt;= j {
-                <span class="kw">let </span>counter_foreign_client = <span class="kw-2">&amp;</span>foreign_clients[j][i];
-                <span class="kw">let </span>foreign_clients =
-                    ForeignClientPair::new(foreign_client.clone(), counter_foreign_client.clone());
-
-                <span class="kw">let </span>bootstrap_options = BootstrapConnectionOptions::default()
-                    .connection_delay(connection_delay)
-                    .bootstrap_with_random_ids(bootstrap_with_random_ids);
-
-                <span class="kw">let </span>connection = bootstrap_connection(<span class="kw-2">&amp;</span>foreign_clients, bootstrap_options)<span class="question-mark">?</span>;
-
-                connections_b.push(connection);
-            } <span class="kw">else </span>{
-                <span class="kw">let </span>counter_connection = <span class="kw-2">&amp;</span>connections[j][i];
-                <span class="kw">let </span>connection = counter_connection.clone().flip();
-
-                connections_b.push(connection);
-            }
-        }
-
-        connections.push(connections_b);
+            bootstrap_connection(<span class="kw-2">&amp;</span>foreign_clients, bootstrap_options)<span class="question-mark">?
+        </span>};
+        connections.insert((src_chain, dst_chain), connection);
     }
 
     <span class="prelude-val">Ok</span>(DynamicConnectedConnections::new(connections))

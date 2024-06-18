@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["binary","config","env","id","nary","process","single","tagged","wallet"]};
+window.SIDEBAR_ITEMS = {"mod":["binary","config","env","id","nary","process","single","tagged","topology","wallet"]};

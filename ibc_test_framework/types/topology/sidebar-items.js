@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TopologyType"],"fn":["bootstrap_topology"],"struct":["CyclicTopology","FullyConnectedTopology","LinearTopology"],"trait":["Topology"]};

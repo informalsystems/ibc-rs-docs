@@ -129,23 +129,6 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Functions for bootstrapping N-ary number of channels.
 */
@@ -165,60 +148,46 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::nary::channel::{ConnectedChannels, DynamicConnectedChannels};
 <span class="kw">use </span><span class="kw">crate</span>::types::nary::connection::{ConnectedConnections, DynamicConnectedConnections};
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::util::array::{assert_same_dimension, into_nested_vec};
+<span class="kw">use </span><span class="kw">crate</span>::util::array::into_nested_vec;
+<span class="kw">use </span><span class="kw">crate</span>::util::two_dim_hash_map::TwoDimMap;
 
 <span class="doccomment">/**
    Bootstrap a dynamic number of channels based on the number of
    connections in `DynamicConnectedConnections`.
+   See [`crate::types::topology`] for more information.
 */
 </span><span class="kw">pub fn </span>bootstrap_channels_with_connections_dynamic&lt;Handle: ChainHandle&gt;(
     connections: DynamicConnectedConnections&lt;Handle&gt;,
-    chains: <span class="kw-2">&amp;</span>Vec&lt;Handle&gt;,
     ports: <span class="kw-2">&amp;</span>Vec&lt;Vec&lt;PortId&gt;&gt;,
     order: Ordering,
     bootstrap_with_random_ids: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;DynamicConnectedChannels&lt;Handle&gt;, Error&gt; {
-    <span class="kw">let </span>size = chains.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>channels: TwoDimMap&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt; = TwoDimMap::new();
 
-    assert_same_dimension(size, connections.connections())<span class="question-mark">?</span>;
-    assert_same_dimension(size, ports)<span class="question-mark">?</span>;
+    <span class="kw">for </span>(src_chain, dst_chain, connection) <span class="kw">in </span>connections.connections().iter() {
+        <span class="kw">let </span>channel = <span class="kw">if let </span><span class="prelude-val">Some</span>(counterparty_channel) = channels.get((dst_chain, src_chain)) {
+            counterparty_channel.clone().flip()
+        } <span class="kw">else </span>{
+            <span class="comment">// No channel is found, will create one
+            </span><span class="kw">let </span>chain_a = <span class="kw-2">&amp;</span>connection.connection.a_chain();
+            <span class="kw">let </span>chain_b = <span class="kw-2">&amp;</span>connection.connection.b_chain();
+            <span class="kw">let </span>port_a = ports[src_chain][dst_chain].clone();
+            <span class="kw">let </span>port_b = ports[dst_chain][src_chain].clone();
 
-    <span class="kw">let </span><span class="kw-2">mut </span>channels: Vec&lt;Vec&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt;&gt; = Vec::new();
+            <span class="kw">let </span>bootstrap_options = BootstrapChannelOptions::default()
+                .order(order)
+                .bootstrap_with_random_ids(bootstrap_with_random_ids);
 
-    <span class="kw">for </span>(i, connections_b) <span class="kw">in </span>connections.connections().iter().enumerate() {
-        <span class="kw">let </span><span class="kw-2">mut </span>channels_b: Vec&lt;ConnectedChannel&lt;Handle, Handle&gt;&gt; = Vec::new();
-
-        <span class="kw">for </span>(j, connection) <span class="kw">in </span>connections_b.iter().enumerate() {
-            <span class="kw">if </span>i &lt;= j {
-                <span class="kw">let </span>chain_a = <span class="kw-2">&amp;</span>chains[i];
-                <span class="kw">let </span>chain_b = <span class="kw-2">&amp;</span>chains[j];
-
-                <span class="kw">let </span>port_a = <span class="kw-2">&amp;</span>ports[i][j];
-                <span class="kw">let </span>port_b = <span class="kw-2">&amp;</span>ports[j][i];
-
-                <span class="kw">let </span>bootstrap_options = BootstrapChannelOptions::default()
-                    .order(order)
-                    .bootstrap_with_random_ids(bootstrap_with_random_ids);
-
-                <span class="kw">let </span>channel = bootstrap_channel_with_connection(
-                    chain_a,
-                    chain_b,
-                    connection.clone(),
-                    <span class="kw-2">&amp;</span>DualTagged::new(port_a),
-                    <span class="kw-2">&amp;</span>DualTagged::new(port_b),
-                    bootstrap_options,
-                )<span class="question-mark">?</span>;
-
-                channels_b.push(channel);
-            } <span class="kw">else </span>{
-                <span class="kw">let </span>counter_channel = <span class="kw-2">&amp;</span>channels[j][i];
-                <span class="kw">let </span>channel = counter_channel.clone().flip();
-
-                channels_b.push(channel);
-            }
-        }
-
-        channels.push(channels_b);
+            bootstrap_channel_with_connection(
+                chain_a,
+                chain_b,
+                connection.clone(),
+                <span class="kw-2">&amp;</span>DualTagged::new(<span class="kw-2">&amp;</span>port_a),
+                <span class="kw-2">&amp;</span>DualTagged::new(<span class="kw-2">&amp;</span>port_b),
+                bootstrap_options,
+            )<span class="question-mark">?
+        </span>};
+        channels.insert((src_chain, dst_chain), channel);
     }
 
     <span class="prelude-val">Ok</span>(DynamicConnectedChannels::new(channels))
@@ -230,14 +199,12 @@
 */
 </span><span class="kw">pub fn </span>bootstrap_channels_with_connections&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt;(
     connections: ConnectedConnections&lt;Handle, SIZE&gt;,
-    chains: [Handle; SIZE],
     ports: [[PortId; SIZE]; SIZE],
     order: Ordering,
     bootstrap_with_random_ids: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;ConnectedChannels&lt;Handle, SIZE&gt;, Error&gt; {
     <span class="kw">let </span>channels = bootstrap_channels_with_connections_dynamic(
         connections.into(),
-        <span class="kw-2">&amp;</span>chains.into(),
         <span class="kw-2">&amp;</span>into_nested_vec(ports),
         order,
         bootstrap_with_random_ids,
@@ -266,7 +233,6 @@
 
     bootstrap_channels_with_connections_dynamic(
         connections,
-        chains.chain_handles(),
         ports,
         order,
         bootstrap_with_random_ids,

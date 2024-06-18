@@ -125,17 +125,9 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Constructs for N-ary connected connections.
 */
-
 </span><span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ConnectionId;
@@ -145,26 +137,28 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::binary::connection::ConnectedConnection;
 <span class="kw">use </span><span class="kw">crate</span>::types::env::{EnvWriter, ExportEnv};
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::util::array::{into_nested_vec, try_into_nested_array};
+<span class="kw">use </span><span class="kw">crate</span>::util::two_dim_hash_map::TwoDimMap;
 
 <span class="doccomment">/**
-   A fixed-size N-ary connected connections as specified by `SIZE`.
+   A two dimensional BTreeMap of connected connections as specified by `SIZE`
+   and topology.
 
-   Contains `SIZE`x`SIZE` number of binary [`ConnectedConnection`]s.
+   The number of binary [`ConnectedConnection`]s depends on the topology.
 */
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ConnectedConnections&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; {
-    connections: [[ConnectedConnection&lt;Handle, Handle&gt;; SIZE]; SIZE],
+    connections: TwoDimMap&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;,
 }
 
 <span class="doccomment">/**
-   A dynamic-sized N-ary connected connections, made of a
-   nested vector of binary [`ConnectedConnection`] which must be
-   in the same dimension.
+   A two dimensional BTreeMap of connected connections as specified by `SIZE`
+   and topology.
+
+   The number of binary [`ConnectedConnection`]s depends on the topology.
 */
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>DynamicConnectedConnections&lt;Handle: ChainHandle&gt; {
-    connections: Vec&lt;Vec&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;&gt;,
+    connections: TwoDimMap&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;,
 }
 
 <span class="doccomment">/**
@@ -189,32 +183,31 @@
     </span><span class="kw">pub fn </span>connection_at&lt;<span class="kw">const </span>CHAIN_A: usize, <span class="kw">const </span>CHAIN_B: usize&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;NthConnectedConnection&lt;CHAIN_A, CHAIN_B, Handle&gt;, Error&gt; {
-        <span class="kw">if </span>CHAIN_A &gt;= SIZE || CHAIN_B &gt;= SIZE {
-            <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(
-                <span class="string">"cannot get connection beyond position {}/{}"</span>,
-                CHAIN_A,
-                CHAIN_B
-            )))
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>raw_connection = <span class="self">self</span>.connections[CHAIN_A][CHAIN_B].clone();
+        <span class="kw">let </span>raw_connection = <span class="self">self
+            </span>.connections
+            .get((CHAIN_A, CHAIN_B))
+            .ok_or_else(|| {
+                Error::generic(<span class="macro">eyre!</span>(
+                    <span class="string">"No connection entry found for chain `{CHAIN_A}` to `{CHAIN_B}`"
+                </span>))
+            })<span class="question-mark">?
+            </span>.clone();
+        <span class="kw">let </span>connection = raw_connection.map_chain(MonoTagged::new, MonoTagged::new);
 
-            <span class="kw">let </span>channel = raw_connection.map_chain(MonoTagged::new, MonoTagged::new);
-
-            <span class="prelude-val">Ok</span>(channel)
-        }
+        <span class="prelude-val">Ok</span>(connection)
     }
 
-    <span class="kw">pub fn </span>connections(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[[ConnectedConnection&lt;Handle, Handle&gt;; SIZE]; SIZE] {
+    <span class="kw">pub fn </span>connections(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TwoDimMap&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.connections
     }
 }
 
 <span class="kw">impl</span>&lt;Handle: ChainHandle&gt; DynamicConnectedConnections&lt;Handle&gt; {
-    <span class="kw">pub fn </span>new(connections: Vec&lt;Vec&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>new(connections: TwoDimMap&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ connections }
     }
 
-    <span class="kw">pub fn </span>connections(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Vec&lt;Vec&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt;&gt; {
+    <span class="kw">pub fn </span>connections(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TwoDimMap&lt;ConnectedConnection&lt;Handle, Handle&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.connections
     }
 }
@@ -224,7 +217,7 @@
 {
     <span class="kw">fn </span>from(connections: ConnectedConnections&lt;Handle, SIZE&gt;) -&gt; <span class="self">Self </span>{
         DynamicConnectedConnections {
-            connections: into_nested_vec(connections.connections),
+            connections: connections.connections,
         }
     }
 }
@@ -236,7 +229,7 @@
 
     <span class="kw">fn </span>try_from(connections: DynamicConnectedConnections&lt;Handle&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="prelude-val">Ok</span>(ConnectedConnections {
-            connections: try_into_nested_array(connections.connections)<span class="question-mark">?</span>,
+            connections: connections.connections,
         })
     }
 }
@@ -251,18 +244,11 @@
 
 <span class="kw">impl</span>&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; ExportEnv <span class="kw">for </span>ConnectedConnections&lt;Handle, SIZE&gt; {
     <span class="kw">fn </span>export_env(<span class="kw-2">&amp;</span><span class="self">self</span>, writer: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>EnvWriter) {
-        <span class="kw">for </span>(i, inner_connections) <span class="kw">in </span><span class="self">self</span>.connections.iter().enumerate() {
-            <span class="kw">for </span>(j, connection_i_to_j) <span class="kw">in </span>inner_connections.iter().enumerate() {
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CONNECTION_ID_{j}_to_{i}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, connection_i_to_j.connection_id_a),
-                );
-
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CONNECTION_ID_{i}_to_{j}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, connection_i_to_j.connection_id_b),
-                );
-            }
+        <span class="kw">for </span>(src_chain, dst_chain, connection) <span class="kw">in </span><span class="self">self</span>.connections.iter() {
+            writer.write_env(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CONNECTION_ID_{}_to_{}"</span>, src_chain, dst_chain),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, connection.connection_id_a),
+            );
         }
     }
 }

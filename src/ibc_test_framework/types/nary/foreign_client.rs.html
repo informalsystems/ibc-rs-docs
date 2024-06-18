@@ -79,12 +79,6 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
 <span class="kw">use </span>ibc_relayer::foreign_client::ForeignClient;
@@ -94,7 +88,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::binary::foreign_client::ForeignClientPair;
 <span class="kw">use </span><span class="kw">crate</span>::types::env::{EnvWriter, ExportEnv};
 <span class="kw">use </span><span class="kw">crate</span>::types::tagged::<span class="kw-2">*</span>;
-<span class="kw">use </span><span class="kw">crate</span>::util::array::{into_nested_vec, try_into_nested_array};
+<span class="kw">use </span><span class="kw">crate</span>::util::two_dim_hash_map::TwoDimMap;
 
 <span class="doccomment">/**
    A [`ForeignClient`] that is tagged by a `Handle: ChainHandle` and
@@ -108,7 +102,7 @@
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>ForeignClientPairs&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; {
-    foreign_clients: [[ForeignClient&lt;Handle, Handle&gt;; SIZE]; SIZE],
+    foreign_clients: TwoDimMap&lt;ForeignClient&lt;Handle, Handle&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; ForeignClientPairs&lt;Handle, SIZE&gt; {
@@ -120,19 +114,15 @@
     </span><span class="kw">pub fn </span>foreign_client_at&lt;<span class="kw">const </span>SRC: usize, <span class="kw">const </span>DEST: usize&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;NthForeignClient&lt;Handle, DEST, SRC&gt;, Error&gt; {
-        <span class="kw">if </span>SRC &gt;= SIZE || DEST &gt;= SIZE {
-            <span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(
-                <span class="string">"cannot get foreign client beyond position {}/{}"</span>,
-                SRC,
-                DEST
-            )))
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>client = <span class="self">self</span>.foreign_clients[SRC][DEST]
-                .clone()
-                .map_chain(MonoTagged::new, MonoTagged::new);
-
-            <span class="prelude-val">Ok</span>(client)
-        }
+        <span class="kw">let </span>client = <span class="self">self
+            </span>.foreign_clients
+            .get((SRC, DEST))
+            .ok_or_else(|| {
+                Error::generic(<span class="macro">eyre!</span>(<span class="string">"No client entry found for chain `{SRC}` to `{DEST}`"</span>))
+            })<span class="question-mark">?
+            </span>.clone()
+            .map_chain(MonoTagged::new, MonoTagged::new);
+        <span class="prelude-val">Ok</span>(client)
     }
 
     <span class="kw">pub fn </span>foreign_client_pair_at&lt;<span class="kw">const </span>CHAIN_A: usize, <span class="kw">const </span>CHAIN_B: usize&gt;(
@@ -144,31 +134,29 @@
         <span class="prelude-val">Ok</span>(ForeignClientPair::new(client_a_to_b, client_b_to_a))
     }
 
-    <span class="kw">pub fn </span>into_nested_vec(<span class="self">self</span>) -&gt; Vec&lt;Vec&lt;ForeignClient&lt;Handle, Handle&gt;&gt;&gt; {
-        into_nested_vec(<span class="self">self</span>.foreign_clients)
+    <span class="kw">pub fn </span>into_nested_vec(<span class="self">self</span>) -&gt; TwoDimMap&lt;ForeignClient&lt;Handle, Handle&gt;&gt; {
+        <span class="self">self</span>.foreign_clients
     }
 }
 
-<span class="kw">impl</span>&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; TryFrom&lt;Vec&lt;Vec&lt;ForeignClient&lt;Handle, Handle&gt;&gt;&gt;&gt;
+<span class="kw">impl</span>&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; TryFrom&lt;TwoDimMap&lt;ForeignClient&lt;Handle, Handle&gt;&gt;&gt;
     <span class="kw">for </span>ForeignClientPairs&lt;Handle, SIZE&gt;
 {
     <span class="kw">type </span>Error = Error;
 
-    <span class="kw">fn </span>try_from(clients: Vec&lt;Vec&lt;ForeignClient&lt;Handle, Handle&gt;&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
-        <span class="kw">let </span>foreign_clients = try_into_nested_array(clients)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>try_from(clients: TwoDimMap&lt;ForeignClient&lt;Handle, Handle&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span>foreign_clients = clients;
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ foreign_clients })
     }
 }
 
 <span class="kw">impl</span>&lt;Handle: ChainHandle, <span class="kw">const </span>SIZE: usize&gt; ExportEnv <span class="kw">for </span>ForeignClientPairs&lt;Handle, SIZE&gt; {
     <span class="kw">fn </span>export_env(<span class="kw-2">&amp;</span><span class="self">self</span>, writer: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>EnvWriter) {
-        <span class="kw">for </span>(source, inner_clients) <span class="kw">in </span><span class="self">self</span>.foreign_clients.iter().enumerate() {
-            <span class="kw">for </span>(destination, client) <span class="kw">in </span>inner_clients.iter().enumerate() {
-                writer.write_env(
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CLIENT_ID_{source}_to_{destination}"</span>),
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, client.id()),
-                );
-            }
+        <span class="kw">for </span>(src_chain, dst_chain, client) <span class="kw">in </span><span class="self">self</span>.foreign_clients.iter() {
+            writer.write_env(
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"CLIENT_ID_{}_to_{}"</span>, src_chain, dst_chain),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}"</span>, client.id()),
+            );
         }
     }
 }

@@ -245,6 +245,17 @@
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Constructs for running test cases with more than two chains,
    together with the relayer setup with chain handles and foreign clients.
@@ -258,7 +269,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::framework::base::{HasOverrides, TestConfigOverride};
-<span class="kw">use </span><span class="kw">crate</span>::framework::binary::chain::RelayerConfigOverride;
+<span class="kw">use </span><span class="kw">crate</span>::framework::binary::chain::{RelayerConfigOverride, TopologyOverride};
 <span class="kw">use </span><span class="kw">crate</span>::framework::binary::node::{NodeConfigOverride, NodeGenesisOverride};
 <span class="kw">use </span><span class="kw">crate</span>::framework::nary::node::{run_nary_node_test, NaryNodeTest};
 <span class="kw">use </span><span class="kw">crate</span>::framework::supervisor::{RunWithSupervisor, SupervisorOverride};
@@ -295,7 +306,8 @@
         + NodeConfigOverride
         + NodeGenesisOverride
         + RelayerConfigOverride
-        + SupervisorOverride,
+        + SupervisorOverride
+        + TopologyOverride,
 {
     run_nary_node_test(<span class="kw-2">&amp;</span>RunNaryChainTest::new(<span class="kw-2">&amp;</span>RunWithSupervisor::new(test)))
 }
@@ -324,7 +336,8 @@
         + NodeConfigOverride
         + NodeGenesisOverride
         + RelayerConfigOverride
-        + SupervisorOverride,
+        + SupervisorOverride
+        + TopologyOverride,
 {
     run_nary_node_test(<span class="kw-2">&amp;</span>RunSelfConnectedNaryChainTest::new(
         <span class="kw-2">&amp;</span>RunWithSupervisor::new(test),
@@ -372,12 +385,17 @@
 <span class="kw">where
     </span>Test: NaryChainTest&lt;SIZE&gt;,
     Test: HasOverrides&lt;Overrides = Overrides&gt;,
-    Overrides: RelayerConfigOverride,
+    Overrides: RelayerConfigOverride + TopologyOverride,
 {
     <span class="kw">fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>, config: <span class="kw-2">&amp;</span>TestConfig, nodes: [FullNode; SIZE]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="kw">let </span>(relayer, chains) = boostrap_chains_with_nodes(config, nodes, |config| {
-            <span class="self">self</span>.test.get_overrides().modify_relayer_config(config);
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>(relayer, chains) = boostrap_chains_with_nodes(
+            config,
+            nodes,
+            <span class="self">self</span>.test.get_overrides().topology(),
+            |config| {
+                <span class="self">self</span>.test.get_overrides().modify_relayer_config(config);
+            },
+        )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>env_path = config.chain_store_dir.join(<span class="string">"nary-chains.env"</span>);
 
@@ -402,13 +420,17 @@
 <span class="kw">where
     </span>Test: NaryChainTest&lt;SIZE&gt;,
     Test: HasOverrides&lt;Overrides = Overrides&gt;,
-    Overrides: RelayerConfigOverride,
+    Overrides: RelayerConfigOverride + TopologyOverride,
 {
     <span class="kw">fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>, config: <span class="kw-2">&amp;</span>TestConfig, nodes: [FullNode; <span class="number">1</span>]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-        <span class="kw">let </span>(relayer, chains) =
-            boostrap_chains_with_self_connected_node(config, nodes[<span class="number">0</span>].clone(), |config| {
+        <span class="kw">let </span>(relayer, chains) = boostrap_chains_with_self_connected_node(
+            config,
+            nodes[<span class="number">0</span>].clone(),
+            <span class="self">self</span>.test.get_overrides().topology(),
+            |config| {
                 <span class="self">self</span>.test.get_overrides().modify_relayer_config(config);
-            })<span class="question-mark">?</span>;
+            },
+        )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>env_path = config.chain_store_dir.join(<span class="string">"nary-chains.env"</span>);
 
