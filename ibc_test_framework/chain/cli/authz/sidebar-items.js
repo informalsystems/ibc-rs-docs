@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["authz_grant","exec_grant","query_authz_grant"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["async_icq","bootstrap","fee_grant","host_zone","ica","provider","query","transfer","upgrade","version"]};
+window.SIDEBAR_ITEMS = {"mod":["async_icq","authz","bootstrap","fee_grant","host_zone","ica","provider","query","transfer","upgrade","version"]};
