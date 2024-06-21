@@ -984,6 +984,40 @@
 <a href="#984" id="984">984</a>
 <a href="#985" id="985">985</a>
 <a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Relayer configuration
 
 </span><span class="kw">pub mod </span>compat_mode;
@@ -1705,6 +1739,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::CosmosSdk(config) =&gt; config
                 .excluded_sequences
+                .map
                 .get(channel_id)
                 .map(|seqs| Cow::Borrowed(seqs.as_slice()))
                 .unwrap_or_else(|| Cow::Owned(Vec::new())),
@@ -1820,7 +1855,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>core::str::FromStr;
 
-    <span class="kw">use super</span>::{load, parse_gas_prices, store_writer};
+    <span class="kw">use super</span>::{load, parse_gas_prices, store_writer, ChainConfig};
     <span class="kw">use </span><span class="kw">crate</span>::config::GasPrice;
     <span class="kw">use </span>test_log::test;
 
@@ -1909,6 +1944,39 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = Vec::new();
         store_writer(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>buffer).unwrap();
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>serialize_valid_excluded_sequences_config() {
+        <span class="kw">let </span>path = <span class="macro">concat!</span>(
+            <span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>),
+            <span class="string">"/tests/config/fixtures/relayer_conf_example.toml"
+        </span>);
+
+        <span class="kw">let </span>config = load(path).expect(<span class="string">"could not parse config"</span>);
+
+        <span class="kw">let </span>excluded_sequences1 = <span class="kw">match </span>config.chains.first().unwrap() {
+            ChainConfig::CosmosSdk(chain_config) =&gt; chain_config.excluded_sequences.clone(),
+        };
+
+        <span class="kw">let </span>excluded_sequences2 = <span class="kw">match </span>config.chains.last().unwrap() {
+            ChainConfig::CosmosSdk(chain_config) =&gt; chain_config.excluded_sequences.clone(),
+        };
+
+        <span class="macro">assert_eq!</span>(excluded_sequences1, excluded_sequences2);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer = Vec::new();
+        store_writer(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;mut </span>buffer).unwrap();
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>serialize_invalid_excluded_sequences_config() {
+        <span class="kw">let </span>path = <span class="macro">concat!</span>(
+            <span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>),
+            <span class="string">"/tests/config/fixtures/relayer_conf_example_invalid_excluded_sequences.toml"
+        </span>);
+
+        <span class="macro">assert!</span>(load(path).is_err());
     }
 
     <span class="attr">#[test]

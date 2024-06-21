@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["DeprecatedGasAdjustmentSubdetail","Error","InvalidTrustThresholdSubdetail"]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["DeprecatedGasAdjustmentSubdetail","Error","ExpectedExcludedSequencesArraySubdetail","InvalidExcludedSequencesSeparatorSubdetail","InvalidTrustThresholdSubdetail","MissingEndExcludedSequenceSubdetail","MissingStartExcludedSequenceSubdetail","ParsingEndExcludedSequenceFailedSubdetail","ParsingStartExcludedSequenceFailedSubdetail"]};
