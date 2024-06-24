@@ -107,7 +107,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["hmac",["",[],["lib.rs","optim.rs","simple.rs"]]],\
 ["http",["",[["header",[],["map.rs","mod.rs","name.rs","value.rs"]],["uri",[],["authority.rs","builder.rs","mod.rs","path.rs","port.rs","scheme.rs"]]],["byte_str.rs","convert.rs","error.rs","extensions.rs","lib.rs","method.rs","request.rs","response.rs","status.rs","version.rs"]]],\
 ["http_body",["",[["combinators",[],["box_body.rs","map_data.rs","map_err.rs","mod.rs"]]],["collect.rs","empty.rs","full.rs","lib.rs","limited.rs","next.rs","size_hint.rs"]]],\
-["httparse",["",[["simd",[],["avx2.rs","mod.rs","sse42.rs"]]],["iter.rs","lib.rs","macros.rs"]]],\
+["httparse",["",[["simd",[],["avx2.rs","mod.rs","runtime.rs","sse42.rs","swar.rs"]]],["iter.rs","lib.rs","macros.rs"]]],\
 ["httpdate",["",[],["date.rs","lib.rs"]]],\
 ["humantime",["",[],["date.rs","duration.rs","lib.rs","wrapper.rs"]]],\
 ["humantime_serde",["",[],["lib.rs","option.rs"]]],\
