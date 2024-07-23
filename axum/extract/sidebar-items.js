@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["connect_info","path","rejection"],"struct":["BodyStream","ConnectInfo","DefaultBodyLimit","Host","MatchedPath","OriginalUri","Path","Query","RawBody","RawForm","RawPathParams","RawQuery","State"],"trait":["FromRef","FromRequest","FromRequestParts"]};
+window.SIDEBAR_ITEMS = {"mod":["path","rejection"],"struct":["DefaultBodyLimit","Host","NestedPath","Path","RawForm","RawPathParams","RawQuery","State"],"trait":["FromRef","FromRequest","FromRequestParts"],"type":["Request"]};
