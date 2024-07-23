@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tokio-1.38.0/src/runtime/time/wheel/level.rs`."><title>level.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="tokio" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../../tokio/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tokio-1.39.0/src/runtime/time/wheel/level.rs`."><title>level.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="tokio" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../../tokio/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -190,6 +190,8 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::time::{EntryList, TimerHandle, TimerShared};
 
 <span class="kw">use </span>std::{array, fmt, ptr::NonNull};
@@ -212,7 +214,6 @@
 }
 
 <span class="doccomment">/// Indicates when a slot must be processed next.
-</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Expiration {
     <span class="doccomment">/// The level containing the slot.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) level: usize,
@@ -273,7 +274,7 @@
             // pseudo-ring buffer, and we rotate around them indefinitely. If we
             // compute a deadline before now, and it's the top level, it
             // therefore means we're actually looking at a slot in the future.
-            </span><span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.level, <span class="kw">super</span>::NUM_LEVELS - <span class="number">1</span>);
+            </span><span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.level, <span class="kw">super</span>::MAX_LEVEL_INDEX);
 
             deadline += level_range;
         }
@@ -312,7 +313,7 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>add_entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: TimerHandle) {
-        <span class="kw">let </span>slot = slot_for(item.cached_when(), <span class="self">self</span>.level);
+        <span class="kw">let </span>slot = slot_for(item.true_when(), <span class="self">self</span>.level);
 
         <span class="self">self</span>.slot[slot].push_front(item);
 
@@ -320,22 +321,25 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>remove_entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: NonNull&lt;TimerShared&gt;) {
-        <span class="kw">let </span>slot = slot_for(<span class="kw">unsafe </span>{ item.as_ref().cached_when() }, <span class="self">self</span>.level);
+        <span class="kw">let </span>slot = slot_for(<span class="kw">unsafe </span>{ item.as_ref().true_when() }, <span class="self">self</span>.level);
 
         <span class="kw">unsafe </span>{ <span class="self">self</span>.slot[slot].remove(item) };
         <span class="kw">if </span><span class="self">self</span>.slot[slot].is_empty() {
-            <span class="comment">// The bit is currently set
-            </span><span class="macro">debug_assert!</span>(<span class="self">self</span>.occupied &amp; occupied_bit(slot) != <span class="number">0</span>);
-
             <span class="comment">// Unset the bit
             </span><span class="self">self</span>.occupied ^= occupied_bit(slot);
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>take_slot(<span class="kw-2">&amp;mut </span><span class="self">self</span>, slot: usize) -&gt; EntryList {
-        <span class="self">self</span>.occupied &amp;= !occupied_bit(slot);
-
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>take_slot(<span class="kw-2">&amp;mut </span><span class="self">self</span>, slot: usize) -&gt; EntryList {
         std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.slot[slot])
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>occupied_bit_maintain(<span class="kw-2">&amp;mut </span><span class="self">self</span>, slot: usize) {
+        <span class="kw">if </span><span class="self">self</span>.slot[slot].is_empty() {
+            <span class="self">self</span>.occupied &amp;= !occupied_bit(slot);
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.occupied |= occupied_bit(slot);
+        }
     }
 }
 
