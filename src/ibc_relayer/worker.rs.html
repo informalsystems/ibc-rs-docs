@@ -240,6 +240,18 @@
 <a href="#240" id="240">240</a>
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::channel::Ordering;
@@ -411,19 +423,31 @@
 
                     <span class="kw">let </span>resubmit = Resubmit::from_clear_interval(clear_interval);
 
+                    <span class="kw">let </span>(clear_cmd_tx, clear_cmd_rx) = crossbeam_channel::unbounded();
+                    <span class="kw">let </span>clear_task = packet::spawn_clear_cmd_worker(
+                        cmd_rx,
+                        link.clone(),
+                        should_clear_on_start,
+                        clear_interval,
+                        config.mode.packets.clear_limit,
+                        clear_cmd_tx,
+                    );
+                    task_handles.push(clear_task);
+
                     <span class="comment">// Only spawn the incentivized worker if a fee filter is specified in the configuration
                     </span><span class="kw">let </span>packet_task = <span class="kw">match </span>fee_filter {
                         <span class="prelude-val">Some</span>(filter) =&gt; packet::spawn_incentivized_packet_cmd_worker(
-                            cmd_rx,
+                            clear_cmd_rx,
                             link.clone(),
                             path.clone(),
                             filter,
                         ),
                         <span class="prelude-val">None </span>=&gt; packet::spawn_packet_cmd_worker(
-                            cmd_rx,
+                            clear_cmd_rx,
                             link.clone(),
                             should_clear_on_start,
                             clear_interval,
+                            config.mode.packets.clear_limit,
                             path.clone(),
                         ),
                     };

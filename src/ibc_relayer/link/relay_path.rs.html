@@ -1977,6 +1977,25 @@
 <a href="#1977" id="1977">1977</a>
 <a href="#1978" id="1978">1978</a>
 <a href="#1979" id="1979">1979</a>
+<a href="#1980" id="1980">1980</a>
+<a href="#1981" id="1981">1981</a>
+<a href="#1982" id="1982">1982</a>
+<a href="#1983" id="1983">1983</a>
+<a href="#1984" id="1984">1984</a>
+<a href="#1985" id="1985">1985</a>
+<a href="#1986" id="1986">1986</a>
+<a href="#1987" id="1987">1987</a>
+<a href="#1988" id="1988">1988</a>
+<a href="#1989" id="1989">1989</a>
+<a href="#1990" id="1990">1990</a>
+<a href="#1991" id="1991">1991</a>
+<a href="#1992" id="1992">1992</a>
+<a href="#1993" id="1993">1993</a>
+<a href="#1994" id="1994">1994</a>
+<a href="#1995" id="1995">1995</a>
+<a href="#1996" id="1996">1996</a>
+<a href="#1997" id="1997">1997</a>
+<a href="#1998" id="1998">1998</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::collections::VecDeque;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
@@ -2408,7 +2427,11 @@
         </span>TrackedEvents::new(result, tracking_id)
     }
 
-    <span class="kw">fn </span>relay_pending_packets(<span class="kw-2">&amp;</span><span class="self">self</span>, height: <span class="prelude-ty">Option</span>&lt;Height&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
+    <span class="kw">fn </span>relay_pending_packets(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
+        clear_limit: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
         <span class="kw">let </span>_span = <span class="macro">span!</span>(Level::ERROR, <span class="string">"relay_pending_packets"</span>, <span class="question-mark">?</span>height).entered();
 
         <span class="kw">let </span>tracking_id = TrackingId::new_packet_clearing();
@@ -2418,10 +2441,15 @@
         <span class="kw">let </span>chunk_size = src_config.query_packets_chunk_size();
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..=MAX_RETRIES {
-            <span class="kw">let </span>cleared_recv =
-                <span class="self">self</span>.schedule_recv_packet_and_timeout_msgs(height, chunk_size, tracking_id);
+            <span class="kw">let </span>cleared_recv = <span class="self">self</span>.schedule_recv_packet_and_timeout_msgs(
+                height,
+                chunk_size,
+                clear_limit,
+                tracking_id,
+            );
 
-            <span class="kw">let </span>cleared_ack = <span class="self">self</span>.schedule_packet_ack_msgs(height, chunk_size, tracking_id);
+            <span class="kw">let </span>cleared_ack =
+                <span class="self">self</span>.schedule_packet_ack_msgs(height, chunk_size, clear_limit, tracking_id);
 
             <span class="kw">match </span>cleared_recv.and(cleared_ack) {
                 <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
@@ -2437,14 +2465,18 @@
 
     <span class="doccomment">/// Clears any packets that were sent before `height`.
     /// If no height is passed in, then the latest height of the source chain is used.
-    </span><span class="kw">pub fn </span>schedule_packet_clearing(<span class="kw-2">&amp;</span><span class="self">self</span>, height: <span class="prelude-ty">Option</span>&lt;Height&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
+    </span><span class="kw">pub fn </span>schedule_packet_clearing(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
+        clear_limit: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
         <span class="kw">let </span>_span = <span class="macro">span!</span>(Level::ERROR, <span class="string">"schedule_packet_clearing"</span>, <span class="question-mark">?</span>height).entered();
 
         <span class="kw">let </span>clear_height = height
             .map(|h| h.decrement().map_err(|e| LinkError::decrement_height(h, e)))
             .transpose()<span class="question-mark">?</span>;
 
-        <span class="self">self</span>.relay_pending_packets(clear_height)<span class="question-mark">?</span>;
+        <span class="self">self</span>.relay_pending_packets(clear_height, clear_limit)<span class="question-mark">?</span>;
 
         <span class="macro">debug!</span>(height = <span class="question-mark">?</span>clear_height, <span class="string">"done relaying pending packets at clear height"</span>);
 
@@ -3118,6 +3150,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         opt_query_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
         chunk_size: usize,
+        clear_limit: usize,
         tracking_id: TrackingId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
         <span class="kw">let </span>_span = <span class="macro">span!</span>(
@@ -3140,10 +3173,12 @@
         }
 
         <span class="comment">// Retain only sequences which should not be filtered out
-        </span><span class="kw">let </span>sequences: Vec&lt;Sequence&gt; = sequences
+        </span><span class="kw">let </span>raw_sequences: Vec&lt;Sequence&gt; = sequences
             .into_iter()
             .filter(|sequence| !<span class="self">self</span>.exclude_src_sequences.contains(sequence))
             .collect();
+
+        <span class="kw">let </span>sequences = <span class="kw-2">&amp;</span>raw_sequences[..raw_sequences.len().min(clear_limit)];
 
         <span class="macro">debug!</span>(
             dst_chain = %<span class="self">self</span>.dst_chain().id(),
@@ -3156,7 +3191,7 @@
         <span class="comment">// Chunk-up the list of sequence nrs. into smaller parts,
         // and schedule operational data incrementally across each chunk.
         </span><span class="kw">for </span>events_chunk <span class="kw">in </span>query_packet_events_with(
-            <span class="kw-2">&amp;</span>sequences,
+            sequences,
             Qualified::SmallerEqual(query_height),
             <span class="self">self</span>.src_chain(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.path_id,
@@ -3185,6 +3220,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         opt_query_height: <span class="prelude-ty">Option</span>&lt;Height&gt;,
         chunk_size: usize,
+        clear_limit: usize,
         tracking_id: TrackingId,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), LinkError&gt; {
         <span class="kw">let </span>_span = <span class="macro">span!</span>(
@@ -3210,10 +3246,12 @@
         }
 
         <span class="comment">// Retain only sequences which should not be filtered out
-        </span><span class="kw">let </span>sequences: Vec&lt;Sequence&gt; = sequences
+        </span><span class="kw">let </span>raw_sequences: Vec&lt;Sequence&gt; = sequences
             .into_iter()
             .filter(|sequence| !<span class="self">self</span>.exclude_src_sequences.contains(sequence))
             .collect();
+
+        <span class="kw">let </span>sequences = <span class="kw-2">&amp;</span>raw_sequences[..raw_sequences.len().min(clear_limit)];
 
         <span class="macro">debug!</span>(
             dst_chain = %<span class="self">self</span>.dst_chain().id(),
@@ -3225,7 +3263,7 @@
 
         <span class="comment">// Incrementally process all the available sequence numbers in chunks
         </span><span class="kw">for </span>events_chunk <span class="kw">in </span>query_packet_events_with(
-            <span class="kw-2">&amp;</span>sequences,
+            sequences,
             Qualified::SmallerEqual(query_height),
             <span class="self">self</span>.src_chain(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.path_id,

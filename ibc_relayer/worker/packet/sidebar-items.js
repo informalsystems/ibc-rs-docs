@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["spawn_incentivized_packet_cmd_worker","spawn_packet_cmd_worker","spawn_packet_worker"]};
+window.SIDEBAR_ITEMS = {"fn":["spawn_clear_cmd_worker","spawn_incentivized_packet_cmd_worker","spawn_packet_cmd_worker","spawn_packet_worker"]};
