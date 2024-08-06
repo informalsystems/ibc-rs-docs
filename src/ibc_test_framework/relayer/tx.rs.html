@@ -79,6 +79,10 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>core::time::Duration;
 
@@ -93,9 +97,10 @@
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
 <span class="kw">use </span>tendermint_rpc::Url;
 
+<span class="kw">use </span><span class="kw">crate</span>::chain::chain_type::ChainType;
 <span class="kw">use </span><span class="kw">crate</span>::error::{handle_generic_error, Error};
 
-<span class="kw">pub fn </span>gas_config_for_test(native_token: String) -&gt; GasConfig {
+<span class="kw">pub fn </span>gas_config_for_test(native_token: String, chain_type: ChainType) -&gt; GasConfig {
     <span class="kw">let </span>max_gas = <span class="number">3000000</span>;
     <span class="kw">let </span>gas_multiplier = <span class="number">1.5</span>;
 
@@ -118,6 +123,12 @@
         granter: fee_granter.clone(),
     };
 
+    <span class="kw">let </span>dynamic_gas_price = <span class="kw">if </span>chain_type.enable_dynamic_fee() {
+        DynamicGasPrice::unsafe_new(<span class="bool-val">true</span>, <span class="number">1.3</span>, <span class="number">5.0</span>)
+    } <span class="kw">else </span>{
+        DynamicGasPrice::disabled()
+    };
+
     GasConfig {
         default_gas,
         max_gas,
@@ -125,16 +136,13 @@
         gas_price,
         max_fee,
         fee_granter,
-        dynamic_gas_price: DynamicGasPrice {
-            enabled: <span class="bool-val">false</span>,
-            multiplier: <span class="number">1.0</span>,
-            max: <span class="number">0.6</span>,
-        },
+        dynamic_gas_price,
     }
 }
 
 <span class="kw">pub fn </span>new_tx_config_for_test(
     chain_id: ChainId,
+    chain_type: ChainType,
     raw_rpc_address: String,
     raw_grpc_address: String,
     address_type: AddressType,
@@ -142,7 +150,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;TxConfig, Error&gt; {
     <span class="kw">let </span>rpc_address = Url::from_str(<span class="kw-2">&amp;</span>raw_rpc_address).map_err(handle_generic_error)<span class="question-mark">?</span>;
     <span class="kw">let </span>grpc_address = Uri::from_str(<span class="kw-2">&amp;</span>raw_grpc_address).map_err(handle_generic_error)<span class="question-mark">?</span>;
-    <span class="kw">let </span>gas_config = gas_config_for_test(native_token);
+    <span class="kw">let </span>gas_config = gas_config_for_test(native_token, chain_type);
     <span class="kw">let </span>rpc_timeout = Duration::from_secs(<span class="number">30</span>);
     <span class="kw">let </span>max_msg_num = Default::default();
     <span class="kw">let </span>max_tx_size = Default::default();

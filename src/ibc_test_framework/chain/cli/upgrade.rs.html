@@ -122,6 +122,30 @@
 <a href="#122" id="122">122</a>
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Methods for voting on a proposal.
 */
@@ -138,7 +162,7 @@
     fees: <span class="kw-2">&amp;</span>str,
     proposal_id: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-    simple_exec(
+    <span class="kw">let </span>raw_output = simple_exec(
         chain_id,
         command_path,
         <span class="kw-2">&amp;</span>[
@@ -159,9 +183,33 @@
             <span class="string">"validator"</span>,
             <span class="string">"--fees"</span>,
             fees,
+            <span class="string">"--output"</span>,
+            <span class="string">"json"</span>,
             <span class="string">"--yes"</span>,
         ],
     )<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>output: serde_json::Value =
+        serde_json::from_str(<span class="kw-2">&amp;</span>raw_output.stdout).map_err(handle_generic_error)<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>output_code = output
+        .get(<span class="string">"code"</span>)
+        .and_then(|code| code.as_u64())
+        .ok_or_else(|| {
+            Error::generic(<span class="macro">eyre!</span>(<span class="string">"failed to extract 'code' from 'tx gov vote' command"</span>))
+        })<span class="question-mark">?</span>;
+
+    <span class="kw">if </span>output_code != <span class="number">0 </span>{
+        <span class="kw">let </span>output_logs = output
+            .get(<span class="string">"raw_log"</span>)
+            .and_then(|code| code.as_str())
+            .ok_or_else(|| {
+                Error::generic(<span class="macro">eyre!</span>(
+                    <span class="string">"failed to extract 'raw_logs' from 'tx gov vote' command"
+                </span>))
+            })<span class="question-mark">?</span>;
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">"output code for commande 'tx gov vote' should be 0, but is instead '{output_code}'. Detail: {output_logs}"</span>, )));
+    }
 
     <span class="prelude-val">Ok</span>(())
 }
