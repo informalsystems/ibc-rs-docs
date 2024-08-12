@@ -1996,6 +1996,15 @@
 <a href="#1996" id="1996">1996</a>
 <a href="#1997" id="1997">1997</a>
 <a href="#1998" id="1998">1998</a>
+<a href="#1999" id="1999">1999</a>
+<a href="#2000" id="2000">2000</a>
+<a href="#2001" id="2001">2001</a>
+<a href="#2002" id="2002">2002</a>
+<a href="#2003" id="2003">2003</a>
+<a href="#2004" id="2004">2004</a>
+<a href="#2005" id="2005">2005</a>
+<a href="#2006" id="2006">2006</a>
+<a href="#2007" id="2007">2007</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap <span class="kw">as </span>HashMap;
 <span class="kw">use </span>alloc::collections::VecDeque;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
@@ -2028,6 +2037,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::chain::counterparty::unreceived_packets;
 <span class="kw">use </span><span class="kw">crate</span>::chain::endpoint::ChainStatus;
 <span class="kw">use </span><span class="kw">crate</span>::chain::handle::ChainHandle;
+<span class="kw">use </span><span class="kw">crate</span>::chain::requests::Paginate;
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::QueryChannelRequest;
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::QueryClientEventRequest;
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::QueryHeight;
@@ -3161,9 +3171,13 @@
         .entered();
 
         <span class="comment">// Pull the s.n. of all packets that the destination chain has not yet received.
-        </span><span class="kw">let </span>(sequences, src_response_height) =
-            unreceived_packets(<span class="self">self</span>.dst_chain(), <span class="self">self</span>.src_chain(), <span class="kw-2">&amp;</span><span class="self">self</span>.path_id)
-                .map_err(LinkError::supervisor)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>(sequences, src_response_height) = unreceived_packets(
+            <span class="self">self</span>.dst_chain(),
+            <span class="self">self</span>.src_chain(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.path_id,
+            Paginate::All,
+        )
+        .map_err(LinkError::supervisor)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>query_height = opt_query_height.unwrap_or(src_response_height);
 
@@ -3230,9 +3244,13 @@
         )
         .entered();
 
-        <span class="kw">let </span>sequences_and_height =
-            unreceived_acknowledgements(<span class="self">self</span>.dst_chain(), <span class="self">self</span>.src_chain(), <span class="kw-2">&amp;</span><span class="self">self</span>.path_id)
-                .map_err(LinkError::supervisor)<span class="question-mark">?</span>;
+        <span class="kw">let </span>sequences_and_height = unreceived_acknowledgements(
+            <span class="self">self</span>.dst_chain(),
+            <span class="self">self</span>.src_chain(),
+            <span class="kw-2">&amp;</span><span class="self">self</span>.path_id,
+            Paginate::All,
+        )
+        .map_err(LinkError::supervisor)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="prelude-val">Some</span>((sequences, src_response_height)) = sequences_and_height <span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());

@@ -665,6 +665,17 @@
 <a href="#665" id="665">665</a>
 <a href="#666" id="666">666</a>
 <a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashSet;
 
 <span class="kw">use </span>ibc_relayer_types::{
@@ -686,7 +697,7 @@
 <span class="kw">use </span>tracing::{error, trace};
 
 <span class="kw">use </span><span class="kw">super</span>::requests::{
-    IncludeProof, PageRequest, QueryChannelRequest, QueryClientConnectionsRequest,
+    IncludeProof, PageRequest, Paginate, QueryChannelRequest, QueryClientConnectionsRequest,
     QueryClientStateRequest, QueryConnectionRequest, QueryPacketAcknowledgementsRequest,
     QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
 };
@@ -1048,13 +1059,14 @@
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     port_id: <span class="kw-2">&amp;</span>PortId,
     channel_id: <span class="kw-2">&amp;</span>ChannelId,
+    paginate: Paginate,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;Sequence&gt;, Height), Error&gt; {
     <span class="comment">// get the packet commitments on the counterparty/ source chain
     </span><span class="kw">let </span>(<span class="kw-2">mut </span>commit_sequences, response_height) = chain
         .query_packet_commitments(QueryPacketCommitmentsRequest {
             port_id: port_id.clone(),
             channel_id: channel_id.clone(),
-            pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
+            pagination: paginate,
         })
         .map_err(Error::relayer)<span class="question-mark">?</span>;
 
@@ -1091,6 +1103,7 @@
     port_id: <span class="kw-2">&amp;</span>PortId,
     channel_id: <span class="kw-2">&amp;</span>ChannelId,
     commit_sequences: Vec&lt;Sequence&gt;,
+    pagination: Paginate,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;Sequence&gt;, Height)&gt;, Error&gt; {
     <span class="comment">// If there aren't any sequences to query for, return early.
     // Otherwise we end up with the full list of acknowledgements on chain,
@@ -1106,7 +1119,7 @@
         .query_packet_acknowledgements(QueryPacketAcknowledgementsRequest {
             port_id: port_id.clone(),
             channel_id: channel_id.clone(),
-            pagination: <span class="prelude-val">Some</span>(PageRequest::all()),
+            pagination,
             packet_commitment_sequences: commit_sequences,
         })
         .map_err(Error::relayer)<span class="question-mark">?</span>;
@@ -1167,11 +1180,13 @@
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     counterparty_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     path: <span class="kw-2">&amp;</span>PathIdentifiers,
+    paginate: Paginate,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;Sequence&gt;, Height), Error&gt; {
     <span class="kw">let </span>(commit_sequences, h) = commitments_on_chain(
         counterparty_chain,
         <span class="kw-2">&amp;</span>path.counterparty_port_id,
         <span class="kw-2">&amp;</span>path.counterparty_channel_id,
+        paginate,
     )<span class="question-mark">?</span>;
 
     <span class="macro">telemetry!</span>(
@@ -1208,6 +1223,7 @@
         counterparty_chain,
         <span class="kw-2">&amp;</span>counterparty.port_id,
         counterparty_channel_id,
+        Paginate::All,
     )<span class="question-mark">?</span>;
 
     <span class="kw">let </span>sequences_and_height = packet_acknowledgements(
@@ -1215,6 +1231,7 @@
         <span class="kw-2">&amp;</span>channel.port_id,
         <span class="kw-2">&amp;</span>channel.channel_id,
         commitments_on_counterparty,
+        Paginate::All,
     )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(sequences_and_height)
@@ -1253,14 +1270,17 @@
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     counterparty_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     path: <span class="kw-2">&amp;</span>PathIdentifiers,
+    pagination: Paginate,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;Sequence&gt;, Height)&gt;, Error&gt; {
-    <span class="kw">let </span>(commitments_on_src, <span class="kw">_</span>) = commitments_on_chain(chain, <span class="kw-2">&amp;</span>path.port_id, <span class="kw-2">&amp;</span>path.channel_id)<span class="question-mark">?</span>;
+    <span class="kw">let </span>(commitments_on_src, <span class="kw">_</span>) =
+        commitments_on_chain(chain, <span class="kw-2">&amp;</span>path.port_id, <span class="kw-2">&amp;</span>path.channel_id, pagination)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>acks_and_height_on_counterparty = packet_acknowledgements(
         counterparty_chain,
         <span class="kw-2">&amp;</span>path.counterparty_port_id,
         <span class="kw-2">&amp;</span>path.counterparty_channel_id,
         commitments_on_src,
+        pagination,
     )<span class="question-mark">?</span>;
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>((acks_on_counterparty, height)) = acks_and_height_on_counterparty {
@@ -1292,6 +1312,7 @@
     chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     counterparty_chain: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
     channel: <span class="kw-2">&amp;</span>IdentifiedChannelEnd,
+    pagination: Paginate,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;PendingPackets, Error&gt; {
     <span class="kw">let </span>counterparty = channel.channel_end.counterparty();
     <span class="kw">let </span>counterparty_channel_id = counterparty
@@ -1300,7 +1321,7 @@
         .ok_or_else(Error::missing_counterparty_channel_id)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>(commitments_on_src, <span class="kw">_</span>) =
-        commitments_on_chain(chain, <span class="kw-2">&amp;</span>channel.port_id, <span class="kw-2">&amp;</span>channel.channel_id)<span class="question-mark">?</span>;
+        commitments_on_chain(chain, <span class="kw-2">&amp;</span>channel.port_id, <span class="kw-2">&amp;</span>channel.channel_id, pagination)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>unreceived = unreceived_packets_sequences(
         counterparty_chain,
@@ -1314,6 +1335,7 @@
         <span class="kw-2">&amp;</span>counterparty.port_id,
         counterparty_channel_id,
         commitments_on_src,
+        Paginate::All,
     )<span class="question-mark">?</span>;
 
     <span class="kw">let </span>pending_acks = <span class="kw">if let </span><span class="prelude-val">Some</span>((acks_on_counterparty, <span class="kw">_</span>)) = acks_on_counterparty {
