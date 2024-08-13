@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["InformalTrace","Map","Meta","Set"]};

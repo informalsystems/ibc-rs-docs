@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["mbt"]};
+window.SIDEBAR_ITEMS = {};
