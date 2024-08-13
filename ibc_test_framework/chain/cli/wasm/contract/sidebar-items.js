@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["instantiate_wasm_contract","store_wasm_client_code","store_wasm_contract"]};

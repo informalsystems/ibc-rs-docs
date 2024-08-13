@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["deposit_proposal","submit_gov_proposal","vote_proposal"]};

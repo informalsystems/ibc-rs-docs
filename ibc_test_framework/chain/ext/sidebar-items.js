@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["async_icq","authz","bootstrap","crosschainquery","fee","fee_grant","forward","ica","proposal","transfer","version","wait_chain"]};
+window.SIDEBAR_ITEMS = {"mod":["async_icq","authz","bootstrap","crosschainquery","fee","fee_grant","forward","ica","proposal","transfer","version","wait_chain","wasm_client"]};

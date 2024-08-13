@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tokio-1.39.0/src/runtime/time/entry.rs`."><title>entry.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="tokio" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../tokio/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tokio-1.39.2/src/runtime/time/entry.rs`."><title>entry.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="tokio" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../tokio/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -619,6 +619,63 @@
 <a href="#619" id="619">619</a>
 <a href="#620" id="620">620</a>
 <a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Timer state structures.
 //!
 //! This module contains the heart of the intrusive timer implementation, and as
@@ -642,8 +699,9 @@
 //!
 //! Each timer has a state field associated with it. This field contains either
 //! the current scheduled time, or a special flag value indicating its state.
-//! This state can either indicate that the timer is firing (and thus will be fired
-//! with an `Ok(())` result soon) or that it has already been fired/deregistered.
+//! This state can either indicate that the timer is on the 'pending' queue (and
+//! thus will be fired with an `Ok(())` result soon) or that it has already been
+//! fired/deregistered.
 //!
 //! This single state field allows for code that is firing the timer to
 //! synchronize with any racing `reset` calls reliably.
@@ -669,10 +727,10 @@
 //! There is of course a race condition between timer reset and timer
 //! expiration. If the driver fails to observe the updated expiration time, it
 //! could trigger expiration of the timer too early. However, because
-//! [`mark_firing`][mark_firing] performs a compare-and-swap, it will identify this race and
-//! refuse to mark the timer as firing.
+//! [`mark_pending`][mark_pending] performs a compare-and-swap, it will identify this race and
+//! refuse to mark the timer as pending.
 //!
-//! [mark_firing]: TimerHandle::mark_firing
+//! [mark_pending]: TimerHandle::mark_pending
 
 </span><span class="kw">use </span><span class="kw">crate</span>::loom::cell::UnsafeCell;
 <span class="kw">use </span><span class="kw">crate</span>::loom::sync::atomic::AtomicU64;
@@ -690,9 +748,9 @@
 
 <span class="kw">type </span>TimerResult = <span class="prelude-ty">Result</span>&lt;(), <span class="kw">crate</span>::time::error::Error&gt;;
 
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">const </span>STATE_DEREGISTERED: u64 = u64::MAX;
-<span class="kw">const </span>STATE_FIRING: u64 = STATE_DEREGISTERED - <span class="number">1</span>;
-<span class="kw">const </span>STATE_MIN_VALUE: u64 = STATE_FIRING;
+<span class="kw">const </span>STATE_DEREGISTERED: u64 = u64::MAX;
+<span class="kw">const </span>STATE_PENDING_FIRE: u64 = STATE_DEREGISTERED - <span class="number">1</span>;
+<span class="kw">const </span>STATE_MIN_VALUE: u64 = STATE_PENDING_FIRE;
 <span class="doccomment">/// The largest safe integer to use for ticks.
 ///
 /// This value should be updated if any other signal values are added above.
@@ -743,6 +801,10 @@
         }
     }
 
+    <span class="kw">fn </span>is_pending(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.state.load(Ordering::Relaxed) == STATE_PENDING_FIRE
+    }
+
     <span class="doccomment">/// Returns the current expiration time, or None if not currently scheduled.
     </span><span class="kw">fn </span>when(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;u64&gt; {
         <span class="kw">let </span>cur_state = <span class="self">self</span>.state.load(Ordering::Relaxed);
@@ -778,28 +840,26 @@
         }
     }
 
-    <span class="doccomment">/// Marks this timer firing, if its scheduled time is not after `not_after`.
+    <span class="doccomment">/// Marks this timer as being moved to the pending list, if its scheduled
+    /// time is not after `not_after`.
     ///
     /// If the timer is scheduled for a time after `not_after`, returns an Err
     /// containing the current scheduled time.
     ///
     /// SAFETY: Must hold the driver lock.
-    </span><span class="kw">unsafe fn </span>mark_firing(<span class="kw-2">&amp;</span><span class="self">self</span>, not_after: u64) -&gt; <span class="prelude-ty">Result</span>&lt;(), u64&gt; {
+    </span><span class="kw">unsafe fn </span>mark_pending(<span class="kw-2">&amp;</span><span class="self">self</span>, not_after: u64) -&gt; <span class="prelude-ty">Result</span>&lt;(), u64&gt; {
         <span class="comment">// Quick initial debug check to see if the timer is already fired. Since
         // firing the timer can only happen with the driver lock held, we know
         // we shouldn't be able to "miss" a transition to a fired state, even
         // with relaxed ordering.
         </span><span class="kw">let </span><span class="kw-2">mut </span>cur_state = <span class="self">self</span>.state.load(Ordering::Relaxed);
+
         <span class="kw">loop </span>{
-            <span class="comment">// Because its state is STATE_DEREGISTERED, it has been fired.
-            </span><span class="kw">if </span>cur_state == STATE_DEREGISTERED {
-                <span class="kw">break </span><span class="prelude-val">Err</span>(cur_state);
-            }
             <span class="comment">// improve the error message for things like
             // https://github.com/tokio-rs/tokio/issues/3675
             </span><span class="macro">assert!</span>(
                 cur_state &lt; STATE_MIN_VALUE,
-                <span class="string">"mark_firing called when the timer entry is in an invalid state"
+                <span class="string">"mark_pending called when the timer entry is in an invalid state"
             </span>);
 
             <span class="kw">if </span>cur_state &gt; not_after {
@@ -808,7 +868,7 @@
 
             <span class="kw">match </span><span class="self">self</span>.state.compare_exchange_weak(
                 cur_state,
-                STATE_FIRING,
+                STATE_PENDING_FIRE,
                 Ordering::AcqRel,
                 Ordering::Acquire,
             ) {
@@ -955,6 +1015,11 @@
     /// Only accessed under the entry lock.
     </span>pointers: linked_list::Pointers&lt;TimerShared&gt;,
 
+    <span class="doccomment">/// The expiration time for which this entry is currently registered.
+    /// Generally owned by the driver, but is accessed by the entry when not
+    /// registered.
+    </span>cached_when: AtomicU64,
+
     <span class="doccomment">/// Current state. This records whether the timer entry is currently under
     /// the ownership of the driver, and if not, its current state (not
     /// complete, fired, error, etc).
@@ -969,6 +1034,7 @@
 <span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span>TimerShared {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_struct(<span class="string">"TimerShared"</span>)
+            .field(<span class="string">"cached_when"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cached_when.load(Ordering::Relaxed))
             .field(<span class="string">"state"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.state)
             .finish()
     }
@@ -986,10 +1052,38 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(shard_id: u32) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             shard_id,
+            cached_when: AtomicU64::new(<span class="number">0</span>),
             pointers: linked_list::Pointers::new(),
             state: StateCell::default(),
             _p: PhantomPinned,
         }
+    }
+
+    <span class="doccomment">/// Gets the cached time-of-expiration value.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>cached_when(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="comment">// Cached-when is only accessed under the driver lock, so we can use relaxed
+        </span><span class="self">self</span>.cached_when.load(Ordering::Relaxed)
+    }
+
+    <span class="doccomment">/// Gets the true time-of-expiration value, and copies it into the cached
+    /// time-of-expiration value.
+    ///
+    /// SAFETY: Must be called with the driver lock held, and when this entry is
+    /// not in any timer wheel lists.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>sync_when(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">let </span>true_when = <span class="self">self</span>.true_when();
+
+        <span class="self">self</span>.cached_when.store(true_when, Ordering::Relaxed);
+
+        true_when
+    }
+
+    <span class="doccomment">/// Sets the cached time-of-expiration value.
+    ///
+    /// SAFETY: Must be called with the driver lock held, and when this entry is
+    /// not in any timer wheel lists.
+    </span><span class="kw">unsafe fn </span>set_cached_when(<span class="kw-2">&amp;</span><span class="self">self</span>, when: u64) {
+        <span class="self">self</span>.cached_when.store(when, Ordering::Relaxed);
     }
 
     <span class="doccomment">/// Returns the true time-of-expiration value, with relaxed memory ordering.
@@ -1004,6 +1098,7 @@
     /// in the timer wheel.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>set_expiration(<span class="kw-2">&amp;</span><span class="self">self</span>, t: u64) {
         <span class="self">self</span>.state.set_expiration(t);
+        <span class="self">self</span>.cached_when.store(t, Ordering::Relaxed);
     }
 
     <span class="doccomment">/// Sets the true time-of-expiration only if it is after the current.
@@ -1173,8 +1268,16 @@
 }
 
 <span class="kw">impl </span>TimerHandle {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>true_when(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
-        <span class="kw">unsafe </span>{ <span class="self">self</span>.inner.as_ref().true_when() }
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>cached_when(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">unsafe </span>{ <span class="self">self</span>.inner.as_ref().cached_when() }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>sync_when(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+        <span class="kw">unsafe </span>{ <span class="self">self</span>.inner.as_ref().sync_when() }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>is_pending(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">unsafe </span>{ <span class="self">self</span>.inner.as_ref().state.is_pending() }
     }
 
     <span class="doccomment">/// Forcibly sets the true and cached expiration times to the given tick.
@@ -1185,7 +1288,7 @@
         <span class="self">self</span>.inner.as_ref().set_expiration(tick);
     }
 
-    <span class="doccomment">/// Attempts to mark this entry as firing. If the expiration time is after
+    <span class="doccomment">/// Attempts to mark this entry as pending. If the expiration time is after
     /// `not_after`, however, returns an Err with the current expiration time.
     ///
     /// If an `Err` is returned, the `cached_when` value will be updated to this
@@ -1193,8 +1296,19 @@
     ///
     /// SAFETY: The caller must ensure that the handle remains valid, the driver
     /// lock is held, and that the timer is not in any wheel linked lists.
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>mark_firing(<span class="kw-2">&amp;</span><span class="self">self</span>, not_after: u64) -&gt; <span class="prelude-ty">Result</span>&lt;(), u64&gt; {
-        <span class="self">self</span>.inner.as_ref().state.mark_firing(not_after)
+    /// After returning Ok, the entry must be added to the pending list.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>mark_pending(<span class="kw-2">&amp;</span><span class="self">self</span>, not_after: u64) -&gt; <span class="prelude-ty">Result</span>&lt;(), u64&gt; {
+        <span class="kw">match </span><span class="self">self</span>.inner.as_ref().state.mark_pending(not_after) {
+            <span class="prelude-val">Ok</span>(()) =&gt; {
+                <span class="comment">// mark this as being on the pending queue in cached_when
+                </span><span class="self">self</span>.inner.as_ref().set_cached_when(u64::MAX);
+                <span class="prelude-val">Ok</span>(())
+            }
+            <span class="prelude-val">Err</span>(tick) =&gt; {
+                <span class="self">self</span>.inner.as_ref().set_cached_when(tick);
+                <span class="prelude-val">Err</span>(tick)
+            }
+        }
     }
 
     <span class="doccomment">/// Attempts to transition to a terminal state. If the state is already a

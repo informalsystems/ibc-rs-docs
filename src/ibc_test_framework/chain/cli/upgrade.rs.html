@@ -135,22 +135,12 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Methods for voting on a proposal.
 */
 </span><span class="kw">use </span>eyre::eyre;
 
+<span class="kw">use </span><span class="kw">crate</span>::chain::cli::query::query_tx_hash;
 <span class="kw">use </span><span class="kw">crate</span>::chain::exec::simple_exec;
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
@@ -162,7 +152,7 @@
     fees: <span class="kw-2">&amp;</span>str,
     proposal_id: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-    <span class="kw">let </span>raw_output = simple_exec(
+    <span class="kw">let </span>output = simple_exec(
         chain_id,
         command_path,
         <span class="kw-2">&amp;</span>[
@@ -189,27 +179,15 @@
         ],
     )<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>output: serde_json::Value =
-        serde_json::from_str(<span class="kw-2">&amp;</span>raw_output.stdout).map_err(handle_generic_error)<span class="question-mark">?</span>;
+    std::thread::sleep(core::time::Duration::from_secs(<span class="number">1</span>));
 
-    <span class="kw">let </span>output_code = output
-        .get(<span class="string">"code"</span>)
-        .and_then(|code| code.as_u64())
-        .ok_or_else(|| {
-            Error::generic(<span class="macro">eyre!</span>(<span class="string">"failed to extract 'code' from 'tx gov vote' command"</span>))
-        })<span class="question-mark">?</span>;
-
-    <span class="kw">if </span>output_code != <span class="number">0 </span>{
-        <span class="kw">let </span>output_logs = output
-            .get(<span class="string">"raw_log"</span>)
-            .and_then(|code| code.as_str())
-            .ok_or_else(|| {
-                Error::generic(<span class="macro">eyre!</span>(
-                    <span class="string">"failed to extract 'raw_logs' from 'tx gov vote' command"
-                </span>))
-            })<span class="question-mark">?</span>;
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::generic(<span class="macro">eyre!</span>(<span class="string">"output code for commande 'tx gov vote' should be 0, but is instead '{output_code}'. Detail: {output_logs}"</span>, )));
-    }
+    query_tx_hash(
+        chain_id,
+        command_path,
+        home_path,
+        rpc_listen_address,
+        <span class="kw-2">&amp;</span>output.stdout,
+    )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
