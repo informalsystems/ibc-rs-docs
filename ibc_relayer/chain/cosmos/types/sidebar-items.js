@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["account","app_state","config","events","gas","tx"]};
+window.SIDEBAR_ITEMS = {"mod":["account","config","events","gas","tx"]};

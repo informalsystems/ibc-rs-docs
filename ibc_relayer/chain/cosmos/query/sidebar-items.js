@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["abci_query","fetch_version_specs","header_query","packet_query","tx_hash_query"],"mod":["account","balance","consensus_state","custom","denom_trace","fee","status","tx"],"struct":["QueryResponse"]};
+window.SIDEBAR_ITEMS = {"fn":["abci_query","fetch_version_specs","header_query","packet_query","tx_hash_query"],"mod":["account","balance","connection","consensus_state","custom","denom_trace","fee","status","tx"],"struct":["QueryResponse"]};
