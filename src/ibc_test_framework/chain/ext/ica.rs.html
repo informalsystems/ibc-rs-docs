@@ -174,7 +174,28 @@
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde_json::json;
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>ibc_relayer::upgrade_chain::requires_legacy_upgrade_proposal;
+<span class="kw">use </span>serde_json::json;
 
 <span class="kw">use </span>ibc_relayer::chain::tracking::TrackedMsgs;
 <span class="kw">use </span>ibc_relayer_types::applications::ics27_ica::msgs::register::{
@@ -239,7 +260,7 @@
 }
 
 <span class="attr">#[allow(clippy::type_complexity)]
-</span><span class="kw">pub fn </span>register_interchain_account&lt;Chain: ChainHandle, Counterparty: ChainHandle&gt;(
+</span><span class="kw">pub fn </span>register_unordered_interchain_account&lt;Chain: ChainHandle, Counterparty: ChainHandle&gt;(
     chain: <span class="kw-2">&amp;</span>MonoTagged&lt;Chain, FullNode&gt;,
     handle: <span class="kw-2">&amp;</span>Chain,
     connection: <span class="kw-2">&amp;</span>ConnectedConnection&lt;Chain, Counterparty&gt;,
@@ -263,13 +284,23 @@
         <span class="string">"host_connection_id"</span>: connection.connection_id_b.<span class="number">0
     </span>});
 
-    <span class="kw">let </span>msg = LegacyMsgRegisterInterchainAccount {
-        owner,
-        connection_id: connection.connection_id_a.<span class="number">0</span>.clone(),
-        version: Version::new(version_obj.to_string()),
-    };
+    <span class="kw">let </span>msg_any = <span class="kw">if </span>requires_legacy_upgrade_proposal(handle.clone()) {
+        <span class="kw">let </span>msg = LegacyMsgRegisterInterchainAccount {
+            owner,
+            connection_id: connection.connection_id_a.<span class="number">0</span>.clone(),
+            version: Version::new(version_obj.to_string()),
+        };
 
-    <span class="kw">let </span>msg_any = msg.to_any();
+        msg.to_any()
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>msg = MsgRegisterInterchainAccount {
+            owner,
+            connection_id: connection.connection_id_a.<span class="number">0</span>.clone(),
+            version: Version::new(version_obj.to_string()),
+            ordering: Ordering::Unordered,
+        };
+        msg.to_any()
+    };
 
     <span class="kw">let </span>tm = TrackedMsgs::new_static(<span class="macro">vec!</span>[msg_any], <span class="string">"RegisterInterchainAccount"</span>);
 
@@ -319,14 +350,23 @@
         <span class="string">"host_connection_id"</span>: connection.connection_id_b.<span class="number">0
     </span>});
 
-    <span class="kw">let </span>msg = MsgRegisterInterchainAccount {
-        owner,
-        connection_id: connection.connection_id_a.<span class="number">0</span>.clone(),
-        version: Version::new(version_obj.to_string()),
-        ordering: Ordering::Ordered,
-    };
+    <span class="kw">let </span>msg_any = <span class="kw">if </span>requires_legacy_upgrade_proposal(handle.clone()) {
+        <span class="kw">let </span>msg = LegacyMsgRegisterInterchainAccount {
+            owner,
+            connection_id: connection.connection_id_a.<span class="number">0</span>.clone(),
+            version: Version::new(version_obj.to_string()),
+        };
 
-    <span class="kw">let </span>msg_any = msg.to_any();
+        msg.to_any()
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>msg = MsgRegisterInterchainAccount {
+            owner,
+            connection_id: connection.connection_id_a.<span class="number">0</span>.clone(),
+            version: Version::new(version_obj.to_string()),
+            ordering: Ordering::Ordered,
+        };
+        msg.to_any()
+    };
 
     <span class="kw">let </span>tm = TrackedMsgs::new_static(<span class="macro">vec!</span>[msg_any], <span class="string">"RegisterInterchainAccount"</span>);
 
