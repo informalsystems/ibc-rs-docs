@@ -156,23 +156,19 @@
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>http::uri::Uri;
-<span class="kw">use </span>ibc_proto::cosmos::base::tendermint::v1beta1::service_client::ServiceClient;
-<span class="kw">use </span>ibc_proto::cosmos::base::tendermint::v1beta1::GetNodeInfoRequest;
+</pre></div><pre class="rust"><code><span class="kw">use </span>ibc_proto::cosmos::base::tendermint::v1beta1::GetNodeInfoResponse;
 <span class="kw">use </span>ibc_relayer_types::core::ics04_channel::packet::Sequence;
 <span class="kw">use </span>ibc_relayer_types::core::ics23_commitment::merkle::{
     convert_tm_to_ics_merkle_proof, MerkleProof,
 };
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
+<span class="kw">use </span>prost::Message;
 <span class="kw">use </span>tendermint::block::Height;
 <span class="kw">use </span>tendermint_rpc::query::Query;
 <span class="kw">use </span>tendermint_rpc::{Client, HttpClient, Url};
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::version::Specs;
+<span class="kw">use </span><span class="kw">crate</span>::chain::requests::QueryHeight;
 <span class="kw">use </span><span class="kw">crate</span>::chain::requests::{QueryClientEventRequest, QueryPacketEventDataRequest, QueryTxHash};
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 
@@ -283,36 +279,32 @@
 }
 
 <span class="doccomment">/// Queries the chain to obtain the version information.
-</span><span class="kw">pub async fn </span>fetch_version_specs(chain_id: <span class="kw-2">&amp;</span>ChainId, grpc_address: <span class="kw-2">&amp;</span>Uri) -&gt; <span class="prelude-ty">Result</span>&lt;Specs, Error&gt; {
-    <span class="kw">let </span>grpc_addr_string = grpc_address.to_string();
-
-    <span class="comment">// Construct a gRPC client
-    </span><span class="kw">let </span><span class="kw-2">mut </span>client = ServiceClient::connect(grpc_address.clone())
-        .<span class="kw">await
-        </span>.map_err(|e| {
-            Error::fetch_version_grpc_transport(
-                chain_id.clone(),
-                grpc_addr_string.clone(),
-                <span class="string">"tendermint::ServiceClient"</span>.to_string(),
+</span><span class="kw">pub async fn </span>fetch_version_specs(
+    chain_id: <span class="kw-2">&amp;</span>ChainId,
+    rpc_client: <span class="kw-2">&amp;</span>HttpClient,
+    rpc_addr: <span class="kw-2">&amp;</span>Url,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Specs, Error&gt; {
+    <span class="kw">let </span>query_response = abci_query(
+        rpc_client,
+        rpc_addr,
+        <span class="string">"/cosmos.base.tendermint.v1beta1.Service/GetNodeInfo"</span>.to_owned(),
+        <span class="string">""</span>.to_owned(),
+        QueryHeight::Latest.into(),
+        <span class="bool-val">false</span>,
+    )
+    .<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>node_info_response =
+        GetNodeInfoResponse::decode(query_response.value.as_ref()).map_err(|e| {
+            Error::protobuf_decode(
+                <span class="string">"cosmos.base.tendermint.v1beta1.Service/GetNodeInfo"</span>.to_owned(),
                 e,
             )
         })<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>request = tonic::Request::new(GetNodeInfoRequest {});
-
-    <span class="kw">let </span>response = client.get_node_info(request).<span class="kw">await</span>.map_err(|e| {
-        Error::fetch_version_grpc_status(
-            chain_id.clone(),
-            grpc_addr_string.clone(),
-            <span class="string">"tendermint::ServiceClient"</span>.to_string(),
-            e,
-        )
-    })<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>version = response.into_inner().application_version.ok_or_else(|| {
+    <span class="kw">let </span>version = node_info_response.application_version.ok_or_else(|| {
         Error::fetch_version_invalid_version_response(
             chain_id.clone(),
-            grpc_addr_string.clone(),
+            rpc_addr.to_string(),
             <span class="string">"tendermint::GetNodeInfoRequest"</span>.to_string(),
         )
     })<span class="question-mark">?</span>;
@@ -320,6 +312,6 @@
     <span class="comment">// Parse the raw version info into a domain-type `version::Specs`
     </span>version
         .try_into()
-        .map_err(|e| Error::fetch_version_parsing(chain_id.clone(), grpc_addr_string.clone(), e))
+        .map_err(|e| Error::fetch_version_parsing(chain_id.clone(), rpc_addr.to_string(), e))
 }
 </code></pre></div></section></main></body></html>
