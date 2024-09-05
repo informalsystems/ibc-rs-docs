@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["compat_mode_from_version"]};
+window.SIDEBAR_ITEMS = {"fn":["compat_mode_from_node_version","compat_mode_from_version_specs"]};

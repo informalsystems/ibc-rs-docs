@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["BLOCK_MAX_BYTES_MAX_FRACTION"],"mod":["batch","client","compatibility","config","eip_base_fee","encode","estimate","fee","gas","query","retry","simulate","tx","types","version","wait"],"struct":["CosmosSdkChain"]};
+window.SIDEBAR_ITEMS = {"constant":["BLOCK_MAX_BYTES_MAX_FRACTION"],"fn":["fetch_compat_mode"],"mod":["batch","client","compatibility","config","eip_base_fee","encode","estimate","fee","gas","query","retry","simulate","tx","types","version","wait"],"struct":["CosmosSdkChain"]};

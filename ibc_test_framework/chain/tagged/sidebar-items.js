@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["TaggedChainDriverExt"]};
+window.SIDEBAR_ITEMS = {"fn":["fetch_compat_mode"],"trait":["TaggedChainDriverExt"]};

@@ -2816,11 +2816,47 @@
 <a href="#2816" id="2816">2816</a>
 <a href="#2817" id="2817">2817</a>
 <a href="#2818" id="2818">2818</a>
+<a href="#2819" id="2819">2819</a>
+<a href="#2820" id="2820">2820</a>
+<a href="#2821" id="2821">2821</a>
+<a href="#2822" id="2822">2822</a>
+<a href="#2823" id="2823">2823</a>
+<a href="#2824" id="2824">2824</a>
+<a href="#2825" id="2825">2825</a>
+<a href="#2826" id="2826">2826</a>
+<a href="#2827" id="2827">2827</a>
+<a href="#2828" id="2828">2828</a>
+<a href="#2829" id="2829">2829</a>
+<a href="#2830" id="2830">2830</a>
+<a href="#2831" id="2831">2831</a>
+<a href="#2832" id="2832">2832</a>
+<a href="#2833" id="2833">2833</a>
+<a href="#2834" id="2834">2834</a>
+<a href="#2835" id="2835">2835</a>
+<a href="#2836" id="2836">2836</a>
+<a href="#2837" id="2837">2837</a>
+<a href="#2838" id="2838">2838</a>
+<a href="#2839" id="2839">2839</a>
+<a href="#2840" id="2840">2840</a>
+<a href="#2841" id="2841">2841</a>
+<a href="#2842" id="2842">2842</a>
+<a href="#2843" id="2843">2843</a>
+<a href="#2844" id="2844">2844</a>
+<a href="#2845" id="2845">2845</a>
+<a href="#2846" id="2846">2846</a>
+<a href="#2847" id="2847">2847</a>
+<a href="#2848" id="2848">2848</a>
+<a href="#2849" id="2849">2849</a>
+<a href="#2850" id="2850">2850</a>
+<a href="#2851" id="2851">2851</a>
+<a href="#2852" id="2852">2852</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::Buf;
 <span class="kw">use </span>bytes::Bytes;
+<span class="kw">use </span>config::CosmosSdkConfig;
 <span class="kw">use </span>core::{future::Future, str::FromStr, time::Duration};
 <span class="kw">use </span>futures::future::join_all;
+<span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>num_bigint::BigInt;
 <span class="kw">use </span>prost::Message;
 <span class="kw">use </span>std::cmp::Ordering;
@@ -2924,9 +2960,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::light_client::tendermint::LightClient <span class="kw">as </span>TmLightClient;
 <span class="kw">use </span><span class="kw">crate</span>::light_client::{LightClient, Verified};
 <span class="kw">use </span><span class="kw">crate</span>::misbehaviour::MisbehaviourEvidence;
-<span class="kw">use </span><span class="kw">crate</span>::util::compat_mode::compat_mode_from_version;
+<span class="kw">use </span><span class="kw">crate</span>::util::collate::CollatedIterExt;
 <span class="kw">use </span><span class="kw">crate</span>::util::create_grpc_client;
-<span class="kw">use </span><span class="kw">crate</span>::util::pretty::PrettySlice;
 <span class="kw">use </span><span class="kw">crate</span>::util::pretty::{
     PrettyIdentifiedChannel, PrettyIdentifiedClientState, PrettyIdentifiedConnection,
 };
@@ -3735,11 +3770,10 @@
             .build()
             .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>node_info = rt.block_on(fetch_node_info(<span class="kw-2">&amp;</span>rpc_client, <span class="kw-2">&amp;</span>config))<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>compat_mode = compat_mode_from_version(<span class="kw-2">&amp;</span>config.compat_mode, node_info.version)<span class="question-mark">?</span>.into();
+        <span class="kw">let </span>compat_mode = rt.block_on(fetch_compat_mode(<span class="kw-2">&amp;</span>rpc_client, <span class="kw-2">&amp;</span>config))<span class="question-mark">?</span>;
         rpc_client.set_compat_mode(compat_mode);
 
+        <span class="kw">let </span>node_info = rt.block_on(fetch_node_info(<span class="kw-2">&amp;</span>rpc_client, <span class="kw-2">&amp;</span>config))<span class="question-mark">?</span>;
         <span class="kw">let </span>light_client = TmLightClient::from_cosmos_sdk_config(<span class="kw-2">&amp;</span>config, node_info.id)<span class="question-mark">?</span>;
 
         <span class="comment">// Initialize key store and load key
@@ -3934,6 +3968,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.rpc_client,
             <span class="kw-2">&amp;</span><span class="self">self</span>.config.rpc_addr,
         ))<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(version_specs)
     }
 
@@ -5500,7 +5535,7 @@
             <span class="kw">if </span>!seqs.is_empty() {
                 <span class="macro">warn!</span>(
                     <span class="string">"chain '{chain_id}' will not clear packets on channel '{channel_id}' with sequences: {}. \
-                    Ignore this warning if this configuration is correct."</span>, PrettySlice(seqs)
+                    Ignore this warning if this configuration is correct."</span>, seqs.iter().copied().collated().format(<span class="string">", "</span>)
                 );
             }
         }
@@ -5550,17 +5585,16 @@
 
             <span class="kw">if </span>!found_matching_denom {
                 <span class="macro">warn!</span>(
-                        <span class="string">"chain '{}' has no minimum gas price of denomination '{}' \
-                        that is strictly less than the `gas_price` specified for that chain in the Hermes configuration. \
-                        This is usually a sign of misconfiguration, please check your chain and Hermes configurations"</span>,
-                        chain_id, relayer_gas_price.denom
-                    );
+                    <span class="string">"chain '{}' does not provide a minimum gas price for denomination '{}'.\
+                    This is usually a sign of misconfiguration, please check your chain configuration"</span>,
+                    chain_id, relayer_gas_price.denom
+                );
             }
         }
 
         <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="macro">warn!</span>(
-            <span class="string">"chain '{}' has no minimum gas price value configured for denomination '{}'. \
-            This is usually a sign of misconfiguration, please check your chain and relayer configurations"</span>,
+            <span class="string">"chain '{}' does not provide a minimum gas price for denomination '{}'. \
+            This is usually a sign of misconfiguration, please check your chain configuration"</span>,
             chain_id, relayer_gas_price.denom
         ),
 
@@ -5590,6 +5624,40 @@
     }
 
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">pub async fn </span>fetch_compat_mode(
+    client: <span class="kw-2">&amp;</span>HttpClient,
+    config: <span class="kw-2">&amp;</span>CosmosSdkConfig,
+) -&gt; <span class="prelude-ty">Result</span>&lt;CompatMode, Error&gt; {
+    <span class="kw">use </span><span class="kw">crate</span>::util::compat_mode::compat_mode_from_node_version;
+    <span class="kw">use </span><span class="kw">crate</span>::util::compat_mode::compat_mode_from_version_specs;
+
+    <span class="kw">let </span>version_specs = fetch_version_specs(<span class="kw-2">&amp;</span>config.id, client, <span class="kw-2">&amp;</span>config.rpc_addr).<span class="kw">await</span>;
+
+    <span class="kw">let </span>compat_mode = <span class="kw">match </span>version_specs {
+        <span class="prelude-val">Ok</span>(specs) =&gt; compat_mode_from_version_specs(<span class="kw-2">&amp;</span>config.compat_mode, specs.consensus),
+        <span class="prelude-val">Err</span>(e) =&gt; {
+            <span class="macro">warn!</span>(
+                <span class="string">"Failed to fetch version specs for chain '{}': {e}"</span>,
+                config.id
+            );
+
+            <span class="kw">let </span>status = client
+                .status()
+                .<span class="kw">await
+                </span>.map_err(|e| Error::rpc(config.rpc_addr.clone(), e))<span class="question-mark">?</span>;
+
+            <span class="macro">warn!</span>(
+                <span class="string">"Will fall back on using the node version: {}"</span>,
+                status.node_info.version
+            );
+
+            compat_mode_from_node_version(<span class="kw-2">&amp;</span>config.compat_mode, status.node_info.version)
+        }
+    }<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(compat_mode.into())
 }
 
 <span class="attr">#[cfg(test)]

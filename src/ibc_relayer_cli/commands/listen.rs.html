@@ -281,34 +281,27 @@
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
-<span class="kw">use </span>core::{
-    fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter},
-    str::FromStr,
-};
+<span class="kw">use </span>core::fmt::{Display, Error <span class="kw">as </span>FmtError, Formatter};
+<span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>std::thread;
 
 <span class="kw">use </span>abscissa_core::application::fatal_error;
 <span class="kw">use </span>abscissa_core::clap::Parser;
 <span class="kw">use </span>eyre::eyre;
 <span class="kw">use </span>itertools::Itertools;
-<span class="kw">use </span>tendermint_rpc::{client::CompatMode, Client, HttpClient};
+<span class="kw">use </span>tendermint_rpc::{client::CompatMode, HttpClient};
 <span class="kw">use </span>tokio::runtime::Runtime <span class="kw">as </span>TokioRuntime;
 <span class="kw">use </span>tracing::{error, info, instrument};
 
-<span class="kw">use </span>ibc_relayer::{
-    chain::handle::Subscription,
-    config::{ChainConfig, EventSourceMode},
-    error::Error,
-    event::source::EventSource,
-    util::compat_mode::compat_mode_from_version,
-    HERMES_VERSION,
-};
-<span class="kw">use </span>ibc_relayer_types::{core::ics24_host::identifier::ChainId, events::IbcEvent};
+<span class="kw">use </span>ibc_relayer::chain::cosmos::fetch_compat_mode;
+<span class="kw">use </span>ibc_relayer::chain::handle::Subscription;
+<span class="kw">use </span>ibc_relayer::config::{ChainConfig, EventSourceMode};
+<span class="kw">use </span>ibc_relayer::error::Error;
+<span class="kw">use </span>ibc_relayer::event::source::EventSource;
+<span class="kw">use </span>ibc_relayer::HERMES_VERSION;
+<span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::ChainId;
+<span class="kw">use </span>ibc_relayer_types::events::IbcEvent;
 
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
@@ -481,16 +474,15 @@
     </span><span class="kw">let </span>rpc_addr = <span class="kw">match </span>config {
         ChainConfig::CosmosSdk(config) =&gt; config.rpc_addr.clone(),
     };
+
     <span class="kw">let </span>client = HttpClient::builder(rpc_addr.try_into()<span class="question-mark">?</span>)
         .user_agent(<span class="macro">format!</span>(<span class="string">"hermes/{}"</span>, HERMES_VERSION))
         .build()<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>status = rt.block_on(client.status())<span class="question-mark">?</span>;
     <span class="kw">let </span>compat_mode = <span class="kw">match </span>config {
-        ChainConfig::CosmosSdk(config) =&gt; {
-            compat_mode_from_version(<span class="kw-2">&amp;</span>config.compat_mode, status.node_info.version)<span class="question-mark">?</span>.into()
-        }
+        ChainConfig::CosmosSdk(config) =&gt; rt.block_on(fetch_compat_mode(<span class="kw-2">&amp;</span>client, config))<span class="question-mark">?</span>,
     };
+
     <span class="prelude-val">Ok</span>(compat_mode)
 }
 
