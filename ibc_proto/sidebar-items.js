@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["COSMOS_SDK_COMMIT","IBC_GO_COMMIT","INTERCHAIN_SECURITY_COMMIT","NFT_TRANSFER_COMMIT"],"macro":["include_proto"],"mod":["cosmos","google","ibc","interchain_security","stride"],"trait":["Protobuf"]};
+window.SIDEBAR_ITEMS = {"constant":["COSMOS_SDK_COMMIT","IBC_GO_COMMIT","INTERCHAIN_SECURITY_COMMIT","NFT_TRANSFER_COMMIT"],"macro":["include_proto"],"mod":["cosmos","google","ibc","interchain_security","stride"],"struct":["Error"],"trait":["Protobuf"]};
