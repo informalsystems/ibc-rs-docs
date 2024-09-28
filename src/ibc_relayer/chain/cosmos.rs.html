@@ -2850,6 +2850,17 @@
 <a href="#2850" id="2850">2850</a>
 <a href="#2851" id="2851">2851</a>
 <a href="#2852" id="2852">2852</a>
+<a href="#2853" id="2853">2853</a>
+<a href="#2854" id="2854">2854</a>
+<a href="#2855" id="2855">2855</a>
+<a href="#2856" id="2856">2856</a>
+<a href="#2857" id="2857">2857</a>
+<a href="#2858" id="2858">2858</a>
+<a href="#2859" id="2859">2859</a>
+<a href="#2860" id="2860">2860</a>
+<a href="#2861" id="2861">2861</a>
+<a href="#2862" id="2862">2862</a>
+<a href="#2863" id="2863">2863</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>bytes::Buf;
 <span class="kw">use </span>bytes::Bytes;
@@ -4715,6 +4726,8 @@
                 )
             })<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>height_param = AsciiMetadataValue::try_from(request.query_height)<span class="question-mark">?</span>;
+
         <span class="kw">if </span>request.pagination.is_enabled() {
             <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
             <span class="kw">let </span><span class="kw-2">mut </span>page_key = Vec::new();
@@ -4741,6 +4754,10 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>tonic_request = tonic::Request::new(raw_request);
                 <span class="comment">// TODO: This should either be configurable or inferred from the pagination
                 </span>tonic_request.set_timeout(Duration::from_secs(<span class="number">10</span>));
+
+                tonic_request
+                    .metadata_mut()
+                    .insert(<span class="string">"x-cosmos-block-height"</span>, height_param.clone());
 
                 <span class="kw">let </span>response = <span class="self">self</span>.rt.block_on(<span class="kw">async </span>{
                     client
@@ -4798,9 +4815,14 @@
 
             <span class="prelude-val">Ok</span>((commitment_sequences, height))
         } <span class="kw">else </span>{
-            <span class="kw">let </span>request = tonic::Request::new(request.into());
+            <span class="kw">let </span><span class="kw-2">mut </span>tonic_request = tonic::Request::new(request.clone().into());
+
+            tonic_request
+                .metadata_mut()
+                .insert(<span class="string">"x-cosmos-block-height"</span>, height_param);
+
             <span class="kw">let </span>response = <span class="self">self
-                </span>.block_on(client.packet_commitments(request))
+                </span>.block_on(client.packet_commitments(tonic_request))
                 .map_err(|e| Error::grpc_status(e, <span class="string">"query_packet_commitments"</span>.to_owned()))<span class="question-mark">?
                 </span>.into_inner();
 

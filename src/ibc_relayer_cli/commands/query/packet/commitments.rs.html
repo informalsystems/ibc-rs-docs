@@ -151,14 +151,40 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>abscissa_core::clap::Parser;
 
 <span class="kw">use </span>ibc_relayer::chain::counterparty::commitments_on_chain;
-<span class="kw">use </span>ibc_relayer::chain::requests::Paginate;
+<span class="kw">use </span>ibc_relayer::chain::handle::ChainHandle;
+<span class="kw">use </span>ibc_relayer::chain::requests::{Paginate, QueryHeight};
+<span class="kw">use </span>ibc_relayer_types::core::ics02_client::height::Height;
 <span class="kw">use </span>ibc_relayer_types::core::ics24_host::identifier::{ChainId, ChannelId, PortId};
 
 <span class="kw">use </span><span class="kw">crate</span>::cli_utils::spawn_chain_runtime;
-<span class="kw">use </span><span class="kw">crate</span>::conclude::Output;
+<span class="kw">use </span><span class="kw">crate</span>::conclude::{exit_with_unrecoverable_error, Output};
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
@@ -193,6 +219,13 @@
         help = <span class="string">"Identifier of the channel to query"
     </span>)]
     </span>channel_id: ChannelId,
+
+    <span class="attr">#[clap(
+        long = <span class="string">"height"</span>,
+        value_name = <span class="string">"HEIGHT"</span>,
+        help = <span class="string">"Height of the state to query. Leave unspecified for latest height."
+    </span>)]
+    </span>height: <span class="prelude-ty">Option</span>&lt;u64&gt;,
 }
 
 <span class="kw">impl </span>QueryPacketCommitmentsCmd {
@@ -201,12 +234,25 @@
 
         <span class="kw">let </span>chain = spawn_chain_runtime(<span class="kw-2">&amp;</span>config, <span class="kw-2">&amp;</span><span class="self">self</span>.chain_id)<span class="question-mark">?</span>;
 
-        commitments_on_chain(<span class="kw-2">&amp;</span>chain, <span class="kw-2">&amp;</span><span class="self">self</span>.port_id, <span class="kw-2">&amp;</span><span class="self">self</span>.channel_id, Paginate::All)
-            .map_err(Error::supervisor)
-            .map(|(seqs_vec, height)| PacketSeqs {
-                height,
-                seqs: seqs_vec,
-            })
+        <span class="kw">let </span>query_height = <span class="self">self</span>.height.map_or(QueryHeight::Latest, |revision_height| {
+            QueryHeight::Specific(
+                Height::new(chain.id().version(), revision_height)
+                    .unwrap_or_else(exit_with_unrecoverable_error),
+            )
+        });
+
+        commitments_on_chain(
+            <span class="kw-2">&amp;</span>chain,
+            <span class="kw-2">&amp;</span>query_height,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.port_id,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.channel_id,
+            Paginate::All,
+        )
+        .map_err(Error::supervisor)
+        .map(|(seqs_vec, height)| PacketSeqs {
+            height,
+            seqs: seqs_vec,
+        })
     }
 }
 
@@ -238,7 +284,8 @@
             QueryPacketCommitmentsCmd {
                 chain_id: ChainId::from_string(<span class="string">"chain_id"</span>),
                 port_id: PortId::from_str(<span class="string">"port_id"</span>).unwrap(),
-                channel_id: ChannelId::from_str(<span class="string">"channel-07"</span>).unwrap()
+                channel_id: ChannelId::from_str(<span class="string">"channel-07"</span>).unwrap(),
+                height: <span class="prelude-val">None</span>,
             },
             QueryPacketCommitmentsCmd::parse_from([
                 <span class="string">"test"</span>,
@@ -258,7 +305,8 @@
             QueryPacketCommitmentsCmd {
                 chain_id: ChainId::from_string(<span class="string">"chain_id"</span>),
                 port_id: PortId::from_str(<span class="string">"port_id"</span>).unwrap(),
-                channel_id: ChannelId::from_str(<span class="string">"channel-07"</span>).unwrap()
+                channel_id: ChannelId::from_str(<span class="string">"channel-07"</span>).unwrap(),
+                height: <span class="prelude-val">None</span>,
             },
             QueryPacketCommitmentsCmd::parse_from([
                 <span class="string">"test"</span>,
