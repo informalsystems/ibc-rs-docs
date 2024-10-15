@@ -220,7 +220,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["secp256k1_sys",["",[],["lib.rs","macros.rs","recovery.rs","types.rs"]]],\
 ["secrecy",["",[],["boxed.rs","lib.rs","string.rs","vec.rs"]]],\
 ["semver",["",[],["backport.rs","display.rs","error.rs","eval.rs","identifier.rs","impls.rs","lib.rs","parse.rs","serde.rs"]]],\
-["serde",["",[["de",[],["format.rs","ignored_any.rs","impls.rs","mod.rs","seed.rs","size_hint.rs","value.rs"]],["private",[],["de.rs","doc.rs","mod.rs","ser.rs"]],["ser",[],["fmt.rs","impls.rs","impossible.rs","mod.rs"]]],["integer128.rs","lib.rs","macros.rs"]]],\
+["serde",["",[["de",[],["ignored_any.rs","impls.rs","mod.rs","seed.rs","size_hint.rs","value.rs"]],["private",[],["de.rs","doc.rs","mod.rs","ser.rs"]],["ser",[],["fmt.rs","impls.rs","impossible.rs","mod.rs"]]],["format.rs","integer128.rs","lib.rs","macros.rs"]]],\
 ["serde_bytes",["",[],["bytearray.rs","bytebuf.rs","bytes.rs","de.rs","lib.rs","ser.rs"]]],\
 ["serde_cbor",["",[["value",[],["de.rs","mod.rs","ser.rs"]]],["de.rs","error.rs","lib.rs","read.rs","ser.rs","tags.rs","write.rs"]]],\
 ["serde_derive",["",[["internals",[],["ast.rs","attr.rs","case.rs","check.rs","ctxt.rs","mod.rs","receiver.rs","respan.rs","symbol.rs"]]],["bound.rs","de.rs","dummy.rs","fragment.rs","lib.rs","pretend.rs","ser.rs","this.rs"]]],\
