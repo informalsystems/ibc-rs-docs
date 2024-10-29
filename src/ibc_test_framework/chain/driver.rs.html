@@ -293,6 +293,23 @@
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
 <a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
    Implementation of [`ChainDriver`].
 */
@@ -393,6 +410,8 @@
     <span class="kw">pub </span>runtime: Arc&lt;Runtime&gt;,
 
     <span class="kw">pub </span>compat_mode: <span class="prelude-ty">Option</span>&lt;CompatMode&gt;,
+
+    <span class="kw">pub </span>ipv6_grpc: bool,
 }
 
 <span class="kw">impl </span>ExportEnv <span class="kw">for </span>ChainDriver {
@@ -420,12 +439,18 @@
         runtime: Arc&lt;Runtime&gt;,
         native_token: String,
         compat_mode: <span class="prelude-ty">Option</span>&lt;CompatMode&gt;,
+        ipv6_grpc: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span>grpc_address = <span class="kw">if </span>ipv6_grpc {
+            <span class="macro">format!</span>(<span class="string">"http://[::1]:{grpc_port}"</span>)
+        } <span class="kw">else </span>{
+            <span class="macro">format!</span>(<span class="string">"http://localhost:{grpc_port}"</span>)
+        };
         <span class="kw">let </span>tx_config = new_tx_config_for_test(
             chain_id.clone(),
             chain_type.clone(),
             <span class="macro">format!</span>(<span class="string">"http://localhost:{rpc_port}"</span>),
-            <span class="macro">format!</span>(<span class="string">"http://localhost:{grpc_port}"</span>),
+            grpc_address,
             chain_type.address_type(),
             native_token,
         )<span class="question-mark">?</span>;
@@ -444,6 +469,7 @@
             tx_config,
             runtime,
             compat_mode,
+            ipv6_grpc,
         })
     }
 
@@ -459,7 +485,11 @@
 
     <span class="doccomment">/// Returns the full URL for the GRPC address.
     </span><span class="kw">pub fn </span>grpc_address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, <span class="self">self</span>.grpc_port)
+        <span class="kw">if </span><span class="self">self</span>.ipv6_grpc {
+            <span class="macro">format!</span>(<span class="string">"http://[::1]:{}"</span>, <span class="self">self</span>.grpc_port)
+        } <span class="kw">else </span>{
+            <span class="macro">format!</span>(<span class="string">"http://127.0.0.1:{}"</span>, <span class="self">self</span>.grpc_port)
+        }
     }
 
     <span class="doccomment">/**
@@ -481,7 +511,11 @@
         as it requires no scheme to be specified.
     */
     </span><span class="kw">pub fn </span>grpc_listen_address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="macro">format!</span>(<span class="string">"localhost:{}"</span>, <span class="self">self</span>.grpc_port)
+        <span class="kw">if </span><span class="self">self</span>.ipv6_grpc {
+            <span class="macro">format!</span>(<span class="string">"[::1]:{}"</span>, <span class="self">self</span>.grpc_port)
+        } <span class="kw">else </span>{
+            <span class="macro">format!</span>(<span class="string">"127.0.0.1:{}"</span>, <span class="self">self</span>.grpc_port)
+        }
     }
 
     <span class="doccomment">/**
