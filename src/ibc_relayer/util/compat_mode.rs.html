@@ -80,11 +80,9 @@
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>tracing::warn;
 
 <span class="kw">use </span>tendermint::Version;
-<span class="kw">use </span>tendermint_rpc::client::CompatMode <span class="kw">as </span>TmCompatMode;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::cosmos::version::ConsensusVersion;
 <span class="kw">use </span><span class="kw">crate</span>::config::compat_mode::CompatMode;
@@ -94,21 +92,21 @@
     configured_version: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CompatMode&gt;,
     version: Version,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;CompatMode, Error&gt; {
-    <span class="kw">let </span>queried_version = TmCompatMode::from_version(version);
+    <span class="kw">let </span>queried_version = CompatMode::from_version(version);
 
     <span class="comment">// This will prioritize the use of the CompatMode specified in Hermes configuration file
     </span><span class="kw">match </span>(configured_version, queried_version) {
-        (<span class="prelude-val">Some</span>(configured), <span class="prelude-val">Ok</span>(queried)) <span class="kw">if </span>!configured.equal_to_tm_compat_mode(queried) =&gt; {
+        (<span class="prelude-val">Some</span>(configured), <span class="prelude-val">Ok</span>(queried)) <span class="kw">if </span>configured != <span class="kw-2">&amp;</span>queried =&gt; {
             <span class="macro">warn!</span>(
                 <span class="string">"potential `compat_mode` misconfiguration! Configured version '{configured}' does not match chain version '{queried}'. \
                 Hermes will use the configured `compat_mode` version '{configured}'. \
                 If this configuration is done on purpose this message can be ignored."</span>,
             );
 
-            <span class="prelude-val">Ok</span>(configured.clone())
+            <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>configured)
         }
-        (<span class="prelude-val">Some</span>(configured), <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(configured.clone()),
-        (<span class="kw">_</span>, <span class="prelude-val">Ok</span>(queried)) =&gt; <span class="prelude-val">Ok</span>(queried.into()),
+        (<span class="prelude-val">Some</span>(configured), <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>configured),
+        (<span class="kw">_</span>, <span class="prelude-val">Ok</span>(queried)) =&gt; <span class="prelude-val">Ok</span>(queried),
         (<span class="kw">_</span>, <span class="prelude-val">Err</span>(e)) =&gt; <span class="prelude-val">Err</span>(Error::invalid_compat_mode(e)),
     }
 }
@@ -133,7 +131,7 @@
                 If this configuration is done on purpose this message can be ignored."
             </span>);
 
-            <span class="prelude-val">Ok</span>(configured.clone())
+            <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>configured)
         }
         (<span class="prelude-val">Some</span>(configured), <span class="prelude-val">None</span>) =&gt; {
             <span class="macro">warn!</span>(
@@ -141,7 +139,7 @@
                 and will use the configured `compat_mode` version `{configured}`."
             </span>);
 
-            <span class="prelude-val">Ok</span>(configured.clone())
+            <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>configured)
         }
         (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(queried)) =&gt; <span class="prelude-val">Ok</span>(queried),
         (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; {
@@ -160,7 +158,7 @@
     <span class="kw">match </span>(v.major, v.minor) {
         (<span class="number">0</span>, <span class="number">34</span>) =&gt; <span class="prelude-val">Some</span>(CompatMode::V0_34),
         (<span class="number">0</span>, <span class="number">37</span>) =&gt; <span class="prelude-val">Some</span>(CompatMode::V0_37),
-        (<span class="number">0</span>, <span class="number">38</span>) =&gt; <span class="prelude-val">Some</span>(CompatMode::V0_37),
+        (<span class="number">0</span>, <span class="number">38</span>) =&gt; <span class="prelude-val">Some</span>(CompatMode::V0_38),
         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
     }
 }

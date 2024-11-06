@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_or_fetch_account","query_account","refresh_account"]};
+window.SIDEBAR_ITEMS = {"fn":["get_or_fetch_account","query_account","refresh_account"],"struct":["EthAccount"]};

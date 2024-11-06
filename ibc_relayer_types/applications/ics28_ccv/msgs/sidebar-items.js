@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["ccv_double_voting","ccv_misbehaviour","error"]};
+window.SIDEBAR_ITEMS = {"mod":["ccv_double_voting","ccv_misbehaviour","error"],"struct":["ConsumerChain","ConsumerId"]};

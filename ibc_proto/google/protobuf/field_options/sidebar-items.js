@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CType","JsType","OptionRetention","OptionTargetType"],"struct":["EditionDefault","FeatureSupport"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["msg_client","msg_server","query_client","query_server"],"struct":["GenesisState","Minter","MsgUpdateParams","MsgUpdateParamsResponse","Params","QueryAnnualProvisionsRequest","QueryAnnualProvisionsResponse","QueryInflationRequest","QueryInflationResponse","QueryParamsRequest","QueryParamsResponse"]};

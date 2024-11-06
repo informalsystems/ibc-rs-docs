@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["v0_34","v0_37"],"struct":["BeginBlock","CheckTx","DeliverTx","EndBlock"],"trait":["Dialect"]};
+window.SIDEBAR_ITEMS = {"mod":["v0_34","v0_37","v0_38"],"struct":["BeginBlock","CheckTx","DeliverTx","EndBlock"],"trait":["Dialect"]};

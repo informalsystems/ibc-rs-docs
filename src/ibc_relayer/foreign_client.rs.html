@@ -1931,6 +1931,36 @@
 <a href="#1931" id="1931">1931</a>
 <a href="#1932" id="1932">1932</a>
 <a href="#1933" id="1933">1933</a>
+<a href="#1934" id="1934">1934</a>
+<a href="#1935" id="1935">1935</a>
+<a href="#1936" id="1936">1936</a>
+<a href="#1937" id="1937">1937</a>
+<a href="#1938" id="1938">1938</a>
+<a href="#1939" id="1939">1939</a>
+<a href="#1940" id="1940">1940</a>
+<a href="#1941" id="1941">1941</a>
+<a href="#1942" id="1942">1942</a>
+<a href="#1943" id="1943">1943</a>
+<a href="#1944" id="1944">1944</a>
+<a href="#1945" id="1945">1945</a>
+<a href="#1946" id="1946">1946</a>
+<a href="#1947" id="1947">1947</a>
+<a href="#1948" id="1948">1948</a>
+<a href="#1949" id="1949">1949</a>
+<a href="#1950" id="1950">1950</a>
+<a href="#1951" id="1951">1951</a>
+<a href="#1952" id="1952">1952</a>
+<a href="#1953" id="1953">1953</a>
+<a href="#1954" id="1954">1954</a>
+<a href="#1955" id="1955">1955</a>
+<a href="#1956" id="1956">1956</a>
+<a href="#1957" id="1957">1957</a>
+<a href="#1958" id="1958">1958</a>
+<a href="#1959" id="1959">1959</a>
+<a href="#1960" id="1960">1960</a>
+<a href="#1961" id="1961">1961</a>
+<a href="#1962" id="1962">1962</a>
+<a href="#1963" id="1963">1963</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Queries and methods for interfacing with foreign clients.
 //!
 //! The term "foreign client" refers to IBC light clients that are running on-chain,
@@ -1942,6 +1972,7 @@
 <span class="kw">use </span>std::time::Instant;
 
 <span class="kw">use </span>ibc_proto::google::protobuf::Any;
+<span class="kw">use </span>ibc_relayer_types::applications::ics28_ccv::msgs::ConsumerId;
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>tracing::{debug, error, info, instrument, trace, warn};
 
@@ -2298,7 +2329,7 @@
     NotTrusted {
         elapsed: Duration,
         network_timestamp: Timestamp,
-        consensus_state_timestmap: Timestamp,
+        consensus_state_timestamp: Timestamp,
     },
     Trusted {
         elapsed: Duration,
@@ -2700,12 +2731,12 @@
             ConsensusStateTrusted::NotTrusted {
                 elapsed,
                 network_timestamp,
-                consensus_state_timestmap,
+                consensus_state_timestamp,
             } =&gt; {
                 <span class="macro">error!</span>(
                     latest_height = %client_state.latest_height(),
-                    network_timestmap = %network_timestamp,
-                    consensus_state_timestamp = %consensus_state_timestmap,
+                    network_timestamp = %network_timestamp,
+                    consensus_state_timestamp = %consensus_state_timestamp,
                     elapsed = <span class="question-mark">?</span>elapsed,
                     <span class="string">"client state is not valid: latest height is outside of trusting period!"</span>,
                 );
@@ -2762,7 +2793,7 @@
             <span class="prelude-val">Ok</span>(ConsensusStateTrusted::NotTrusted {
                 elapsed,
                 network_timestamp: current_src_network_time,
-                consensus_state_timestmap: consensus_state_timestamp,
+                consensus_state_timestamp,
             })
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(ConsensusStateTrusted::Trusted { elapsed })
@@ -3169,14 +3200,14 @@
             // then check if the consensus state at `trusted_height` is within trusting period
             </span><span class="kw">if let </span>ConsensusStateTrusted::NotTrusted {
                 elapsed,
-                consensus_state_timestmap,
+                consensus_state_timestamp,
                 network_timestamp,
             } = <span class="self">self</span>.check_consensus_state_trusting_period(<span class="kw-2">&amp;</span>client_state, <span class="kw-2">&amp;</span>trusted_height)<span class="question-mark">?
             </span>{
                 <span class="macro">error!</span>(
                     %trusted_height,
                     %network_timestamp,
-                    %consensus_state_timestmap,
+                    %consensus_state_timestamp,
                     <span class="question-mark">?</span>elapsed,
                     <span class="string">"cannot build client update message because the provided trusted height is outside of trusting period!"</span>,
                 );
@@ -3719,13 +3750,24 @@
         <span class="comment">// If the misbehaving chain is a CCV consumer chain, we need to add
         // the corresponding CCV message for the provider.
         </span><span class="kw">if </span>is_ccv_consumer_chain {
-            msgs.push(
-                MsgSubmitIcsConsumerMisbehaviour {
-                    submitter: signer.clone(),
-                    misbehaviour: tm_misbehaviour,
+            <span class="kw">match </span>fetch_ccv_consumer_id(<span class="kw-2">&amp;</span><span class="self">self</span>.dst_chain(), <span class="kw-2">&amp;</span><span class="self">self</span>.id) {
+                <span class="prelude-val">Ok</span>(consumer_id) =&gt; {
+                    msgs.push(
+                        MsgSubmitIcsConsumerMisbehaviour {
+                            submitter: signer.clone(),
+                            misbehaviour: tm_misbehaviour,
+                            consumer_id,
+                        }
+                        .to_any(),
+                    );
                 }
-                .to_any(),
-            );
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">error!</span>(
+                        <span class="string">"cannot build CCV misbehaviour evidence: failed to fetch CCV consumer id for client {}: {}"</span>,
+                        <span class="self">self</span>.id, e
+                    );
+                }
+            }
         }
 
         msgs.push(
@@ -3863,5 +3905,23 @@
             event.clone(),
         )),
     }
+}
+
+<span class="kw">pub fn </span>fetch_ccv_consumer_id(
+    provider: <span class="kw-2">&amp;</span><span class="kw">impl </span>ChainHandle,
+    client_id: <span class="kw-2">&amp;</span>ClientId,
+) -&gt; <span class="prelude-ty">Result</span>&lt;ConsumerId, ForeignClientError&gt; {
+    <span class="kw">let </span>consumer_id = provider.query_ccv_consumer_id(client_id).map_err(|e| {
+        ForeignClientError::misbehaviour(
+            <span class="macro">format!</span>(
+                <span class="string">"failed to query CCV consumer id corresponding to client {} from provider {}"</span>,
+                client_id,
+                provider.id()
+            ),
+            e,
+        )
+    })<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(consumer_id)
 }
 </code></pre></div></section></main></body></html>

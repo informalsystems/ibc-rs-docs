@@ -821,36 +821,6 @@
 <a href="#821" id="821">821</a>
 <a href="#822" id="822">822</a>
 <a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
-<a href="#829" id="829">829</a>
-<a href="#830" id="830">830</a>
-<a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
-<a href="#835" id="835">835</a>
-<a href="#836" id="836">836</a>
-<a href="#837" id="837">837</a>
-<a href="#838" id="838">838</a>
-<a href="#839" id="839">839</a>
-<a href="#840" id="840">840</a>
-<a href="#841" id="841">841</a>
-<a href="#842" id="842">842</a>
-<a href="#843" id="843">843</a>
-<a href="#844" id="844">844</a>
-<a href="#845" id="845">845</a>
-<a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
-<a href="#850" id="850">850</a>
-<a href="#851" id="851">851</a>
-<a href="#852" id="852">852</a>
-<a href="#853" id="853">853</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::ops::{ControlFlow, Deref};
 <span class="kw">use </span>std::sync::Arc;
@@ -871,7 +841,7 @@
 <span class="kw">use </span>ibc_relayer::chain::handle::{BaseChainHandle, ChainHandle};
 <span class="kw">use </span>ibc_relayer::chain::requests::{IncludeProof, PageRequest, QueryHeight};
 <span class="kw">use </span>ibc_relayer::chain::tracking::TrackedMsgs;
-<span class="kw">use </span>ibc_relayer::foreign_client::ForeignClient;
+<span class="kw">use </span>ibc_relayer::foreign_client::{fetch_ccv_consumer_id, ForeignClient};
 <span class="kw">use </span>ibc_relayer::spawn::spawn_chain_runtime_with_modified_config;
 <span class="kw">use </span>ibc_relayer_types::applications::ics28_ccv::msgs::ccv_double_voting::MsgSubmitIcsConsumerDoubleVoting;
 <span class="kw">use </span>ibc_relayer_types::applications::ics28_ccv::msgs::ccv_misbehaviour::MsgSubmitIcsConsumerMisbehaviour;
@@ -1171,10 +1141,15 @@
 
     <span class="kw">let </span>signer = counterparty_chain_handle.get_signer()<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>!is_counterparty_provider(chain, counterparty_chain_handle, counterparty_client_id) {
-        <span class="macro">debug!</span>(<span class="string">"counterparty client `{counterparty_client_id}` on chain `{counterparty_chain_id}` is not a CCV client, skipping..."</span>);
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(ControlFlow::Continue(()));
-    }
+    <span class="kw">let </span>consumer_id = <span class="kw">match </span>fetch_ccv_consumer_id(counterparty_chain_handle, counterparty_client_id)
+    {
+        <span class="prelude-val">Ok</span>(consumer_id) =&gt; consumer_id,
+        <span class="prelude-val">Err</span>(e) =&gt; {
+            <span class="macro">info!</span>(<span class="string">"Failed to query Consumer ID: {e}. \
+            Counterparty client `{counterparty_client_id}` on chain `{counterparty_chain_id}` might not be a CCV client, skipping..."</span>);
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(ControlFlow::Continue(()));
+        }
+    };
 
     <span class="kw">let </span>infraction_height = evidence.vote_a.height;
 
@@ -1212,6 +1187,7 @@
         submitter: signer.clone(),
         duplicate_vote_evidence: evidence.clone(),
         infraction_block_header,
+        consumer_id,
     }
     .to_any();
 
@@ -1360,41 +1336,13 @@
         counterparty.id(),
     );
 
-    <span class="kw">let </span>counterparty_is_provider =
-        is_counterparty_provider(chain, counterparty, <span class="kw-2">&amp;</span>counterparty_client_id);
-
     <span class="kw">let </span>counterparty_client_is_frozen = counterparty_client.is_frozen();
-
-    <span class="kw">if </span>!counterparty_is_provider &amp;&amp; counterparty_client_is_frozen {
-        <span class="macro">warn!</span>(
-            <span class="string">"cannot submit light client attack evidence to client `{}` on counterparty chain `{}`"</span>,
-            counterparty_client_id,
-            counterparty.id()
-        );
-        <span class="macro">warn!</span>(<span class="string">"reason: client is frozen and chain is not a CCV provider chain"</span>);
-
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-    }
 
     <span class="kw">let </span>signer = counterparty.get_signer()<span class="question-mark">?</span>;
     <span class="kw">let </span>common_height = Height::from_tm(evidence.common_height, chain.id());
 
     <span class="kw">let </span>counterparty_has_common_consensus_state =
         has_consensus_state(counterparty, <span class="kw-2">&amp;</span>counterparty_client_id, common_height);
-
-    <span class="kw">if </span>counterparty_is_provider
-        &amp;&amp; counterparty_client_is_frozen
-        &amp;&amp; !counterparty_has_common_consensus_state
-    {
-        <span class="macro">warn!</span>(
-            <span class="string">"cannot submit light client attack evidence to client `{}` on provider chain `{}`"</span>,
-            counterparty_client_id,
-            counterparty.id()
-        );
-        <span class="macro">warn!</span>(<span class="string">"reason: client is frozen and does not have a consensus state at height {common_height}"</span>);
-
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-    }
 
     <span class="kw">let </span><span class="kw-2">mut </span>msgs = <span class="kw">if </span>counterparty_has_common_consensus_state {
         <span class="macro">info!</span>(
@@ -1403,8 +1351,8 @@
             counterparty.id()
         );
         <span class="macro">info!</span>(
-            <span class="string">"reason: counterparty chain already has consensus state at common height {common_height}"
-        </span>);
+                <span class="string">"reason: counterparty chain already has consensus state at common height {common_height}"
+            </span>);
 
         Vec::new()
     } <span class="kw">else </span>{
@@ -1424,21 +1372,31 @@
         }
     };
 
-    <span class="kw">if </span>counterparty_is_provider {
+    <span class="kw">if let </span><span class="prelude-val">Ok</span>(consumer_id) = fetch_ccv_consumer_id(counterparty, <span class="kw-2">&amp;</span>counterparty_client_id) {
+        <span class="kw">if </span>counterparty_client_is_frozen &amp;&amp; !counterparty_has_common_consensus_state {
+            <span class="macro">warn!</span>(
+                <span class="string">"cannot submit light client attack evidence to client `{}` on provider chain `{}`"</span>,
+                counterparty_client_id,
+                counterparty.id()
+            );
+            <span class="macro">warn!</span>(<span class="string">"reason: client is frozen and does not have a consensus state at height {common_height}"</span>);
+
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        }
         <span class="macro">info!</span>(
             <span class="string">"will submit consumer light client attack evidence to client `{}` on provider chain `{}`"</span>,
             counterparty_client_id,
             counterparty.id(),
         );
-
-        <span class="kw">let </span>msg = MsgSubmitIcsConsumerMisbehaviour {
-            submitter: signer.clone(),
-            misbehaviour: misbehaviour.clone(),
-        }
-        .to_any();
-
-        msgs.push(msg);
-    };
+        msgs.push(
+            MsgSubmitIcsConsumerMisbehaviour {
+                submitter: signer.clone(),
+                misbehaviour: misbehaviour.clone(),
+                consumer_id,
+            }
+            .to_any(),
+        );
+    }
 
     <span class="comment">// We do not need to submit the misbehaviour if the client is already frozen.
     </span><span class="kw">if </span>!counterparty_client_is_frozen {
@@ -1515,29 +1473,6 @@
     res.is_ok()
 }
 
-<span class="doccomment">/// If the misbehaving chain is a CCV consumer chain,
-/// then try fetch the consumer chains of the counterparty chains.
-/// If that fails, then the counterparty chain is not a provider chain.
-/// Otherwise, check if the misbehaving chain is a consumer of the counterparty chain,
-/// which is then definitely a provider.
-</span><span class="kw">fn </span>is_counterparty_provider(
-    chain: <span class="kw-2">&amp;</span>CosmosSdkChain,
-    counterparty_chain_handle: <span class="kw-2">&amp;</span>BaseChainHandle,
-    counterparty_client_id: <span class="kw-2">&amp;</span>ClientId,
-) -&gt; bool {
-    <span class="kw">if </span>chain.config().ccv_consumer_chain {
-        <span class="kw">let </span>consumer_chains = counterparty_chain_handle
-            .query_consumer_chains()
-            .unwrap_or_default(); <span class="comment">// If the query fails, use an empty list of consumers
-
-        </span>consumer_chains.iter().any(|(chain_id, client_id)| {
-            chain_id == chain.id() &amp;&amp; client_id == counterparty_client_id
-        })
-    } <span class="kw">else </span>{
-        <span class="bool-val">false
-    </span>}
-}
-
 <span class="doccomment">/// Fetch all the counterparty clients of the given chain.
 /// A counterparty client is a client that has a connection with that chain.
 ///
@@ -1568,6 +1503,11 @@
             <span class="string">"found connection `{}` with client `{client_id}` and counterparty client `{counterparty_client_id}`"</span>,
             connection.connection_id
         );
+
+        <span class="kw">if </span>client_id.as_str() == <span class="string">"09-localhost" </span>{
+            <span class="macro">debug!</span>(<span class="string">"skipping localhost client `{client_id}`..."</span>);
+            <span class="kw">continue</span>;
+        }
 
         <span class="macro">debug!</span>(
             <span class="string">"fetching client state for client `{client_id}` on connection `{}`"</span>,

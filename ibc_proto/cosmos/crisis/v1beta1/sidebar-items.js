@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["msg_client","msg_server"],"struct":["GenesisState","MsgUpdateParams","MsgUpdateParamsResponse","MsgVerifyInvariant","MsgVerifyInvariantResponse"]};

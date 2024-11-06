@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["code_generator_response"],"struct":["CodeGeneratorRequest","CodeGeneratorResponse","Version"]};

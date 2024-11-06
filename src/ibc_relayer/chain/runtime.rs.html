@@ -903,6 +903,20 @@
 <a href="#903" id="903">903</a>
 <a href="#904" id="904">904</a>
 <a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>std::thread;
 
@@ -915,10 +929,12 @@
     core::channel::v1::{QueryUpgradeErrorRequest, QueryUpgradeRequest},
 };
 <span class="kw">use </span>ibc_relayer_types::{
-    applications::ics31_icq::response::CrossChainQueryResponse,
+    applications::{
+        ics28_ccv::msgs::{ConsumerChain, ConsumerId},
+        ics31_icq::response::CrossChainQueryResponse,
+    },
     core::{
-        ics02_client::events::UpdateClient,
-        ics02_client::header::AnyHeader,
+        ics02_client::{events::UpdateClient, header::AnyHeader},
         ics03_connection::{
             connection::{ConnectionEnd, IdentifiedConnectionEnd},
             version::Version,
@@ -929,7 +945,7 @@
             upgrade::{ErrorReceipt, Upgrade},
         },
         ics23_commitment::{commitment::CommitmentPrefix, merkle::MerkleProof},
-        ics24_host::identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId},
+        ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
     },
     proofs::Proofs,
     signer::Signer,
@@ -1267,6 +1283,10 @@
 
                         ChainRequest::QueryUpgradeError { request, height, include_proof, reply_to } =&gt; {
                             <span class="self">self</span>.query_upgrade_error(request, height, include_proof, reply_to)<span class="question-mark">?
+                        </span>},
+
+                        ChainRequest::QueryConsumerId { client_id, reply_to } =&gt; {
+                            <span class="self">self</span>.query_ccv_consumer_id(client_id, reply_to)<span class="question-mark">?
                         </span>},
                     }
                 },
@@ -1770,10 +1790,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn </span>query_consumer_chains(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        reply_to: ReplyTo&lt;Vec&lt;(ChainId, ClientId)&gt;&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+    <span class="kw">fn </span>query_consumer_chains(<span class="kw-2">&amp;</span><span class="self">self</span>, reply_to: ReplyTo&lt;Vec&lt;ConsumerChain&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
         <span class="kw">let </span>result = <span class="self">self</span>.chain.query_consumer_chains();
         reply_to.send(result).map_err(Error::send)<span class="question-mark">?</span>;
 
@@ -1803,6 +1820,17 @@
         <span class="kw">let </span>result = <span class="self">self
             </span>.chain
             .query_upgrade_error(request, height, include_proof);
+        reply_to.send(result).map_err(Error::send)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn </span>query_ccv_consumer_id(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        client_id: ClientId,
+        reply_to: ReplyTo&lt;ConsumerId&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+        <span class="kw">let </span>result = <span class="self">self</span>.chain.query_ccv_consumer_id(client_id);
         reply_to.send(result).map_err(Error::send)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
