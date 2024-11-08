@@ -142,6 +142,20 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
 Helper functions for bootstrapping a consumer full node.
 */
@@ -152,6 +166,7 @@ Helper functions for bootstrapping a consumer full node.
 <span class="kw">use </span>tracing::info;
 
 <span class="kw">use </span><span class="kw">crate</span>::chain::builder::ChainBuilder;
+<span class="kw">use </span><span class="kw">crate</span>::chain::cli::provider::validator_opt_in;
 <span class="kw">use </span><span class="kw">crate</span>::chain::config;
 <span class="kw">use </span><span class="kw">crate</span>::chain::ext::bootstrap::ChainBootstrapMethodsExt;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
@@ -166,6 +181,7 @@ Helper functions for bootstrapping a consumer full node.
     genesis_modifier: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>serde_json::Value) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt;,
     chain_number: usize,
     provider_chain_driver: <span class="kw-2">&amp;</span>ChainDriver,
+    provider_fee: <span class="kw-2">&amp;</span>String,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;FullNode, Error&gt; {
     <span class="kw">let </span>stake_denom = Denom::base(<span class="string">"stake"</span>);
 
@@ -182,7 +198,7 @@ Helper functions for bootstrapping a consumer full node.
         </span>)))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>initial_coin = Token::new(denom.clone(), initial_amount);
-    <span class="kw">let </span>chain_driver = builder.new_chain(prefix, <span class="bool-val">false</span>, chain_number)<span class="question-mark">?</span>;
+    <span class="kw">let </span>chain_driver = builder.new_chain(<span class="string">"consumer"</span>, <span class="bool-val">false</span>, chain_number)<span class="question-mark">?</span>;
 
     chain_driver.initialize()<span class="question-mark">?</span>;
 
@@ -197,11 +213,23 @@ Helper functions for bootstrapping a consumer full node.
     chain_driver.add_genesis_account(<span class="kw-2">&amp;</span>user2.address, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>initial_stake, <span class="kw-2">&amp;</span>initial_coin])<span class="question-mark">?</span>;
 
     <span class="comment">// Wait for the consumer chain to be initialized before querying the genesis
+    </span>thread::sleep(Duration::from_secs(<span class="number">5</span>));
+
+    validator_opt_in(
+        provider_chain_driver.chain_id.as_str(),
+        <span class="kw-2">&amp;</span>provider_chain_driver.command_path,
+        <span class="kw-2">&amp;</span>provider_chain_driver.home_path,
+        <span class="kw-2">&amp;</span>provider_chain_driver.rpc_listen_address(),
+        provider_fee,
+        prefix,
+    )<span class="question-mark">?</span>;
+
+    <span class="comment">// Wait enough time so that the spawn_time passed
     </span>thread::sleep(Duration::from_secs(<span class="number">30</span>));
 
     node_a
         .chain_driver
-        .query_consumer_genesis(<span class="kw-2">&amp;</span>chain_driver, chain_driver.chain_id.as_str())<span class="question-mark">?</span>;
+        .query_consumer_genesis(<span class="kw-2">&amp;</span>chain_driver, prefix)<span class="question-mark">?</span>;
 
     chain_driver.replace_genesis_state()<span class="question-mark">?</span>;
 

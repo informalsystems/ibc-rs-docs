@@ -45,7 +45,6 @@
 <a href="#45" id="45">45</a>
 <a href="#46" id="46">46</a>
 <a href="#47" id="47">47</a>
-<a href="#48" id="48">48</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>block_on;
 <span class="kw">pub use </span>block_on::{block_on, spawn_blocking};
 
@@ -69,29 +68,28 @@
     grpc_addr: <span class="kw-2">&amp;</span>tonic::transport::Uri,
     client_constructor: <span class="kw">impl </span>FnOnce(tonic::transport::Channel) -&gt; T,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;T, <span class="kw">crate</span>::error::Error&gt; {
-    <span class="kw">let </span>tls_config = tonic::transport::ClientTlsConfig::new().with_native_roots();
     <span class="kw">let </span>builder = tonic::transport::Channel::builder(grpc_addr.clone());
 
     <span class="comment">// Don't configures TLS for the endpoint if using IPv6
-    </span><span class="kw">let </span>builder = <span class="kw">if </span>is_ipv6(grpc_addr) {
-        builder
-    } <span class="kw">else </span>{
+    </span><span class="kw">let </span>builder = <span class="kw">if </span>grpc_addr.scheme() == <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>http::uri::Scheme::HTTPS) {
+        <span class="kw">let </span>domain = grpc_addr
+            .host()
+            .map(|d| d.replace([<span class="string">'['</span>, <span class="string">']'</span>], <span class="string">""</span>))
+            .ok_or_else(|| <span class="kw">crate</span>::error::Error::invalid_http_host(grpc_addr.to_string()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>tls_config = tonic::transport::ClientTlsConfig::new()
+            .with_native_roots()
+            .domain_name(domain);
         builder
             .tls_config(tls_config)
             .map_err(<span class="kw">crate</span>::error::Error::grpc_transport)<span class="question-mark">?
-    </span>};
+    </span>} <span class="kw">else </span>{
+        builder
+    };
+
     <span class="kw">let </span>channel = builder
         .connect()
         .<span class="kw">await
         </span>.map_err(<span class="kw">crate</span>::error::Error::grpc_transport)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(client_constructor(channel))
-}
-
-<span class="kw">fn </span>is_ipv6(uri: <span class="kw-2">&amp;</span>tonic::transport::Uri) -&gt; bool {
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(host) = uri.host() {
-        host.starts_with(<span class="string">'['</span>) &amp;&amp; host.ends_with(<span class="string">']'</span>)
-    } <span class="kw">else </span>{
-        <span class="bool-val">false
-    </span>}
 }
 </code></pre></div></section></main></body></html>

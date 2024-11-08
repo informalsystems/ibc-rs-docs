@@ -114,39 +114,19 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
+<span class="kw">use </span>std::thread;
 
 <span class="kw">use </span><span class="kw">crate</span>::bootstrap::consumer::bootstrap_consumer_node;
 <span class="kw">use </span><span class="kw">crate</span>::bootstrap::single::bootstrap_single_node;
 <span class="kw">use </span><span class="kw">crate</span>::chain::builder::ChainBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::chain::chain_type::ChainType;
-<span class="kw">use </span><span class="kw">crate</span>::chain::cli::upgrade::vote_proposal;
 <span class="kw">use </span><span class="kw">crate</span>::chain::ext::bootstrap::ChainBootstrapMethodsExt;
 <span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <span class="kw">use </span><span class="kw">crate</span>::framework::base::{run_basic_test, BasicTest, HasOverrides, TestConfigOverride};
 <span class="kw">use </span><span class="kw">crate</span>::framework::binary::node::{NodeConfigOverride, NodeGenesisOverride};
 <span class="kw">use </span><span class="kw">crate</span>::prelude::FullNode;
 <span class="kw">use </span><span class="kw">crate</span>::types::config::TestConfig;
-<span class="kw">use </span><span class="kw">crate</span>::util::proposal_status::ProposalStatus;
 
 <span class="doccomment">/**
 Runs a test case that implements [`InterchainSecurityChainTest`].
@@ -206,47 +186,29 @@ Runs a test case that implements [`InterchainSecurityChainTest`].
         </span><span class="kw">let </span>chain_type = ChainType::from_str(<span class="kw-2">&amp;</span>builder.command_paths[<span class="number">1</span>])<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id = chain_type.chain_id(<span class="string">"consumer"</span>, <span class="bool-val">false</span>);
 
-        node_a.chain_driver.submit_consumer_chain_proposal(
-            chain_id.as_str(),
+        <span class="kw">let </span>consumer_id = node_a
+            .chain_driver
+            .create_permisionless_consumer(chain_id.as_str(), <span class="kw-2">&amp;</span>provider_fee)<span class="question-mark">?</span>;
+
+        thread::sleep(std::time::Duration::from_secs(<span class="number">3</span>));
+
+        node_a.chain_driver.update_consumer(
+            <span class="kw-2">&amp;</span>consumer_id,
             <span class="kw-2">&amp;</span>provider_fee,
-            <span class="string">"2023-05-31T12:09:47.048227Z"</span>,
+            node_a.wallets.validator.address.as_str(),
         )<span class="question-mark">?</span>;
 
-        node_a.chain_driver.assert_proposal_status(
-            node_a.chain_driver.chain_id.as_str(),
-            <span class="kw-2">&amp;</span>node_a.chain_driver.command_path,
-            <span class="kw-2">&amp;</span>node_a.chain_driver.home_path,
-            <span class="kw-2">&amp;</span>node_a.chain_driver.rpc_listen_address(),
-            ProposalStatus::VotingPeriod,
-            <span class="string">"1"</span>,
-        )<span class="question-mark">?</span>;
-
-        vote_proposal(
-            node_a.chain_driver.chain_id.as_str(),
-            <span class="kw-2">&amp;</span>node_a.chain_driver.command_path,
-            <span class="kw-2">&amp;</span>node_a.chain_driver.home_path,
-            <span class="kw-2">&amp;</span>node_a.chain_driver.rpc_listen_address(),
-            <span class="kw-2">&amp;</span>provider_fee,
-            <span class="string">"1"</span>,
-        )<span class="question-mark">?</span>;
-
-        node_a.chain_driver.assert_proposal_status(
-            node_a.chain_driver.chain_id.as_str(),
-            <span class="kw-2">&amp;</span>node_a.chain_driver.command_path,
-            <span class="kw-2">&amp;</span>node_a.chain_driver.home_path,
-            <span class="kw-2">&amp;</span>node_a.chain_driver.rpc_listen_address(),
-            ProposalStatus::Passed,
-            <span class="string">"1"</span>,
-        )<span class="question-mark">?</span>;
+        thread::sleep(std::time::Duration::from_secs(<span class="number">3</span>));
 
         <span class="kw">let </span>node_b = bootstrap_consumer_node(
             builder,
-            <span class="string">"consumer"</span>,
+            <span class="kw-2">&amp;</span>consumer_id,
             <span class="kw-2">&amp;</span>node_a,
             |config| <span class="self">self</span>.test.get_overrides().modify_node_config(config),
             |genesis| <span class="self">self</span>.test.get_overrides().modify_genesis_file(genesis),
             <span class="number">1</span>,
             <span class="kw-2">&amp;</span>node_a.chain_driver,
+            <span class="kw-2">&amp;</span>provider_fee,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>_node_process_a = node_a.process.clone();
