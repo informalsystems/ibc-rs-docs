@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/hyper-timeout-0.5.1/src/stream.rs`."><title>stream.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hyper_timeout" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../hyper_timeout/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/hyper-timeout-0.5.2/src/stream.rs`."><title>stream.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hyper_timeout" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../hyper_timeout/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -744,6 +744,73 @@
 <a href="#744" id="744">744</a>
 <a href="#745" id="745">745</a>
 <a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Wrappers for applying timeouts to IO operations.
 //!
 //! This used to depend on [tokio-io-timeout]. After Hyper 1.0 introduced hyper-specific IO traits, this was rewritten to use hyper IO traits instead of tokio IO traits.
@@ -811,6 +878,20 @@
     }
 
     <span class="attr">#[inline]
+    </span><span class="kw">fn </span>restart(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;) {
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
+
+        <span class="kw">if </span><span class="kw-2">*</span>this.active {
+            <span class="kw">let </span>timeout = <span class="kw">match </span>this.timeout {
+                <span class="prelude-val">Some</span>(timeout) =&gt; <span class="kw-2">*</span>timeout,
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
+            };
+
+            this.cur.reset(Instant::now() + timeout);
+        }
+    }
+
+    <span class="attr">#[inline]
     </span><span class="kw">fn </span>poll_check(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; io::Result&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>this = <span class="self">self</span>.project();
 
@@ -839,6 +920,7 @@
         </span>reader: R,
         <span class="attr">#[pin]
         </span>state: TimeoutState,
+        reset_on_write: bool,
     }
 }
 
@@ -853,6 +935,7 @@
         TimeoutReader {
             reader,
             state: TimeoutState::new(),
+            reset_on_write: <span class="bool-val">false</span>,
         }
     }
 
@@ -898,6 +981,20 @@
     }
 }
 
+<span class="kw">impl</span>&lt;R&gt; TimeoutReader&lt;R&gt;
+<span class="kw">where
+    </span>R: Read + Write,
+{
+    <span class="doccomment">/// Reset on the reader timeout on write
+    ///
+    /// This will reset the reader timeout when a write is done through the
+    /// the TimeoutReader. This is useful when you don't want to trigger
+    /// a reader timeout while writes are still be accepted.
+    </span><span class="kw">pub fn </span>set_reset_on_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reset: bool) {
+        <span class="self">self</span>.reset_on_write = reset
+    }
+}
+
 <span class="kw">impl</span>&lt;R&gt; Read <span class="kw">for </span>TimeoutReader&lt;R&gt;
 <span class="kw">where
     </span>R: Read,
@@ -926,15 +1023,30 @@
         cx: <span class="kw-2">&amp;mut </span>Context,
         buf: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;usize, io::Error&gt;&gt; {
-        <span class="self">self</span>.project().reader.poll_write(cx, buf)
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
+        <span class="kw">let </span>r = this.reader.poll_write(cx, buf);
+        <span class="kw">if </span><span class="kw-2">*</span>this.reset_on_write &amp;&amp; r.is_ready() {
+            this.state.restart();
+        }
+        r
     }
 
     <span class="kw">fn </span>poll_flush(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;(), io::Error&gt;&gt; {
-        <span class="self">self</span>.project().reader.poll_flush(cx)
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
+        <span class="kw">let </span>r = this.reader.poll_flush(cx);
+        <span class="kw">if </span><span class="kw-2">*</span>this.reset_on_write &amp;&amp; r.is_ready() {
+            this.state.restart();
+        }
+        r
     }
 
     <span class="kw">fn </span>poll_shutdown(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;(), io::Error&gt;&gt; {
-        <span class="self">self</span>.project().reader.poll_shutdown(cx)
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
+        <span class="kw">let </span>r = this.reader.poll_shutdown(cx);
+        <span class="kw">if </span><span class="kw-2">*</span>this.reset_on_write &amp;&amp; r.is_ready() {
+            this.state.restart();
+        }
+        r
     }
 
     <span class="kw">fn </span>poll_write_vectored(
@@ -942,7 +1054,12 @@
         cx: <span class="kw-2">&amp;mut </span>Context,
         bufs: <span class="kw-2">&amp;</span>[io::IoSlice],
     ) -&gt; Poll&lt;io::Result&lt;usize&gt;&gt; {
-        <span class="self">self</span>.project().reader.poll_write_vectored(cx, bufs)
+        <span class="kw">let </span>this = <span class="self">self</span>.project();
+        <span class="kw">let </span>r = this.reader.poll_write_vectored(cx, bufs);
+        <span class="kw">if </span><span class="kw-2">*</span>this.reset_on_write &amp;&amp; r.is_ready() {
+            this.state.restart();
+        }
+        r
     }
 
     <span class="kw">fn </span>is_write_vectored(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -1154,6 +1271,15 @@
             .set_timeout_pinned(timeout)
     }
 
+    <span class="doccomment">/// Reset on the reader timeout on write
+    ///
+    /// This will reset the reader timeout when a write is done through the
+    /// the TimeoutReader. This is useful when you don't want to trigger
+    /// a reader timeout while writes are still be accepted.
+    </span><span class="kw">pub fn </span>set_reset_reader_on_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, reset: bool) {
+        <span class="self">self</span>.stream.set_reset_on_write(reset);
+    }
+
     <span class="doccomment">/// Returns a shared reference to the inner stream.
     </span><span class="kw">pub fn </span>get_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>S {
         <span class="self">self</span>.stream.get_ref().get_ref()
@@ -1253,6 +1379,7 @@
 ///
 /// The returned future will resolve to both the I/O stream and the buffer
 /// as well as the number of bytes read once the read operation is completed.
+</span><span class="attr">#[cfg(test)]
 </span><span class="kw">fn </span>read&lt;<span class="lifetime">'a</span>, R&gt;(reader: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>R, buf: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8]) -&gt; ReadFut&lt;<span class="lifetime">'a</span>, R&gt;
 <span class="kw">where
     </span>R: Read + Unpin + <span class="question-mark">?</span>Sized,
@@ -1274,7 +1401,8 @@
     }
 }
 
-<span class="kw">trait </span>ReadExt: Read {
+<span class="attr">#[cfg(test)]
+</span><span class="kw">trait </span>ReadExt: Read {
     <span class="doccomment">/// Pulls some bytes from this source into the specified buffer,
     /// returning how many bytes were read.
     </span><span class="kw">fn </span>read&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8]) -&gt; ReadFut&lt;<span class="lifetime">'a</span>, <span class="self">Self</span>&gt;
@@ -1295,6 +1423,7 @@
 
 <span class="doccomment">/// Tries to write some bytes from the given `buf` to the writer in an
 /// asynchronous manner, returning a future.
+</span><span class="attr">#[cfg(test)]
 </span><span class="kw">fn </span>write&lt;<span class="lifetime">'a</span>, W&gt;(writer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>W, buf: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; WriteFut&lt;<span class="lifetime">'a</span>, W&gt;
 <span class="kw">where
     </span>W: Write + Unpin + <span class="question-mark">?</span>Sized,
@@ -1314,7 +1443,8 @@
     }
 }
 
-<span class="kw">trait </span>WriteExt: Write {
+<span class="attr">#[cfg(test)]
+</span><span class="kw">trait </span>WriteExt: Write {
     <span class="doccomment">/// Writes a buffer into this writer, returning how many bytes were
     /// written.
     </span><span class="kw">fn </span>write&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>, src: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; WriteFut&lt;<span class="lifetime">'a</span>, <span class="self">Self</span>&gt;
@@ -1325,7 +1455,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;R&gt; ReadExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutReader&lt;R&gt;&gt;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;R&gt; ReadExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutReader&lt;R&gt;&gt;
 <span class="kw">where
     </span>R: Read,
 {
@@ -1334,7 +1465,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;W&gt; WriteExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutWriter&lt;W&gt;&gt;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;W&gt; WriteExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutWriter&lt;W&gt;&gt;
 <span class="kw">where
     </span>W: Write,
 {
@@ -1343,7 +1475,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;S&gt; ReadExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutStream&lt;S&gt;&gt;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;S&gt; ReadExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutStream&lt;S&gt;&gt;
 <span class="kw">where
     </span>S: Read + Write,
 {
@@ -1352,7 +1485,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;S&gt; WriteExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutStream&lt;S&gt;&gt;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">impl</span>&lt;S&gt; WriteExt <span class="kw">for </span>Pin&lt;<span class="kw-2">&amp;mut </span>TimeoutStream&lt;S&gt;&gt;
 <span class="kw">where
     </span>S: Read + Write,
 {
