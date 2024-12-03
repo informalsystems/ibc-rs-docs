@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["field_new","impl_additive_ops_from_ref","impl_multiplicative_ops_from_ref","push_to_vec","to_bytes","vec"],"mod":["biginteger","bytes","fields","prelude","vec"],"trait":["One","ToConstraintField","UniformRand","Zero"]};

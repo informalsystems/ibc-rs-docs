@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CONVERT_NAME","ENV_VAR_MASP_PARAMS_DIR","OUTPUT_NAME","SPEND_NAME"],"fn":["get_params_dir","partial_deauthorize","preload_verifying_keys","verify_shielded_tx"],"struct":["PVKs","PartialAuthorized"]};

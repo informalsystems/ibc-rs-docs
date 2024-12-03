@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["transaction","validity_predicate"],"derive":["BorshDeserializer","StorageKeys"],"macro":["derive_borshdeserializer","derive_typehash","typehash"]};

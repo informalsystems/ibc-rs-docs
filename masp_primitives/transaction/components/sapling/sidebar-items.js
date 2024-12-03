@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["read_base","read_point","read_zkproof"],"mod":["builder","fees"],"struct":["Authorized","Bundle","CompactOutputDescription","ConvertDescription","ConvertDescriptionV5","OutputDescription","OutputDescriptionV5","SpendDescription","SpendDescriptionV5","Unproven"],"trait":["Authorization","MapAuth"],"type":["GrothProofBytes"]};

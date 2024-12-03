@@ -1,0 +1,1 @@
+searchState.loadedDescShard("num256", 0, "Returns the argument unchanged.\nCalls <code>U::from(self)</code>.\nChecked conversion to Uint256\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nConverts value to a signed 256 bit integer")

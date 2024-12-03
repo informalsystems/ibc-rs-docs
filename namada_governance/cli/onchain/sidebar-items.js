@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PgfAction"],"struct":["DefaultProposal","OnChainProposal","PgfContinuous","PgfFunding","PgfFundingProposal","PgfRetro","PgfSteward","PgfStewardProposal","StewardsUpdate"]};

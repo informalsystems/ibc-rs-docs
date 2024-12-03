@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["query_bridge_validator_set","query_governnace_validator_set","query_validator_set_update_proof","relay_validator_set_update"]};

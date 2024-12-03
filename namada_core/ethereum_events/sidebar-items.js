@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EthereumEvent"],"struct":["EthAddress","TransferToEthereum","TransferToNamada","TransfersToNamada","Uint"],"trait":["GetEventNonce"]};

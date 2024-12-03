@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["bootstrap_namada_node"]};

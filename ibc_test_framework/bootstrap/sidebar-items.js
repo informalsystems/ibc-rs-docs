@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["binary","consumer","init","nary","single"]};
+window.SIDEBAR_ITEMS = {"mod":["binary","consumer","init","namada","nary","single"]};

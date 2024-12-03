@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EventError","EventLevel"],"macro":["event_type"],"mod":["extend"],"struct":["Event","EventType","EventTypeBuilder"],"trait":["EmitEvents","EventToEmit"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["extract_attribute","maybe_extract_attribute","parse_timeout_height"],"struct":["RawObject"]};
+window.SIDEBAR_ITEMS = {"fn":["parse_timeout_height"]};

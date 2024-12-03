@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AcknowledgePacket","ChannelClosed","CloseConfirm","CloseInit","OpenAck","OpenConfirm","OpenInit","OpenTry","ReceivePacket","SendPacket","TimeoutPacket","WriteAcknowledgement"]};

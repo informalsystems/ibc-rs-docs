@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["NATIVE_MAX_DECIMAL_PLACES","NATIVE_SCALE"],"enum":["AmountError","AmountParseError","EventLevel","MaspDigitPos","UserAccount"],"struct":["Amount","DenominatedAmount","Denomination"],"trait":["Events","Keys","Read","Write"],"type":["Change","Result"]};

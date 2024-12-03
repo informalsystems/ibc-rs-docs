@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["simple_exec"],"struct":["ExecOutput"]};
+window.SIDEBAR_ITEMS = {"fn":["simple_exec","simple_exec_with_envs"],"struct":["ExecOutput"]};

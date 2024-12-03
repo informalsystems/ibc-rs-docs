@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SIGNATURE_SIZE"],"struct":["PublicKey","SecretKey","SigScheme","Signature"]};

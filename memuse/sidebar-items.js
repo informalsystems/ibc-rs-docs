@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["impl_no_dynamic_usage"],"trait":["DynamicUsage"]};

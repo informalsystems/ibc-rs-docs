@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Address","MaspDigitPos"],"struct":["AllowedConversion","AssetType","ConversionLeaf","ConversionState","Denomination","FrozenCommitmentTree","MaspEpoch","SaplingNode"],"trait":["ReadConversionState","WithConversionState"]};

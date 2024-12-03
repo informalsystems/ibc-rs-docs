@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["UPGRADE_PROPOSAL_TYPE_URL"],"fn":["execute_upgrade_client_proposal"],"struct":["Plan","UpgradeChain","UpgradeClientProposal","UpgradeProposal"],"trait":["UpgradeExecutionContext","UpgradeValidationContext"],"type":["UpgradedClientStateRef","UpgradedConsensusStateRef"]};

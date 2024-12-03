@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["send_batched_messages_and_wait_check_tx","send_batched_messages_and_wait_commit","sequential_send_batched_messages_and_wait_commit"]};
+window.SIDEBAR_ITEMS = {"fn":["response_to_tx_sync_result","send_batched_messages_and_wait_check_tx","send_batched_messages_and_wait_commit","sequential_send_batched_messages_and_wait_commit"]};

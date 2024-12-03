@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_VALIDATOR_METADATA_LEN","TOKENS_PER_NAM"],"enum":["ValidationError"],"struct":["OwnedPosParams","PosParams"]};

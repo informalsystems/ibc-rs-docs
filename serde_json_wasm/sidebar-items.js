@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["from_slice","from_str","to_string","to_vec"],"mod":["de","ser"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["HASH_SIZE"],"fn":["simple_hash_from_byte_vectors"],"mod":["proof"],"struct":["NonIncremental","Proof"],"trait":["MerkleHash"],"type":["Hash"]};

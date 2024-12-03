@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EthereumTxData"],"mod":["bridge_pool_roots","ethereum_events","ethereum_tx_data_variants","validator_set_update"],"struct":["VoteExtension"],"trait":["EthereumTxDataVariants"]};

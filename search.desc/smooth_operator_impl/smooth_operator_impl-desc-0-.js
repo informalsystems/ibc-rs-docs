@@ -1,0 +1,1 @@
+searchState.loadedDescShard("smooth_operator_impl", 0, "Convert arithmetic operators within the given expression …")

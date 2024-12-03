@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SAPLING_COMMITMENT_TREE_DEPTH"],"enum":["Rseed"],"fn":["merkle_hash","spend_sig"],"mod":["group_hash","keys","note_encryption","pedersen_hash","prover","redjubjub","util"],"struct":["Diversifier","Node","Note","NoteValue","Nullifier","NullifierDerivingKey","PaymentAddress","ProofGenerationKey","SaplingIvk","ValueCommitment","ViewingKey"]};

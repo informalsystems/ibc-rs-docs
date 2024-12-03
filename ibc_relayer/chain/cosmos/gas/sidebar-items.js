@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["calculate_fee","dynamic_gas_price","gas_amount_to_fee","mul_ceil","mul_floor"]};
+window.SIDEBAR_ITEMS = {"fn":["adjust_estimated_gas","calculate_fee","dynamic_gas_price","gas_amount_to_fee","mul_ceil","mul_floor"],"struct":["AdjustGas"]};

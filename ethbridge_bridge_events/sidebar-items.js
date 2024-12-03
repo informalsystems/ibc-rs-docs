@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BridgeEvents"],"struct":["TransferToChainFilter","TransferToErcFilter","ValidatorSetUpdateFilter"]};

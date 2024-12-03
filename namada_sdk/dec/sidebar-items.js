@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["POS_DECIMAL_PRECISION"],"struct":["Dec","Error"],"type":["Result"]};

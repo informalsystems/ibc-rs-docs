@@ -1,0 +1,1 @@
+searchState.loadedDescShard("borsh_ext", 0, "Extensions to types implementing <code>BorshSerialize</code>.\nSerialize a value to a <code>Vec</code> of bytes.")

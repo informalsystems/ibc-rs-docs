@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CREATE_CLIENT_TYPE_URL","RECOVER_CLIENT_TYPE_URL","SUBMIT_MISBEHAVIOUR_TYPE_URL","UPDATE_CLIENT_TYPE_URL","UPGRADE_CLIENT_TYPE_URL"],"enum":["ClientMsg","MsgUpdateOrMisbehaviour"],"struct":["MsgCreateClient","MsgRecoverClient","MsgSubmitMisbehaviour","MsgUpdateClient","MsgUpgradeClient"]};

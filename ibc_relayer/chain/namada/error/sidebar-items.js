@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["AddressDecodeSubdetail","BorshDecodeSubdetail","DecodeSubdetail","DenomNotFoundSubdetail","DryRunSubdetail","Error","HealthCheckJsonRpcSubdetail","InvalidHeightSubdetail","NamadaSubdetail","QuerySubdetail","RpcSubdetail","UpgradeSubdetail","VersionSubdetail"]};

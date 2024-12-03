@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["NumeralStringError"],"struct":["BinaryNumeralString","FF1","FlexibleNumeralString","InvalidRadix"],"trait":["NumeralString","Operations"]};

@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["namada_core",[]],["namada_ethereum_bridge",[["impl <a class=\"trait\" href=\"namada_core/eth_abi/trait.Encode.html\" title=\"trait namada_core::eth_abi::Encode\">Encode</a>&lt;1&gt; for <a class=\"struct\" href=\"namada_ethereum_bridge/storage/proof/struct.EthereumProof.html\" title=\"struct namada_ethereum_bridge::storage::proof::EthereumProof\">EthereumProof</a>&lt;(<a class=\"struct\" href=\"namada_core/chain/struct.Epoch.html\" title=\"struct namada_core::chain::Epoch\">Epoch</a>, <a class=\"type\" href=\"namada_vote_ext/validator_set_update/type.VotingPowersMap.html\" title=\"type namada_vote_ext::validator_set_update::VotingPowersMap\">VotingPowersMap</a>)&gt;"]]],["namada_merkle_tree",[["impl <a class=\"trait\" href=\"namada_core/eth_abi/trait.Encode.html\" title=\"trait namada_core::eth_abi::Encode\">Encode</a>&lt;3&gt; for <a class=\"struct\" href=\"namada_merkle_tree/eth_bridge_pool/struct.BridgePoolProof.html\" title=\"struct namada_merkle_tree::eth_bridge_pool::BridgePoolProof\">BridgePoolProof</a>"]]],["namada_sdk",[]],["namada_vote_ext",[["impl <a class=\"trait\" href=\"namada_core/eth_abi/trait.Encode.html\" title=\"trait namada_core::eth_abi::Encode\">Encode</a>&lt;1&gt; for <a class=\"struct\" href=\"namada_vote_ext/validator_set_update/struct.ValidatorSetArgs.html\" title=\"struct namada_vote_ext::validator_set_update::ValidatorSetArgs\">ValidatorSetArgs</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[18,662,351,18,355]}

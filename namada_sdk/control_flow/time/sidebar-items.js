@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"fn":["sleep"],"struct":["Constant","Duration","ExponentialBackoff","Instant","LinearBackoff","Map","RunForever","RunWithRetries","Sleep"],"trait":["SleepRunUntil","SleepStrategy"]};

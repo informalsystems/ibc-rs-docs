@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_max_proposal_period","get_parameters","get_proposal_author","get_proposal_by_id","get_proposal_code","get_proposal_result","get_proposal_votes","init_proposal","is_proposal_accepted","load_proposals","vote_proposal","write_proposal_result"],"mod":["keys","proposal","vote"]};

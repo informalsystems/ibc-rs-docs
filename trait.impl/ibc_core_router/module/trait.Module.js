@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["namada_ibc",[["impl&lt;C&gt; <a class=\"trait\" href=\"namada_ibc/core/router/module/trait.Module.html\" title=\"trait namada_ibc::core::router::module::Module\">Module</a> for <a class=\"struct\" href=\"namada_ibc/context/transfer_mod/struct.TransferModule.html\" title=\"struct namada_ibc::context::transfer_mod::TransferModule\">TransferModule</a>&lt;C&gt;<div class=\"where\">where\n    C: <a class=\"trait\" href=\"namada_ibc/context/common/trait.IbcCommonContext.html\" title=\"trait namada_ibc::context::common::IbcCommonContext\">IbcCommonContext</a> + <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a>,</div>"],["impl&lt;C, Token&gt; <a class=\"trait\" href=\"namada_ibc/core/router/module/trait.Module.html\" title=\"trait namada_ibc::core::router::module::Module\">Module</a> for <a class=\"struct\" href=\"namada_ibc/context/nft_transfer_mod/struct.NftTransferModule.html\" title=\"struct namada_ibc::context::nft_transfer_mod::NftTransferModule\">NftTransferModule</a>&lt;C, Token&gt;<div class=\"where\">where\n    C: <a class=\"trait\" href=\"namada_ibc/context/common/trait.IbcCommonContext.html\" title=\"trait namada_ibc::context::common::IbcCommonContext\">IbcCommonContext</a> + <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a>,\n    Token: <a class=\"trait\" href=\"namada_systems/trans_token/trait.Keys.html\" title=\"trait namada_systems::trans_token::Keys\">Keys</a> + <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a>,</div>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1699]}

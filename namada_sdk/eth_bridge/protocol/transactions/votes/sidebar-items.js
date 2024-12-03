@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["calculate_new","dedupe"],"struct":["Tally"],"trait":["EpochedVotingPowerExt"],"type":["EpochedVotingPower","Votes"]};

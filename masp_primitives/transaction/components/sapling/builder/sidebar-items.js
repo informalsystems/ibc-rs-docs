@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["ConvertBuildParams","ConvertDescriptionInfo","OutputBuildParams","RngBuildParams","SaplingBuilder","SaplingMetadata","SaplingOutputInfo","SpendBuildParams","SpendDescriptionInfo","StoredBuildParams","Unauthorized"],"trait":["BuildParams","MapBuilder"]};

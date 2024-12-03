@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["default_gas_from_config","gas_multiplier_from_config","max_gas_from_config"],"struct":["GasConfig"]};
+window.SIDEBAR_ITEMS = {"fn":["default_gas_from_config","gas_multiplier_from_config","max_gas_from_config","max_gas_from_config_opt"],"struct":["GasConfig"]};

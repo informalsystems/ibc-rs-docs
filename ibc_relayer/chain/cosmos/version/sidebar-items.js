@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ConsensusVersion","ErrorDetail"],"struct":["AppInfo","ConsensusModuleNotFoundSubdetail","Error","Specs","VersionParsingFailedSubdetail"]};
+window.SIDEBAR_ITEMS = {"enum":["ErrorDetail"],"struct":["AppInfo","ConsensusModuleNotFoundSubdetail","Error","Specs","VersionParsingFailedSubdetail"]};

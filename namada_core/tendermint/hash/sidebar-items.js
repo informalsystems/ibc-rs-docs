@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SHA256_HASH_SIZE"],"enum":["Algorithm","Hash"],"mod":["allow_empty"],"struct":["AppHash"]};

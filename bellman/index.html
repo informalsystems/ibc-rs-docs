@@ -1,0 +1,142 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`bellman` is a crate for building zk-SNARK circuits. It provides circuit traits and and primitive structures, as well as basic gadget implementations such as booleans and number abstractions."><title>bellman - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bellman" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bellman/index.html">bellman</a><span class="version">0.14.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example-circuit" title="Example circuit">Example circuit</a></li><li><a href="#roadmap" title="Roadmap">Roadmap</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>bellman</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bellman/lib.rs.html#1-597">source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>bellman</code> is a crate for building zk-SNARK circuits. It provides circuit
+traits and and primitive structures, as well as basic gadget implementations
+such as booleans and number abstractions.</p>
+<h2 id="example-circuit"><a class="doc-anchor" href="#example-circuit">§</a>Example circuit</h2>
+<p>Say we want to write a circuit that proves we know the preimage to some hash
+computed using SHA-256d (calling SHA-256 twice). The preimage must have a
+fixed length known in advance (because the circuit parameters will depend on
+it), but can otherwise have any value. We take the following strategy:</p>
+<ul>
+<li>Witness each bit of the preimage.</li>
+<li>Compute <code>hash = SHA-256d(preimage)</code> inside the circuit.</li>
+<li>Expose <code>hash</code> as a public input using multiscalar packing.</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bellman::{
+    gadgets::{
+        boolean::{AllocatedBit, Boolean},
+        multipack,
+        sha256::sha256,
+    },
+    groth16, Circuit, ConstraintSystem, SynthesisError,
+};
+<span class="kw">use </span>bls12_381::Bls12;
+<span class="kw">use </span>ff::PrimeField;
+<span class="kw">use </span>pairing::Engine;
+<span class="kw">use </span>rand::rngs::OsRng;
+<span class="kw">use </span>sha2::{Digest, Sha256};
+
+<span class="doccomment">/// Our own SHA-256d gadget. Input and output are in little-endian bit order.
+</span><span class="kw">fn </span>sha256d&lt;Scalar: PrimeField, CS: ConstraintSystem&lt;Scalar&gt;&gt;(
+    <span class="kw-2">mut </span>cs: CS,
+    data: <span class="kw-2">&amp;</span>[Boolean],
+) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Boolean&gt;, SynthesisError&gt; {
+    <span class="comment">// Flip endianness of each input byte
+    </span><span class="kw">let </span>input: Vec&lt;<span class="kw">_</span>&gt; = data
+        .chunks(<span class="number">8</span>)
+        .map(|c| c.iter().rev())
+        .flatten()
+        .cloned()
+        .collect();
+
+    <span class="kw">let </span>mid = sha256(cs.namespace(|| <span class="string">"SHA-256(input)"</span>), <span class="kw-2">&amp;</span>input)<span class="question-mark">?</span>;
+    <span class="kw">let </span>res = sha256(cs.namespace(|| <span class="string">"SHA-256(mid)"</span>), <span class="kw-2">&amp;</span>mid)<span class="question-mark">?</span>;
+
+    <span class="comment">// Flip endianness of each output byte
+    </span><span class="prelude-val">Ok</span>(res
+        .chunks(<span class="number">8</span>)
+        .map(|c| c.iter().rev())
+        .flatten()
+        .cloned()
+        .collect())
+}
+
+<span class="kw">struct </span>MyCircuit {
+    <span class="doccomment">/// The input to SHA-256d we are proving that we know. Set to `None` when we
+    /// are verifying a proof (and do not have the witness data).
+    </span>preimage: <span class="prelude-ty">Option</span>&lt;[u8; <span class="number">80</span>]&gt;,
+}
+
+<span class="kw">impl</span>&lt;Scalar: PrimeField&gt; Circuit&lt;Scalar&gt; <span class="kw">for </span>MyCircuit {
+    <span class="kw">fn </span>synthesize&lt;CS: ConstraintSystem&lt;Scalar&gt;&gt;(<span class="self">self</span>, cs: <span class="kw-2">&amp;mut </span>CS) -&gt; <span class="prelude-ty">Result</span>&lt;(), SynthesisError&gt; {
+        <span class="comment">// Compute the values for the bits of the preimage. If we are verifying a proof,
+        // we still need to create the same constraints, so we return an equivalent-size
+        // Vec of None (indicating that the value of each bit is unknown).
+        </span><span class="kw">let </span>bit_values = <span class="kw">if let </span><span class="prelude-val">Some</span>(preimage) = <span class="self">self</span>.preimage {
+            preimage
+                .into_iter()
+                .map(|byte| (<span class="number">0</span>..<span class="number">8</span>).map(<span class="kw">move </span>|i| (byte &gt;&gt; i) &amp; <span class="number">1u8 </span>== <span class="number">1u8</span>))
+                .flatten()
+                .map(|b| <span class="prelude-val">Some</span>(b))
+                .collect()
+        } <span class="kw">else </span>{
+            <span class="macro">vec!</span>[<span class="prelude-val">None</span>; <span class="number">80 </span>* <span class="number">8</span>]
+        };
+        <span class="macro">assert_eq!</span>(bit_values.len(), <span class="number">80 </span>* <span class="number">8</span>);
+
+        <span class="comment">// Witness the bits of the preimage.
+        </span><span class="kw">let </span>preimage_bits = bit_values
+            .into_iter()
+            .enumerate()
+            <span class="comment">// Allocate each bit.
+            </span>.map(|(i, b)| {
+                AllocatedBit::alloc(cs.namespace(|| <span class="macro">format!</span>(<span class="string">"preimage bit {}"</span>, i)), b)
+            })
+            <span class="comment">// Convert the AllocatedBits into Booleans (required for the sha256 gadget).
+            </span>.map(|b| b.map(Boolean::from))
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
+
+        <span class="comment">// Compute hash = SHA-256d(preimage).
+        </span><span class="kw">let </span>hash = sha256d(cs.namespace(|| <span class="string">"SHA-256d(preimage)"</span>), <span class="kw-2">&amp;</span>preimage_bits)<span class="question-mark">?</span>;
+
+        <span class="comment">// Expose the vector of 32 boolean variables as compact public inputs.
+        </span>multipack::pack_into_inputs(cs.namespace(|| <span class="string">"pack hash"</span>), <span class="kw-2">&amp;</span>hash)
+    }
+}
+
+<span class="comment">// Create parameters for our circuit. In a production deployment these would
+// be generated securely using a multiparty computation.
+</span><span class="kw">let </span>params = {
+    <span class="kw">let </span>c = MyCircuit { preimage: <span class="prelude-val">None </span>};
+    groth16::generate_random_parameters::&lt;Bls12, <span class="kw">_</span>, <span class="kw">_</span>&gt;(c, <span class="kw-2">&amp;mut </span>OsRng).unwrap()
+};
+
+<span class="comment">// Prepare the verification key (for proof verification).
+</span><span class="kw">let </span>pvk = groth16::prepare_verifying_key(<span class="kw-2">&amp;</span>params.vk);
+
+<span class="comment">// Pick a preimage and compute its hash.
+</span><span class="kw">let </span>preimage = [<span class="number">42</span>; <span class="number">80</span>];
+<span class="kw">let </span>hash = Sha256::digest(<span class="kw-2">&amp;</span>Sha256::digest(<span class="kw-2">&amp;</span>preimage));
+
+<span class="comment">// Create an instance of our circuit (with the preimage as a witness).
+</span><span class="kw">let </span>c = MyCircuit {
+    preimage: <span class="prelude-val">Some</span>(preimage),
+};
+
+<span class="comment">// Create a Groth16 proof with our parameters.
+</span><span class="kw">let </span>proof = groth16::create_random_proof(c, <span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;mut </span>OsRng).unwrap();
+
+<span class="comment">// Pack the hash as inputs for proof verification.
+</span><span class="kw">let </span>hash_bits = multipack::bytes_to_bits_le(<span class="kw-2">&amp;</span>hash);
+<span class="kw">let </span>inputs = multipack::compute_multipacking(<span class="kw-2">&amp;</span>hash_bits);
+
+<span class="comment">// Check the proof!
+</span><span class="macro">assert!</span>(groth16::verify_proof(<span class="kw-2">&amp;</span>pvk, <span class="kw-2">&amp;</span>proof, <span class="kw-2">&amp;</span>inputs).is_ok());</code></pre></div>
+<h2 id="roadmap"><a class="doc-anchor" href="#roadmap">§</a>Roadmap</h2>
+<p><code>bellman</code> is being refactored into a generic proving library. Currently it
+is pairing-specific, and different types of proving systems need to be
+implemented as sub-modules. After the refactor, <code>bellman</code> will be generic
+using the <a href="../ff/index.html" title="mod ff"><code>ff</code></a> and <a href="../group/index.html" title="mod group"><code>group</code></a> crates, while specific proving systems will
+be separate crates that pull in the dependencies they require.</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="domain/index.html" title="mod bellman::domain">domain</a></div><div class="desc docblock-short">This module contains an <a href="domain/struct.EvaluationDomain.html" title="struct bellman::domain::EvaluationDomain"><code>EvaluationDomain</code></a> abstraction for performing
+various kinds of polynomial arithmetic on top of the scalar field.</div></li><li><div class="item-name"><a class="mod" href="gadgets/index.html" title="mod bellman::gadgets">gadgets</a></div><div class="desc docblock-short">Self-contained sub-circuit implementations for various primitives.</div></li><li><div class="item-name"><a class="mod" href="groth16/index.html" title="mod bellman::groth16">groth16</a></div><div class="desc docblock-short">The <a href="https://eprint.iacr.org/2016/260">Groth16</a> proving system.</div></li><li><div class="item-name"><a class="mod" href="multicore/index.html" title="mod bellman::multicore">multicore</a></div><div class="desc docblock-short">An interface for dealing with the kinds of parallel computations involved in
+<code>bellman</code>. It’s currently just a thin wrapper around [<code>rayon</code>] but may be
+extended in the future to allow for various parallelism strategies.</div></li><li><div class="item-name"><a class="mod" href="multiexp/index.html" title="mod bellman::multiexp">multiexp</a></div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.LinearCombination.html" title="struct bellman::LinearCombination">Linear<wbr>Combination</a></div><div class="desc docblock-short">This represents a linear combination of some variables, with coefficients
+in the scalar field of a pairing-friendly elliptic curve group.</div></li><li><div class="item-name"><a class="struct" href="struct.Namespace.html" title="struct bellman::Namespace">Namespace</a></div><div class="desc docblock-short">This is a “namespaced” constraint system which borrows a constraint system (pushing
+a namespace context) and, when dropped, pops out of the namespace context.</div></li><li><div class="item-name"><a class="struct" href="struct.Variable.html" title="struct bellman::Variable">Variable</a></div><div class="desc docblock-short">Represents a variable in our constraint system.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.Index.html" title="enum bellman::Index">Index</a></div><div class="desc docblock-short">Represents the index of either an input variable or
+auxiliary variable.</div></li><li><div class="item-name"><a class="enum" href="enum.SynthesisError.html" title="enum bellman::SynthesisError">Synthesis<wbr>Error</a></div><div class="desc docblock-short">This is an error that could occur during circuit synthesis contexts,
+such as CRS generation or proving.</div></li><li><div class="item-name"><a class="enum" href="enum.VerificationError.html" title="enum bellman::VerificationError">Verification<wbr>Error</a></div><div class="desc docblock-short">An error during verification.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Circuit.html" title="trait bellman::Circuit">Circuit</a></div><div class="desc docblock-short">Computations are expressed in terms of arithmetic circuits, in particular
+rank-1 quadratic constraint systems. The <code>Circuit</code> trait represents a
+circuit that can be synthesized. The <code>synthesize</code> method is called during
+CRS generation and during proving.</div></li><li><div class="item-name"><a class="trait" href="trait.ConstraintSystem.html" title="trait bellman::ConstraintSystem">Constraint<wbr>System</a></div><div class="desc docblock-short">Represents a constraint system which can have new variables
+allocated and constrains between them formed.</div></li></ul></section></div></main></body></html>

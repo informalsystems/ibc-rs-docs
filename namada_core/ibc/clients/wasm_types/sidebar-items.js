@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["WASM_CLIENT_TYPE"],"fn":["client_type"],"mod":["client_message","client_state","consensus_state","error","msgs","proto","serializer"],"static":["SUBJECT_PREFIX","SUBSTITUTE_PREFIX"],"type":["Bytes"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["error","key","version","wallet"],"struct":["NamadaChain"]};
