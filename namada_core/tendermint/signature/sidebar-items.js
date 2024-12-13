@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["SIGNATURE_LENGTH"],"struct":["Ed25519Signature","Signature"],"type":["Secp256k1Signature"]};

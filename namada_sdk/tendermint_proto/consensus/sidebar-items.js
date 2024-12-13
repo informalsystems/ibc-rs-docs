@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["message","wal_message"],"struct":["BlockPart","EndHeight","HasVote","Message","MsgInfo","NewRoundStep","NewValidBlock","Proposal","ProposalPol","TimedWalMessage","TimeoutInfo","Vote","VoteSetBits","VoteSetMaj23","WalMessage"]};

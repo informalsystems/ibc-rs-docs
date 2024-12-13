@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["POS"],"mod":["client_only_methods"],"struct":["Enriched","Pos"],"type":["EnrichedBondsAndUnbondsDetail","EnrichedBondsAndUnbondsDetails","ValidatorStateInfo"]};

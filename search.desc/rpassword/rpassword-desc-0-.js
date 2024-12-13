@@ -1,1 +1,0 @@
-searchState.loadedDescShard("rpassword", 0, "Prompts for a password on STDERR and reads it from STDIN\nPrompts for a password on STDOUT and reads it from STDIN\nReads a password from STDIN\nReads a password from the terminal\nReads a password from anything that implements BufRead")

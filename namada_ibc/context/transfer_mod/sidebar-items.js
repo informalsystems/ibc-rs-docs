@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TransferModule"],"trait":["ModuleWrapper"]};

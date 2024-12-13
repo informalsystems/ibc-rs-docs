@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["PRF_EXPAND_PERSONALIZATION"],"fn":["prf_expand","prf_expand_vec"],"struct":["OutgoingViewingKey"]};

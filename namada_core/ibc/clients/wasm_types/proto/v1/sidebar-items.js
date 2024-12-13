@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Checksums","ClientMessage","ClientState","ConsensusState","Contract","GenesisState","MsgMigrateContract","MsgMigrateContractResponse","MsgRemoveChecksum","MsgRemoveChecksumResponse","MsgStoreCode","MsgStoreCodeResponse","QueryChecksumsRequest","QueryChecksumsResponse","QueryCodeRequest","QueryCodeResponse"]};

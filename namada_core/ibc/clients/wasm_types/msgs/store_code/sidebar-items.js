@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["STORE_CODE_TYPE_URL"],"struct":["MsgStoreCode"]};

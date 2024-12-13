@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An AVX512-IFMA implementation of the vectorized point operation strategy."><title>curve25519_dalek::backend::vector::ifma - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="curve25519_dalek" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button><a class="logo-container" href="../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt="logo"></a><h2><a href="../../../../curve25519_dalek/index.html">curve25519_<wbr>dalek</a><span class="version">4.1.3</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module ifma</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#ifma-instructions" title="IFMA instructions">IFMA instructions</a><ul><li><a href="#ifma-for-big-integer-multiplications" title="IFMA for big-integer multiplications">IFMA for big-integer multiplications</a></li><li><a href="#an-alternative-strategy" title="An alternative strategy">An alternative strategy</a></li></ul></li><li><a href="#choice-of-radix" title="Choice of radix">Choice of radix</a><ul><li><a href="#handling-offset-product-terms" title="Handling offset product terms">Handling offset product terms</a></li><li><a href="#advantages-of-a-smaller-radix" title="Advantages of a smaller radix">Advantages of a smaller radix</a></li></ul></li><li><a href="#multiplication" title="Multiplication">Multiplication</a></li><li><a href="#reduction-modulo-p" title="Reduction modulo \(p\)">Reduction modulo \(p\)</a></li><li><a href="#squaring" title="Squaring">Squaring</a></li><li><a href="#future-improvements" title="Future improvements">Future improvements</a></li></ul><h3><a href="#modules">Module Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In curve25519_<wbr>dalek::<wbr>backend::<wbr>vector</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../../../index.html">curve25519_dalek</a>::<wbr><a href="../../index.html">backend</a>::<wbr><a href="../index.html">vector</a></span><h1>Module <span>ifma</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../../src/curve25519_dalek/backend/vector/ifma/mod.rs.html#10-20">source</a> </span></div><span class="item-info"><div class="stab portability">Available on <strong><code>curve25519_dalek_backend="simd"</code> and <code>nightly</code></strong> only.</div></span><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An AVX512-IFMA implementation of the vectorized point operation
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An AVX512-IFMA implementation of the vectorized point operation strategy."><title>curve25519_dalek::backend::vector::ifma - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="curve25519_dalek" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (dbce3b43b 2024-04-20)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button><a class="logo-container" href="../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../../../../curve25519_dalek/index.html"><img src="https://cdn.jsdelivr.net/gh/dalek-cryptography/curve25519-dalek/docs/assets/dalek-logo-clear.png" alt="logo"></a><h2><a href="../../../../curve25519_dalek/index.html">curve25519_dalek</a><span class="version">4.1.3</span></h2></div><h2 class="location"><a href="#">Module ifma</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#modules">Modules</a></li></ul></section><h2><a href="../index.html">In curve25519_dalek::backend::vector</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../curve25519_dalek/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../../../index.html">curve25519_dalek</a>::<wbr><a href="../../index.html">backend</a>::<wbr><a href="../index.html">vector</a>::<wbr><a class="mod" href="#">ifma</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../../../../src/curve25519_dalek/backend/vector/ifma/mod.rs.html#10-20">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><span class="item-info"><div class="stab portability">Available on <strong><code>curve25519_dalek_backend="simd"</code> and <code>nightly</code></strong> only.</div></span><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An AVX512-IFMA implementation of the vectorized point operation
 strategy.</p>
 <h2 id="ifma-instructions"><a class="doc-anchor" href="#ifma-instructions">§</a>IFMA instructions</h2>
 <p>AVX512-IFMA is an extension to AVX-512 consisting of two instructions:</p>
@@ -30,14 +30,14 @@ The basic idea is that multiplication of large integers (such as 1024,
 \[
 \begin{aligned}
 x &amp;= x’_0 + x’_1 2^{64} + x’_2 2^{128} + \cdots \\
-y &amp;= y’_0 + y’_1 2^{64} + y’_2 2^{128} + \cdots
+y &amp;= y’_0 + y’_1 2^{64} + y’_2 2^{128} + \cdots 
 \end{aligned}
 \]
 into a “redundant” 52-bit representation
 \[
 \begin{aligned}
 x &amp;= x_0 + x_1 2^{52} + x_2 2^{104} + \cdots \\
-y &amp;= y_0 + y_1 2^{52} + y_2 2^{104} + \cdots
+y &amp;= y_0 + y_1 2^{52} + y_2 2^{104} + \cdots 
 \end{aligned}
 \]
 with each \(x_i, y_j\) in a 64-bit lane.</p>
@@ -64,7 +64,7 @@ Notice that the product coefficient \(z_k\), representing the value
 with \(k = i + j\).<br />
 Write the IFMA operators \(\mathrm{lo}(a,b)\), denoting the low
 \(52\) bits of \(ab\), and
-\(\mathrm{hi}(a,b)\), denoting the high \(52\) bits of
+\(\mathrm{hi}(a,b)\), denoting the high \(52\) bits of 
 \(ab\).<br />
 Now we can rewrite the product terms as
 \[
@@ -77,7 +77,7 @@ Now we can rewrite the product terms as
 )
 \\
 &amp;=
-\mathrm{lo}(x_i, y_j) 2^{52 (i+j)} +
+\mathrm{lo}(x_i, y_j) 2^{52 (i+j)} + 
 \mathrm{hi}(x_i, y_j) 2^{52 (i+j+1)}.
 \end{aligned}
 \]
@@ -100,8 +100,8 @@ multiplication into the form
 \]
 Gueron and Krasnov implement multiplication by constructing vectors
 out of the columns of this diagram, so that the source operands for
-the IFMA instructions are of the form \((x_0, x_1, x_2, \ldots)\)
-and \((y_i, y_i, y_i, \ldots)\).
+the IFMA instructions are of the form \((x_0, x_1, x_2, \ldots)\) 
+and \((y_i, y_i, y_i, \ldots)\). 
 After performing the multiplication,
 the product terms \(z_i\) are then repacked into a 64-bit representation.</p>
 <h3 id="an-alternative-strategy"><a class="doc-anchor" href="#an-alternative-strategy">§</a>An alternative strategy</h3>
@@ -146,13 +146,13 @@ has the advantage that for \(x_i, y_j \in [0,2^{52})\), the product term
 )
 \\
 &amp;=
-\mathrm{lo}(x_i, y_j) 2^{52 (i+j)} +
+\mathrm{lo}(x_i, y_j) 2^{52 (i+j)} + 
 \mathrm{hi}(x_i, y_j) 2^{52 (i+j+1)},
 \end{aligned}
 \]
-so that the low and high halves of the product can be directly accumulated
+so that the low and high halves of the product can be directly accumulated 
 onto the product limbs.
-In contrast, when using a smaller radix \(r = 52 - k\),
+In contrast, when using a smaller radix \(r = 52 - k\), 
 the product term has the form
 \[
 \begin{aligned}
@@ -164,7 +164,7 @@ the product term has the form
 )
 \\
 &amp;=
-\mathrm{lo}(x_i, y_j) 2^{r (i+j)} +
+\mathrm{lo}(x_i, y_j) 2^{r (i+j)} + 
 (
 \mathrm{hi}(x_i, y_j) 2^k
 )
@@ -314,7 +314,7 @@ As noted above, our strategy will be to multiply and accumulate the
 terms with coefficient \(2\) separately from those with coefficient
 \(1\), before combining them at the end.  This can alternately be
 thought of as accumulating product terms into a <em>doubly-redundant</em>
-representation, with two limbs for each digit, before collapsing
+representation, with two limbs for each digit, before collapsing 
 the doubly-redundant representation by shifts and adds.</p>
 <p>This computation requires 25 <code>vpmadd52luq</code> and 25 <code>vpmadd52huq</code>
 operations.  For 256-bit vectors, IFMA operations execute on an
@@ -364,10 +364,10 @@ Then the contribution of \(z_{5+i}\), taken modulo \(p\), is
 \[
 \begin{aligned}
 z_{5+i} 2^{255} 2^{51 i}
-&amp;=
-19 (z_{5+i}’ + z_{5+i}‘’ 2^{52}) 2^{51 i}
+&amp;= 
+19 (z_{5+i}’ + z_{5+i}‘’ 2^{52}) 2^{51 i} 
 \\
-&amp;=
+&amp;= 
 19 z_{5+i}’ 2^{51 i} + 2 \cdot 19 z_{5+i}‘’ 2^{51 (i+1)}
 \\
 \end{aligned}
@@ -388,10 +388,10 @@ Combining these observations, we can write
 \[
 \begin{aligned}
 z_{5+i} 2^{255} 2^{51 i}
-&amp;=
+&amp;= 
 19 z_{5+i}’ 2^{51 i} + 2 \cdot 19 z_{5+i}‘’ 2^{51 (i+1)}
 \\
-&amp;=
+&amp;= 
 \mathrm{lo}(19, z_{5+i}) 2^{51 i}
 + 2 \mathrm{hi}(19, z_{5+i}) 2^{51 (i+1)}
 + 2 \mathrm{lo}(19, z_{5+i}/2^{52}) 2^{51 (i+1)}.
@@ -405,19 +405,19 @@ complication: the contribution becomes
 \[
 \begin{aligned}
 z_{9} 2^{255} 2^{204}
-&amp;=
+&amp;= 
 \mathrm{lo}(19, z_{9}) 2^{204}
 + 2 \mathrm{hi}(19, z_{9}) 2^{255}
 + 2 \mathrm{lo}(19, z_{9}/2^{52}) 2^{255}
 \\
-&amp;=
+&amp;= 
 \mathrm{lo}(19, z_{9}) 2^{204}
 + 2 \mathrm{hi}(19, z_{9}) 19
 + 2 \mathrm{lo}(19, z_{9}/2^{52}) 19
 \\
 &amp;=
 \mathrm{lo}(19, z_{9}) 2^{204}
-+ 2
++ 2 
 \mathrm{lo}(19, \mathrm{hi}(19, z_{9}) + \mathrm{lo}(19, z_{9}/2^{52})).
 \\
 \end{aligned}

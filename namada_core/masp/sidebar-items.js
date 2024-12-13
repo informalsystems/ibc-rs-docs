@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["BalanceOwner","MaspValue","TAddrData","TransferSource","TransferTarget"],"fn":["addr_taddr","deserialize_txid","encode_asset_type","ibc_taddr","serialize_txid"],"struct":["AssetData","ExtendedSpendingKey","ExtendedViewingKey","MaspEpoch","MaspTransaction","MaspTxId","PaymentAddress","TxIdInner"],"type":["TokenMap"]};

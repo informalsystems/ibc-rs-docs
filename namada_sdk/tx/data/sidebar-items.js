@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ResultCode","TxSentinel","TxType","WrapperTxErr"],"fn":["compute_inner_tx_hash","hash_tx"],"mod":["eval_vp","pgf","pos","protocol","wrapper"],"struct":["BatchedTxResult","DryRunResult","ExtendedTxResult","Fee","GasLimit","TxResult","VpStatusFlags","VpsResult","WrapperTx"],"type":["EllipticCurve"]};

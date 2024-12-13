@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["cosmos_adr028_escrow_address"]};

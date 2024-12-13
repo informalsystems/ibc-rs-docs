@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Index","SynthesisError","VerificationError"],"mod":["domain","gadgets","groth16","multicore","multiexp"],"struct":["LinearCombination","Namespace","Variable"],"trait":["Circuit","ConstraintSystem"]};

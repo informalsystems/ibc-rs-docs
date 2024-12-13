@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["RoAccess","RwAccess","WasmValidationError"],"fn":["validate_untrusted_wasm"],"mod":["host_env","memory","types"],"struct":["HostRef","WasmCacheRoAccess","WasmCacheRwAccess"],"trait":["WasmCacheAccess"],"type":["RoHostRef","RwHostRef"]};

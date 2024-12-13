@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["MIN_UTC"],"fn":["duration_passed"],"struct":["DateTime","DateTimeUtc","DurationNanos","DurationSecs","Rfc3339String","Utc"],"trait":["TimeZone"],"type":["Duration"]};

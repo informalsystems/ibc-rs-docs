@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MaspClientCapabilities","RetryStrategy"],"fn":["blocks_left_to_fetch"],"struct":["Fetched","TrialDecrypted"],"trait":["MaspClient"],"type":["DecryptedData","IndexedNoteData","IndexedNoteEntry","IndexedNoteEntryRefs"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["base_leaf_spec","ibc_leaf_spec","ibc_proof_specs","leaf_spec","proof_specs"]};

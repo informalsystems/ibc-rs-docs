@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["TypeEq"],"trait":["HasTypeWitness","MakeTypeWitness","TypeWitnessTypeArg"]};

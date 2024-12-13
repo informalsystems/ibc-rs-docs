@@ -1,9 +1,3 @@
-(function() {
-    var implementors = Object.fromEntries([["coins_bip32",[]],["ethers",[]],["k256",[]],["rand_core",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[18,14,12,17]}
+(function() {var implementors = {
+"rand_core":[]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

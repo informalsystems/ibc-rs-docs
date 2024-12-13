@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["multi_transfer","transfer"],"trait":["CreditOrDebit"]};

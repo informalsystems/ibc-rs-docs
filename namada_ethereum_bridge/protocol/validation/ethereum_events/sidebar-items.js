@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["validate_eth_events_vext"]};

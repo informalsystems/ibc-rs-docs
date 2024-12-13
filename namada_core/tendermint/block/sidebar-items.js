@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["BlockIdFlag","CommitSig"],"mod":["commit_sig","header","parts","signed_header"],"struct":["Block","Commit","Header","Height","Id","Meta","Round","Size"],"trait":["ParseHeight","ParseId"]};

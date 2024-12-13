@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["LegendreSymbol"],"fn":["batch_inversion","batch_inversion_and_mul"],"mod":["arithmetic","macros","models","utils"],"struct":["BitIteratorBE","BitIteratorLE"],"trait":["FftField","FftParameters","Field","FpParameters","PrimeField","SquareRootField"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["BorshDeserialize","BorshSerialize"],"enum":["Address"],"mod":["storage"],"struct":["Event","EventType","MaspTransaction"],"trait":["BorshDeserialize","BorshSerialize","BorshSerializeExt","EventToEmit","ResultExt","StorageRead","StorageWrite","TxEnv"],"type":["Result"]};

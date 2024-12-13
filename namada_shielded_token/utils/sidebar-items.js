@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["handle_masp_tx","is_masp_transfer","update_note_commitment_tree"]};

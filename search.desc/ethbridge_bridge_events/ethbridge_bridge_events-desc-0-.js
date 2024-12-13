@@ -1,1 +1,0 @@
-searchState.loadedDescShard("ethbridge_bridge_events", 0, "Container type for all of the contract’s events\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.")

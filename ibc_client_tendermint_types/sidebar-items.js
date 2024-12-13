@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["TENDERMINT_CLIENT_STATE_TYPE_URL","TENDERMINT_CLIENT_TYPE","TENDERMINT_CONSENSUS_STATE_TYPE_URL","TENDERMINT_HEADER_TYPE_URL","TENDERMINT_MISBEHAVIOUR_TYPE_URL"],"fn":["client_type"],"mod":["error","proto"],"struct":["AllowUpdate","ClientState","ConsensusState","Header","Misbehaviour","TrustThreshold"]};

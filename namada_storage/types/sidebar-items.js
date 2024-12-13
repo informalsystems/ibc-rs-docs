@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["CommitOnlyData","PatternIterator","PrefixIterator","Regex"],"type":["KVBytes"]};

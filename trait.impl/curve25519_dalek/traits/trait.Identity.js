@@ -1,9 +1,3 @@
-(function() {
-    var implementors = Object.fromEntries([["curve25519_dalek",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[23]}
+(function() {var implementors = {
+"curve25519_dalek":[]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

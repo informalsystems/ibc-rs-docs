@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["VoteExtensionError"],"mod":["bridge_pool_roots","ethereum_events","validator_set_update"]};

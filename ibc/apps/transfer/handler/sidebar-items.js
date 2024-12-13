@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["process_recv_packet_execute","refund_packet_token_execute","refund_packet_token_validate","send_transfer","send_transfer_execute","send_transfer_validate"]};

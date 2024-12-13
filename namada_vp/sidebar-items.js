@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Address"],"mod":["native_vp","vp_host_fns"],"struct":["Event","EventType","Hash"],"trait":["VpEnv"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["bridgetree"],"struct":["Altitude","Position"],"trait":["Frontier","Hashable","Tree"]};

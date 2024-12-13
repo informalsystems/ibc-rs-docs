@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["message"],"struct":["BlockRequest","BlockResponse","Message","NoBlockResponse","StatusRequest","StatusResponse"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["copy_validator_sets_and_positions","insert_validator_into_validator_set","promote_next_below_capacity_validator_to_consensus","remove_below_capacity_validator","remove_consensus_validator","update_validator_set","validator_set_update_comet"]};

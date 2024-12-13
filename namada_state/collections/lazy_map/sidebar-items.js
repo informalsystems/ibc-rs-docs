@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DATA_SUBKEY"],"enum":["NestedSubKey","SubKey","ValidationError"],"struct":["LazyMap"],"trait":["Collectable"],"type":["NestedMap"]};

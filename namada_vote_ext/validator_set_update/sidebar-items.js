@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["valset_upd_toks_to_hashes"],"struct":["EthAddrBook","SerializeWithAbiEncode","SignedVext","ValidatorSetArgs","ValidatorSetUpdateVext","ValidatorSetUpdateVextDigest"],"trait":["VotingPowersMapExt"],"type":["Vext","VextDigest","VotingPowersMap"]};

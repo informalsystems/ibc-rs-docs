@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Action","GovAction","MaspAction","PgfAction","PosAction"],"fn":["get_masp_section_ref","is_ibc_shielding_transfer"],"trait":["Read","Write"],"type":["Actions"]};

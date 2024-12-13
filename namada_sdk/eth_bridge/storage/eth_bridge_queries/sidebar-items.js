@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["EthBridgeEnabled","EthBridgeStatus","SendValsetUpd"],"fn":["check_bridge_status","is_bridge_active_at","is_bridge_comptime_enabled"],"struct":["EthAssetMint","EthBridgeQueriesHook"],"trait":["EthBridgeQueries"]};

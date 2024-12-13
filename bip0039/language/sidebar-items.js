@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ChineseSimplified","ChineseTraditional","Czech","English","French","Italian","Japanese","Korean","Portuguese","Spanish"],"trait":["Language"]};

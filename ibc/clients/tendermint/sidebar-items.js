@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["TENDERMINT_CLIENT_TYPE"],"mod":["client_state","consensus_state","types"]};

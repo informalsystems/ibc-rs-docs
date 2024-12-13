@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DecodingError"],"struct":["ExpandedSpendingKey","FullViewingKey","OutgoingViewingKey"]};

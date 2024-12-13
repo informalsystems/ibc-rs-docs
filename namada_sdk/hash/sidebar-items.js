@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["HASH_LENGTH","HEX_HASH_LENGTH"],"enum":["DummyHasher","Error"],"struct":["Hash","KeccakHasher","Sha256Hasher"],"trait":["StorageHasher"],"type":["HashResult"]};

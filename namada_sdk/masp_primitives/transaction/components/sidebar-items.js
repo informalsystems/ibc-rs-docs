@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["GROTH_PROOF_SIZE"],"mod":["amount","sapling","transparent"],"struct":["ConvertDescription","OutputDescription","SpendDescription","TxIn","TxOut","ValueSum"],"type":["I128Sum","I16Sum","I32Sum","I64Sum","I8Sum","U128Sum","U16Sum","U32Sum","U64Sum","U8Sum"]};

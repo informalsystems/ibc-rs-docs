@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"struct":["Base64","Base64NoPadding","Base64UrlSafe","Base64UrlSafeNoPadding","Hex"],"trait":["Decoder","Encoder"]};

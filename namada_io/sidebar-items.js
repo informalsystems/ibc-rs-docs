@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["prompt_aux","read_aux"],"macro":["display","display_line","edisplay_line","prompt"],"mod":["client"],"struct":["DevNullProgressBar","NullIo","StdIo"],"trait":["Io","MaybeSend","MaybeSync","NamadaIo","ProgressBar"]};

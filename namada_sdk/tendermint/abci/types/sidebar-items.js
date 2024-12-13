@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["BlockSignatureInfo","MisbehaviorKind"],"struct":["CommitInfo","ExecTxResult","ExtendedCommitInfo","ExtendedVoteInfo","Misbehavior","Snapshot","Validator","VoteInfo"]};

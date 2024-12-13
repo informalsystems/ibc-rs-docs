@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ADDRESS","REWARD_DISTRIBUTION_LIMIT"],"mod":["cli","inflation","parameters","storage"]};

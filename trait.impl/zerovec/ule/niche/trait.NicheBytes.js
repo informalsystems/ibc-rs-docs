@@ -1,9 +1,3 @@
-(function() {
-    var implementors = Object.fromEntries([["zerovec",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[14]}
+(function() {var implementors = {
+"zerovec":[]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

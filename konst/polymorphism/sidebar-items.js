@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["type_eq_projection_fn"],"mod":["kinds"]};

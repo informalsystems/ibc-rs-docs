@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["MAX_COMPACT_SIZE"],"struct":["Array","CompactSize","Optional","Vector"]};

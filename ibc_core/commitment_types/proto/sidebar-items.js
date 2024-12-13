@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["ics23","v1"]};

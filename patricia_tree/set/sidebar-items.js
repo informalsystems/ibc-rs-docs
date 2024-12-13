@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["GenericPatriciaSet","IntoIter","Iter"],"type":["PatriciaSet","StringPatriciaSet"]};

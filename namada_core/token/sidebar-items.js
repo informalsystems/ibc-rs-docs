@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["NATIVE_MAX_DECIMAL_PLACES","NATIVE_SCALE"],"enum":["AmountError","AmountParseError","MaspDigitPos"],"struct":["Amount","DenominatedAmount","Denomination"],"type":["Change"]};

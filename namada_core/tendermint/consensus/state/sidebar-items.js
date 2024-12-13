@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["NIL_PLACEHOLDER"],"enum":["Ordering"],"mod":["fmt"],"struct":["State"]};

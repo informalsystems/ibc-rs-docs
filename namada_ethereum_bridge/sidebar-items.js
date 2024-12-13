@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ADDRESS"],"mod":["event","oracle","protocol","storage","vp"]};

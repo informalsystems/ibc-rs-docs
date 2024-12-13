@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["array_assume_init","uninit_array"],"struct":["UNINIT","UNINIT_ARRAY"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["migrate_contract","remove_checksum","store_code"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["new_tx_event"],"mod":["types"],"struct":["Batch","Code","TxEvent"]};

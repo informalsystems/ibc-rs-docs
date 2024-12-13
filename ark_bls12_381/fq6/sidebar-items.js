@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Fq6Parameters"],"type":["Fq6"]};

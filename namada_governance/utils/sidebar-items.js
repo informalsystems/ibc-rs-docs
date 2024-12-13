@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ProposalStatus","TallyResult","TallyType"],"fn":["compute_proposal_result","is_valid_validator_voting_period","last_validator_voting_epoch"],"struct":["ProposalResult","ProposalVotes","Vote"],"type":["VotePower"]};

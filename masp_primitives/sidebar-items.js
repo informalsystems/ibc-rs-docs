@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["asset_type","consensus","constants","convert","keys","memo","merkle_tree","sapling","transaction","zip32"]};

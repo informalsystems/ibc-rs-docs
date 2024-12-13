@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Animation","Colour"],"macro":["tqdm"],"mod":["format","monitor","term"],"struct":["Bar","BarBuilder","BarIter","RowManager"],"trait":["BarExt","TqdmIterator"]};

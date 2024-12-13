@@ -1,9 +1,3 @@
-(function() {
-    var implementors = Object.fromEntries([["crypto_bigint",[]],["ethers",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[20,14]}
+(function() {var implementors = {
+"crypto_bigint":[]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

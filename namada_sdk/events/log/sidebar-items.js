@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["dumb_queries"],"struct":["EventLog","Params","WithMatcher"]};

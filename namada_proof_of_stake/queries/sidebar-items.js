@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["bonds_and_unbonds","find_bonds","find_delegation_validators","find_delegations","find_unbonds","get_consensus_validator_from_protocol_pk","get_total_voting_power","get_validator_eth_hot_key","get_validator_protocol_key","has_bonds","read_validator_stake"]};

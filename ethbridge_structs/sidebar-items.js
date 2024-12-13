@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ChainTransfer","Erc20Transfer","RelayProof","Signature","ValidatorSetArgs"]};

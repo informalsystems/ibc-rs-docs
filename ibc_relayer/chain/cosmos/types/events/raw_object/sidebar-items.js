@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["extract_attribute","maybe_extract_attribute"],"struct":["RawObject"]};

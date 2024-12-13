@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["set_block_cache_bytes","set_default_mint_limit","set_default_per_epoch_throughput_limit","set_epochs_per_year","set_p2p_port","set_pipeline_len","set_proxy_app_port","set_rpc_port","set_unbonding_len"]};

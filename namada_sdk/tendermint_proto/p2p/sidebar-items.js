@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["message","packet"],"struct":["AuthSigMessage","DefaultNodeInfo","DefaultNodeInfoOther","Message","NetAddress","Packet","PacketMsg","PacketPing","PacketPong","PexAddrs","PexRequest","ProtocolVersion"]};

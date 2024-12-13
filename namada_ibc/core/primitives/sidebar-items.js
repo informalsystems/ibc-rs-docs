@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ZERO_DURATION"],"enum":["TimestampError"],"struct":["Signer","Timestamp"],"trait":["ToProto","ToVec"]};

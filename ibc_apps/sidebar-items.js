@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["nft_transfer","transfer"]};

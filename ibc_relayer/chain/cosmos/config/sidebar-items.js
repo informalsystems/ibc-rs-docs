@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Diagnostic"],"fn":["validate_trust_threshold"],"mod":["error"],"struct":["CosmosSdkConfig"]};
+window.SIDEBAR_ITEMS = {"enum":["Diagnostic"],"mod":["error"],"struct":["CosmosSdkConfig"]};

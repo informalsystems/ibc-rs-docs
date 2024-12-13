@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["install_shutdown_signal"],"mod":["time"],"struct":["ShutdownSignalChan"],"trait":["ShutdownSignal"]};

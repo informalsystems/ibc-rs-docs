@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["client","common","execution","nft_transfer","nft_transfer_mod","router","storage","token_transfer","transfer_mod","validation"],"struct":["IbcContext","ValidationParams"]};

@@ -1,1 +1,0 @@
-searchState.loadedDescShard("memzero", 0, "Wrapper to zero out memory when dropped.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

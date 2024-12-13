@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["sort_sigs"],"struct":["EthereumProof"],"type":["BridgePoolRootProof"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"mod":["collection_validation"],"struct":["BlockHeader","BlockHeight","Epoch","Epochs","Key","TxIndex"],"trait":["StorageRead","VpEnv"],"type":["Result"]};

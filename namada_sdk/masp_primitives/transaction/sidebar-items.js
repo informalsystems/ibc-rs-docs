@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["GROTH_PROOF_SIZE"],"enum":["DigestError","TxVersion"],"mod":["builder","components","fees","sighash","sighash_v5","txid"],"struct":["Authorized","Transaction","TransactionData","TransparentAddress","TransparentDigests","TxDigests","TxId","Unauthorized","Unproven"],"trait":["Authorization","TransactionDigest"],"type":["GrothProofBytes"]};

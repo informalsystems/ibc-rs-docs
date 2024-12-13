@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ConsensusRequest","ConsensusResponse","InfoRequest","InfoResponse","MempoolRequest","MempoolResponse","Request","Response","SnapshotRequest","SnapshotResponse"]};

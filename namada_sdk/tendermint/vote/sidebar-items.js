@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Type"],"struct":["CanonicalVote","Power","SignVoteRequest","SignedVote","SignedVoteResponse","ValidatorIndex","Vote"]};

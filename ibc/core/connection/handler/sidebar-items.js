@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["conn_open_ack","conn_open_confirm","conn_open_init","conn_open_try"]};

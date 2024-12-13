@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["WASM_CONSENSUS_STATE_TYPE_URL"],"struct":["ConsensusState"]};

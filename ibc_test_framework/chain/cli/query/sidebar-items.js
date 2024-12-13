@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["query_auth_module","query_balance","query_cross_chain_query","query_namada_balance","query_recipient_transactions","query_tx_hash"]};
+window.SIDEBAR_ITEMS = {"fn":["query_auth_module","query_balance","query_cross_chain_query","query_recipient_transactions","query_tx_hash"]};

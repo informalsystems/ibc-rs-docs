@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["derive_ed25519_private_key"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["WrapperTxErr"],"struct":["Fee","GasLimit","WrapperTx"],"type":["EllipticCurve"]};

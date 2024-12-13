@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Overwritten"],"mod":["btree","hash","serde"],"type":["BiMap"]};

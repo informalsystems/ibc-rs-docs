@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["concat_strs","concat_sum_lengths","join_strs","join_sum_lengths"],"struct":["ArrayStr","StrJoinArgs"]};

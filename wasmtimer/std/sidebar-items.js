@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["UNIX_EPOCH"],"struct":["Instant","SystemTime","SystemTimeError"]};

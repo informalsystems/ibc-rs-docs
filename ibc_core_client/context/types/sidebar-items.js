@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["HeightError","Status","UpdateKind"],"mod":["error","events","msgs","proto"],"struct":["Height"]};

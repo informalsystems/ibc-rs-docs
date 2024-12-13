@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["CONN_OPEN_ACK_TYPE_URL","CONN_OPEN_CONFIRM_TYPE_URL","CONN_OPEN_INIT_TYPE_URL","CONN_OPEN_TRY_TYPE_URL"],"enum":["ConnectionMsg"],"struct":["MsgConnectionOpenAck","MsgConnectionOpenConfirm","MsgConnectionOpenInit","MsgConnectionOpenTry"]};

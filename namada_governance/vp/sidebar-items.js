@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ADDRESS","MAX_PGF_ACTIONS"],"enum":["VpError"],"mod":["pgf","utils"],"struct":["GovernanceVp"]};

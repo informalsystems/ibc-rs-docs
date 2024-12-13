@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["apply_shielded_transfer","apply_transparent_transfers","multi_transfer","transfer"]};

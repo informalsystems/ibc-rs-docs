@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Error","StorageModification"],"struct":["PrefixIter","WriteLog"],"type":["Result"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["FnIdentity","FnRev","GRef","GRefMut","Invoke"],"trait":["InjTypeFn","RevTypeFn","TypeFn"],"type":["CallFn","CallInjFn","UncallFn"]};

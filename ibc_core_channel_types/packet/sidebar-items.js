@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["PacketMsgType","Receipt"],"struct":["Packet","PacketState"]};

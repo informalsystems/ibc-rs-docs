@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["RewardsError"],"fn":["add_rewards_to_counter","apply_inflation","compute_current_rewards_from_bonds","compute_inflation","estimate_staking_reward_rate","read_rewards_counter","take_rewards_from_counter","update_rewards_products_and_mint_inflation"],"struct":["PosRewards","PosRewardsCalculator","PosRewardsRates"]};

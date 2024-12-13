@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["BecomeValidator","Bond","ClaimRewards","CommissionChange","ConsensusKeyChange","MetaDataChange","Redelegation","Withdraw"],"type":["Unbond"]};

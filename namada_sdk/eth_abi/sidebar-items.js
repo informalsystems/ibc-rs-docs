@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Token"],"struct":["EncodeCell"],"trait":["Encode"],"type":["AbiEncode"]};

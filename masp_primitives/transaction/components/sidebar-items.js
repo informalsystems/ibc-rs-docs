@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["GROTH_PROOF_SIZE"],"mod":["amount","sapling","transparent"]};

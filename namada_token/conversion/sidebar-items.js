@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["calculate_masp_rewards","calculate_masp_rewards_precision","compute_inflation","update_allowed_conversions"]};

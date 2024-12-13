@@ -1,9 +1,3 @@
-(function() {
-    var implementors = Object.fromEntries([["bitcoin_internals",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[24]}
+(function() {var implementors = {
+"bitcoin_internals":[]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

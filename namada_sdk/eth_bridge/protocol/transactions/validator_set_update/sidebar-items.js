@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["aggregate_votes","sign_validator_set_update"]};

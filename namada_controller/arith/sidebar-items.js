@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["checked"],"struct":["Error"],"trait":["CheckedAdd","CheckedDiv","CheckedMul","CheckedNeg","CheckedRem","CheckedSub","OverflowingAdd","OverflowingSub"]};

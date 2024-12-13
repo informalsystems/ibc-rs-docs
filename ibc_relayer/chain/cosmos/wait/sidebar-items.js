@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["all_tx_results_found","wait_for_block_commits","wait_tx_hash","wait_tx_succeed"]};
+window.SIDEBAR_ITEMS = {"fn":["wait_for_block_commits","wait_tx_hash","wait_tx_succeed"]};

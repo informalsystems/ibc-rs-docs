@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ApplySnapshotChunkResult","Code","ConsensusRequest","ConsensusResponse","EventAttribute","InfoRequest","InfoResponse","MempoolRequest","MempoolResponse","MethodKind","Request","Response","SnapshotRequest","SnapshotResponse"],"mod":["request","response","types"],"struct":["Event"]};

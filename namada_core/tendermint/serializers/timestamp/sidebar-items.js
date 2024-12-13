@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["deserialize","fmt_as_rfc3339_nanos","serialize","to_rfc3339_nanos"],"struct":["Rfc3339"]};

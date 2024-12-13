@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["PosEvent"],"mod":["types"],"struct":["SlashedAmount","SlashedValidator"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["BLOCK_HASH_LENGTH","BLOCK_HEIGHT_LENGTH","CHAIN_ID_LENGTH","CHAIN_ID_PREFIX_MAX_LEN","CHAIN_ID_PREFIX_SEP","DEFAULT_CHAIN_ID"],"enum":["ChainIdParseError","ChainIdPrefixParseError","ChainIdValidationError","ParseBlockHashError"],"struct":["BlockHash","BlockHeader","BlockHeight","ChainId","ChainIdPrefix","Epoch","Epochs"]};

@@ -1,1 +1,0 @@
-searchState.loadedDescShard("open_fastrlp_derive", 0, "Derive macro for <code>#[derive(RlpEncodable, RlpDecodable)]</code>.")

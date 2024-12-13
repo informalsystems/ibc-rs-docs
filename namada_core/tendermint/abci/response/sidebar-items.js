@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ConsensusResponse","InfoResponse","MempoolResponse","OfferSnapshot","ProcessProposal","Response","SnapshotResponse"],"struct":["ApplySnapshotChunk","BeginBlock","CheckTx","Commit","DeliverTx","Echo","EndBlock","Exception","Info","InitChain","ListSnapshots","LoadSnapshotChunk","PrepareProposal","Query"]};

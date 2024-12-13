@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["apply_derived_tx","sign_bridge_pool_root"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["IsIntoIterKind","IsIteratorKind","IsNotStdKind","IsRefKind","IsStdKind"]};

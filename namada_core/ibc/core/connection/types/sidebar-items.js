@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["State"],"mod":["error","events","msgs","proto","version"],"struct":["ConnectionEnd","Counterparty","IdentifiedConnectionEnd"]};

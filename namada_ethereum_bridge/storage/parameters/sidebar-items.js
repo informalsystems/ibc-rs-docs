@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["read_native_erc20_address"],"struct":["ContractVersion","Contracts","Erc20WhitelistEntry","EthereumBridgeParams","EthereumOracleConfig","MinimumConfirmations","UpgradeableContract"]};

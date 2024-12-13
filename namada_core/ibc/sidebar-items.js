@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["apps","clients","core","cosmos_host","derive","primitives"],"struct":["IbcTokenHash","PGFIbcTarget"],"type":["IbcTxDataHash"]};

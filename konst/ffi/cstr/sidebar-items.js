@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["from_bytes_until_nul","from_bytes_with_nul","to_bytes","to_bytes_with_nul","to_str"],"struct":["FromBytesUntilNulError","FromBytesWithNulError"]};

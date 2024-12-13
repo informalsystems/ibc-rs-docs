@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["hash_map","hash_set"],"struct":["HashMap","HashSet"]};

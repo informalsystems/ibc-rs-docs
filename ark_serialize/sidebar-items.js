@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["EdwardsFlags","SWFlags","SerializationError"],"fn":["buffer_bit_byte_size","buffer_byte_size"],"struct":["EmptyFlags"],"trait":["CanonicalDeserialize","CanonicalDeserializeWithFlags","CanonicalSerialize","CanonicalSerializeHashExt","CanonicalSerializeWithFlags","Flags","Read","Write"]};

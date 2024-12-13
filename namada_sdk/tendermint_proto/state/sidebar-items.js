@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["AbciResponses","AbciResponsesInfo","ConsensusParamsInfo","State","ValidatorsInfo","Version"]};

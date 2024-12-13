@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Algorithm","PublicKey","TendermintKey"],"fn":["deserialize_public_key"],"struct":["Ed25519","PubKeyRequest","PubKeyResponse"],"type":["Secp256k1"]};

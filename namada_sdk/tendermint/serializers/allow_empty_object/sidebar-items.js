@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["allow_empty_object"]};

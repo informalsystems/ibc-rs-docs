@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ZIP32_SAPLING_FVFP_PERSONALIZATION","ZIP32_SAPLING_INT_PERSONALIZATION","ZIP32_SAPLING_MASTER_PERSONALIZATION"],"fn":["sapling_address","sapling_default_address","sapling_derive_internal_fvk","sapling_find_address"],"struct":["DiversifiableFullViewingKey","DiversifierKey","ExtendedFullViewingKey","ExtendedSpendingKey"]};

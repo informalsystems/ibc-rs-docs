@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["build_bridge_pool_tx","construct_proof","query_bridge_pool","query_eth_transfer_status","query_relay_progress","query_signed_bridge_pool","recommend_batch","relay_bridge_pool_proof"]};

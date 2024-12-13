@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["WASM_CLIENT_STATE_TYPE_URL"],"struct":["ClientState"]};

@@ -1,1 +1,0 @@
-searchState.loadedDescShard("duration_str", 0, "Parse string to <code>Duration</code> .\nContains the error value\nContains the success value\nconvert <code>Into&lt;String&gt;</code> to <code>chrono::Duration</code>\nconvert <code>Into&lt;String&gt;</code> to <code>std::time::Duration</code>\nconvert <code>Into&lt;String&gt;</code> to <code>time::Duration</code>")

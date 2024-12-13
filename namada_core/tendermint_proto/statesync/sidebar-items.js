@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["message"],"struct":["ChunkRequest","ChunkResponse","Message","SnapshotsRequest","SnapshotsResponse"]};

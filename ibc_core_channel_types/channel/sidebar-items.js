@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Order","State"],"struct":["ChannelEnd","Counterparty","IdentifiedChannelEnd"]};

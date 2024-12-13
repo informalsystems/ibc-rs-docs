@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["batched_ibc_token_transfer","build_transfer_message","ibc_namada_token_transfer","ibc_token_transfer","local_namada_token_transfer"]};
+window.SIDEBAR_ITEMS = {"fn":["batched_ibc_token_transfer","build_transfer_message","ibc_token_transfer"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["to_txid"],"struct":["BlockTxCommitmentDigester","TxIdDigester"]};

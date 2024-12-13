@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Evidence"],"struct":["ConflictingBlock","DuplicateVoteEvidence","Duration","LightClientAttackEvidence","List","Params"]};

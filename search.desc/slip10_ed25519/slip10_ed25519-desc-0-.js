@@ -1,1 +1,0 @@
-searchState.loadedDescShard("slip10_ed25519", 0, "Derives only the private key for ED25519 in the manor …")

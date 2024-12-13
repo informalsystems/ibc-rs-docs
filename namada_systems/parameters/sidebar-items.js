@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["EpochDuration","Parameters","ProposalBytes"],"trait":["Keys","Read","Write"],"type":["Result"]};

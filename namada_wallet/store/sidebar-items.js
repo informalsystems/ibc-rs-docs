@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AddressVpType","ConfirmationResponse"],"fn":["derive_hd_secret_key","derive_hd_spending_key"],"struct":["Store","ValidatorData","ValidatorKeys"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"static":["BRIDGE_ABI"],"struct":["Bridge"]};

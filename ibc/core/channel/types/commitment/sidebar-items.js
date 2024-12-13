@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["compute_ack_commitment","compute_packet_commitment"],"struct":["AcknowledgementCommitment","PacketCommitment"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["client","cosmos","counterparty","endpoint","handle","namada","requests","runtime","tracking","version"]};
+window.SIDEBAR_ITEMS = {"mod":["client","cosmos","counterparty","endpoint","handle","requests","runtime","tracking"]};

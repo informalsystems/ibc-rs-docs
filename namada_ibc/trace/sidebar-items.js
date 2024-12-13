@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["calc_hash","calc_ibc_token_hash","convert_to_address","ibc_token","ibc_token_for_nft","ibc_trace_for_nft","is_ibc_denom","is_nft_trace","is_receiver_chain_source","is_sender_chain_source"]};
