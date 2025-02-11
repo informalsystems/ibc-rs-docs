@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.8/src/common/concurrent.rs`."><title>concurrent.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">moka/common/</div>concurrent.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/moka-0.12.10/src/common/concurrent.rs`."><title>concurrent.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moka" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">moka/common/</div>concurrent.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -384,47 +384,19 @@
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
-<a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::common::{deque::DeqNode, time::Instant};
+<a href="#386" id="386">386</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::common::{concurrent::arc::MiniArc, deque::DeqNode, time::Instant};
 
 <span class="kw">use </span>parking_lot::Mutex;
 <span class="kw">use </span>std::{fmt, ptr::NonNull, sync::Arc};
 <span class="kw">use </span>tagptr::TagNonNull;
-<span class="kw">use </span>triomphe::Arc <span class="kw">as </span>TrioArc;
 
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>arc;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>constants;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>deques;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>entry_info;
 
 <span class="attr">#[cfg(feature = <span class="string">"sync"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>housekeeper;
-
-<span class="comment">// target_has_atomic is more convenient but yet unstable (Rust 1.55)
-// https://github.com/rust-lang/rust/issues/32976
-// #[cfg_attr(target_has_atomic = "64", path = "common/time_atomic64.rs")]
-
-</span><span class="attr">#[cfg_attr(
-    all(feature = <span class="string">"atomic64"</span>, feature = <span class="string">"quanta"</span>),
-    path = <span class="string">"concurrent/atomic_time/atomic_time.rs"
-</span>)]
-#[cfg_attr(
-    not(all(feature = <span class="string">"atomic64"</span>, feature = <span class="string">"quanta"</span>)),
-    path = <span class="string">"concurrent/atomic_time/atomic_time_compat.rs"
-</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>atomic_time;
 
 <span class="attr">#[cfg(feature = <span class="string">"unstable-debug-counters"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>debug_counters;
@@ -464,13 +436,13 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KeyHashDate&lt;K&gt; {
-    entry_info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;,
+    entry_info: MiniArc&lt;EntryInfo&lt;K&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;K&gt; KeyHashDate&lt;K&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(entry_info: <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&lt;K&gt;&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(entry_info: <span class="kw-2">&amp;</span>MiniArc&lt;EntryInfo&lt;K&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            entry_info: TrioArc::clone(entry_info),
+            entry_info: MiniArc::clone(entry_info),
         }
     }
 
@@ -501,11 +473,11 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>KvEntry&lt;K, V&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) key: Arc&lt;K&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) entry: MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;K, V&gt; KvEntry&lt;K, V&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(key: Arc&lt;K&gt;, entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(key: Arc&lt;K&gt;, entry: MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ key, entry }
     }
 }
@@ -514,7 +486,7 @@
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             key: Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.key),
-            entry: TrioArc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.entry),
+            entry: MiniArc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.entry),
         }
     }
 }
@@ -577,33 +549,33 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ValueEntry&lt;K, V&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) value: V,
-    info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;,
-    nodes: TrioArc&lt;Mutex&lt;DeqNodes&lt;K&gt;&gt;&gt;,
+    info: MiniArc&lt;EntryInfo&lt;K&gt;&gt;,
+    nodes: MiniArc&lt;Mutex&lt;DeqNodes&lt;K&gt;&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;K, V&gt; ValueEntry&lt;K, V&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(value: V, entry_info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(value: V, entry_info: MiniArc&lt;EntryInfo&lt;K&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="attr">#[cfg(feature = <span class="string">"unstable-debug-counters"</span>)]
         </span><span class="self">self</span>::debug_counters::InternalGlobalDebugCounters::value_entry_created();
 
         <span class="self">Self </span>{
             value,
             info: entry_info,
-            nodes: TrioArc::new(Mutex::new(DeqNodes::default())),
+            nodes: MiniArc::new(Mutex::new(DeqNodes::default())),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_from(value: V, entry_info: TrioArc&lt;EntryInfo&lt;K&gt;&gt;, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_from(value: V, entry_info: MiniArc&lt;EntryInfo&lt;K&gt;&gt;, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         <span class="attr">#[cfg(feature = <span class="string">"unstable-debug-counters"</span>)]
         </span><span class="self">self</span>::debug_counters::InternalGlobalDebugCounters::value_entry_created();
         <span class="self">Self </span>{
             value,
             info: entry_info,
-            nodes: TrioArc::clone(<span class="kw-2">&amp;</span>other.nodes),
+            nodes: MiniArc::clone(<span class="kw-2">&amp;</span>other.nodes),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TrioArc&lt;EntryInfo&lt;K&gt;&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MiniArc&lt;EntryInfo&lt;K&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.info
     }
 
@@ -624,7 +596,7 @@
         <span class="self">self</span>.info.policy_weight()
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>deq_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TrioArc&lt;Mutex&lt;DeqNodes&lt;K&gt;&gt;&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>deq_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MiniArc&lt;Mutex&lt;DeqNodes&lt;K&gt;&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.nodes
     }
 
@@ -678,7 +650,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K, V&gt; AccessTime <span class="kw">for </span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt; {
+<span class="kw">impl</span>&lt;K, V&gt; AccessTime <span class="kw">for </span>MiniArc&lt;ValueEntry&lt;K, V&gt;&gt; {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>last_accessed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
         <span class="self">self</span>.info.last_accessed()
@@ -702,7 +674,7 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ReadOp&lt;K, V&gt; {
     Hit {
-        value_entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
+        value_entry: MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;,
         is_expiry_modified: bool,
     },
     <span class="comment">// u64 is the hash of the key.
@@ -712,7 +684,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>WriteOp&lt;K, V&gt; {
     Upsert {
         key_hash: KeyHash&lt;K&gt;,
-        value_entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
+        value_entry: MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;,
         <span class="doccomment">/// Entry generation after the operation.
         </span>entry_gen: u16,
         old_weight: u32,
@@ -724,7 +696,7 @@
     },
 }
 
-<span class="doccomment">/// Cloning a `WriteOp` is safe and cheap because it uses `Arc` and `TrioArc` pointers to
+<span class="doccomment">/// Cloning a `WriteOp` is safe and cheap because it uses `Arc` and `MiniArc` pointers to
 /// the actual data.
 </span><span class="kw">impl</span>&lt;K, V&gt; Clone <span class="kw">for </span>WriteOp&lt;K, V&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
@@ -737,7 +709,7 @@
                 new_weight,
             } =&gt; <span class="self">Self</span>::Upsert {
                 key_hash: key_hash.clone(),
-                value_entry: TrioArc::clone(value_entry),
+                value_entry: MiniArc::clone(value_entry),
                 entry_gen: <span class="kw-2">*</span>entry_gen,
                 old_weight: <span class="kw-2">*</span>old_weight,
                 new_weight: <span class="kw-2">*</span>new_weight,
@@ -766,13 +738,13 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_upsert(
         key: <span class="kw-2">&amp;</span>Arc&lt;K&gt;,
         hash: u64,
-        value_entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
+        value_entry: <span class="kw-2">&amp;</span>MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;,
         entry_generation: u16,
         old_weight: u32,
         new_weight: u32,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>key_hash = KeyHash::new(Arc::clone(key), hash);
-        <span class="kw">let </span>value_entry = TrioArc::clone(value_entry);
+        <span class="kw">let </span>value_entry = MiniArc::clone(value_entry);
         <span class="self">Self</span>::Upsert {
             key_hash,
             value_entry,
@@ -784,15 +756,15 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>OldEntryInfo&lt;K, V&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) entry: TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) entry: MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) last_accessed: <span class="prelude-ty">Option</span>&lt;Instant&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) last_modified: <span class="prelude-ty">Option</span>&lt;Instant&gt;,
 }
 
 <span class="kw">impl</span>&lt;K, V&gt; OldEntryInfo&lt;K, V&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(entry: <span class="kw-2">&amp;</span>TrioArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(entry: <span class="kw-2">&amp;</span>MiniArc&lt;ValueEntry&lt;K, V&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            entry: TrioArc::clone(entry),
+            entry: MiniArc::clone(entry),
             last_accessed: entry.last_accessed(),
             last_modified: entry.last_modified(),
         }
