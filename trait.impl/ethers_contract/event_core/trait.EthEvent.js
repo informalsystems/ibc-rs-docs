@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["ethbridge_bridge_events",[["impl <a class=\"trait\" href=\"ethers_contract/event_core/trait.EthEvent.html\" title=\"trait ethers_contract::event_core::EthEvent\">EthEvent</a> for <a class=\"struct\" href=\"ethbridge_bridge_events/struct.TransferToChainFilter.html\" title=\"struct ethbridge_bridge_events::TransferToChainFilter\">TransferToChainFilter</a>"],["impl <a class=\"trait\" href=\"ethers_contract/event_core/trait.EthEvent.html\" title=\"trait ethers_contract::event_core::EthEvent\">EthEvent</a> for <a class=\"struct\" href=\"ethbridge_bridge_events/struct.TransferToErcFilter.html\" title=\"struct ethbridge_bridge_events::TransferToErcFilter\">TransferToErcFilter</a>"],["impl <a class=\"trait\" href=\"ethers_contract/event_core/trait.EthEvent.html\" title=\"trait ethers_contract::event_core::EthEvent\">EthEvent</a> for <a class=\"struct\" href=\"ethbridge_bridge_events/struct.ValidatorSetUpdateFilter.html\" title=\"struct ethbridge_bridge_events::ValidatorSetUpdateFilter\">ValidatorSetUpdateFilter</a>"]]],["ethers",[]],["ethers_middleware",[["impl <a class=\"trait\" href=\"ethers_contract/event_core/trait.EthEvent.html\" title=\"trait ethers_contract::event_core::EthEvent\">EthEvent</a> for <a class=\"struct\" href=\"ethers_middleware/transformer/ds_proxy/factory/ds_proxy_factory/struct.CreatedFilter.html\" title=\"struct ethers_middleware::transformer::ds_proxy::factory::ds_proxy_factory::CreatedFilter\">CreatedFilter</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1028,14,416]}

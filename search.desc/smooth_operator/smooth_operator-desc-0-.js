@@ -1,0 +1,1 @@
+searchState.loadedDescShard("smooth_operator", 0, "Checked arithmetics error.\nConvert arithmetic operators within the given expression …\nThe original expression given to the <code>checked</code> macro.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

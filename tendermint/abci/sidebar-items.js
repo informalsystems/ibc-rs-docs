@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Code","EventAttribute","MethodKind"],"mod":["request","response","types","v0_34"],"struct":["Event"],"trait":["EventAttributeIndexExt","TypedEvent"]};
+window.SIDEBAR_ITEMS = {"enum":["Code","EventAttribute","MethodKind"],"mod":["request","response","types","v0_34","v0_37"],"struct":["Event"],"trait":["EventAttributeIndexExt","TypedEvent"]};

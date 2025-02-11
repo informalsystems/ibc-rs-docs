@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["KeyType"],"fn":["is_cap_or_whitelisted_key"],"struct":["Key"]};

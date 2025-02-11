@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"type":["BridgePool","BridgePoolVext","EthEventsVext","EthereumEvents","ValSetUpdateVext","ValidatorSetUpdate"]};

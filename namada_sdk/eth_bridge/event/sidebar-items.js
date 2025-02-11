@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BpTransferStatus","EthBridgeEvent"],"mod":["types"],"struct":["BridgePoolTxHash"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AddRemove","PGFAction","PGFTarget","ProposalError","ProposalType","ProposalTypeError"],"struct":["InitProposalData","PGFIbcTarget","PGFInternalTarget","StoragePgfFunding","StorageProposal","VoteProposalData"]};

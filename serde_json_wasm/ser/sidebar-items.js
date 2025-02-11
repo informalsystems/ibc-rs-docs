@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error","Unreachable"],"fn":["to_string","to_vec"],"struct":["Serializer"],"type":["Result"]};

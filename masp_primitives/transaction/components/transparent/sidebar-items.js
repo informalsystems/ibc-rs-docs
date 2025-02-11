@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["builder","fees"],"struct":["Authorized","Bundle","TxIn","TxOut"],"trait":["Authorization","MapAuth"]};

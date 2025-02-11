@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CheckTxKind","ConsensusRequest","InfoRequest","MempoolRequest","Request","SnapshotRequest"],"struct":["ApplySnapshotChunk","BeginBlock","CheckTx","DeliverTx","Echo","EndBlock","Info","InitChain","LoadSnapshotChunk","OfferSnapshot","Query","SetOption"]};

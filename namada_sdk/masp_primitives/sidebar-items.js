@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["asset_type","bls12_381","consensus","constants","convert","ff","group","jubjub","keys","memo","merkle_tree","num_traits","sapling","transaction","zip32"],"trait":["MaybeArbitrary"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ethereum_bridge","governance","ibc","parameters","pgf","proof_of_stake","shielded_token","trans_token"]};

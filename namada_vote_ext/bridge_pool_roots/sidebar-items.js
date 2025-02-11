@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BridgePoolRootVext","MultiSignedVext","SignedVext"],"type":["Vext"]};

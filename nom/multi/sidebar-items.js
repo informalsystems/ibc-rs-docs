@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["fill","fold_many0","fold_many1","fold_many_m_n","length_data","length_value","many0_count","many1_count"]};

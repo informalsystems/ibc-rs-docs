@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ZERO_DURATION"],"enum":["TimestampError"],"mod":["prelude","proto","serializers","utils"],"struct":["Signer","Timestamp"],"trait":["IntoHostTime","IntoTimestamp","ToProto","ToVec"]};

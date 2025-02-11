@@ -1,0 +1,1 @@
+searchState.loadedDescShard("ibc_middleware_module", 0, "IBC module to facilitate middleware implementations.")

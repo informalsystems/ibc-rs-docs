@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AddressVpType","Signable"],"fn":["aux_signing_data","default_sign","find_key_by_pk","find_pk","gen_disposable_signing_key","generate_tx_signatures","sign_tx","to_ledger_vector","tx_signers","validate_fee","validate_transparent_fee","wrap_tx"],"struct":["LedgerVector","OfflineSignatures","SigningTxData","TxSourcePostBalance"]};

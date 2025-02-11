@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["batch_normalize"],"struct":["AffineNielsPoint","AffinePoint","ExtendedNielsPoint","ExtendedPoint","Fq","Fr","SubgroupPoint"],"type":["Base","Scalar"]};

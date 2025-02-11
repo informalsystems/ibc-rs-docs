@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Any","Duration","Error","Timestamp"],"trait":["Protobuf"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TxIndexStatus"],"struct":["Info","ListenAddress","OtherInfo","ProtocolVersionInfo"]};

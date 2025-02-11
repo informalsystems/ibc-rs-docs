@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MIGRATE_CONTRACT_TYPE_URL"],"struct":["MsgMigrateContract"]};

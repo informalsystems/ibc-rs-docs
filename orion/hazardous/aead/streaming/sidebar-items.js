@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ABYTES","TAG_SIZE"],"enum":["StreamTag"],"struct":["StreamXChaCha20Poly1305"]};

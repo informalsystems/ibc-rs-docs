@@ -1,0 +1,1 @@
+searchState.loadedDescShard("memuse", 0, "Measure dynamic memory usage of your types!\nTrait for measuring the dynamic memory usage of types.\nReturns a best estimate of the amount of heap-allocated …\nReturns the lower and upper bounds on the amount of …\nHelper to implement <code>DynamicUsage</code> for simple types that don…")

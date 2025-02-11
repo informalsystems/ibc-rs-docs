@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_transfer_middlewares"],"mod":["pfm_mod","shielded_recv"],"type":["TransferMiddlewares"]};

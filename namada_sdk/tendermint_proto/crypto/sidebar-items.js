@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["public_key"],"struct":["DominoOp","Proof","ProofOp","ProofOps","PublicKey","ValueOp"]};

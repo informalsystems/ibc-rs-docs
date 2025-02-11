@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BlockHeight","ChainTransfer","Erc20Transfer","RelayProof","Signature","ValidatorSetArgs"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REMOVE_CHECKSUM_TYPE_URL"],"struct":["MsgRemoveChecksum"]};

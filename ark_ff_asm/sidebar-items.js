@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["unroll_for_loops"],"macro":["x86_64_asm_mul","x86_64_asm_square"]};

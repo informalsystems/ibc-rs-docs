@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["WASM_CLIENT_MESSAGE_TYPE_URL"],"struct":["ClientMessage"]};

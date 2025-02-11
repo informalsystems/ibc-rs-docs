@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EncodingError","Error","EthereumBridgeError","QueryError","TxSubmitError"],"type":["Result"]};

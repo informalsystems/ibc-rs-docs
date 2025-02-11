@@ -1,0 +1,1 @@
+searchState.loadedDescShard("namada_macros", 0, "Namada macros for generating WASM binding code for …\nGenerate WASM binding for a transaction main entrypoint …\nGenerate WASM binding for validity predicate main …")

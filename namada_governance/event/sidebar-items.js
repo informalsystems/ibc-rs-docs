@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GovernanceEvent","ProposalEventKind"],"mod":["types"],"struct":["HasProposalCode","ProposalCodeExitStatus","ProposalId","ProposalType","TallyResult"]};

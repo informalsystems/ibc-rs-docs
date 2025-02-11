@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EthereumEventsVext","EthereumEventsVextDigest","MultiSignedEthEvent","SignedVext"],"type":["Vext","VextDigest"]};

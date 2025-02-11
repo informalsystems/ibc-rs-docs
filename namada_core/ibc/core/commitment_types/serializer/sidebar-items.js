@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["ser_hex_upper"]};

@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Measure dynamic memory usage of your types!"><title>memuse - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="memuse" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../memuse/index.html">memuse</a><span class="version">0.2.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#about" title="About">About</a></li><li><a href="#minimum-supported-rust-version" title="Minimum Supported Rust Version">Minimum Supported Rust Version</a></li><li><a href="#usage" title="Usage">Usage</a></li></ul><h3><a href="#macros">Crate Items</a></h3><ul class="block"><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>memuse</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/memuse/lib.rs.html#1-423">source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Measure dynamic memory usage of your types!</p>
+<h3 id="about"><a class="doc-anchor" href="#about">§</a>About</h3>
+<p>Memory-tracking is a common activity in large applications, particularly ones
+that receive data from a network and store it in memory. By monitoring how much
+memory is used by different areas of the application, memory pressure can be
+alleviated by ignoring new packets, or implementing random drop logic for DoS
+mitigation.</p>
+<p>Measuring memory use on the stack is easy, with <a href="https://doc.rust-lang.org/nightly/core/mem/fn.size_of.html" title="fn core::mem::size_of"><code>std::mem::size_of</code></a> and
+friends. Measuring memory allocated on the heap is more tricky. Applications can
+use a custom global allocator to track the memory usage of different areas. This
+isn’t an option for reusable library code however, and the nearest alternative
+(using custom allocators for individual types) is currently only an experimental
+feature in nightly Rust (<a href="https://github.com/rust-lang/rust/issues/32838"><code>allocator_api</code></a>).</p>
+<p>This crate takes a different approach: it provides traits that library authors
+can use to expose dynamic memory usage information on their types. By composing
+these implementations, we gain the ability to query the amount of heap-allocated
+memory in use by specific instances of types at any point in time, without any
+changes to the way in which these types are constructed.</p>
+<h3 id="minimum-supported-rust-version"><a class="doc-anchor" href="#minimum-supported-rust-version">§</a>Minimum Supported Rust Version</h3>
+<p>Requires Rust <strong>1.51</strong> or newer.</p>
+<p>In the future, we reserve the right to change MSRV (i.e. MSRV is out-of-scope for this
+crate’s SemVer guarantees), however when we do it will be accompanied by a minor
+version bump.</p>
+<h3 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>memuse::DynamicUsage;
+
+<span class="comment">// Simple types don't allocate memory on the heap.
+</span><span class="macro">assert_eq!</span>(<span class="number">7u64</span>.dynamic_usage(), <span class="number">0</span>);
+<span class="macro">assert_eq!</span>(<span class="string">"I'm simple!"</span>.dynamic_usage(), <span class="number">0</span>);
+
+<span class="comment">// When a type allocates memory, we can see it!
+</span><span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="number">7u64</span>; <span class="number">2</span>].dynamic_usage(), <span class="number">16</span>);
+
+<span class="comment">// We see the memory the type has allocated, even if it isn't being used.
+</span><span class="kw">let </span>empty: Vec&lt;u32&gt; = Vec::with_capacity(<span class="number">100</span>);
+<span class="macro">assert_eq!</span>(empty.len(), <span class="number">0</span>);
+<span class="macro">assert_eq!</span>(empty.dynamic_usage(), <span class="number">400</span>);
+
+<span class="comment">// For some types, we can't measure the exact memory usage, so we return a best
+// estimate. If you need precision, call `dynamic_usage_bounds` which returns a
+// lower bound, and (if known) an upper bound.
+</span><span class="kw">let </span>map: HashMap&lt;u8, u64&gt; = HashMap::with_capacity(<span class="number">27</span>);
+<span class="kw">let </span>(lower, upper): (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) = map.dynamic_usage_bounds();
+<span class="macro">assert!</span>(upper.is_none());</code></pre></div>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.impl_no_dynamic_usage.html" title="macro memuse::impl_no_dynamic_usage">impl_<wbr>no_<wbr>dynamic_<wbr>usage</a></div><div class="desc docblock-short">Helper to implement <a href="trait.DynamicUsage.html" title="trait memuse::DynamicUsage"><code>DynamicUsage</code></a> for simple types that don’t allocate.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.DynamicUsage.html" title="trait memuse::DynamicUsage">Dynamic<wbr>Usage</a></div><div class="desc docblock-short">Trait for measuring the dynamic memory usage of types.</div></li></ul></section></div></main></body></html>

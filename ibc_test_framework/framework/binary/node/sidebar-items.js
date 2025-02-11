@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["run_binary_node_test","run_single_node_test"],"struct":["RunBinaryNodeTest","RunSingleNodeTest"],"trait":["BinaryNodeTest","NodeConfigOverride","NodeGenesisOverride"]};
+window.SIDEBAR_ITEMS = {"fn":["run_binary_node_test","run_single_node_test"],"struct":["RunBinaryNodeTest","RunSingleNodeTest"],"trait":["BinaryNodeTest","NamadaParametersOverride","NodeConfigOverride","NodeGenesisOverride"]};

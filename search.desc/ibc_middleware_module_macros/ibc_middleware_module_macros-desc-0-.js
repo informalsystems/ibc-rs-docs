@@ -1,0 +1,1 @@
+searchState.loadedDescShard("ibc_middleware_module_macros", 0, "Generate an IBC module from a type that implements an IBC …")
