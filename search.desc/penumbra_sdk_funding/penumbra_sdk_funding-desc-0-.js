@@ -1,0 +1,1 @@
+searchState.loadedDescShard("penumbra_sdk_funding", 0, "Returns the argument unchanged.\nCalls <code>U::from(self)</code>.\nReturns the argument unchanged.\nThe initial configuration parameters for the Funding …\nCalls <code>U::from(self)</code>.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

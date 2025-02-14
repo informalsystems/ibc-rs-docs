@@ -1,0 +1,207 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/decaf377-frost-1.0.1/src/keys.rs`."><title>keys.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="decaf377_frost" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">decaf377_frost/</div>keys.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
+<a href="#2" id="2">2</a>
+<a href="#3" id="3">3</a>
+<a href="#4" id="4">4</a>
+<a href="#5" id="5">5</a>
+<a href="#6" id="6">6</a>
+<a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a></pre></div><pre class="rust"><code><span class="doccomment">//! FROST key shares and key generation.
+
+</span><span class="kw">use </span>decaf377_rdsa::{SigningKey, SpendAuth};
+
+<span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>rand_core::RngCore;
+
+<span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+<span class="kw">pub mod </span>dkg;
+
+<span class="doccomment">/// The identifier list to use when generating key shares.
+</span><span class="kw">pub type </span>IdentifierList&lt;<span class="lifetime">'a</span>&gt; = frost::keys::IdentifierList&lt;<span class="lifetime">'a</span>, E&gt;;
+
+<span class="doccomment">/// Allows all participants' keys to be generated using a central, trusted
+/// dealer.
+</span><span class="kw">pub fn </span>generate_with_dealer&lt;RNG: RngCore + CryptoRng&gt;(
+    max_signers: u16,
+    min_signers: u16,
+    identifiers: IdentifierList,
+    <span class="kw-2">mut </span>rng: RNG,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(HashMap&lt;Identifier, SecretShare&gt;, PublicKeyPackage), Error&gt; {
+    frost::keys::generate_with_dealer(max_signers, min_signers, identifiers, <span class="kw-2">&amp;mut </span>rng)
+}
+
+<span class="doccomment">/// Splits an existing key into FROST shares.
+///
+/// This is identical to [`generate_with_dealer`] but receives an existing key
+/// instead of generating a fresh one. This is useful in scenarios where
+/// the key needs to be generated externally or must be derived from e.g. a
+/// seed phrase.
+</span><span class="kw">pub fn </span>split&lt;R: RngCore + CryptoRng&gt;(
+    secret: <span class="kw-2">&amp;</span>SigningKey&lt;SpendAuth&gt;,
+    max_signers: u16,
+    min_signers: u16,
+    identifiers: IdentifierList,
+    rng: <span class="kw-2">&amp;mut </span>R,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(HashMap&lt;Identifier, SecretShare&gt;, PublicKeyPackage), Error&gt; {
+    <span class="comment">// https://github.com/ZcashFoundation/frost/issues/497
+    </span><span class="kw">let </span>frost_secret = frost_core::SigningKey::deserialize(secret.to_bytes().to_vec())<span class="question-mark">?</span>;
+    frost::keys::split(<span class="kw-2">&amp;</span>frost_secret, max_signers, min_signers, identifiers, rng)
+}
+
+<span class="doccomment">/// Recompute the secret from t-of-n secret shares using Lagrange interpolation.
+///
+/// This can be used if for some reason the original key must be restored; e.g.
+/// if threshold signing is not required anymore.
+///
+/// This is NOT required to sign with FROST; the whole point of FROST is being
+/// able to generate signatures only using the shares, without having to
+/// reconstruct the original key.
+///
+/// The caller is responsible for providing at least `min_signers` shares;
+/// if less than that is provided, a different key will be returned.
+</span><span class="kw">pub fn </span>reconstruct(key_packages: <span class="kw-2">&amp;</span>[KeyPackage]) -&gt; <span class="prelude-ty">Result</span>&lt;SigningKey&lt;SpendAuth&gt;, Error&gt; {
+    <span class="comment">// https://github.com/ZcashFoundation/frost/issues/497
+    </span><span class="kw">let </span>frost_secret = frost::keys::reconstruct(key_packages)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(SigningKey::try_from(
+        TryInto::&lt;[u8; <span class="number">32</span>]&gt;::try_into(frost_secret.serialize()).expect(<span class="string">"serialization is valid"</span>),
+    )
+    .expect(<span class="string">"serialization is valid"</span>))
+}
+
+<span class="doccomment">/// Secret and public key material generated by a dealer performing
+/// [`generate_with_dealer`].
+</span><span class="kw">pub type </span>SecretShare = frost::keys::SecretShare&lt;E&gt;;
+
+<span class="doccomment">/// A secret scalar value representing a signer's share of the group secret.
+</span><span class="kw">pub type </span>SigningShare = frost::keys::SigningShare&lt;E&gt;;
+
+<span class="doccomment">/// A public group element that represents a single signer's public verification share.
+</span><span class="kw">pub type </span>VerifyingShare = frost::keys::VerifyingShare&lt;E&gt;;
+
+<span class="doccomment">/// A valid verifying key for Schnorr signatures over a FROST [`Ciphersuite::Group`].
+</span><span class="kw">pub type </span>VerifyingKey = frost_core::VerifyingKey&lt;E&gt;;
+
+<span class="doccomment">/// A FROST keypair, which can be generated either by a trusted dealer or using a DKG.
+///
+/// When using a central dealer, [`SecretShare`]s are distributed to
+/// participants, who then perform verification, before deriving
+/// [`KeyPackage`]s, which they store to later use during signing.
+</span><span class="kw">pub type </span>KeyPackage = frost::keys::KeyPackage&lt;E&gt;;
+
+<span class="doccomment">/// Public data that contains all the signers' public keys as well as the
+/// group public key.
+///
+/// Used for verification purposes before publishing a signature.
+</span><span class="kw">pub type </span>PublicKeyPackage = frost::keys::PublicKeyPackage&lt;E&gt;;
+
+<span class="doccomment">/// Contains the commitments to the coefficients for our secret polynomial _f_,
+/// used to generate participants' key shares.
+///
+/// [`VerifiableSecretSharingCommitment`] contains a set of commitments to the coefficients (which
+/// themselves are scalars) for a secret polynomial f, where f is used to
+/// generate each ith participant's key share f(i). Participants use this set of
+/// commitments to perform verifiable secret sharing.
+///
+/// Note that participants MUST be assured that they have the *same*
+/// [`VerifiableSecretSharingCommitment`], either by performing pairwise comparison, or by using
+/// some agreed-upon public location for publication, where each participant can
+/// ensure that they received the correct (and same) value.
+</span><span class="kw">pub type </span>VerifiableSecretSharingCommitment = frost::keys::VerifiableSecretSharingCommitment&lt;E&gt;;
+</code></pre></div></section></main></body></html>

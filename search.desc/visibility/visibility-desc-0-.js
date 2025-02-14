@@ -1,0 +1,1 @@
+searchState.loadedDescShard("visibility", 0, "<strong>Override</strong>s the visibility of the annotated item with the …")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FungibleTokenRefundReason"],"struct":["EventInboundFungibleTokenTransfer","EventOutboundFungibleTokenRefund","EventOutboundFungibleTokenTransfer","EventOutput","EventSpend","FungibleTokenTransferPacketMetadata"]};

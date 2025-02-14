@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["delegator_vote","proposal_deposit_claim","proposal_failed","proposal_passed","proposal_slashed","proposal_submit","proposal_withdraw","validator_vote"]};

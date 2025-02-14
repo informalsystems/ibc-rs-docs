@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ChannelMsg","PacketMsg"],"struct":["MsgAcknowledgement","MsgChannelCloseConfirm","MsgChannelCloseInit","MsgChannelOpenAck","MsgChannelOpenConfirm","MsgChannelOpenInit","MsgChannelOpenTry","MsgRecvPacket","MsgTimeout","MsgTimeoutOnClose"]};

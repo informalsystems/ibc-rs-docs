@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["by_pair","by_pair_and_height","prefix"]};

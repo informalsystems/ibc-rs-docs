@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["action","plan","proof","view"]};

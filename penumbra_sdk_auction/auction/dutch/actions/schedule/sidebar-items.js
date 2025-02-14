@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_AUCTION_AMOUNT_RESERVES"],"struct":["ActionDutchAuctionSchedule"]};

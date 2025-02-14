@@ -1,0 +1,1 @@
+searchState.loadedDescShard("ibc_types_domain_type", 0, "Provides a marker type capturing the relationship between …\nA marker type that captures the relationships between a …\nDecode this domain type from a byte buffer, via proto type …\nEncode this domain type to a byte vector, via proto type <code>P</code>.\nConvert this domain type to the associated proto type.")

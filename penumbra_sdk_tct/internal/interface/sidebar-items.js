@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Full"],"trait":["Complete","Focus","Forget","ForgetOwned","Frontier","GetPosition","Witness"]};

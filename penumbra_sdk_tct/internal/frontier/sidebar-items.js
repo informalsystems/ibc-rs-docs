@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Insert","InsertMut","TrackForgotten"],"struct":["Full","Item","Leaf","Node","Tier","Top"],"trait":["Focus","Forget","Frontier","GetPosition"]};

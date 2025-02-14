@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["r1cs"],"struct":["Instance"]};

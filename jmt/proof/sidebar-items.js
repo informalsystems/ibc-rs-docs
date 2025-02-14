@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["INTERNAL_DOMAIN_SEPARATOR","LEAF_DOMAIN_SEPARATOR"],"struct":["SparseMerkleLeafNode","SparseMerkleProof","SparseMerkleRangeProof","UpdateMerkleProof"]};

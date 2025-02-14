@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["request_span","service_span"],"trait":["GetSpan","InstrumentMake","InstrumentableService"],"type":["InstrumentedService"]};

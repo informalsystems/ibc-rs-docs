@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["chain","consensus_update","parameters","penalty","validators"]};

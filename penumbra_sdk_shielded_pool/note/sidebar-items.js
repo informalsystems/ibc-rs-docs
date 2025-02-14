@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["NOTE_CIPHERTEXT_BYTES","NOTE_LEN_BYTES"],"enum":["Error"],"fn":["commitment","commitment_from_address"],"struct":["Note","NoteCiphertext","NoteVar","NoteView","StateCommitment"]};

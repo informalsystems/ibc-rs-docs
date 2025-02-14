@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["msg_client"],"struct":["MsgSubmitQueryResponse","MsgSubmitQueryResponseResponse"]};
+window.SIDEBAR_ITEMS = {"mod":["msg_client","msg_server"],"struct":["MsgSubmitQueryResponse","MsgSubmitQueryResponseResponse"]};

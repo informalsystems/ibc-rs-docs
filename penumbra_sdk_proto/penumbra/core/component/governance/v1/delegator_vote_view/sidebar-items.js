@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DelegatorVote"],"struct":["Opaque","Visible"]};

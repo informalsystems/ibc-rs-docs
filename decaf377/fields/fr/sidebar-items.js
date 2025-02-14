@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["arkworks","u32","u64"],"type":["Fr"]};

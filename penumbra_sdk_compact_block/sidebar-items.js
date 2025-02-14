@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["StatePayload"],"mod":["event","state_key"],"struct":["CompactBlock","StatePayloadDebugKind"]};

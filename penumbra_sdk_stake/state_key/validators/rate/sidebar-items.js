@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["current_by_id","previous_by_id"]};

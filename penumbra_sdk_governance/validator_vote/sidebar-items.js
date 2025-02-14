@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_VALIDATOR_VOTE_REASON_LENGTH"],"mod":["action"]};

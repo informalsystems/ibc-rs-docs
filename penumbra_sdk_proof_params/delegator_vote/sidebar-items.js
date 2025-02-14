@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PROVING_KEY_ID","VERIFICATION_KEY_ID"]};

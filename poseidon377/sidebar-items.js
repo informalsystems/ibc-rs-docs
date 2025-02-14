@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RATE_1_PARAMS","RATE_2_PARAMS","RATE_3_PARAMS","RATE_4_PARAMS","RATE_5_PARAMS","RATE_6_PARAMS","RATE_7_PARAMS"],"fn":["hash_1","hash_2","hash_3","hash_4","hash_5","hash_6","hash_7"],"mod":["r1cs"],"struct":["Instance","PoseidonParameters"],"type":["Fq"]};

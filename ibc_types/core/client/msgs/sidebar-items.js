@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ClientMsg"],"struct":["MsgCreateClient","MsgSubmitMisbehaviour","MsgUpdateClient","MsgUpgradeClient"]};

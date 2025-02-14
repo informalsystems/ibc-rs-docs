@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CloseConfirm","CloseInit","OpenAck","OpenConfirm","OpenInit","OpenTry"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error","FieldError","GroupError"],"fn":["challenge"],"mod":["batch","frost"],"struct":["Challenge","ScalarSerialization","Signature","SigningKey","VerifyingKey"],"trait":["Ciphersuite","Field","Group"],"type":["Element","Scalar"]};

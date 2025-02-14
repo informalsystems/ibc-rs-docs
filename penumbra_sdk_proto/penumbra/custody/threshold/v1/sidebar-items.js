@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["coordinator_round1","coordinator_round2","dkg_round2","follower_round1","follower_round2"],"struct":["CoordinatorRound1","CoordinatorRound2","DkgRound1","DkgRound2","FollowerRound1","FollowerRound2","Signature","VerificationKey"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SWAP_CIPHERTEXT_BYTES","SWAP_LEN_BYTES"],"enum":["SwapView"],"mod":["proof"],"static":["DOMAIN_SEPARATOR"],"struct":["Body","Swap","SwapCiphertext","SwapPayload","SwapPlaintext","SwapPlaintextVar","SwapPlan"]};

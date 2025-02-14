@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["auction","event","genesis","params","state_key"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["backref","convert","event","fmd","genesis","ics20_withdrawal","note","nullifier_derivation","output","params","rseed","spend","state_key"],"struct":["NotePayload"]};

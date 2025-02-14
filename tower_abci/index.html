@@ -1,0 +1,78 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An interface for ABCI built on Tower’s `Service` abstraction."><title>tower_abci - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="tower_abci" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../tower_abci/index.html">tower_<wbr>abci</a><span class="version">0.18.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>tower_abci</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/tower_abci/lib.rs.html#1-34">source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An interface for <a href="https://docs.tendermint.com/master/spec/abci/">ABCI</a> built on <a href="https://docs.rs/tower">Tower</a>’s <a href="https://docs.rs/tower/0.4.6/tower/trait.Service.html"><code>Service</code></a> abstraction.</p>
+<p><a href="https://docs.tendermint.com/master/spec/abci/">ABCI</a> is the interface between Tendermint (a consensus engine for BFT
+replication of a state machine), and an arbitrary application (the state
+machine to be replicated). The ABCI interface consists of a set of requests
+and responses the consensus engine makes to drive the application state.
+<a href="https://docs.rs/tower">Tower</a> is a library of modular components for building networking clients
+and servers. Tower defines a core abstraction, the <a href="https://docs.rs/tower/0.4.6/tower/trait.Service.html"><code>Service</code></a> trait,
+which represents an asynchronous function with backpressure, and then
+provides combinators that allow generic composition of additional behavior,
+e.g., timeouts, buffering, load-shedding, rate-limiting, instrumentation,
+etc.</p>
+<p>This crate uses Tower to define an asynchronous ABCI interface.  It has two parts:</p>
+<ol>
+<li>
+<p>An ABCI server, which listens for connections and forwards ABCI requests
+to one of four user-provided <a href="https://docs.rs/tower/0.4.6/tower/trait.Service.html"><code>Service</code></a>s, each responsible for processing
+one category of requests (consensus, mempool, info, or snapshot).</p>
+</li>
+<li>
+<p>Middleware that splits a single <a href="https://docs.rs/tower/0.4.6/tower/trait.Service.html"><code>Service</code></a> implementing all of ABCI
+into four cloneable component services, each implementing one category of
+requests. The component services use message-passing to share access to the
+main service, which processes requests with the following category-based
+prioritization:</p>
+<ol>
+<li><code>ConsensusRequest</code>s sent to the <code>Consensus</code> service;</li>
+<li><code>MempoolRequest</code>s sent to the <code>Mempool</code> service;</li>
+<li><code>SnapshotRequest</code>s sent to the <code>Snapshot</code> service;</li>
+<li><code>InfoRequest</code>s sent to the <code>Info</code> service.</li>
+</ol>
+</li>
+</ol>
+<p>Because the ABCI server takes one service per category, users can apply Tower
+layers to the services they pass to the ABCI <code>Server</code> to add
+category-specific behavior, such as load-shedding, buffering, etc.</p>
+<p>These parts can be combined in different ways to provide different points on
+the tradeoff curve between implementation complexity and performance:</p>
+<ol>
+<li>
+<p>At the lowest level of complexity, application developers can implement an
+ABCI application entirely synchronously. To do this, they implement
+<code>Service&lt;Request&gt;</code> so that <code>Service::call</code> performs request processing and
+returns a ready future. Then they use <code>split::service</code> to create four
+component services that share access to their application, and use those to
+construct the ABCI <code>Server</code>. The application developer does not need to
+manage synchronization of shared state between different clones of their
+application, because there is only one copy of their application.</p>
+</li>
+<li>
+<p>At the next level of complexity, application developers can implement an
+ABCI application partially synchronously. As before, they implement
+<code>Service&lt;Request&gt;</code> to create a single ABCI application, but instead of
+processing all requests in the body of <code>Service::call</code>, they can defer
+processing of some requests by immediately returning a future that will be
+executed on the caller’s task. Although all requests are still received by
+the application task, not all request processing needs to happen on the
+application task.
+At this level the developer must pay closer attention to utilising Tower
+layers to control the concurrency of the individual services mentioned above.
+In particular the <code>Consensus</code> service should be wrapped with
+<code>ServiceBuilder::concurrency_limit</code> of 1 to avoid a potential reordering of
+consensus message effects caused by concurrent execution, as well as
+<code>ServiceBuilder::buffer</code> to avoid any deadlocks in message handling in <code>Connection</code>
+due to the limited concurrency.</p>
+</li>
+<li>
+<p>At the highest level of complexity, application developers can implement
+multiple distinct <code>Service</code>s and manually control synchronization of shared
+state between them, then use these to construct the ABCI <code>Server</code>.</p>
+</li>
+</ol>
+<p>Because these use the same interfaces in different ways, application
+developers can move gradually along this curve according to their performance
+requirements, starting with a synchronous application, then refactoring it to
+do some processing asynchronously, then doing more processing asynchronously,
+then splitting out one standalone service, then using entirely distinct
+services, etc.</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="v034/index.html" title="mod tower_abci::v034">v034</a></div></li><li><div class="item-name"><a class="mod" href="v037/index.html" title="mod tower_abci::v037">v037</a></div></li><li><div class="item-name"><a class="mod" href="v038/index.html" title="mod tower_abci::v038">v038</a></div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.BoxError.html" title="type tower_abci::BoxError">BoxError</a></div><div class="desc docblock-short">A convenient error type alias.</div></li></ul></section></div></main></body></html>

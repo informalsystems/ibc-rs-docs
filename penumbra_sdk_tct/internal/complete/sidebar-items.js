@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Item","Leaf","Node","Tier","Top"],"trait":["Complete","ForgetOwned"],"type":["Nested"]};

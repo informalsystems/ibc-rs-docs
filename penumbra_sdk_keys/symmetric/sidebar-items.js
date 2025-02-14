@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MEMOKEY_WRAPPED_LEN_BYTES","OVK_WRAPPED_LEN_BYTES","PAYLOAD_KEY_LEN_BYTES"],"enum":["PayloadKind"],"struct":["BackreferenceKey","OutgoingCipherKey","OvkWrappedKey","PayloadKey","WrappedMemoKey"]};

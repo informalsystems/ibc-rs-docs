@@ -61,7 +61,18 @@
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
-<a href="#63" id="63">63</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::time::Duration;
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::time::Duration;
 
 <span class="kw">use </span>tracing::{error_span, trace, warn};
 
@@ -75,6 +86,17 @@
     <span class="kw">let </span>span = <span class="macro">error_span!</span>(<span class="string">"wallet"</span>, chain = %chain.id());
 
     spawn_background_task(span, <span class="prelude-val">Some</span>(Duration::from_secs(<span class="number">5</span>)), <span class="kw">move </span>|| {
+        <span class="kw">let </span>chain_config = chain
+            .config()
+            .map_err(|e| TaskError::Fatal(<span class="macro">format!</span>(<span class="string">"failed to get chain config: {e}"</span>)))<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>!chain_config.keyring_support() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(TaskError::Ignore(<span class="macro">format!</span>(
+                <span class="string">"chain {} does not support keyring"</span>,
+                chain.id()
+            )));
+        }
+
         <span class="kw">let </span>key = chain.get_key().map_err(|e| {
             TaskError::Fatal(<span class="macro">format!</span>(<span class="string">"failed to get key in use by the relayer: {e}"</span>))
         })<span class="question-mark">?</span>;

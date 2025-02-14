@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"static":["REGISTRY","VALUE_GENERATOR_DOMAIN_SEP"],"struct":["AssetIdVar","Cache","Denom","Id","Metadata","Registry","Unit"]};

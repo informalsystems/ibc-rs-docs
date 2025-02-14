@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DkgRound1Package","DkgRound2Package","NonceCommitment","SignatureShare","SigningCommitments","SigningShare","VerifiableSecretSharingCommitment"]};

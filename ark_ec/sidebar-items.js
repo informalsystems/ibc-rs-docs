@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["prepare_g1","prepare_g2"],"mod":["group","models","msm","wnaf"],"trait":["AffineCurve","CurveCycle","PairingEngine","PairingFriendlyCycle","ProjectiveCurve"]};
+window.SIDEBAR_ITEMS = {"mod":["hashing","models","pairing","scalar_mul"],"trait":["AffineRepr","CurveCycle","CurveGroup","Group","PairingFriendlyCycle"]};

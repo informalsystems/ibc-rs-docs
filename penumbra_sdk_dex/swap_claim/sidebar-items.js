@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SwapClaimView"],"mod":["proof"],"struct":["Body","SwapClaim","SwapClaimPlan"]};

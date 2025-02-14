@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["fee_accumulator","fee_params","gas_prices","gas_prices_changed"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AuthHash","EffectHash","TransactionContext","TransactionId"],"trait":["AuthorizingData","EffectingData"]};

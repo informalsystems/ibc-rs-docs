@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ZETA"],"enum":["EncodingError"],"mod":["fields","r1cs"],"struct":["Element","Encoding"],"type":["Bls12_377"]};

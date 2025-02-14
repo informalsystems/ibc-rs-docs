@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["QuadExtField"],"trait":["QuadExtParameters"]};
+window.SIDEBAR_ITEMS = {"struct":["QuadExtField"],"trait":["QuadExtConfig"]};

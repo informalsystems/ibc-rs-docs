@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FeeTier"],"mod":["component","event","genesis","params","state_key"],"struct":["Fee","Gas","GasPrices"]};

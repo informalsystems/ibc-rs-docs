@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["balance","bonding_state"]};

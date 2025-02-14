@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PreAuthorization"],"struct":["Ed25519"]};

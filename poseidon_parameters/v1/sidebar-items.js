@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Alpha"],"fn":["mat_mul","square_mat_mul"],"struct":["ArcMatrix","Matrix","MdsMatrix","OptimizedArcMatrix","OptimizedMdsMatrices","PoseidonParameters","RoundNumbers","SquareMatrix"],"trait":["MatrixOperations","SquareMatrixOperations"]};

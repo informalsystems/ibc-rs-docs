@@ -1,0 +1,1 @@
+searchState.loadedDescShard("debugless_unwrap", 0, "This library provides alternatives to the standard <code>.unwrap</code>*…\nProvides <code>.debugless_unwrap()</code> on <code>Result</code>.\nProvides <code>.debugless_unwrap_err()</code> on <code>Result</code>.\nProvides <code>.debugless_unwrap_none()</code> on <code>Option</code>.")

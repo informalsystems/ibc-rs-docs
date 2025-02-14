@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SpendView"],"struct":["Body","Spend","SpendCircuit","SpendPlan","SpendProof","SpendProofPrivate","SpendProofPublic"]};

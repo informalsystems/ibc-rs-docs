@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FMD_GRACE_PERIOD_BLOCKS_DEFAULT"],"enum":["MetaParametersAlgorithm","MetaParametersAlgorithmState"],"fn":["should_update_fmd_params"],"mod":["state_key"],"struct":["MetaParameters","Parameters","SlidingWindow"]};

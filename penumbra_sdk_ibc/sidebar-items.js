@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IbcRelay"],"mod":["component","genesis","params"],"static":["IBC_COMMITMENT_PREFIX","IBC_PROOF_SPECS","IBC_SUBSTORE_PREFIX"],"struct":["IbcToken"],"trait":["MerklePrefixExt"]};

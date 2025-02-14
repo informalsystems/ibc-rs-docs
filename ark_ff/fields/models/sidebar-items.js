@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cubic_extension","fp12_2over3over2","fp2","fp3","fp4","fp6_2over3","fp6_3over2","quadratic_extension"],"struct":["Fp256","Fp320","Fp384","Fp448","Fp64","Fp768","Fp832"],"trait":["Fp256Parameters","Fp320Parameters","Fp384Parameters","Fp448Parameters","Fp64Parameters","Fp768Parameters","Fp832Parameters"]};
+window.SIDEBAR_ITEMS = {"mod":["cubic_extension","fp","fp12_2over3over2","fp2","fp3","fp4","fp6_2over3","fp6_3over2","quadratic_extension"]};

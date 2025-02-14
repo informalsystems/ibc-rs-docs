@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Fp2ParamsWrapper"],"trait":["Fp2Parameters"],"type":["Fp2"]};
+window.SIDEBAR_ITEMS = {"struct":["Fp2ConfigWrapper"],"trait":["Fp2Config"],"type":["Fp2"]};

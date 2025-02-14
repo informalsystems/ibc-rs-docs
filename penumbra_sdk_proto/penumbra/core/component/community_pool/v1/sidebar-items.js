@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["query_service_client","query_service_server"],"struct":["CommunityPoolAssetBalancesRequest","CommunityPoolAssetBalancesResponse","CommunityPoolParameters","GenesisContent"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["pending_notes","pending_rolled_up_payloads","shielded_pool_params"],"mod":["denom_metadata_by_asset"]};

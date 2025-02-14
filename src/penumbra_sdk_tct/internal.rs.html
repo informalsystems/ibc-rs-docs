@@ -1,0 +1,323 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/penumbra-sdk-tct-1.0.1/src/internal.rs`."><title>internal.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="penumbra_sdk_tct" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9322d183f 2024-10-14)" data-channel="nightly" data-search-js="search-e056c65ede92db13.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">penumbra_sdk_tct/</div>internal.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
+<a href="#2" id="2">2</a>
+<a href="#3" id="3">3</a>
+<a href="#4" id="4">4</a>
+<a href="#5" id="5">5</a>
+<a href="#6" id="6">6</a>
+<a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a></pre></div><pre class="rust"><code><span class="doccomment">//! The internal implementation of the tree, exposed here for documentation.
+//!
+//! This module and its submodules should not be expected to follow semantic versioning.
+//!
+//! ## Structure of Implementation
+//!
+//! The tiered commitment tree is not accessed directly _as a tree_; rather, the
+//! [`Tree`](crate::Tree), [`epoch::Builder`](crate::builder::epoch::Builder),
+//! [`epoch::Finalized`](crate::builder::epoch::Finalized),
+//! [`block::Builder`](crate::builder::block::Builder), and
+//! [`block::Finalized`](crate::builder::block::Finalized) structs from the top level of the crate
+//! contain a tree together with a hashmap which maps commitments to their corresponding index
+//! within the tree. This `internal` module and all its submodules concern themselves solely with
+//! the implementation of the tree itself, wherein commitments and their authentication paths are
+//! accessed by index. The surrounding pieces of the crate make use of the internal-facing API
+//! exposed by this module to implement an external API specific to the three-tiered
+//! tree/epoch/block commitment tree required by Penumbra.
+//!
+//! The tiered commitment tree has a very specific structure, and in this implementation we make
+//! strong Rust's type system to enforce that structure. In particular, we ensure that internal
+//! nodes are non-empty, and that leaves occur only at the bottom-most level of the tree. A
+//! consequence of this is that it is unrepresentable to build a tree which fails to be pruned of
+//! internal nodes holding no witnessed leaves, or whose leaves are of mismatched depth. A lesser
+//! benefit of this design is that recursive methods on trees can be monomorphized and therefore
+//! potentially inlined to the height of tree they are called upon, avoiding ever performing runtime
+//! checks about the tree structure (there no need to check whether a particular part of the tree is
+//! a leaf, internal node, etc., because this is statically known).
+//!
+//! This structural guarantee is achieved by defining these tree structures as _nested generic
+//! types_, and defining their methods as _recursive trait implementations_ (rather than as
+//! inductive non-generic enumeration types with recursive methods). These traits are all defined in
+//! [`interface`], but they are re-exported from [`frontier`] and [`complete`] as relevant.
+//!
+//! ## Tiers of Nodes of Leaves of Items: Frontier and Complete
+//!
+//! The primary exports of this module is the type [`frontier::Tier`]. It is in terms of this type
+//! that the [`Tree`](crate::Tree) and [`builder`](crate::builder) structs are defined: a
+//! [`Tree`](crate::Tree) is a `Top&lt;Tier&lt;Tier&lt;Item&gt;&gt;&gt;`, an epoch is a `Top&lt;Tier&lt;Item&gt;&gt;`, and a
+//! `Block` is a `Top&lt;Item&gt;` (each with a managed index of commitments alongside).
+//!
+//! Internally, a [`Tier`](frontier::Tier) is a quadtree where every internal node is annotated with
+//! the hash of its children, into which leaves (all at depth 8) are inserted in left to right
+//! order. The "frontier" represents the path from the root to the rightmost leaf, at every level
+//! containing any leftward siblings of a given frontier node, each of which is a [`complete`] tree
+//! which stores the finalized bulk of the items inserted into the tree. As new leaves are created,
+//! the frontier zig-zags rightwards, pushing finalized portions of itself into the leftward
+//! complete tree.
+//!
+//! All [`Tier`](frontier::Tier)s must contain at least one child, and may be either unfinalized or
+//! finalized; a [`Top`](frontier::Top) is like a tier, but it may be empty, and may not be
+//! finalized. Stacking a [`Top`](frontier::Top) on top of [`Tier`](frontier::Tier)s allows there to
+//! be a canonical representation for empty trees, and prevents the illegal state of a finalized
+//! top-level tree.
+//!
+//! As described above, a variety of recursively defined traits are used to define the behavior of
+//! trees. The [`Frontier`](frontier::Frontier) trait defines the operations possible on a frontier
+//! of a tree, while the [`Focus`](frontier::Focus) trait defines how to operate over the tip of a
+//! frontier, and the [`Forget`](frontier::Forget) trait defines how to remove witnessed leaves from
+//! a frontier.
+//!
+//! While the frontier changes on every inserted leaf, within the complete portion of the tree the
+//! only changes that occur are when leaves are forgotten and their containing nodes pruned. As a
+//! result, the traits exposed by the [`complete`] module are merely
+//! [`Complete`](complete::Complete), which is a marker trait used to ensure that every
+//! [`Frontier`](frontier::Frontier) type is paired with a unique corresponding type of complete
+//! tree, and the [`ForgetOwned`](complete::ForgetOwned) trait, which defines an equivalent to
+//! [`frontier::Forget`] that is applicable to the by-value usage pattern of complete trees.
+
+</span><span class="kw">pub mod </span>hash;
+<span class="kw">pub mod </span>height;
+<span class="kw">pub mod </span>interface;
+<span class="kw">pub mod </span>path;
+<span class="kw">pub mod </span>proof;
+<span class="kw">pub mod </span>three;
+
+<span class="kw">mod </span>insert;
+
+<span class="attr">#[allow(missing_docs)]
+</span><span class="kw">pub mod </span>frontier {
+    <span class="doccomment">//! [`Frontier`] things can be inserted into and updated, always representing the rightmost
+    //! (most recently inserted) element of a tree.
+    //!
+    //! In sketch: the structure of a single [`Tier`] contains eight [`Node`]s, the bottom-most of
+    //! which contains a [`Leaf`]. Alternatively, a tier can be a summarized [`Hash`] of what its
+    //! contents _would be_, and contain nothing at all besides this hash.
+    //!
+    //! At every level of a [`frontier::Tier`](Tier), the rightmost child of a
+    //! [`frontier::Node`](Node) is a [`frontier::Node`](Node); all leftward siblings are
+    //! [`complete::Node`](super::complete::Node)s. When the child of a [`frontier::Node`](Node)
+    //! becomes entirely full (all its possible leaves are inserted), it is transformed into a
+    //! [`complete::Node`](super::complete::Node) and appended to the list of complete siblings of
+    //! its parent, thus shifting the frontier rightwards.
+    //!
+    //! At any given time, the frontier is always fully materialized; no node within it is ever
+    //! summarized as a hash. It is at the point when a [`frontier::Node`](Node) becomes full and is
+    //! then finalized into a [`complete::Node`](super::complete::Node) that it is pruned, if it
+    //! contains no witnessed children.
+    //!
+    //! At the tip of the frontier, however deeply nested (perhaps within multiple [`Tier`]s), there
+    //! is a single [`Item`], which is either a [`Commitment`](crate::Commitment) or a hash of one.
+    //! Commitments can be inserted either with the intent to remember them, or with the intent to
+    //! immediately forget them; this determines whether the [`Item`] is a commitment or merely its
+    //! hash.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span><span class="kw">super</span>::interface::OutOfOrder;
+    <span class="attr">#[doc(inline)]
+    </span><span class="kw">pub use </span><span class="kw">super</span>::interface::{Focus, Forget, Frontier, Full, GetPosition};
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>item;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>leaf;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>node;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>tier;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>top;
+    <span class="kw">pub use </span><span class="kw">super</span>::insert::{Insert, InsertMut};
+    <span class="attr">#[doc(inline)]
+    </span><span class="kw">pub use </span>{
+        item::Item,
+        leaf::Leaf,
+        node::Node,
+        tier::Tier,
+        top::{Top, TrackForgotten},
+    };
+}
+
+<span class="attr">#[allow(missing_docs)]
+</span><span class="kw">pub mod </span>complete {
+    <span class="doccomment">//! [`Complete`] things are sparse representations of only the data that was inserted using
+    //! [`Witness::Keep`](crate::Witness::Keep), with the data that was inserted using
+    //! [`Witness::Forget`](crate::Witness::Forget) being pruned eagerly.
+    //!
+    //! The structure of a single [`Tier`] contains eight levels of [`Node`]s, the bottom-most level
+    //! of which contains [`Leaf`]s. Alternatively, a tier can be a summarized [`Hash`] of what its
+    //! contents _would be_, and contain nothing at all besides this hash.
+    //!
+    //! In the internal levels of a [`complete::Tier`](Tier) are eight levels of
+    //! [`complete::Node`](Node)s, each of which may have between one and four children. If a node
+    //! does not have a given child, then it instead stores the hash that child used to have, when
+    //! it existed. Empty nodes (all of whose children would be hashes) are unrepresentable, and
+    //! instead their own hash is immediately stored in their parent node when their last child is
+    //! forgotten.
+    //!
+    //! At the bottom of the bottom-most tier (perhaps at the bottom of multiple [`Tier`]s), there
+    //! are [`Item`]s, each of which is merely a wrapper for a single
+    //! [`Commitment`](crate::Commitment).
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span><span class="kw">super</span>::interface::OutOfOrderOwned;
+    <span class="attr">#[doc(inline)]
+    </span><span class="kw">pub use </span><span class="kw">super</span>::interface::{Complete, ForgetOwned};
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>item;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>leaf;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>node;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>tier;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>top;
+    <span class="attr">#[doc(inline)]
+    </span><span class="kw">pub use </span>{
+        item::Item,
+        leaf::Leaf,
+        node::Node,
+        tier::{Nested, Tier},
+        top::Top,
+    };
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>interface::UncheckedSetHash;
+</code></pre></div></section></main></body></html>

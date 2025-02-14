@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SwapCircuit","SwapProof","SwapProofPrivate","SwapProofPublic"]};

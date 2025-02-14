@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SignMode"],"mod":["signature_descriptor"],"struct":["SignatureDescriptor","SignatureDescriptors"]};

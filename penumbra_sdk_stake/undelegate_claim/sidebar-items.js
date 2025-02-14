@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["UndelegateClaim","UndelegateClaimBody","UndelegateClaimPlan","UndelegateClaimProof","UndelegateClaimProofPrivate","UndelegateClaimProofPublic"]};

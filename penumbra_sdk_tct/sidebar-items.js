@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Witness"],"mod":["builder","error","internal","r1cs","storage","structure","validate"],"static":["DOMAIN_SEPARATOR"],"struct":["Forgotten","Position","Proof","Root","StateCommitment","Tree"]};

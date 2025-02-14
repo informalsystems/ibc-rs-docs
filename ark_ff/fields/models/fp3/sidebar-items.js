@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Fp3ParamsWrapper"],"trait":["Fp3Parameters"],"type":["Fp3"]};
+window.SIDEBAR_ITEMS = {"struct":["Fp3ConfigWrapper"],"trait":["Fp3Config"],"type":["Fp3"]};

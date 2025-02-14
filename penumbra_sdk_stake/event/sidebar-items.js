@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["EventDelegate","EventRateDataChange","EventSlashingPenaltyApplied","EventTombstoneValidator","EventUndelegate","EventValidatorBondingStateChange","EventValidatorDefinitionUpload","EventValidatorMissedBlock","EventValidatorStateChange","EventValidatorVotingPowerChange"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["StatePayload"],"struct":["Note","RolledUp","Swap"]};

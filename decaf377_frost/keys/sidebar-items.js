@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["generate_with_dealer","reconstruct","split"],"mod":["dkg"],"type":["IdentifierList","KeyPackage","PublicKeyPackage","SecretShare","SigningShare","VerifiableSecretSharingCommitment","VerifyingKey","VerifyingShare"]};

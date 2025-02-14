@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConnectionMsg"],"struct":["MsgConnectionOpenAck","MsgConnectionOpenConfirm","MsgConnectionOpenInit","MsgConnectionOpenTry"]};

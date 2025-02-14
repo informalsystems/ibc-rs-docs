@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["element","fqvar_ext","ops"],"struct":["ElementVar"],"trait":["CountConstraints"],"type":["FqVar"]};

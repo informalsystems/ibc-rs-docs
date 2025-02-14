@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["msg_client","query_client"],"struct":["MsgUpdateParams","MsgUpdateParamsResponse","Params","QueryParamsRequest","QueryParamsResponse"]};
+window.SIDEBAR_ITEMS = {"mod":["msg_client","msg_server","query_client","query_server"],"struct":["MsgUpdateParams","MsgUpdateParamsResponse","Params","QueryParamsRequest","QueryParamsResponse"]};

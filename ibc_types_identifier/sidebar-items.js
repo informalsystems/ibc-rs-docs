@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IdentifierError"],"fn":["validate_channel_identifier","validate_client_identifier","validate_connection_identifier","validate_identifier","validate_port_identifier"]};

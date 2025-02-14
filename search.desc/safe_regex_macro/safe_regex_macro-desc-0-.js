@@ -1,0 +1,1 @@
+searchState.loadedDescShard("safe_regex_macro", 0, "crates.io version license: Apache 2.0 unsafe forbidden …\nCompiles a regular expression into a Rust type.")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IndexError","WitnessError"],"fn":["all_proofs","cached_hashes","forgotten","index"],"struct":["IndexMalformed","InvalidCachedHash","InvalidCachedHashes","InvalidForgotten","InvalidForgottenVersion","InvalidWitnesses"]};

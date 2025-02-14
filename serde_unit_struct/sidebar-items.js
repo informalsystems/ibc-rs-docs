@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["Deserialize_unit_struct","Serialize_unit_struct"]};

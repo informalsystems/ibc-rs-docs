@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADDRESS_LEN_BYTES","ADDRESS_NUM_CHARS_SHORT_FORM","TRANSPARENT_ADDRESS_BECH32_PREFIX"],"enum":["AddressView"],"struct":["Address","AddressVar","NobleForwardingAddress"]};

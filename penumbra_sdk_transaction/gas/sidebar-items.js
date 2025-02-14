@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["output_gas_cost","spend_gas_cost","swap_claim_gas_cost"],"trait":["GasCost"]};

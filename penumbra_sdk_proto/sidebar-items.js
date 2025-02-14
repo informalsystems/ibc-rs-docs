@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FILE_DESCRIPTOR_SET"],"derive":["Message"],"mod":["box_grpc_svc","cosmos","event","noble","penumbra","serializers","state","tendermint"],"trait":["DomainType","Message","Name"]};

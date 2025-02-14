@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["bls12","bn","bw6","mnt4","mnt6","short_weierstrass_jacobian","twisted_edwards_extended"],"trait":["ModelParameters","MontgomeryModelParameters","SWModelParameters","TEModelParameters"]};
+window.SIDEBAR_ITEMS = {"mod":["bls12","bn","bw6","mnt4","mnt6","short_weierstrass","twisted_edwards"],"trait":["CurveConfig"]};

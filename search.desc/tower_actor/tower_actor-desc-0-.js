@@ -1,0 +1,1 @@
+searchState.loadedDescShard("tower_actor", 0, "A service backed by an actor that runs in a separate task …\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.")

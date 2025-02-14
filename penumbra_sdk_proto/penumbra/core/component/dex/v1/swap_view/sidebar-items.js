@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SwapView"],"struct":["Opaque","Visible"]};

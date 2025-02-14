@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["WhichWay"],"struct":["Leaf","Node","PathDecodeError"],"trait":["Path"],"type":["AuthPath"]};

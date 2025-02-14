@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["config","util","version"],"static":["IBC_PROOF_SPECS"],"struct":["PenumbraChain"]};

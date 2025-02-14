@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["aggregate","compute_binding_factor_list","compute_group_commitment","compute_lagrange_coefficient","derive_interpolating_value"],"mod":["keys","round1","round2"],"struct":["BindingFactor","BindingFactorList","GroupCommitment","Identifier","SigningPackage"]};

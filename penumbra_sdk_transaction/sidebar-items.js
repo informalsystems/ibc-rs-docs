@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"mod":["action","action_list","gas","memo","plan","view"],"struct":["AuthorizationData","Compat","DetectionData","Transaction","TransactionBody","TransactionParameters","WitnessData"],"trait":["IsAction"]};

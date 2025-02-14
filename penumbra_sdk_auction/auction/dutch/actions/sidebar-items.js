@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["end","plan","schedule","view","withdraw"]};

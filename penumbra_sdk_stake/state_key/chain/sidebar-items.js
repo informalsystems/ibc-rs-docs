@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["total_bonded"],"mod":["base_rate","delegation_changes"]};

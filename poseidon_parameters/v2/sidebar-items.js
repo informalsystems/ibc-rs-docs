@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Alpha"],"struct":["ArcMatrix","PoseidonParameters","RoundNumbers","SquareMatrix"],"trait":["MatrixOperations","SquareMatrixOperations"]};

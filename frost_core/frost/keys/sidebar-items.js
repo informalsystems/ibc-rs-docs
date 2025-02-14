@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IdentifierList"],"fn":["generate_with_dealer","reconstruct","split"],"mod":["dkg","repairable"],"struct":["CoefficientCommitment","KeyPackage","PublicKeyPackage","SecretShare","SigningShare","VerifiableSecretSharingCommitment","VerifyingShare"]};

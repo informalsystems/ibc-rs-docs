@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TRANSACTION_PLAN_TYPE_URL"],"enum":["ProposalKind","ProposalPayload","ProposalPayloadToml"],"struct":["Proposal","ProposalToml"]};

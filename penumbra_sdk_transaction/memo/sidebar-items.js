@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MEMO_CIPHERTEXT_LEN_BYTES","MEMO_LEN_BYTES"],"struct":["MemoCiphertext","MemoPlaintext"]};

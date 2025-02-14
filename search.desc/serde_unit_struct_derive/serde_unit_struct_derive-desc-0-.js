@@ -1,0 +1,1 @@
+searchState.loadedDescShard("serde_unit_struct_derive", 0, "Copyright (c) 2022 Chris Riches (Licensed under MIT or …\nAutomatically derive Deserialize for the given unit struct.\nAutomatically derive Serialize for the given unit struct.")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["anchor","commitment","epoch_root"],"struct":["EventBlockRoot"]};

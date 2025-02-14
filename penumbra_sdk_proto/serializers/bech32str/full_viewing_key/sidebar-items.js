@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BECH32_PREFIX"],"fn":["deserialize","serialize"]};

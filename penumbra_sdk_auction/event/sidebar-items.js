@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["auction_vcb_credit","auction_vcb_debit","dutch_auction_closed_by_user","dutch_auction_exhausted","dutch_auction_expired","dutch_auction_schedule_event","dutch_auction_updated","dutch_auction_withdrawn"]};
